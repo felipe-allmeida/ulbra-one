@@ -39,6 +39,7 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.Property(x => x.Codigo).HasMaxLength(50).IsRequired();
             e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
             e.Property(x => x.OrcamentoAnual).HasPrecision(18, 2);
+            e.Property(x => x.LimiteAutoAprovacao).HasPrecision(18, 2);
             e.HasOne<Empresa>().WithMany().HasForeignKey(x => x.EmpresaId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.EmpresaId, x.Codigo }).IsUnique();
         });

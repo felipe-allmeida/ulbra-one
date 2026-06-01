@@ -11,16 +11,16 @@ namespace Ulbra.One.Core.Application.Endpoints;
 public sealed class UnidadesEndpoint : IEndpoint
 {
     public record CreateUnidadeRequest(Guid EmpresaId, string Nome, string Sigla);
+    public record UpdateUnidadeRequest(string Nome, string Sigla);
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/unidades").WithTags("Organograma");
+        var group = builder.MapGroup("/unidades").WithTags("Cadastros");
 
         group.MapGet("/", async (CoreContext db, Guid? empresaId, CancellationToken ct) =>
         {
             var query = db.Unidades.AsQueryable();
-            if (empresaId is not null)
-                query = query.Where(u => u.EmpresaId == empresaId);
+            if (empresaId is not null) query = query.Where(u => u.EmpresaId == empresaId);
             return Results.Ok(await query.OrderBy(u => u.Nome).ToListAsync(ct));
         })
         .WithName("ListarUnidades");
@@ -36,5 +36,15 @@ public sealed class UnidadesEndpoint : IEndpoint
             return Results.Created($"/api/unidades/{unidade.Id}", unidade);
         })
         .WithName("CriarUnidade");
+
+        group.MapPut("/{id:guid}", async (Guid id, UpdateUnidadeRequest req, CoreContext db, CancellationToken ct) =>
+        {
+            var unidade = await db.Unidades.FirstOrDefaultAsync(u => u.Id == id, ct);
+            if (unidade is null) return Results.NotFound();
+            unidade.Atualizar(req.Nome, req.Sigla);
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(unidade);
+        })
+        .WithName("AtualizarUnidade");
     }
 }

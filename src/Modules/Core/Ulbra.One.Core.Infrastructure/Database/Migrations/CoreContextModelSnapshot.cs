@@ -48,6 +48,11 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("empresa_id");
 
+                    b.Property<decimal>("LimiteAutoAprovacao")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("limite_auto_aprovacao");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)

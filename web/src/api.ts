@@ -56,6 +56,7 @@ export interface CentroDeCusto {
   codigo: string;
   nome: string;
   orcamentoAnual: number;
+  limiteAutoAprovacao: number;
   ativo: boolean;
   unidadeIds: string[];
 }
@@ -71,15 +72,24 @@ export const api = {
   listEmpresas: () => request<Empresa[]>('/empresas'),
   createEmpresa: (razaoSocial: string, cnpj: string) =>
     request<Empresa>('/empresas', { method: 'POST', body: JSON.stringify({ razaoSocial, cnpj }) }),
+  updateEmpresa: (id: string, razaoSocial: string, cnpj: string) =>
+    request<Empresa>(`/empresas/${id}`, { method: 'PUT', body: JSON.stringify({ razaoSocial, cnpj }) }),
 
   listUnidades: (empresaId: string) => request<Unidade[]>(`/unidades?empresaId=${empresaId}`),
   createUnidade: (empresaId: string, nome: string, sigla: string) =>
     request<Unidade>('/unidades', { method: 'POST', body: JSON.stringify({ empresaId, nome, sigla }) }),
+  updateUnidade: (id: string, nome: string, sigla: string) =>
+    request<Unidade>(`/unidades/${id}`, { method: 'PUT', body: JSON.stringify({ nome, sigla }) }),
 
   listCentros: (empresaId: string) => request<CentroDeCusto[]>(`/centros-custo?empresaId=${empresaId}`),
-  createCentro: (empresaId: string, codigo: string, nome: string, orcamentoAnual: number, unidadeIds: string[]) =>
+  createCentro: (empresaId: string, codigo: string, nome: string, orcamentoAnual: number, limiteAutoAprovacao: number, unidadeIds: string[]) =>
     request<CentroDeCusto>('/centros-custo', {
       method: 'POST',
-      body: JSON.stringify({ empresaId, codigo, nome, orcamentoAnual, unidadeIds }),
+      body: JSON.stringify({ empresaId, codigo, nome, orcamentoAnual, limiteAutoAprovacao, unidadeIds }),
+    }),
+  updateCentro: (id: string, codigo: string, nome: string, orcamentoAnual: number, limiteAutoAprovacao: number, unidadeIds: string[]) =>
+    request<CentroDeCusto>(`/centros-custo/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ codigo, nome, orcamentoAnual, limiteAutoAprovacao, unidadeIds }),
     }),
 };

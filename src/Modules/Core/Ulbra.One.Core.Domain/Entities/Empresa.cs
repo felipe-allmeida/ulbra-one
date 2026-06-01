@@ -18,4 +18,10 @@ public class Empresa
         RazaoSocial = razaoSocial;
         Cnpj = cnpj;
     }
+
+    public void Atualizar(string razaoSocial, string cnpj)
+    {
+        RazaoSocial = razaoSocial;
+        Cnpj = cnpj;
+    }
 }

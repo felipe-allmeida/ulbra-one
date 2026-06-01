@@ -20,4 +20,10 @@ public class Unidade
         Nome = nome;
         Sigla = sigla;
     }
+
+    public void Atualizar(string nome, string sigla)
+    {
+        Nome = nome;
+        Sigla = sigla;
+    }
 }
