@@ -8,5 +8,7 @@
     <ProjectReference Include="../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
     <ProjectReference Include="../../Modules/Core/Ulbra.One.Core.Application/Ulbra.One.Core.Application.csproj" />
     <ProjectReference Include="../../Modules/Core/Ulbra.One.Core.Infrastructure/Ulbra.One.Core.Infrastructure.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Ulbra.One.Identity.Application/Ulbra.One.Identity.Application.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Ulbra.One.Identity.Infrastructure/Ulbra.One.Identity.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

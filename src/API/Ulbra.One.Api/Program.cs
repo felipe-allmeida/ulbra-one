@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Core.Application;
 using Ulbra.One.Core.Infrastructure;
 using Ulbra.One.Core.Infrastructure.Database;
+using Ulbra.One.Identity.Application;
+using Ulbra.One.Identity.Infrastructure;
+using Ulbra.One.Identity.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,12 +44,24 @@ builder.Services.AddSwaggerGen(options =>
         Title = "ULBRA One API",
         Version = "v1"
     });
+
+    var jwtScheme = new Microsoft.OpenApi.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.ParameterLocation.Header,
+        Description = "JWT obtido em /api/auth/dev-token ou /api/auth/google"
+    };
+    options.AddSecurityDefinition("Bearer", jwtScheme);
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException("Connection string 'Database' não configurada.");
 
 // Modules
+builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddCoreModule(builder.Configuration);
 
 // Health checks
@@ -65,6 +80,7 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
+            await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
             break;
         }
@@ -84,13 +100,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-app.MapGroup("/api").MapCoreEndpoints();
+var apiGroup = app.MapGroup("/api");
+apiGroup.MapIdentityEndpoints();
+apiGroup.MapCoreEndpoints();
 
 app.Run();
 

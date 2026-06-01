@@ -18,5 +18,10 @@
     <!-- Health Checks -->
     <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <!-- Auth -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.11.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.11.0" />
+    <PackageVersion Include="Google.Apis.Auth" Version="1.69.0" />
   </ItemGroup>
 </Project>
