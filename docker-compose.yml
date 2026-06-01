@@ -45,8 +45,7 @@ services:
       - web_node_modules:/app/node_modules
     command: >
       sh -c "corepack enable &&
-             corepack prepare pnpm@latest --activate &&
-             pnpm install &&
+             pnpm install --config.minimumReleaseAge=0 &&
              pnpm dev --host 0.0.0.0"
 
 volumes:
