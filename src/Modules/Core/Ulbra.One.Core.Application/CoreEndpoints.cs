@@ -9,6 +9,8 @@ public static class CoreEndpoints
     {
         new PingEndpoint().Map(builder);
         new EmpresasEndpoint().Map(builder);
+        new UnidadesEndpoint().Map(builder);
+        new CentrosDeCustoEndpoint().Map(builder);
         return builder;
     }
 }

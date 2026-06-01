@@ -23,6 +23,59 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.CentroDeCusto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativo");
+
+                    b.Property<Guid?>("CentroDeCustoPaiId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("centro_de_custo_pai_id");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nome");
+
+                    b.Property<decimal>("OrcamentoAnual")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("orcamento_anual");
+
+                    b.Property<Guid>("UnidadeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("unidade_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_centros_de_custo");
+
+                    b.HasIndex("CentroDeCustoPaiId")
+                        .HasDatabaseName("ix_centros_de_custo_centro_de_custo_pai_id");
+
+                    b.HasIndex("UnidadeId", "Codigo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_centros_de_custo_unidade_id_codigo");
+
+                    b.ToTable("centros_de_custo", "core");
+                });
+
             modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.Empresa", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +111,73 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_empresas_cnpj");
 
                     b.ToTable("empresas", "core");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.Unidade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criada_em");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nome");
+
+                    b.Property<string>("Sigla")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sigla");
+
+                    b.HasKey("Id")
+                        .HasName("pk_unidades");
+
+                    b.HasIndex("EmpresaId", "Sigla")
+                        .IsUnique()
+                        .HasDatabaseName("ix_unidades_empresa_id_sigla");
+
+                    b.ToTable("unidades", "core");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.CentroDeCusto", b =>
+                {
+                    b.HasOne("Ulbra.One.Core.Domain.Entities.CentroDeCusto", null)
+                        .WithMany()
+                        .HasForeignKey("CentroDeCustoPaiId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_centros_de_custo_centros_de_custo_centro_de_custo_pai_id");
+
+                    b.HasOne("Ulbra.One.Core.Domain.Entities.Unidade", null)
+                        .WithMany()
+                        .HasForeignKey("UnidadeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_centros_de_custo_unidades_unidade_id");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.Unidade", b =>
+                {
+                    b.HasOne("Ulbra.One.Core.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_unidades_empresas_empresa_id");
                 });
 #pragma warning restore 612, 618
         }
