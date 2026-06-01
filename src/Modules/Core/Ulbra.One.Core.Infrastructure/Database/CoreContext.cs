@@ -10,6 +10,7 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
     public DbSet<Empresa> Empresas => Set<Empresa>();
     public DbSet<Unidade> Unidades => Set<Unidade>();
     public DbSet<CentroDeCusto> CentrosDeCusto => Set<CentroDeCusto>();
+    public DbSet<CentroDeCustoUnidade> CentroDeCustoUnidades => Set<CentroDeCustoUnidade>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,9 +39,15 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.Property(x => x.Codigo).HasMaxLength(50).IsRequired();
             e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
             e.Property(x => x.OrcamentoAnual).HasPrecision(18, 2);
-            e.HasOne<Unidade>().WithMany().HasForeignKey(x => x.UnidadeId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<CentroDeCusto>().WithMany().HasForeignKey(x => x.CentroDeCustoPaiId).OnDelete(DeleteBehavior.Restrict);
-            e.HasIndex(x => new { x.UnidadeId, x.Codigo }).IsUnique();
+            e.HasOne<Empresa>().WithMany().HasForeignKey(x => x.EmpresaId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => new { x.EmpresaId, x.Codigo }).IsUnique();
+        });
+
+        modelBuilder.Entity<CentroDeCustoUnidade>(e =>
+        {
+            e.HasKey(x => new { x.CentroDeCustoId, x.UnidadeId });
+            e.HasOne<CentroDeCusto>().WithMany().HasForeignKey(x => x.CentroDeCustoId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Unidade>().WithMany().HasForeignKey(x => x.UnidadeId).OnDelete(DeleteBehavior.Cascade);
         });
 
         base.OnModelCreating(modelBuilder);

@@ -34,10 +34,6 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("ativo");
 
-                    b.Property<Guid?>("CentroDeCustoPaiId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("centro_de_custo_pai_id");
-
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -47,6 +43,10 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("criado_em");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -59,21 +59,33 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("orcamento_anual");
 
+                    b.HasKey("Id")
+                        .HasName("pk_centros_de_custo");
+
+                    b.HasIndex("EmpresaId", "Codigo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_centros_de_custo_empresa_id_codigo");
+
+                    b.ToTable("centros_de_custo", "core");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.CentroDeCustoUnidade", b =>
+                {
+                    b.Property<Guid>("CentroDeCustoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("centro_de_custo_id");
+
                     b.Property<Guid>("UnidadeId")
                         .HasColumnType("uuid")
                         .HasColumnName("unidade_id");
 
-                    b.HasKey("Id")
-                        .HasName("pk_centros_de_custo");
+                    b.HasKey("CentroDeCustoId", "UnidadeId")
+                        .HasName("pk_centro_de_custo_unidades");
 
-                    b.HasIndex("CentroDeCustoPaiId")
-                        .HasDatabaseName("ix_centros_de_custo_centro_de_custo_pai_id");
+                    b.HasIndex("UnidadeId")
+                        .HasDatabaseName("ix_centro_de_custo_unidades_unidade_id");
 
-                    b.HasIndex("UnidadeId", "Codigo")
-                        .IsUnique()
-                        .HasDatabaseName("ix_centros_de_custo_unidade_id_codigo");
-
-                    b.ToTable("centros_de_custo", "core");
+                    b.ToTable("centro_de_custo_unidades", "core");
                 });
 
             modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.Empresa", b =>
@@ -156,18 +168,29 @@ namespace Ulbra.One.Core.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.CentroDeCusto", b =>
                 {
+                    b.HasOne("Ulbra.One.Core.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_centros_de_custo_empresas_empresa_id");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.CentroDeCustoUnidade", b =>
+                {
                     b.HasOne("Ulbra.One.Core.Domain.Entities.CentroDeCusto", null)
                         .WithMany()
-                        .HasForeignKey("CentroDeCustoPaiId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_centros_de_custo_centros_de_custo_centro_de_custo_pai_id");
+                        .HasForeignKey("CentroDeCustoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_centro_de_custo_unidades_centros_de_custo_centro_de_custo_id");
 
                     b.HasOne("Ulbra.One.Core.Domain.Entities.Unidade", null)
                         .WithMany()
                         .HasForeignKey("UnidadeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_centros_de_custo_unidades_unidade_id");
+                        .HasConstraintName("fk_centro_de_custo_unidades_unidades_unidade_id");
                 });
 
             modelBuilder.Entity("Ulbra.One.Core.Domain.Entities.Unidade", b =>

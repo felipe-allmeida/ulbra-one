@@ -52,12 +52,12 @@ export interface Unidade {
 
 export interface CentroDeCusto {
   id: string;
-  unidadeId: string;
-  centroDeCustoPaiId: string | null;
+  empresaId: string;
   codigo: string;
   nome: string;
   orcamentoAnual: number;
   ativo: boolean;
+  unidadeIds: string[];
 }
 
 export const api = {
@@ -76,10 +76,10 @@ export const api = {
   createUnidade: (empresaId: string, nome: string, sigla: string) =>
     request<Unidade>('/unidades', { method: 'POST', body: JSON.stringify({ empresaId, nome, sigla }) }),
 
-  listCentros: (unidadeId: string) => request<CentroDeCusto[]>(`/centros-custo?unidadeId=${unidadeId}`),
-  createCentro: (unidadeId: string, codigo: string, nome: string, orcamentoAnual: number) =>
+  listCentros: (empresaId: string) => request<CentroDeCusto[]>(`/centros-custo?empresaId=${empresaId}`),
+  createCentro: (empresaId: string, codigo: string, nome: string, orcamentoAnual: number, unidadeIds: string[]) =>
     request<CentroDeCusto>('/centros-custo', {
       method: 'POST',
-      body: JSON.stringify({ unidadeId, codigo, nome, orcamentoAnual }),
+      body: JSON.stringify({ empresaId, codigo, nome, orcamentoAnual, unidadeIds }),
     }),
 };
