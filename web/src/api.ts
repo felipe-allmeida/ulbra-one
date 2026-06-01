@@ -82,6 +82,7 @@ export const api = {
     request<Unidade>(`/unidades/${id}`, { method: 'PUT', body: JSON.stringify({ nome, sigla }) }),
 
   listCentros: (empresaId: string) => request<CentroDeCusto[]>(`/centros-custo?empresaId=${empresaId}`),
+  getCentro: (id: string) => request<CentroDeCusto>(`/centros-custo/${id}`),
   createCentro: (empresaId: string, codigo: string, nome: string, orcamentoAnual: number, limiteAutoAprovacao: number, unidadeIds: string[]) =>
     request<CentroDeCusto>('/centros-custo', {
       method: 'POST',

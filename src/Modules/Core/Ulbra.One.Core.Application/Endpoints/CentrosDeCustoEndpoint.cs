@@ -36,6 +36,16 @@ public sealed class CentrosDeCustoEndpoint : IEndpoint
         })
         .WithName("ListarCentrosDeCusto");
 
+        group.MapGet("/{id:guid}", async (Guid id, CoreContext db, CancellationToken ct) =>
+        {
+            var centro = await db.CentrosDeCusto.FirstOrDefaultAsync(c => c.Id == id, ct);
+            if (centro is null) return Results.NotFound();
+            var unidadeIds = await db.CentroDeCustoUnidades
+                .Where(x => x.CentroDeCustoId == id).Select(x => x.UnidadeId).ToArrayAsync(ct);
+            return Results.Ok(Projetar(centro, unidadeIds));
+        })
+        .WithName("ObterCentroDeCusto");
+
         group.MapPost("/", async (CreateCentroDeCustoRequest req, CoreContext db, CancellationToken ct) =>
         {
             if (!await db.Empresas.AnyAsync(e => e.Id == req.EmpresaId, ct))
