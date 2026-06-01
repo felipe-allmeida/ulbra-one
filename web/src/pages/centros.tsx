@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Target, ChevronLeft, Pencil, Activity, Zap } from 'lucide-react';
-import { api, type Unidade, type CentroDeCusto } from '../api';
+import { api, type Unidade, type CentroDeCusto, type Lancamento } from '../api';
 import { useApp } from '../store';
 import { brlCompact, brl } from '../lib';
-import { Button, Chip, Kpi, EmptyState, PageHeader } from '../ui';
+import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
 import { EmpresaPicker, CentroForm } from './shared';
+import { StatusBadge } from './lancamentos';
 
 /* ===================== LISTA ===================== */
 export function CentrosListPage() {
@@ -80,6 +81,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
 
   const [centro, setCentro] = useState<CentroDeCusto | null>(null);
   const [unidades, setUnidades] = useState<Unidade[]>([]);
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [editando, setEditando] = useState(modo === 'novo');
   const [carregando, setCarregando] = useState(modo === 'detalhe');
 
@@ -94,7 +96,11 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
     if (!id) return;
     setCarregando(true);
     api.getCentro(id)
-      .then(async (c) => { setCentro(c); setUnidades(await api.listUnidades(c.empresaId)); })
+      .then(async (c) => {
+        setCentro(c);
+        const [us, ls] = await Promise.all([api.listUnidades(c.empresaId), api.listLancamentos({ centroDeCustoId: c.id })]);
+        setUnidades(us); setLancamentos(ls);
+      })
       .catch(() => setCentro(null))
       .finally(() => setCarregando(false));
   }, [id, modo, empresa?.id]);
@@ -123,6 +129,10 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
     : centro.unidadeIds.length === 0 ? 'Nenhuma unidade'
     : centro.unidadeIds.map((id) => unidades.find((u) => u.id === id)?.sigla ?? '—').join(', ');
 
+  const executado = lancamentos.filter((l) => l.tipo === 'Pagar' && (l.status === 'Aprovado' || l.status === 'Pago')).reduce((s, l) => s + l.valor, 0);
+  const pctExec = centro.orcamentoAnual > 0 ? Math.round((executado / centro.orcamentoAnual) * 100) : 0;
+  const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+
   return (
     <>
       <button className="backlink" onClick={() => nav('/centros')}><ChevronLeft /> Centros de custo</button>
@@ -143,21 +153,38 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
         <>
           <div className="info-grid">
             <Info label="Orçamento anual" value={brl(centro.orcamentoAnual)} />
+            <Info label="Executado" value={brl(executado)} foot={`${pctExec}% do orçamento`} />
             <Info label="Auto-aprovação" value={centro.limiteAutoAprovacao > 0 ? `até ${brl(centro.limiteAutoAprovacao)}` : 'desativada'} />
             <Info label="Cobertura" value={cobertura} />
           </div>
 
           <h2 className="section-title">Atividade</h2>
-          <div className="activity-empty">
-            <Activity />
-            Os lançamentos (contas a pagar/receber) deste centro de custo aparecerão aqui quando o módulo financeiro estiver ativo.
-          </div>
+          {lancamentos.length === 0 ? (
+            <div className="activity-empty"><Activity />Nenhum lançamento neste centro de custo ainda.</div>
+          ) : (
+            <Panel title={`${lancamentos.length} lançamento(s)`}>
+              <table>
+                <thead><tr><th>Vencimento</th><th>Descrição</th><th>Tipo</th><th style={{ textAlign: 'right' }}>Valor</th><th>Status</th></tr></thead>
+                <tbody>
+                  {lancamentos.map((l) => (
+                    <tr key={l.id} className="row-click" onClick={() => nav(`/lancamentos/${l.id}`)}>
+                      <td className="t-mono">{fmtData(l.vencimento)}</td>
+                      <td>{l.descricao}</td>
+                      <td>{l.tipo === 'Pagar' ? 'A pagar' : 'A receber'}</td>
+                      <td className="amount-cell" style={{ textAlign: 'right' }}>{brl(l.valor)}</td>
+                      <td><StatusBadge s={l.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+          )}
         </>
       )}
     </>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return <div className="info-card"><div className="info-label">{label}</div><div className="info-value">{value}</div></div>;
+function Info({ label, value, foot }: { label: string; value: string; foot?: string }) {
+  return <div className="info-card"><div className="info-label">{label}</div><div className="info-value">{value}</div>{foot && <div className="kpi-foot">{foot}</div>}</div>;
 }

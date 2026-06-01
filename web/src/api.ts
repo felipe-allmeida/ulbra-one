@@ -50,6 +50,26 @@ export interface Unidade {
   ativa: boolean;
 }
 
+export type TipoLancamento = 'Pagar' | 'Receber';
+export type StatusLancamento = 'Pendente' | 'Aprovado' | 'Pago' | 'Rejeitado';
+
+export interface Lancamento {
+  id: string;
+  empresaId: string;
+  unidadeId: string;
+  centroDeCustoId: string;
+  tipo: TipoLancamento;
+  descricao: string;
+  contraparte: string;
+  valor: number;
+  vencimento: string;
+  status: StatusLancamento;
+  motivoRejeicao: string | null;
+  criadoEm: string;
+  aprovadoEm: string | null;
+  pagoEm: string | null;
+}
+
 export interface CentroDeCusto {
   id: string;
   empresaId: string;
@@ -93,4 +113,21 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ codigo, nome, orcamentoAnual, limiteAutoAprovacao, unidadeIds }),
     }),
+
+  listLancamentos: (params: { empresaId?: string; tipo?: TipoLancamento; status?: StatusLancamento; centroDeCustoId?: string }) => {
+    const q = new URLSearchParams();
+    if (params.empresaId) q.set('empresaId', params.empresaId);
+    if (params.tipo) q.set('tipo', params.tipo);
+    if (params.status) q.set('status', params.status);
+    if (params.centroDeCustoId) q.set('centroDeCustoId', params.centroDeCustoId);
+    return request<Lancamento[]>(`/lancamentos?${q}`);
+  },
+  getLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}`),
+  createLancamento: (body: {
+    empresaId: string; unidadeId: string; centroDeCustoId: string; tipo: TipoLancamento;
+    descricao: string; contraparte: string; valor: number; vencimento: string;
+  }) => request<Lancamento>('/lancamentos', { method: 'POST', body: JSON.stringify(body) }),
+  aprovarLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}/aprovar`, { method: 'POST' }),
+  rejeitarLancamento: (id: string, motivo: string) => request<Lancamento>(`/lancamentos/${id}/rejeitar`, { method: 'POST', body: JSON.stringify({ motivo }) }),
+  pagarLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}/pagar`, { method: 'POST' }),
 };

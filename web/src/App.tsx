@@ -9,6 +9,7 @@ import { AppDataProvider } from './store';
 import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
+import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
 
 export default function App() {
   return (
@@ -17,6 +18,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/inicio" replace />} />
           <Route path="/inicio" element={<DashboardPage />} />
+          <Route path="/contas-pagar" element={<LancamentosPage tipo="Pagar" />} />
+          <Route path="/contas-receber" element={<LancamentosPage tipo="Receber" />} />
+          <Route path="/aprovacoes" element={<AprovacoesPage />} />
+          <Route path="/lancamentos/novo" element={<NovoLancamentoPage />} />
+          <Route path="/lancamentos/:id" element={<LancamentoDetailPage />} />
           <Route path="/centros" element={<CentrosListPage />} />
           <Route path="/centros/novo" element={<CentroDetailPage modo="novo" />} />
           <Route path="/centros/:id" element={<CentroDetailPage modo="detalhe" />} />
@@ -55,10 +61,11 @@ function Shell({ children }: { children: ReactNode }) {
         <nav className="sb-nav">
           <Section>Financeiro</Section>
           <NavItem icon={<LayoutDashboard />} label="Início" active={pathname.startsWith('/inicio')} onClick={() => go('/inicio')} />
-          <NavItem icon={<ArrowUpRight />} label="Contas a pagar" />
-          <NavItem icon={<ArrowDownLeft />} label="Contas a receber" />
+          <NavItem icon={<ArrowUpRight />} label="Contas a pagar" active={pathname.startsWith('/contas-pagar')} onClick={() => go('/contas-pagar')} />
+          <NavItem icon={<ArrowDownLeft />} label="Contas a receber" active={pathname.startsWith('/contas-receber')} onClick={() => go('/contas-receber')} />
           <NavItem icon={<Activity />} label="Fluxo de caixa" />
-          <NavItem icon={<ClipboardCheck />} label="Aprovações" />
+          <NavItem icon={<ClipboardCheck />} label="Aprovações" active={pathname.startsWith('/aprovacoes')} onClick={() => go('/aprovacoes')} />
+          {/* lançamentos detail/novo herdam o crumb de Financeiro */}
           <NavItem icon={<Target />} label="Centros de custo" active={pathname.startsWith('/centros')} onClick={() => go('/centros')} />
           <NavItem icon={<FileText />} label="Relatórios" />
           <NavItem icon={<FileBox />} label="Documentos" />
