@@ -19,4 +19,9 @@
     <Project Path="src/Modules/Identity/Ulbra.One.Identity.Domain/Ulbra.One.Identity.Domain.csproj" />
     <Project Path="src/Modules/Identity/Ulbra.One.Identity.Infrastructure/Ulbra.One.Identity.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Financeiro/">
+    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Application/Ulbra.One.Financeiro.Application.csproj" />
+    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Domain/Ulbra.One.Financeiro.Domain.csproj" />
+    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Infrastructure/Ulbra.One.Financeiro.Infrastructure.csproj" />
+  </Folder>
 </Solution>
