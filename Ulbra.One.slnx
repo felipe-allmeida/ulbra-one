@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Common/">
+    <Project Path="src/Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
+    <Project Path="src/Common/Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
+    <Project Path="src/Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Core/">
+    <Project Path="src/Modules/Core/Ulbra.One.Core.Application/Ulbra.One.Core.Application.csproj" />
+    <Project Path="src/Modules/Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
+    <Project Path="src/Modules/Core/Ulbra.One.Core.Infrastructure/Ulbra.One.Core.Infrastructure.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+appsettings.*.local.json
+.idea/
+.superpowers/
+docs/superpowers/
+.claude/
