@@ -9,16 +9,18 @@ Stack: **.NET 10** (modular monolith) · **PostgreSQL 17** · EF Core (code-firs
 ## Subir local
 
 ```bash
-docker compose up -d --build       # Postgres + API
+docker compose up -d --build       # Postgres + API + Web
 curl http://localhost:5001/health  # deve responder Healthy
-open http://localhost:5001/swagger
+open http://localhost:5001/swagger # API docs
+open http://localhost:5173         # frontend (login "Entrar (dev)")
 ```
 
-Sem Docker pro backend:
+Sem Docker pro backend/front:
 
 ```bash
 docker compose up -d postgres
-dotnet run --project src/API/Ulbra.One.Api
+dotnet run --project src/API/Ulbra.One.Api      # API em :5001
+cd web && pnpm install && pnpm dev              # web em :5173
 ```
 
 ## Estrutura
