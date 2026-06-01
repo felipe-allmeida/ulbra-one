@@ -1,15 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Building2, LogIn, LogOut, Plus, Network, Wallet } from 'lucide-react';
-import { api, auth, type Empresa, type Unidade, type CentroDeCusto, type Usuario } from './api';
+import { Building2, Plus, Network, Wallet } from 'lucide-react';
+import { api, type Empresa, type Unidade, type CentroDeCusto } from './api';
 
 function moeda(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export default function App() {
-  const [user, setUser] = useState<Usuario | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [empresaSel, setEmpresaSel] = useState<Empresa | null>(null);
   const [unidades, setUnidades] = useState<Unidade[]>([]);
@@ -21,29 +18,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!auth.token) return;
-    api.me()
-      .then((u) => { setUser(u); return carregarEmpresas(); })
-      .catch(() => auth.clear());
+    carregarEmpresas().catch(() => {});
   }, []);
-
-  async function login() {
-    setErro(null);
-    try {
-      const { token, usuario } = await api.devLogin('felipe.allmeida.dev@gmail.com', 'Felipe de Almeida');
-      auth.set(token);
-      setUser(usuario);
-      await carregarEmpresas();
-    } catch (e) {
-      setErro(String(e));
-    }
-  }
-
-  function logout() {
-    auth.clear();
-    setUser(null);
-    setEmpresas([]); setEmpresaSel(null); setUnidades([]); setUnidadeSel(null); setCentros([]);
-  }
 
   async function selecionarEmpresa(e: Empresa) {
     setEmpresaSel(e); setUnidadeSel(null); setCentros([]);
@@ -55,27 +31,6 @@ export default function App() {
     setCentros(await api.listCentros(u.id));
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 w-[380px] text-center">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-slate-900 text-white grid place-items-center mb-4">
-            <Network size={24} />
-          </div>
-          <h1 className="text-xl font-semibold text-slate-900">ULBRA One</h1>
-          <p className="text-sm text-slate-500 mt-1 mb-6">ERP — Organograma</p>
-          <button
-            onClick={login}
-            className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-slate-800 transition"
-          >
-            <LogIn size={16} /> Entrar (dev)
-          </button>
-          {erro && <p className="text-xs text-red-600 mt-4 break-words">{erro}</p>}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0">
@@ -83,12 +38,7 @@ export default function App() {
           <span className="w-7 h-7 rounded-lg bg-slate-900 text-white grid place-items-center"><Network size={16} /></span>
           ULBRA One
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-500">{user.nome} · <span className="font-medium text-slate-700">{user.role}</span></span>
-          <button onClick={logout} className="flex items-center gap-1 text-slate-500 hover:text-slate-900">
-            <LogOut size={15} /> sair
-          </button>
-        </div>
+        <span className="text-xs text-slate-400">Organograma</span>
       </header>
 
       <main className="max-w-6xl mx-auto p-6 grid grid-cols-3 gap-4">
