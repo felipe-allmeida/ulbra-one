@@ -9,15 +9,22 @@ namespace Ulbra.One.IntegrationTests;
 
 public sealed class ApiFactory(string connectionString) : WebApplicationFactory<Program>
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    protected override IHost CreateHost(IHostBuilder builder)
     {
-        builder.UseEnvironment(Environments.Development);
-        builder.ConfigureAppConfiguration((_, config) =>
+        // Host configuration has the highest precedence, so this overrides the value in
+        // appsettings.Development.json (which Program reads eagerly at startup). Pointing at the
+        // ephemeral test container keeps the suite isolated from the dev/compose database.
+        builder.ConfigureHostConfiguration(config =>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Database"] = connectionString,
-                ["Authentication:JwtSecret"] = "test-secret-min-32-chars-aaaaaaaaaaaa",
             }));
+        return base.CreateHost(builder);
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment(Environments.Development);
     }
 
     public async Task<HttpClient> CreateAdminClientAsync(string email = "admin@ulbra.br", string nome = "Admin Teste")
