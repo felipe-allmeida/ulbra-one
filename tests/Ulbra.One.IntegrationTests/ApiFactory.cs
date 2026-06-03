@@ -30,7 +30,7 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
     public async Task<HttpClient> CreateAdminClientAsync(string email = "admin@ulbra.br", string nome = "Admin Teste")
     {
         var client = CreateClient();
-        var res = await client.PostAsJsonAsync("/api/auth/dev-token", new { email, nome });
+        var res = await client.PostAsJsonAsync("/api/auth/dev-token", new { email, name = nome });
         res.EnsureSuccessStatusCode();
         var body = await res.Content.ReadFromJsonAsync<TokenResponse>();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body!.Token);

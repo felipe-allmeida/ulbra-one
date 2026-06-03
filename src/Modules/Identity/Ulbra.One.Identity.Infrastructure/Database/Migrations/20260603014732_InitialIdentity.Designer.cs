@@ -12,7 +12,7 @@ using Ulbra.One.Identity.Infrastructure.Database;
 namespace Ulbra.One.Identity.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(IdentityContext))]
-    [Migration("20260601111718_InitialIdentity")]
+    [Migration("20260603014732_InitialIdentity")]
     partial class InitialIdentity
     {
         /// <inheritdoc />
@@ -26,20 +26,20 @@ namespace Ulbra.One.Identity.Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Ulbra.One.Identity.Domain.Entities.Usuario", b =>
+            modelBuilder.Entity("Ulbra.One.Identity.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<bool>("Ativo")
+                    b.Property<bool>("Active")
                         .HasColumnType("boolean")
-                        .HasColumnName("ativo");
+                        .HasColumnName("active");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("criado_em");
+                        .HasColumnName("created_at");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -52,11 +52,15 @@ namespace Ulbra.One.Identity.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("google_subject");
 
-                    b.Property<string>("Nome")
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("nome");
+                        .HasColumnName("name");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -64,18 +68,14 @@ namespace Ulbra.One.Identity.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("role");
 
-                    b.Property<DateTime?>("UltimoLoginEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("ultimo_login_em");
-
                     b.HasKey("Id")
-                        .HasName("pk_usuarios");
+                        .HasName("pk_users");
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasDatabaseName("ix_usuarios_email");
+                        .HasDatabaseName("ix_users_email");
 
-                    b.ToTable("usuarios", "identity");
+                    b.ToTable("users", "identity");
                 });
 #pragma warning restore 612, 618
         }

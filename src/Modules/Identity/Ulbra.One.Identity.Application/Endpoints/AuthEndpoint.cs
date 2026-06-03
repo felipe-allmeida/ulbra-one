@@ -17,7 +17,7 @@ namespace Ulbra.One.Identity.Application.Endpoints;
 public sealed class AuthEndpoint : IEndpoint
 {
     public record GoogleSignInRequest(string IdToken);
-    public record DevTokenRequest(string? Email, string? Nome);
+    public record DevTokenRequest(string? Email, string? Name);
 
     public void Map(IEndpointRouteBuilder builder)
     {
@@ -62,24 +62,24 @@ public sealed class AuthEndpoint : IEndpoint
                 return Results.Problem($"Domínio '{domain}' não autorizado.", statusCode: StatusCodes.Status403Forbidden);
         }
 
-        var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
         var isBootstrapAdmin = opt.BootstrapAdmins.Contains(email, StringComparer.OrdinalIgnoreCase);
 
-        if (usuario is null)
+        if (user is null)
         {
-            usuario = new Usuario(email, payload.Name, isBootstrapAdmin ? Roles.Admin : Roles.User);
-            db.Usuarios.Add(usuario);
+            user = new User(email, payload.Name, isBootstrapAdmin ? Roles.Admin : Roles.User);
+            db.Users.Add(user);
         }
-        else if (isBootstrapAdmin && usuario.Role != Roles.Admin)
+        else if (isBootstrapAdmin && user.Role != Roles.Admin)
         {
-            usuario.DefinirRole(Roles.Admin);
+            user.SetRole(Roles.Admin);
         }
 
-        usuario.RegistrarLoginGoogle(payload.Subject, payload.Name);
+        user.RegisterGoogleLogin(payload.Subject, payload.Name);
         await db.SaveChangesAsync(ct);
 
-        var token = jwt.GenerateToken(usuario.Id.ToString(), usuario.Role, usuario.Nome, usuario.Email);
-        return Results.Ok(new { token, usuario = new { usuario.Id, usuario.Email, usuario.Nome, usuario.Role } });
+        var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
+        return Results.Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role } });
     }
 
     private static async Task<IResult> DevToken(
@@ -93,26 +93,26 @@ public sealed class AuthEndpoint : IEndpoint
             return Results.NotFound();
 
         var email = (req.Email ?? "dev@ulbra.br").ToLowerInvariant();
-        var nome = req.Nome ?? "Usuário Dev";
+        var name = req.Name ?? "Usuário Dev";
 
-        var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
-        if (usuario is null)
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+        if (user is null)
         {
-            usuario = new Usuario(email, nome, Roles.Admin);
-            db.Usuarios.Add(usuario);
+            user = new User(email, name, Roles.Admin);
+            db.Users.Add(user);
         }
-        usuario.RegistrarLogin();
+        user.RegisterLogin();
         await db.SaveChangesAsync(ct);
 
-        var token = jwt.GenerateToken(usuario.Id.ToString(), usuario.Role, usuario.Nome, usuario.Email);
-        return Results.Ok(new { token, usuario = new { usuario.Id, usuario.Email, usuario.Nome, usuario.Role } });
+        var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
+        return Results.Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role } });
     }
 
     private static IResult Me(UserContext user) =>
         Results.Ok(new
         {
             userId = user.UserId,
-            nome = user.UserName,
+            name = user.UserName,
             email = user.UserEmail,
             role = user.Role,
             isAdmin = user.IsAdmin
