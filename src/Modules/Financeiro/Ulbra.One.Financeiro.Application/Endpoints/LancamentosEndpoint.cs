@@ -37,17 +37,17 @@ public sealed class LancamentosEndpoint : IEndpoint
 
         group.MapPost("/", async (CreateLancamentoRequest req, FinanceiroContext db, CoreContext core, CancellationToken ct) =>
         {
-            var cc = await core.CentrosDeCusto.FirstOrDefaultAsync(c => c.Id == req.CentroDeCustoId && c.EmpresaId == req.EmpresaId, ct);
+            var cc = await core.CostCenters.FirstOrDefaultAsync(c => c.Id == req.CentroDeCustoId && c.CompanyId == req.EmpresaId, ct);
             if (cc is null) return Results.Problem("Centro de custo inválido para esta empresa.", statusCode: StatusCodes.Status400BadRequest);
 
-            var unidadeOk = await core.Unidades.AnyAsync(u => u.Id == req.UnidadeId && u.EmpresaId == req.EmpresaId, ct);
+            var unidadeOk = await core.Units.AnyAsync(u => u.Id == req.UnidadeId && u.CompanyId == req.EmpresaId, ct);
             if (!unidadeOk) return Results.Problem("Unidade inválida para esta empresa.", statusCode: StatusCodes.Status400BadRequest);
 
             if (req.Valor <= 0) return Results.Problem("Valor deve ser maior que zero.", statusCode: StatusCodes.Status400BadRequest);
 
             var l = new Lancamento(req.EmpresaId, req.UnidadeId, req.CentroDeCustoId, req.Tipo,
                 req.Descricao, req.Contraparte, req.Valor, req.Vencimento);
-            l.AplicarAutoAprovacao(cc.LimiteAutoAprovacao);
+            l.AplicarAutoAprovacao(cc.AutoApprovalLimit);
 
             db.Lancamentos.Add(l);
             await db.SaveChangesAsync(ct);

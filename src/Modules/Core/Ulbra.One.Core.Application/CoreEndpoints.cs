@@ -8,9 +8,9 @@ public static class CoreEndpoints
     public static IEndpointRouteBuilder MapCoreEndpoints(this IEndpointRouteBuilder builder)
     {
         new PingEndpoint().Map(builder);
-        new EmpresasEndpoint().Map(builder);
-        new UnidadesEndpoint().Map(builder);
-        new CentrosDeCustoEndpoint().Map(builder);
+        new CompaniesEndpoint().Map(builder);
+        new UnitsEndpoint().Map(builder);
+        new CostCentersEndpoint().Map(builder);
         return builder;
     }
 }

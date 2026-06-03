@@ -7,48 +7,48 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
 {
     public const string Schema = "core";
 
-    public DbSet<Empresa> Empresas => Set<Empresa>();
-    public DbSet<Unidade> Unidades => Set<Unidade>();
-    public DbSet<CentroDeCusto> CentrosDeCusto => Set<CentroDeCusto>();
-    public DbSet<CentroDeCustoUnidade> CentroDeCustoUnidades => Set<CentroDeCustoUnidade>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<Unit> Units => Set<Unit>();
+    public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+    public DbSet<CostCenterUnit> CostCenterUnits => Set<CostCenterUnit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
 
-        modelBuilder.Entity<Empresa>(e =>
+        modelBuilder.Entity<Company>(e =>
         {
             e.HasKey(x => x.Id);
-            e.Property(x => x.RazaoSocial).HasMaxLength(200).IsRequired();
+            e.Property(x => x.LegalName).HasMaxLength(200).IsRequired();
             e.Property(x => x.Cnpj).HasMaxLength(14).IsRequired();
             e.HasIndex(x => x.Cnpj).IsUnique();
         });
 
-        modelBuilder.Entity<Unidade>(e =>
+        modelBuilder.Entity<Unit>(e =>
         {
             e.HasKey(x => x.Id);
-            e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
-            e.Property(x => x.Sigla).HasMaxLength(20).IsRequired();
-            e.HasOne<Empresa>().WithMany().HasForeignKey(x => x.EmpresaId).OnDelete(DeleteBehavior.Restrict);
-            e.HasIndex(x => new { x.EmpresaId, x.Sigla }).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Acronym).HasMaxLength(20).IsRequired();
+            e.HasOne<Company>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => new { x.CompanyId, x.Acronym }).IsUnique();
         });
 
-        modelBuilder.Entity<CentroDeCusto>(e =>
+        modelBuilder.Entity<CostCenter>(e =>
         {
             e.HasKey(x => x.Id);
-            e.Property(x => x.Codigo).HasMaxLength(50).IsRequired();
-            e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
-            e.Property(x => x.OrcamentoAnual).HasPrecision(18, 2);
-            e.Property(x => x.LimiteAutoAprovacao).HasPrecision(18, 2);
-            e.HasOne<Empresa>().WithMany().HasForeignKey(x => x.EmpresaId).OnDelete(DeleteBehavior.Restrict);
-            e.HasIndex(x => new { x.EmpresaId, x.Codigo }).IsUnique();
+            e.Property(x => x.Code).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.AnnualBudget).HasPrecision(18, 2);
+            e.Property(x => x.AutoApprovalLimit).HasPrecision(18, 2);
+            e.HasOne<Company>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => new { x.CompanyId, x.Code }).IsUnique();
         });
 
-        modelBuilder.Entity<CentroDeCustoUnidade>(e =>
+        modelBuilder.Entity<CostCenterUnit>(e =>
         {
-            e.HasKey(x => new { x.CentroDeCustoId, x.UnidadeId });
-            e.HasOne<CentroDeCusto>().WithMany().HasForeignKey(x => x.CentroDeCustoId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<Unidade>().WithMany().HasForeignKey(x => x.UnidadeId).OnDelete(DeleteBehavior.Cascade);
+            e.HasKey(x => new { x.CostCenterId, x.UnitId });
+            e.HasOne<CostCenter>().WithMany().HasForeignKey(x => x.CostCenterId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Unit>().WithMany().HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Cascade);
         });
 
         base.OnModelCreating(modelBuilder);

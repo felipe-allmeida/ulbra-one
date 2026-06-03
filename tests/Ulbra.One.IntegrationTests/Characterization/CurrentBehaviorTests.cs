@@ -27,21 +27,21 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         await using var f = new ApiFactory(fixture.ConnectionString);
         var client = await f.CreateAdminClientAsync();
 
-        // Empresa
-        var empRes = await client.PostAsJsonAsync("/api/empresas", new { razaoSocial = "ACME SA", cnpj = "11222333000181" });
+        // Company
+        var empRes = await client.PostAsJsonAsync("/api/companies", new { legalName = "ACME SA", cnpj = "11222333000181" });
         Assert.Equal(HttpStatusCode.Created, empRes.StatusCode);
-        var empresaId = (await ReadJson(empRes)).GetProperty("id").GetGuid();
+        var companyId = (await ReadJson(empRes)).GetProperty("id").GetGuid();
 
-        // Unidade
-        var uniRes = await client.PostAsJsonAsync("/api/unidades", new { empresaId, nome = "Campus Centro", sigla = "CC" });
+        // Unit
+        var uniRes = await client.PostAsJsonAsync("/api/units", new { companyId, name = "Campus Centro", acronym = "CC" });
         Assert.Equal(HttpStatusCode.Created, uniRes.StatusCode);
-        var unidadeId = (await ReadJson(uniRes)).GetProperty("id").GetGuid();
+        var unitId = (await ReadJson(uniRes)).GetProperty("id").GetGuid();
 
-        // Centro de custo with auto-approval
-        var ccRes = await client.PostAsJsonAsync("/api/centros-custo", new
+        // Cost center with auto-approval
+        var ccRes = await client.PostAsJsonAsync("/api/cost-centers", new
         {
-            empresaId, codigo = "MKT", nome = "Marketing",
-            orcamentoAnual = 100000m, limiteAutoAprovacao = 5000m, unidadeIds = new[] { unidadeId }
+            companyId, code = "MKT", name = "Marketing",
+            annualBudget = 100000m, autoApprovalLimit = 5000m, unitIds = new[] { unitId }
         });
         Assert.Equal(HttpStatusCode.Created, ccRes.StatusCode);
         var centroId = (await ReadJson(ccRes)).GetProperty("id").GetGuid();
@@ -49,7 +49,7 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         // Lancamento under the auto-approval limit -> should be auto-approved
         var lanRes = await client.PostAsJsonAsync("/api/lancamentos", new
         {
-            empresaId, unidadeId, centroDeCustoId = centroId, tipo = "Pagar",
+            empresaId = companyId, unidadeId = unitId, centroDeCustoId = centroId, tipo = "Pagar",
             descricao = "Anúncios", contraparte = "Google", valor = 3000m, vencimento = "2026-07-01"
         });
         Assert.Equal(HttpStatusCode.Created, lanRes.StatusCode);
@@ -57,7 +57,7 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         Assert.Equal("Aprovado", lan.GetProperty("status").GetString());
 
         // List by empresa returns it
-        var list = await ReadJson(await client.GetAsync($"/api/lancamentos?empresaId={empresaId}"));
+        var list = await ReadJson(await client.GetAsync($"/api/lancamentos?empresaId={companyId}"));
         Assert.True(list.GetArrayLength() >= 1);
     }
 
@@ -67,17 +67,17 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         await using var f = new ApiFactory(fixture.ConnectionString);
         var client = await f.CreateAdminClientAsync();
 
-        var empresaId = (await ReadJson(await client.PostAsJsonAsync("/api/empresas",
-            new { razaoSocial = "Beta SA", cnpj = "11444777000161" }))).GetProperty("id").GetGuid();
-        var unidadeId = (await ReadJson(await client.PostAsJsonAsync("/api/unidades",
-            new { empresaId, nome = "Sede", sigla = "SE" }))).GetProperty("id").GetGuid();
-        var centroId = (await ReadJson(await client.PostAsJsonAsync("/api/centros-custo",
-            new { empresaId, codigo = "TI", nome = "TI", orcamentoAnual = 50000m, limiteAutoAprovacao = 0m, unidadeIds = new[] { unidadeId } })))
+        var companyId = (await ReadJson(await client.PostAsJsonAsync("/api/companies",
+            new { legalName = "Beta SA", cnpj = "11444777000161" }))).GetProperty("id").GetGuid();
+        var unitId = (await ReadJson(await client.PostAsJsonAsync("/api/units",
+            new { companyId, name = "Sede", acronym = "SE" }))).GetProperty("id").GetGuid();
+        var centroId = (await ReadJson(await client.PostAsJsonAsync("/api/cost-centers",
+            new { companyId, code = "TI", name = "TI", annualBudget = 50000m, autoApprovalLimit = 0m, unitIds = new[] { unitId } })))
             .GetProperty("id").GetGuid();
 
         var lanId = (await ReadJson(await client.PostAsJsonAsync("/api/lancamentos", new
         {
-            empresaId, unidadeId, centroDeCustoId = centroId, tipo = "Pagar",
+            empresaId = companyId, unidadeId = unitId, centroDeCustoId = centroId, tipo = "Pagar",
             descricao = "Servidor", contraparte = "AWS", valor = 20000m, vencimento = "2026-08-01"
         }))).GetProperty("id").GetGuid();
 
