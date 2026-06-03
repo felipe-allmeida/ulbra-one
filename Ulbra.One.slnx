@@ -24,4 +24,7 @@
     <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Domain/Ulbra.One.Financeiro.Domain.csproj" />
     <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Infrastructure/Ulbra.One.Financeiro.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
+  </Folder>
 </Solution>
