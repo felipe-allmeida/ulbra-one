@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, type Empresa } from './api';
+import { api, type Company } from './api';
 
 interface AppCtx {
-  empresas: Empresa[];
+  empresas: Company[];
   empresaId: string;
-  empresa: Empresa | null;
+  empresa: Company | null;
   setEmpresaId: (id: string) => void;
   refreshEmpresas: (selecionar?: string) => Promise<void>;
 }
@@ -13,11 +13,11 @@ const Ctx = createContext<AppCtx>(null!);
 export const useApp = () => useContext(Ctx);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresas, setEmpresas] = useState<Company[]>([]);
   const [empresaId, setEmpresaId] = useState('');
 
   const refreshEmpresas = async (selecionar?: string) => {
-    const es = await api.listEmpresas();
+    const es = await api.listCompanies();
     setEmpresas(es);
     setEmpresaId((cur) => {
       const want = selecionar ?? cur;

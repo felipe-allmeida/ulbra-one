@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Network, Target, Wallet, Zap } from 'lucide-react';
-import { api, type Unidade, type CentroDeCusto } from '../api';
+import { api, type Unit, type CostCenter } from '../api';
 import { useApp } from '../store';
 import { brl, brlCompact } from '../lib';
 import { Kpi, PageHeader, Panel, EmptyState } from '../ui';
@@ -10,18 +10,18 @@ import { EmpresaPicker } from './shared';
 export function DashboardPage() {
   const { empresas, empresa, empresaId } = useApp();
   const nav = useNavigate();
-  const [unidades, setUnidades] = useState<Unidade[]>([]);
-  const [centros, setCentros] = useState<CentroDeCusto[]>([]);
+  const [unidades, setUnidades] = useState<Unit[]>([]);
+  const [centros, setCentros] = useState<CostCenter[]>([]);
 
   useEffect(() => {
     if (!empresaId) { setUnidades([]); setCentros([]); return; }
-    Promise.all([api.listUnidades(empresaId), api.listCentros(empresaId)])
+    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
       .then(([u, c]) => { setUnidades(u); setCentros(c); }).catch(() => {});
   }, [empresaId]);
 
-  const orcamentoTotal = centros.reduce((s, c) => s + c.orcamentoAnual, 0);
-  const comAuto = centros.filter((c) => c.limiteAutoAprovacao > 0).length;
-  const ordenados = [...centros].sort((a, b) => b.orcamentoAnual - a.orcamentoAnual);
+  const orcamentoTotal = centros.reduce((s, c) => s + c.annualBudget, 0);
+  const comAuto = centros.filter((c) => c.autoApprovalLimit > 0).length;
+  const ordenados = [...centros].sort((a, b) => b.annualBudget - a.annualBudget);
 
   return (
     <>
@@ -35,7 +35,7 @@ export function DashboardPage() {
         <>
           <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <Kpi label="Empresas (grupo)" value={String(empresas.length)} />
-            <Kpi label="Unidades" value={String(unidades.length)} foot={empresa.razaoSocial} />
+            <Kpi label="Unidades" value={String(unidades.length)} foot={empresa.legalName} />
             <Kpi label="Centros de custo" value={String(centros.length)} foot={comAuto > 0 ? `${comAuto} com auto-aprovação` : undefined} />
             <Kpi label="Orçamento total (anual)" value={brlCompact(orcamentoTotal)} />
           </div>
@@ -45,12 +45,12 @@ export function DashboardPage() {
           ) : (
             <Panel title="Orçamento por centro de custo">
               {ordenados.map((c) => {
-                const pct = orcamentoTotal > 0 ? Math.round((c.orcamentoAnual / orcamentoTotal) * 100) : 0;
+                const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
                 return (
                   <div className="bd-row" key={c.id} style={{ cursor: 'pointer' }} onClick={() => nav(`/centros/${c.id}`)}>
-                    <div className="bd-name">{c.nome} <small>· {c.codigo}</small></div>
+                    <div className="bd-name">{c.name} <small>· {c.code}</small></div>
                     <div className="bd-bar"><div className="bd-fill" style={{ width: `${pct}%` }} /></div>
-                    <div className="bd-val">{brl(c.orcamentoAnual)} <small style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{pct}%</small></div>
+                    <div className="bd-val">{brl(c.annualBudget)} <small style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{pct}%</small></div>
                   </div>
                 );
               })}

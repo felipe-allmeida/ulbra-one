@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, type Empresa, type Unidade, type CentroDeCusto } from '../api';
+import { api, type Company, type Unit, type CostCenter } from '../api';
 import { useApp } from '../store';
 import { Button, Input, Select, Field, ToolbarField, useSave } from '../ui';
 
@@ -9,13 +9,13 @@ export function EmpresaPicker() {
     <ToolbarField label="Empresa">
       <Select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
         {empresas.length === 0 && <option value="">— nenhuma —</option>}
-        {empresas.map((e) => <option key={e.id} value={e.id}>{e.razaoSocial}</option>)}
+        {empresas.map((e) => <option key={e.id} value={e.id}>{e.legalName}</option>)}
       </Select>
     </ToolbarField>
   );
 }
 
-export function UnidadePicker({ unidades, sel, setSel }: { unidades: Unidade[]; sel: Set<string>; setSel: (s: Set<string>) => void }) {
+export function UnidadePicker({ unidades, sel, setSel }: { unidades: Unit[]; sel: Set<string>; setSel: (s: Set<string>) => void }) {
   const todas = unidades.length > 0 && sel.size === unidades.length;
   const toggle = (id: string) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
   if (unidades.length === 0) return <div className="uni-pick-empty">Cadastre uma unidade primeiro (em Estrutura).</div>;
@@ -27,7 +27,7 @@ export function UnidadePicker({ unidades, sel, setSel }: { unidades: Unidade[]; 
       <div className="uni-pick-sep" />
       {unidades.map((u) => (
         <label className="uni-pick-row" key={u.id}>
-          <input type="checkbox" checked={sel.has(u.id)} onChange={() => toggle(u.id)} /> {u.nome} <span className="sig">{u.sigla}</span>
+          <input type="checkbox" checked={sel.has(u.id)} onChange={() => toggle(u.id)} /> {u.name} <span className="sig">{u.acronym}</span>
         </label>
       ))}
     </div>
@@ -36,20 +36,20 @@ export function UnidadePicker({ unidades, sel, setSel }: { unidades: Unidade[]; 
 
 /** Formulário de centro de custo (criar ou editar). */
 export function CentroForm({ empresa, unidades, initial, onSaved, onCancel }: {
-  empresa: Empresa; unidades: Unidade[]; initial?: CentroDeCusto;
-  onSaved: (cc: CentroDeCusto) => void; onCancel: () => void;
+  empresa: Company; unidades: Unit[]; initial?: CostCenter;
+  onSaved: (cc: CostCenter) => void; onCancel: () => void;
 }) {
-  const [codigo, setCodigo] = useState(initial?.codigo ?? '');
-  const [nome, setNome] = useState(initial?.nome ?? '');
-  const [orc, setOrc] = useState(initial ? String(initial.orcamentoAnual) : '');
-  const [limite, setLimite] = useState(initial ? String(initial.limiteAutoAprovacao) : '');
-  const [sel, setSel] = useState<Set<string>>(new Set(initial?.unidadeIds ?? []));
+  const [codigo, setCodigo] = useState(initial?.code ?? '');
+  const [nome, setNome] = useState(initial?.name ?? '');
+  const [orc, setOrc] = useState(initial ? String(initial.annualBudget) : '');
+  const [limite, setLimite] = useState(initial ? String(initial.autoApprovalLimit) : '');
+  const [sel, setSel] = useState<Set<string>>(new Set(initial?.unitIds ?? []));
 
   const { salvando, erro, run } = useSave(async () => {
     const o = Number(orc) || 0, l = Number(limite) || 0;
     const cc = initial
-      ? await api.updateCentro(initial.id, codigo.trim(), nome.trim(), o, l, [...sel])
-      : await api.createCentro(empresa.id, codigo.trim(), nome.trim(), o, l, [...sel]);
+      ? await api.updateCostCenter(initial.id, codigo.trim(), nome.trim(), o, l, [...sel])
+      : await api.createCostCenter(empresa.id, codigo.trim(), nome.trim(), o, l, [...sel]);
     onSaved(cc);
   });
 

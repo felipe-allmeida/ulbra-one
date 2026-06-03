@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Target, ChevronLeft, Pencil, Activity, Zap } from 'lucide-react';
-import { api, type Unidade, type CentroDeCusto, type Lancamento } from '../api';
+import { api, type Unit, type CostCenter, type Transaction } from '../api';
 import { useApp } from '../store';
 import { brlCompact, brl } from '../lib';
 import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
@@ -12,17 +12,17 @@ import { StatusBadge } from './lancamentos';
 export function CentrosListPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
-  const [unidades, setUnidades] = useState<Unidade[]>([]);
-  const [centros, setCentros] = useState<CentroDeCusto[]>([]);
+  const [unidades, setUnidades] = useState<Unit[]>([]);
+  const [centros, setCentros] = useState<CostCenter[]>([]);
 
   useEffect(() => {
     if (!empresaId) { setUnidades([]); setCentros([]); return; }
-    Promise.all([api.listUnidades(empresaId), api.listCentros(empresaId)])
+    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
       .then(([u, c]) => { setUnidades(u); setCentros(c); }).catch(() => {});
   }, [empresaId]);
 
-  const unidadeSigla = useMemo(() => Object.fromEntries(unidades.map((u) => [u.id, u.sigla])), [unidades]);
-  const orcamentoTotal = centros.reduce((s, c) => s + c.orcamentoAnual, 0);
+  const unidadeSigla = useMemo(() => Object.fromEntries(unidades.map((u) => [u.id, u.acronym])), [unidades]);
+  const orcamentoTotal = centros.reduce((s, c) => s + c.annualBudget, 0);
 
   return (
     <>
@@ -38,7 +38,7 @@ export function CentrosListPage() {
           <div className="kpi-grid">
             <Kpi label="Centros de custo" value={String(centros.length)} />
             <Kpi label="Orçamento total (anual)" value={brlCompact(orcamentoTotal)} foot={`${centros.length} centro(s)`} />
-            <Kpi label="Unidades" value={String(unidades.length)} foot={empresa.razaoSocial} />
+            <Kpi label="Unidades" value={String(unidades.length)} foot={empresa.legalName} />
           </div>
 
           {centros.length === 0 ? (
@@ -46,20 +46,20 @@ export function CentrosListPage() {
           ) : (
             <div className="cc-grid">
               {centros.map((c) => {
-                const pct = orcamentoTotal > 0 ? Math.round((c.orcamentoAnual / orcamentoTotal) * 100) : 0;
-                const todas = unidades.length > 0 && c.unidadeIds.length >= unidades.length;
+                const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
+                const todas = unidades.length > 0 && c.unitIds.length >= unidades.length;
                 return (
                   <div className="cc-card" key={c.id} onClick={() => nav(`/centros/${c.id}`)} title="Abrir">
                     <div className="cc-card-top">
-                      <div><div className="cc-name">{c.nome}</div><div className="cc-code">{c.codigo}</div></div>
-                      <div className="cc-orc"><div className="v">{brlCompact(c.orcamentoAnual)}</div><div className="l">orçamento/ano</div></div>
+                      <div><div className="cc-name">{c.name}</div><div className="cc-code">{c.code}</div></div>
+                      <div className="cc-orc"><div className="v">{brlCompact(c.annualBudget)}</div><div className="l">orçamento/ano</div></div>
                     </div>
                     <div className="cc-progress"><div className="cc-progress-bar" style={{ width: `${pct}%` }} /></div>
                     <div className="cc-meta"><span>participação no orçamento</span><span>{pct}%</span></div>
                     <div className="chips">
-                      {c.unidadeIds.length === 0 && <Chip>sem unidade</Chip>}
-                      {todas ? <Chip tone="brand">Todas as unidades</Chip> : c.unidadeIds.map((id) => <Chip key={id}>{unidadeSigla[id] ?? '—'}</Chip>)}
-                      {c.limiteAutoAprovacao > 0 && <Chip tone="auto" icon={<Zap />}>auto ≤ {brlCompact(c.limiteAutoAprovacao)}</Chip>}
+                      {c.unitIds.length === 0 && <Chip>sem unidade</Chip>}
+                      {todas ? <Chip tone="brand">Todas as unidades</Chip> : c.unitIds.map((id) => <Chip key={id}>{unidadeSigla[id] ?? '—'}</Chip>)}
+                      {c.autoApprovalLimit > 0 && <Chip tone="auto" icon={<Zap />}>auto ≤ {brlCompact(c.autoApprovalLimit)}</Chip>}
                     </div>
                   </div>
                 );
@@ -79,26 +79,26 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   const nav = useNavigate();
   const { empresa, empresas } = useApp();
 
-  const [centro, setCentro] = useState<CentroDeCusto | null>(null);
-  const [unidades, setUnidades] = useState<Unidade[]>([]);
-  const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
+  const [centro, setCentro] = useState<CostCenter | null>(null);
+  const [unidades, setUnidades] = useState<Unit[]>([]);
+  const [lancamentos, setLancamentos] = useState<Transaction[]>([]);
   const [editando, setEditando] = useState(modo === 'novo');
   const [carregando, setCarregando] = useState(modo === 'detalhe');
 
   // empresa do centro (no detalhe) ou empresa selecionada (no novo)
-  const empresaDoCentro = centro ? empresas.find((e) => e.id === centro.empresaId) ?? null : empresa;
+  const empresaDoCentro = centro ? empresas.find((e) => e.id === centro.companyId) ?? null : empresa;
 
   useEffect(() => {
     if (modo === 'novo') {
-      if (empresa) api.listUnidades(empresa.id).then(setUnidades).catch(() => {});
+      if (empresa) api.listUnits(empresa.id).then(setUnidades).catch(() => {});
       return;
     }
     if (!id) return;
     setCarregando(true);
-    api.getCentro(id)
+    api.getCostCenter(id)
       .then(async (c) => {
         setCentro(c);
-        const [us, ls] = await Promise.all([api.listUnidades(c.empresaId), api.listLancamentos({ centroDeCustoId: c.id })]);
+        const [us, ls] = await Promise.all([api.listUnits(c.companyId), api.listTransactions({ costCenterId: c.id })]);
         setUnidades(us); setLancamentos(ls);
       })
       .catch(() => setCentro(null))
@@ -111,7 +111,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
       <>
         <button className="backlink" onClick={() => nav('/centros')}><ChevronLeft /> Centros de custo</button>
         <div className="detail-head"><div><h1 className="detail-title">Novo centro de custo</h1>
-          <div className="detail-sub">{empresa?.razaoSocial ?? 'Selecione uma empresa'}</div></div></div>
+          <div className="detail-sub">{empresa?.legalName ?? 'Selecione uma empresa'}</div></div></div>
         {empresa
           ? <div className="card-form"><CentroForm empresa={empresa} unidades={unidades}
               onSaved={(cc) => nav(`/centros/${cc.id}`)} onCancel={() => nav('/centros')} /></div>
@@ -124,13 +124,13 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   if (carregando) return <div className="empty-state">Carregando…</div>;
   if (!centro || !empresaDoCentro) return <EmptyState icon={<Target />} title="Centro de custo não encontrado" sub="Ele pode ter sido removido." />;
 
-  const todas = unidades.length > 0 && centro.unidadeIds.length >= unidades.length;
+  const todas = unidades.length > 0 && centro.unitIds.length >= unidades.length;
   const cobertura = todas ? 'Todas as unidades'
-    : centro.unidadeIds.length === 0 ? 'Nenhuma unidade'
-    : centro.unidadeIds.map((id) => unidades.find((u) => u.id === id)?.sigla ?? '—').join(', ');
+    : centro.unitIds.length === 0 ? 'Nenhuma unidade'
+    : centro.unitIds.map((id) => unidades.find((u) => u.id === id)?.acronym ?? '—').join(', ');
 
-  const executado = lancamentos.filter((l) => l.tipo === 'Pagar' && (l.status === 'Aprovado' || l.status === 'Pago')).reduce((s, l) => s + l.valor, 0);
-  const pctExec = centro.orcamentoAnual > 0 ? Math.round((executado / centro.orcamentoAnual) * 100) : 0;
+  const executado = lancamentos.filter((l) => l.type === 'Payable' && (l.status === 'Approved' || l.status === 'Paid')).reduce((s, l) => s + l.amount, 0);
+  const pctExec = centro.annualBudget > 0 ? Math.round((executado / centro.annualBudget) * 100) : 0;
   const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
   return (
@@ -138,8 +138,8 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
       <button className="backlink" onClick={() => nav('/centros')}><ChevronLeft /> Centros de custo</button>
       <div className="detail-head">
         <div>
-          <h1 className="detail-title"><Target size={20} /> {centro.nome}</h1>
-          <div className="detail-sub">{centro.codigo} · {empresaDoCentro.razaoSocial}</div>
+          <h1 className="detail-title"><Target size={20} /> {centro.name}</h1>
+          <div className="detail-sub">{centro.code} · {empresaDoCentro.legalName}</div>
         </div>
         {!editando && <div className="detail-actions"><Button icon={<Pencil />} onClick={() => setEditando(true)}>Editar</Button></div>}
       </div>
@@ -152,9 +152,9 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
       ) : (
         <>
           <div className="info-grid">
-            <Info label="Orçamento anual" value={brl(centro.orcamentoAnual)} />
+            <Info label="Orçamento anual" value={brl(centro.annualBudget)} />
             <Info label="Executado" value={brl(executado)} foot={`${pctExec}% do orçamento`} />
-            <Info label="Auto-aprovação" value={centro.limiteAutoAprovacao > 0 ? `até ${brl(centro.limiteAutoAprovacao)}` : 'desativada'} />
+            <Info label="Auto-aprovação" value={centro.autoApprovalLimit > 0 ? `até ${brl(centro.autoApprovalLimit)}` : 'desativada'} />
             <Info label="Cobertura" value={cobertura} />
           </div>
 
@@ -168,10 +168,10 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
                 <tbody>
                   {lancamentos.map((l) => (
                     <tr key={l.id} className="row-click" onClick={() => nav(`/lancamentos/${l.id}`)}>
-                      <td className="t-mono">{fmtData(l.vencimento)}</td>
-                      <td>{l.descricao}</td>
-                      <td>{l.tipo === 'Pagar' ? 'A pagar' : 'A receber'}</td>
-                      <td className="amount-cell" style={{ textAlign: 'right' }}>{brl(l.valor)}</td>
+                      <td className="t-mono">{fmtData(l.dueDate)}</td>
+                      <td>{l.description}</td>
+                      <td>{l.type === 'Payable' ? 'A pagar' : 'A receber'}</td>
+                      <td className="amount-cell" style={{ textAlign: 'right' }}>{brl(l.amount)}</td>
                       <td><StatusBadge s={l.status} /></td>
                     </tr>
                   ))}

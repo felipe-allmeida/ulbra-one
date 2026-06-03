@@ -18,8 +18,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/inicio" replace />} />
           <Route path="/inicio" element={<DashboardPage />} />
-          <Route path="/contas-pagar" element={<LancamentosPage tipo="Pagar" />} />
-          <Route path="/contas-receber" element={<LancamentosPage tipo="Receber" />} />
+          <Route path="/contas-pagar" element={<LancamentosPage tipo="Payable" />} />
+          <Route path="/contas-receber" element={<LancamentosPage tipo="Receivable" />} />
           <Route path="/aprovacoes" element={<AprovacoesPage />} />
           <Route path="/lancamentos/novo" element={<NovoLancamentoPage />} />
           <Route path="/lancamentos/:id" element={<LancamentoDetailPage />} />

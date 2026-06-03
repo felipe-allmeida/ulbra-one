@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil } from 'lucide-react';
-import { api, type Empresa, type Unidade } from '../api';
+import { api, type Company, type Unit } from '../api';
 import { useApp } from '../store';
 import { Button, Input, PageHeader, Panel, useSave } from '../ui';
 import { EmpresaPicker } from './shared';
 
 export function EstruturaPage() {
   const { empresas, empresa, empresaId, refreshEmpresas } = useApp();
-  const [unidades, setUnidades] = useState<Unidade[]>([]);
-  const [empresaForm, setEmpresaForm] = useState<null | { edit?: Empresa }>(null);
-  const [unidadeForm, setUnidadeForm] = useState<null | { edit?: Unidade }>(null);
+  const [unidades, setUnidades] = useState<Unit[]>([]);
+  const [empresaForm, setEmpresaForm] = useState<null | { edit?: Company }>(null);
+  const [unidadeForm, setUnidadeForm] = useState<null | { edit?: Unit }>(null);
 
-  const refreshUnidades = () => { if (empresaId) api.listUnidades(empresaId).then(setUnidades).catch(() => {}); };
+  const refreshUnidades = () => { if (empresaId) api.listUnits(empresaId).then(setUnidades).catch(() => {}); };
   useEffect(() => { if (!empresaId) { setUnidades([]); return; } refreshUnidades(); }, [empresaId]);
 
   return (
@@ -31,7 +31,7 @@ export function EstruturaPage() {
                 ? <tr><td colSpan={4} className="t-empty">Nenhuma empresa cadastrada.</td></tr>
                 : empresas.map((e) => (
                   <tr key={e.id}>
-                    <td>{e.razaoSocial}</td><td className="t-mono">{e.cnpj}</td><td>{e.ativa ? 'Ativa' : 'Inativa'}</td>
+                    <td>{e.legalName}</td><td className="t-mono">{e.cnpj}</td><td>{e.active ? 'Ativa' : 'Inativa'}</td>
                     <td className="td-action"><button className="icon-btn" onClick={() => setEmpresaForm({ edit: e })} aria-label="Editar"><Pencil /></button></td>
                   </tr>
                 ))}
@@ -55,7 +55,7 @@ export function EstruturaPage() {
                 ? <tr><td colSpan={4} className="t-empty">Nenhuma unidade nesta empresa.</td></tr>
                 : unidades.map((u) => (
                   <tr key={u.id}>
-                    <td>{u.nome}</td><td className="t-mono">{u.sigla}</td><td>{u.ativa ? 'Ativa' : 'Inativa'}</td>
+                    <td>{u.name}</td><td className="t-mono">{u.acronym}</td><td>{u.active ? 'Ativa' : 'Inativa'}</td>
                     <td className="td-action"><button className="icon-btn" onClick={() => setUnidadeForm({ edit: u })} aria-label="Editar"><Pencil /></button></td>
                   </tr>
                 ))}
@@ -66,11 +66,11 @@ export function EstruturaPage() {
   );
 }
 
-function InlineEmpresaForm({ initial, onClose, onSaved }: { initial?: Empresa; onClose: () => void; onSaved: (e: Empresa) => void }) {
-  const [razao, setRazao] = useState(initial?.razaoSocial ?? '');
+function InlineEmpresaForm({ initial, onClose, onSaved }: { initial?: Company; onClose: () => void; onSaved: (e: Company) => void }) {
+  const [razao, setRazao] = useState(initial?.legalName ?? '');
   const [cnpj, setCnpj] = useState(initial?.cnpj ?? '');
   const { salvando, erro, run } = useSave(async () => {
-    const e = initial ? await api.updateEmpresa(initial.id, razao.trim(), cnpj.trim()) : await api.createEmpresa(razao.trim(), cnpj.trim());
+    const e = initial ? await api.updateCompany(initial.id, razao.trim(), cnpj.trim()) : await api.createCompany(razao.trim(), cnpj.trim());
     onSaved(e);
   });
   return (
@@ -84,11 +84,11 @@ function InlineEmpresaForm({ initial, onClose, onSaved }: { initial?: Empresa; o
   );
 }
 
-function InlineUnidadeForm({ empresa, initial, onClose, onSaved }: { empresa: Empresa; initial?: Unidade; onClose: () => void; onSaved: () => void }) {
-  const [nome, setNome] = useState(initial?.nome ?? '');
-  const [sigla, setSigla] = useState(initial?.sigla ?? '');
+function InlineUnidadeForm({ empresa, initial, onClose, onSaved }: { empresa: Company; initial?: Unit; onClose: () => void; onSaved: () => void }) {
+  const [nome, setNome] = useState(initial?.name ?? '');
+  const [sigla, setSigla] = useState(initial?.acronym ?? '');
   const { salvando, erro, run } = useSave(async () => {
-    initial ? await api.updateUnidade(initial.id, nome.trim(), sigla.trim()) : await api.createUnidade(empresa.id, nome.trim(), sigla.trim());
+    initial ? await api.updateUnit(initial.id, nome.trim(), sigla.trim()) : await api.createUnit(empresa.id, nome.trim(), sigla.trim());
     onSaved();
   });
   return (

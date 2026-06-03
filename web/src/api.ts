@@ -28,106 +28,99 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export interface Usuario {
+export interface User {
   id: string;
   email: string;
-  nome: string;
+  name: string;
   role: string;
 }
 
-export interface Empresa {
+export interface Company {
   id: string;
-  razaoSocial: string;
+  legalName: string;
   cnpj: string;
-  ativa: boolean;
+  active: boolean;
 }
 
-export interface Unidade {
+export interface Unit {
   id: string;
-  empresaId: string;
-  nome: string;
-  sigla: string;
-  ativa: boolean;
+  companyId: string;
+  name: string;
+  acronym: string;
+  active: boolean;
 }
 
-export type TipoLancamento = 'Pagar' | 'Receber';
-export type StatusLancamento = 'Pendente' | 'Aprovado' | 'Pago' | 'Rejeitado';
+export type TransactionType = 'Payable' | 'Receivable';
+export type TransactionStatus = 'Pending' | 'Approved' | 'Paid' | 'Rejected';
 
-export interface Lancamento {
+export interface Transaction {
   id: string;
-  empresaId: string;
-  unidadeId: string;
-  centroDeCustoId: string;
-  tipo: TipoLancamento;
-  descricao: string;
-  contraparte: string;
-  valor: number;
-  vencimento: string;
-  status: StatusLancamento;
-  motivoRejeicao: string | null;
-  criadoEm: string;
-  aprovadoEm: string | null;
-  pagoEm: string | null;
+  companyId: string;
+  unitId: string;
+  costCenterId: string;
+  type: TransactionType;
+  description: string;
+  counterparty: string;
+  amount: number;
+  dueDate: string;
+  status: TransactionStatus;
+  rejectionReason: string | null;
+  createdAt: string;
+  approvedAt: string | null;
+  paidAt: string | null;
 }
 
-export interface CentroDeCusto {
+export interface CostCenter {
   id: string;
-  empresaId: string;
-  codigo: string;
-  nome: string;
-  orcamentoAnual: number;
-  limiteAutoAprovacao: number;
-  ativo: boolean;
-  unidadeIds: string[];
+  companyId: string;
+  code: string;
+  name: string;
+  annualBudget: number;
+  autoApprovalLimit: number;
+  active: boolean;
+  unitIds: string[];
 }
 
 export const api = {
-  devLogin: (email: string, nome: string) =>
-    request<{ token: string; usuario: Usuario }>('/auth/dev-token', {
-      method: 'POST',
-      body: JSON.stringify({ email, nome }),
+  devLogin: (email: string, name: string) =>
+    request<{ token: string; user: User }>('/auth/dev-token', {
+      method: 'POST', body: JSON.stringify({ email, name }),
     }),
-  me: () => request<Usuario & { isAdmin: boolean }>('/auth/me'),
+  me: () => request<{ userId: string; name: string; email: string; role: string; isAdmin: boolean }>('/auth/me'),
 
-  listEmpresas: () => request<Empresa[]>('/empresas'),
-  createEmpresa: (razaoSocial: string, cnpj: string) =>
-    request<Empresa>('/empresas', { method: 'POST', body: JSON.stringify({ razaoSocial, cnpj }) }),
-  updateEmpresa: (id: string, razaoSocial: string, cnpj: string) =>
-    request<Empresa>(`/empresas/${id}`, { method: 'PUT', body: JSON.stringify({ razaoSocial, cnpj }) }),
+  listCompanies: () => request<Company[]>('/companies'),
+  createCompany: (legalName: string, cnpj: string) =>
+    request<Company>('/companies', { method: 'POST', body: JSON.stringify({ legalName, cnpj }) }),
+  updateCompany: (id: string, legalName: string, cnpj: string) =>
+    request<Company>(`/companies/${id}`, { method: 'PUT', body: JSON.stringify({ legalName, cnpj }) }),
 
-  listUnidades: (empresaId: string) => request<Unidade[]>(`/unidades?empresaId=${empresaId}`),
-  createUnidade: (empresaId: string, nome: string, sigla: string) =>
-    request<Unidade>('/unidades', { method: 'POST', body: JSON.stringify({ empresaId, nome, sigla }) }),
-  updateUnidade: (id: string, nome: string, sigla: string) =>
-    request<Unidade>(`/unidades/${id}`, { method: 'PUT', body: JSON.stringify({ nome, sigla }) }),
+  listUnits: (companyId: string) => request<Unit[]>(`/units?companyId=${companyId}`),
+  createUnit: (companyId: string, name: string, acronym: string) =>
+    request<Unit>('/units', { method: 'POST', body: JSON.stringify({ companyId, name, acronym }) }),
+  updateUnit: (id: string, name: string, acronym: string) =>
+    request<Unit>(`/units/${id}`, { method: 'PUT', body: JSON.stringify({ name, acronym }) }),
 
-  listCentros: (empresaId: string) => request<CentroDeCusto[]>(`/centros-custo?empresaId=${empresaId}`),
-  getCentro: (id: string) => request<CentroDeCusto>(`/centros-custo/${id}`),
-  createCentro: (empresaId: string, codigo: string, nome: string, orcamentoAnual: number, limiteAutoAprovacao: number, unidadeIds: string[]) =>
-    request<CentroDeCusto>('/centros-custo', {
-      method: 'POST',
-      body: JSON.stringify({ empresaId, codigo, nome, orcamentoAnual, limiteAutoAprovacao, unidadeIds }),
-    }),
-  updateCentro: (id: string, codigo: string, nome: string, orcamentoAnual: number, limiteAutoAprovacao: number, unidadeIds: string[]) =>
-    request<CentroDeCusto>(`/centros-custo/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ codigo, nome, orcamentoAnual, limiteAutoAprovacao, unidadeIds }),
-    }),
+  listCostCenters: (companyId: string) => request<CostCenter[]>(`/cost-centers?companyId=${companyId}`),
+  getCostCenter: (id: string) => request<CostCenter>(`/cost-centers/${id}`),
+  createCostCenter: (companyId: string, code: string, name: string, annualBudget: number, autoApprovalLimit: number, unitIds: string[]) =>
+    request<CostCenter>('/cost-centers', { method: 'POST', body: JSON.stringify({ companyId, code, name, annualBudget, autoApprovalLimit, unitIds }) }),
+  updateCostCenter: (id: string, code: string, name: string, annualBudget: number, autoApprovalLimit: number, unitIds: string[]) =>
+    request<CostCenter>(`/cost-centers/${id}`, { method: 'PUT', body: JSON.stringify({ code, name, annualBudget, autoApprovalLimit, unitIds }) }),
 
-  listLancamentos: (params: { empresaId?: string; tipo?: TipoLancamento; status?: StatusLancamento; centroDeCustoId?: string }) => {
+  listTransactions: (params: { companyId?: string; type?: TransactionType; status?: TransactionStatus; costCenterId?: string }) => {
     const q = new URLSearchParams();
-    if (params.empresaId) q.set('empresaId', params.empresaId);
-    if (params.tipo) q.set('tipo', params.tipo);
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.type) q.set('type', params.type);
     if (params.status) q.set('status', params.status);
-    if (params.centroDeCustoId) q.set('centroDeCustoId', params.centroDeCustoId);
-    return request<Lancamento[]>(`/lancamentos?${q}`);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    return request<Transaction[]>(`/transactions?${q}`);
   },
-  getLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}`),
-  createLancamento: (body: {
-    empresaId: string; unidadeId: string; centroDeCustoId: string; tipo: TipoLancamento;
-    descricao: string; contraparte: string; valor: number; vencimento: string;
-  }) => request<Lancamento>('/lancamentos', { method: 'POST', body: JSON.stringify(body) }),
-  aprovarLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}/aprovar`, { method: 'POST' }),
-  rejeitarLancamento: (id: string, motivo: string) => request<Lancamento>(`/lancamentos/${id}/rejeitar`, { method: 'POST', body: JSON.stringify({ motivo }) }),
-  pagarLancamento: (id: string) => request<Lancamento>(`/lancamentos/${id}/pagar`, { method: 'POST' }),
+  getTransaction: (id: string) => request<Transaction>(`/transactions/${id}`),
+  createTransaction: (body: {
+    companyId: string; unitId: string; costCenterId: string; type: TransactionType;
+    description: string; counterparty: string; amount: number; dueDate: string;
+  }) => request<Transaction>('/transactions', { method: 'POST', body: JSON.stringify(body) }),
+  approveTransaction: (id: string) => request<Transaction>(`/transactions/${id}/approve`, { method: 'POST' }),
+  rejectTransaction: (id: string, reason: string) => request<Transaction>(`/transactions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  payTransaction: (id: string) => request<Transaction>(`/transactions/${id}/pay`, { method: 'POST' }),
 };
