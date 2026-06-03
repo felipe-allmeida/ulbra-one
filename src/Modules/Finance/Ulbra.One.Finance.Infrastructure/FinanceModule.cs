@@ -1,18 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ulbra.One.Financeiro.Infrastructure.Database;
+using Ulbra.One.Finance.Infrastructure.Database;
 
-namespace Ulbra.One.Financeiro.Infrastructure;
+namespace Ulbra.One.Finance.Infrastructure;
 
-public static class FinanceiroModule
+public static class FinanceModule
 {
-    public static IServiceCollection AddFinanceiroModule(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddFinanceModule(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' não configurada.");
 
-        services.AddDbContext<FinanceiroContext>(options =>
+        services.AddDbContext<FinanceContext>(options =>
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
 
         return services;

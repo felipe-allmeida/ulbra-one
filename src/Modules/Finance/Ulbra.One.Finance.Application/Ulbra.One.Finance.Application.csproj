@@ -3,8 +3,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Ulbra.One.Financeiro.Domain/Ulbra.One.Financeiro.Domain.csproj" />
-    <ProjectReference Include="../Ulbra.One.Financeiro.Infrastructure/Ulbra.One.Financeiro.Infrastructure.csproj" />
+    <ProjectReference Include="../Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
+    <ProjectReference Include="../Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
     <ProjectReference Include="../../Core/Ulbra.One.Core.Infrastructure/Ulbra.One.Core.Infrastructure.csproj" />
   </ItemGroup>

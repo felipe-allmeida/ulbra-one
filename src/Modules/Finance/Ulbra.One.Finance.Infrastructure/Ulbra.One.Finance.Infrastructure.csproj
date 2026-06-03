@@ -9,7 +9,7 @@
     <PackageReference Include="EFCore.NamingConventions" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Ulbra.One.Financeiro.Domain/Ulbra.One.Financeiro.Domain.csproj" />
+    <ProjectReference Include="../Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

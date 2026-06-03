@@ -7,9 +7,9 @@ using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Identity.Application;
 using Ulbra.One.Identity.Infrastructure;
 using Ulbra.One.Identity.Infrastructure.Database;
-using Ulbra.One.Financeiro.Application;
-using Ulbra.One.Financeiro.Infrastructure;
-using Ulbra.One.Financeiro.Infrastructure.Database;
+using Ulbra.One.Finance.Application;
+using Ulbra.One.Finance.Infrastructure;
+using Ulbra.One.Finance.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +66,7 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
 // Modules
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddCoreModule(builder.Configuration);
-builder.Services.AddFinanceiroModule(builder.Configuration);
+builder.Services.AddFinanceModule(builder.Configuration);
 
 // Health checks
 builder.Services.AddHealthChecks().AddNpgSql(connectionString);
@@ -86,7 +86,7 @@ using (var scope = app.Services.CreateScope())
         {
             await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<FinanceiroContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
             break;
         }
         catch (Exception ex) when (attempts++ < maxAttempts)
@@ -116,7 +116,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 var apiGroup = app.MapGroup("/api");
 apiGroup.MapIdentityEndpoints();
 apiGroup.MapCoreEndpoints();
-apiGroup.MapFinanceiroEndpoints();
+apiGroup.MapFinanceEndpoints();
 
 app.Run();
 

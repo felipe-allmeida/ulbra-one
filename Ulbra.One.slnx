@@ -19,10 +19,10 @@
     <Project Path="src/Modules/Identity/Ulbra.One.Identity.Domain/Ulbra.One.Identity.Domain.csproj" />
     <Project Path="src/Modules/Identity/Ulbra.One.Identity.Infrastructure/Ulbra.One.Identity.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Modules/Financeiro/">
-    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Application/Ulbra.One.Financeiro.Application.csproj" />
-    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Domain/Ulbra.One.Financeiro.Domain.csproj" />
-    <Project Path="src/Modules/Financeiro/Ulbra.One.Financeiro.Infrastructure/Ulbra.One.Financeiro.Infrastructure.csproj" />
+  <Folder Name="/src/Modules/Finance/">
+    <Project Path="src/Modules/Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
+    <Project Path="src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
+    <Project Path="src/Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />

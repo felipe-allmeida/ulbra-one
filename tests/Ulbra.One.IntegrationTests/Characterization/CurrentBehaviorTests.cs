@@ -22,7 +22,7 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Full_Chain_Empresa_Unidade_Centro_Lancamento()
+    public async Task Full_Chain_Company_Unit_CostCenter_Transaction()
     {
         await using var f = new ApiFactory(fixture.ConnectionString);
         var client = await f.CreateAdminClientAsync();
@@ -46,23 +46,23 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, ccRes.StatusCode);
         var centroId = (await ReadJson(ccRes)).GetProperty("id").GetGuid();
 
-        // Lancamento under the auto-approval limit -> should be auto-approved
-        var lanRes = await client.PostAsJsonAsync("/api/lancamentos", new
+        // Transaction under the auto-approval limit -> should be auto-approved
+        var lanRes = await client.PostAsJsonAsync("/api/transactions", new
         {
-            empresaId = companyId, unidadeId = unitId, centroDeCustoId = centroId, tipo = "Pagar",
-            descricao = "Anúncios", contraparte = "Google", valor = 3000m, vencimento = "2026-07-01"
+            companyId, unitId, costCenterId = centroId, type = "Payable",
+            description = "Anúncios", counterparty = "Google", amount = 3000m, dueDate = "2026-07-01"
         });
         Assert.Equal(HttpStatusCode.Created, lanRes.StatusCode);
         var lan = await ReadJson(lanRes);
-        Assert.Equal("Aprovado", lan.GetProperty("status").GetString());
+        Assert.Equal("Approved", lan.GetProperty("status").GetString());
 
-        // List by empresa returns it
-        var list = await ReadJson(await client.GetAsync($"/api/lancamentos?empresaId={companyId}"));
+        // List by company returns it
+        var list = await ReadJson(await client.GetAsync($"/api/transactions?companyId={companyId}"));
         Assert.True(list.GetArrayLength() >= 1);
     }
 
     [Fact]
-    public async Task Lancamento_Above_Limit_Stays_Pendente_Then_Approve_Then_Pay()
+    public async Task Transaction_Above_Limit_Stays_Pending_Then_Approve_Then_Pay()
     {
         await using var f = new ApiFactory(fixture.ConnectionString);
         var client = await f.CreateAdminClientAsync();
@@ -75,18 +75,18 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
             new { companyId, code = "TI", name = "TI", annualBudget = 50000m, autoApprovalLimit = 0m, unitIds = new[] { unitId } })))
             .GetProperty("id").GetGuid();
 
-        var lanId = (await ReadJson(await client.PostAsJsonAsync("/api/lancamentos", new
+        var lanId = (await ReadJson(await client.PostAsJsonAsync("/api/transactions", new
         {
-            empresaId = companyId, unidadeId = unitId, centroDeCustoId = centroId, tipo = "Pagar",
-            descricao = "Servidor", contraparte = "AWS", valor = 20000m, vencimento = "2026-08-01"
+            companyId, unitId, costCenterId = centroId, type = "Payable",
+            description = "Servidor", counterparty = "AWS", amount = 20000m, dueDate = "2026-08-01"
         }))).GetProperty("id").GetGuid();
 
-        Assert.Equal("Pendente", (await ReadJson(await client.GetAsync($"/api/lancamentos/{lanId}"))).GetProperty("status").GetString());
+        Assert.Equal("Pending", (await ReadJson(await client.GetAsync($"/api/transactions/{lanId}"))).GetProperty("status").GetString());
 
-        await client.PostAsync($"/api/lancamentos/{lanId}/aprovar", null);
-        Assert.Equal("Aprovado", (await ReadJson(await client.GetAsync($"/api/lancamentos/{lanId}"))).GetProperty("status").GetString());
+        await client.PostAsync($"/api/transactions/{lanId}/approve", null);
+        Assert.Equal("Approved", (await ReadJson(await client.GetAsync($"/api/transactions/{lanId}"))).GetProperty("status").GetString());
 
-        await client.PostAsync($"/api/lancamentos/{lanId}/pagar", null);
-        Assert.Equal("Pago", (await ReadJson(await client.GetAsync($"/api/lancamentos/{lanId}"))).GetProperty("status").GetString());
+        await client.PostAsync($"/api/transactions/{lanId}/pay", null);
+        Assert.Equal("Paid", (await ReadJson(await client.GetAsync($"/api/transactions/{lanId}"))).GetProperty("status").GetString());
     }
 }
