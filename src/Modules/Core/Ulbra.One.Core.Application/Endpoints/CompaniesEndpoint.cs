@@ -14,7 +14,7 @@ public sealed class CompaniesEndpoint : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/companies").WithTags("Cadastros");
+        var group = builder.MapGroup("/companies").WithTags("Core");
 
         group.MapGet("/", async (CoreContext db, CancellationToken ct) =>
             Results.Ok(await db.Companies.OrderBy(e => e.LegalName).ToListAsync(ct)))
