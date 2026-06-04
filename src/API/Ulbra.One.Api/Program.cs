@@ -10,6 +10,9 @@ using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Finance.Application;
 using Ulbra.One.Finance.Infrastructure;
 using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Registry.Application;
+using Ulbra.One.Registry.Infrastructure;
+using Ulbra.One.Registry.Infrastructure.Database;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +73,8 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddCoreModule(builder.Configuration);
 builder.Services.AddFinanceModule(builder.Configuration);
+builder.Services.AddRegistryModule(builder.Configuration);
+builder.Services.AddRegistryValidators();
 
 // Health checks
 builder.Services.AddHealthChecks().AddNpgSql(connectionString);
@@ -90,6 +95,7 @@ using (var scope = app.Services.CreateScope())
             await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
             break;
         }
         catch (Exception ex) when (attempts++ < maxAttempts)
@@ -120,6 +126,7 @@ var apiGroup = app.MapGroup("/api");
 apiGroup.MapIdentityEndpoints();
 apiGroup.MapCoreEndpoints();
 apiGroup.MapFinanceEndpoints();
+apiGroup.MapRegistryEndpoints();
 
 app.Run();
 
