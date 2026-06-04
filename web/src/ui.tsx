@@ -1,7 +1,7 @@
 import {
-  useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type ButtonHTMLAttributes,
+  useState, useEffect, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type ButtonHTMLAttributes,
 } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 
 export const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
@@ -85,6 +85,94 @@ export function Modal({ title, sub, onClose, footer, children }: {
         <div className="modal-foot">{footer}</div>
       </div>
     </div>
+  );
+}
+
+/* ---------- Drawer (painel lateral deslizante) ---------- */
+export function Drawer({ open, title, sub, onClose, footer, children, width = 480 }: {
+  open: boolean; title: string; sub?: string; onClose: () => void;
+  footer?: ReactNode; children: ReactNode; width?: number;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="drawer-overlay" onClick={onClose}>
+      <aside className="drawer" style={{ width }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="drawer-head">
+          <div><div className="drawer-title">{title}</div>{sub && <div className="drawer-sub">{sub}</div>}</div>
+          <button className="icon-btn" onClick={onClose} aria-label="Fechar"><X /></button>
+        </div>
+        <div className="drawer-body">{children}</div>
+        {footer && <div className="drawer-foot">{footer}</div>}
+      </aside>
+    </div>
+  );
+}
+
+/* ---------- ConfirmDialog ---------- */
+export function ConfirmDialog({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger, busy, onConfirm, onCancel }: {
+  title: string; message: ReactNode; confirmLabel?: string; cancelLabel?: string;
+  danger?: boolean; busy?: boolean; onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()} role="alertdialog" aria-label={title}>
+        <div className="confirm-body">
+          {danger && <div className="confirm-icon"><AlertTriangle /></div>}
+          <div><div className="modal-title">{title}</div><div className="confirm-msg">{message}</div></div>
+        </div>
+        <div className="modal-foot">
+          <Button onClick={onCancel} disabled={busy}>{cancelLabel}</Button>
+          <button className={cx('btn', danger ? 'btn-danger' : 'btn-brand')} onClick={onConfirm} disabled={busy}>
+            {busy ? 'Aguarde…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Skeleton ---------- */
+export function Skeleton({ width, height = 14, className }: { width?: number | string; height?: number | string; className?: string }) {
+  return <span className={cx('skeleton', className)} style={{ width, height, display: 'inline-block' }} />;
+}
+
+/** Linhas de skeleton para tabelas. */
+export function SkeletonRows({ rows = 4, cols = 3 }: { rows?: number; cols?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, r) => (
+        <tr key={r}>
+          {Array.from({ length: cols }).map((__, c) => (
+            <td key={c}><Skeleton width={c === 0 ? '70%' : '45%'} /></td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
+/* ---------- MaskedInput ---------- */
+type MaskedInputProps = {
+  value: string;
+  mask: (raw: string) => string;
+  onValueChange: (masked: string) => void;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>;
+
+export function MaskedInput({ value, mask, onValueChange, className, ...p }: MaskedInputProps) {
+  return (
+    <input
+      className={cx('input', className)}
+      value={mask(value)}
+      onChange={(e) => onValueChange(mask(e.target.value))}
+      {...p}
+    />
   );
 }
 
