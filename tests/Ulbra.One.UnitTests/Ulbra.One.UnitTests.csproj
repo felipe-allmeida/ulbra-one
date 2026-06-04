@@ -12,4 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Common/Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
+  </ItemGroup>
 </Project>
