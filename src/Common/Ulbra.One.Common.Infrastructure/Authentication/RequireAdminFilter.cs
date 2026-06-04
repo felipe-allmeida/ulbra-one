@@ -12,7 +12,7 @@ internal sealed class RequireAdminFilter : IEndpointFilter
         var role = context.HttpContext.User.FindFirstValue(ClaimTypes.Role);
         if (role != "Admin")
         {
-            return Results.Problem(
+            return TypedResults.Problem(
                 detail: "Acesso restrito a administradores.",
                 statusCode: StatusCodes.Status403Forbidden,
                 title: "Forbidden");
