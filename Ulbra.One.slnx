@@ -26,5 +26,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
+    <Project Path="tests/Ulbra.One.UnitTests/Ulbra.One.UnitTests.csproj" />
   </Folder>
 </Solution>
