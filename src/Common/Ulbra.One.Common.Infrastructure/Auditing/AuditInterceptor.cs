@@ -37,9 +37,12 @@ public sealed class AuditInterceptor(UserContext userContext, TimeProvider timeP
         }
     }
 
+    // Falls back to "system" outside an authenticated request (e.g. startup migrations,
+    // background jobs). The IsAuthenticated guard is the normal path; the narrow catch only
+    // covers UserId throwing if there's no HttpContext at all — we don't swallow anything else.
     private string ResolveUserId()
     {
         try { return userContext.IsAuthenticated ? userContext.UserId : "system"; }
-        catch { return "system"; }
+        catch (InvalidOperationException) { return "system"; }
     }
 }

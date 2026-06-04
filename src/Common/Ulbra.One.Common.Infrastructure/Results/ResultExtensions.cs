@@ -12,6 +12,9 @@ public static class ResultExtensions
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
         ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+        // Failure and Problem are unexpected/internal conditions → 500 by design. Domain code
+        // should prefer the specific types above for client-facing errors; a Failure reaching
+        // here intentionally surfaces as a server error rather than leaking as a 4xx.
         _ => StatusCodes.Status500InternalServerError,
     };
 
