@@ -103,7 +103,8 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
 
                     b.HasIndex("CompanyId", "Document")
                         .IsUnique()
-                        .HasDatabaseName("ix_customers_company_id_document");
+                        .HasDatabaseName("ix_customers_company_id_document")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("customers", "registry");
                 });
@@ -192,7 +193,8 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
 
                     b.HasIndex("CompanyId", "Document")
                         .IsUnique()
-                        .HasDatabaseName("ix_employees_company_id_document");
+                        .HasDatabaseName("ix_employees_company_id_document")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("employees", "registry");
                 });
@@ -282,7 +284,8 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
 
                     b.HasIndex("CompanyId", "Document")
                         .IsUnique()
-                        .HasDatabaseName("ix_vendors_company_id_document");
+                        .HasDatabaseName("ix_vendors_company_id_document")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("vendors", "registry");
                 });

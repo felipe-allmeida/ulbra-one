@@ -90,6 +90,26 @@ public class VendorsEndpointTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Same_Document_Can_Be_Reregistered_After_SoftDelete()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = Guid.NewGuid();
+
+        // Create then soft-delete a vendor.
+        var first = await (await client.PostAsJsonAsync("/api/vendors", ValidCompany(companyId)))
+            .Content.ReadFromJsonAsync<VendorResponse>();
+        var deleteRes = await client.DeleteAsync($"/api/vendors/{first!.Id}");
+        Assert.Equal(HttpStatusCode.OK, deleteRes.StatusCode);
+
+        // Re-registering the same document in the same company must succeed (partial unique index).
+        var secondRes = await client.PostAsJsonAsync("/api/vendors", ValidCompany(companyId));
+        Assert.Equal(HttpStatusCode.Created, secondRes.StatusCode);
+        var second = await secondRes.Content.ReadFromJsonAsync<VendorResponse>();
+        Assert.NotEqual(first.Id, second!.Id);
+    }
+
+    [Fact]
     public async Task Lookup_Cnpj_Bad_Input_Returns_404_Gracefully()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

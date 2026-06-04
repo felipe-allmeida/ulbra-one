@@ -28,7 +28,9 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
             e.Property(x => x.CreatedBy).HasMaxLength(64);
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.OwnsOne(x => x.Address, ConfigureAddress);
-            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique();
+            // Partial unique index: uniqueness applies only to live (non-soft-deleted) rows,
+            // so the same document can be re-registered after a soft-delete.
+            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
         });
 
@@ -44,7 +46,9 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
             e.Property(x => x.CreatedBy).HasMaxLength(64);
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.OwnsOne(x => x.Address, ConfigureAddress);
-            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique();
+            // Partial unique index: uniqueness applies only to live (non-soft-deleted) rows,
+            // so the same document can be re-registered after a soft-delete.
+            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
         });
 
@@ -59,7 +63,9 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
             e.Property(x => x.CreatedBy).HasMaxLength(64);
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.OwnsOne(x => x.Address, ConfigureAddress);
-            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique();
+            // Partial unique index: uniqueness applies only to live (non-soft-deleted) rows,
+            // so the same document can be re-registered after a soft-delete.
+            e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
         });
 

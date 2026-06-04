@@ -120,21 +120,24 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
                 schema: "registry",
                 table: "customers",
                 columns: new[] { "company_id", "document" },
-                unique: true);
+                unique: true,
+                filter: "deleted_at IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_employees_company_id_document",
                 schema: "registry",
                 table: "employees",
                 columns: new[] { "company_id", "document" },
-                unique: true);
+                unique: true,
+                filter: "deleted_at IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_vendors_company_id_document",
                 schema: "registry",
                 table: "vendors",
                 columns: new[] { "company_id", "document" },
-                unique: true);
+                unique: true,
+                filter: "deleted_at IS NULL");
         }
 
         /// <inheritdoc />
