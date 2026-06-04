@@ -17,7 +17,7 @@ public sealed class CostCentersEndpoint : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/cost-centers").WithTags("Core");
+        var group = builder.MapGroup("/cost-centers").WithTags("Core").RequireAuthorization();
 
         group.MapGet("/", async (CoreContext db, Guid? companyId, CancellationToken ct) =>
         {

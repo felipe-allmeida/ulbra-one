@@ -19,7 +19,7 @@ public sealed class TransactionsEndpoint : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/transactions").WithTags("Finance");
+        var group = builder.MapGroup("/transactions").WithTags("Finance").RequireAuthorization();
 
         group.MapGet("/", async (FinanceContext db, Guid? companyId, TransactionType? type, TransactionStatus? status, Guid? costCenterId, CancellationToken ct) =>
         {

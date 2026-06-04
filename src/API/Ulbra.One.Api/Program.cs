@@ -10,6 +10,7 @@ using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Finance.Application;
 using Ulbra.One.Finance.Infrastructure;
 using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Common.Infrastructure.ErrorHandling;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
         new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
-builder.Services.AddProblemDetails();
+builder.Services.AddAppProblemDetails();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpContextAccessor();
 
 // CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
@@ -104,7 +107,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-app.UseExceptionHandler();
+app.UseAppExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
