@@ -24,7 +24,7 @@ export function Select({ className, children, ...p }: SelectHTMLAttributes<HTMLS
 }
 
 /** Campo de formulário (modal): label em cima, ajuda embaixo. */
-export function Field({ label, help, children }: { label: string; help?: string; children: ReactNode }) {
+export function Field({ label, help, children }: { label: ReactNode; help?: string; children: ReactNode }) {
   return <div className="form-field"><label>{label}</label>{children}{help && <div className="help">{help}</div>}</div>;
 }
 

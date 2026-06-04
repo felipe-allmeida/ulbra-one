@@ -3,13 +3,16 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import {
   LayoutDashboard, ArrowUpRight, ArrowDownLeft, Activity, ClipboardCheck, Target,
   FileText, FileBox, LineChart, ShieldCheck, Building2, Plug, Settings,
-  Users, Calculator, Package, Search, Menu,
+  Users, Calculator, Package, Search, Menu, Truck, UserSquare, Contact,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
 import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
 import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
+import { FornecedoresPage } from './pages/fornecedores';
+import { ClientesPage } from './pages/clientes';
+import { ColaboradoresPage } from './pages/colaboradores';
 
 export default function App() {
   return (
@@ -27,6 +30,9 @@ export default function App() {
           <Route path="/centros/novo" element={<CentroDetailPage modo="novo" />} />
           <Route path="/centros/:id" element={<CentroDetailPage modo="detalhe" />} />
           <Route path="/estrutura" element={<EstruturaPage />} />
+          <Route path="/fornecedores" element={<FornecedoresPage />} />
+          <Route path="/clientes" element={<ClientesPage />} />
+          <Route path="/colaboradores" element={<ColaboradoresPage />} />
           <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
       </Shell>
@@ -43,9 +49,15 @@ function Shell({ children }: { children: ReactNode }) {
 
   const crumb = pathname.startsWith('/estrutura')
     ? <>Estrutura <b>/ Empresas e unidades</b></>
-    : pathname.startsWith('/inicio')
-      ? <>Financeiro <b>/ Início</b></>
-      : <>Financeiro <b>/ Centros de custo</b></>;
+    : pathname.startsWith('/fornecedores')
+      ? <>Cadastros <b>/ Fornecedores</b></>
+      : pathname.startsWith('/clientes')
+        ? <>Cadastros <b>/ Clientes</b></>
+        : pathname.startsWith('/colaboradores')
+          ? <>Cadastros <b>/ Colaboradores</b></>
+          : pathname.startsWith('/inicio')
+            ? <>Financeiro <b>/ Início</b></>
+            : <>Financeiro <b>/ Centros de custo</b></>;
 
   return (
     <>
@@ -71,6 +83,10 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem icon={<FileBox />} label="Documentos" />
           <NavItem icon={<LineChart />} label="Projeções" />
           <NavItem icon={<ShieldCheck />} label="Auditoria" />
+          <Section>Cadastros</Section>
+          <NavItem icon={<Truck />} label="Fornecedores" active={pathname.startsWith('/fornecedores')} onClick={() => go('/fornecedores')} />
+          <NavItem icon={<UserSquare />} label="Clientes" active={pathname.startsWith('/clientes')} onClick={() => go('/clientes')} />
+          <NavItem icon={<Contact />} label="Colaboradores" active={pathname.startsWith('/colaboradores')} onClick={() => go('/colaboradores')} />
           <Section>Estrutura</Section>
           <NavItem icon={<Building2 />} label="Empresas e unidades" active={pathname.startsWith('/estrutura')} onClick={() => go('/estrutura')} />
           <Section>Sistema</Section>
