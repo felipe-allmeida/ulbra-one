@@ -4,6 +4,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
+    <!-- NU1903: transitive dependency vulnerability advisory surfaced via referenced module
+         projects; not shipped from the unit test project. Keep it from failing the test build. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903;NU1902</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -15,5 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Common/Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
     <ProjectReference Include="../../src/Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
   </ItemGroup>
 </Project>
