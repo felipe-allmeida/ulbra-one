@@ -23,6 +23,19 @@ function toAddress(a: Address): Address | null {
   return { ...a, complement: a.complement?.trim() ? a.complement.trim() : null };
 }
 
+/** Fills only the address fields that are currently blank from a lookup result — never clobbers
+ *  data the user already typed (important in edit mode). Returns the merged address + filled keys. */
+function mergeAddressEmpty(current: Address, incoming: Partial<Address>): { address: Address; filled: (keyof Address)[] } {
+  const out = { ...current };
+  const filled: (keyof Address)[] = [];
+  (['cep', 'street', 'number', 'neighborhood', 'city', 'state'] as (keyof Address)[]).forEach((k) => {
+    const cur = (current[k] ?? '').toString();
+    const inc = (incoming[k] ?? '').toString();
+    if (!cur.trim() && inc) { out[k] = inc; filled.push(k); }
+  });
+  return { address: out, filled };
+}
+
 const AutoHint = () => <span className="auto-hint"><Sparkles /> auto</span>;
 
 /** Address sub-form with CEP auto-fill. `auto` marks which fields were just auto-filled. */
@@ -36,8 +49,10 @@ function AddressFields({ address, setAddress }: { address: Address; setAddress: 
     if (cep.length !== 8) return;
     try {
       const r = await api.lookupCep(cep);
-      set({ street: r.street, neighborhood: r.neighborhood, city: r.city, state: r.state });
-      setAuto(new Set(['street', 'neighborhood', 'city', 'state'] as (keyof Address)[]));
+      const { address: merged, filled } = mergeAddressEmpty(address, { street: r.street, neighborhood: r.neighborhood, city: r.city, state: r.state });
+      if (filled.length === 0) return; // nothing blank to fill — don't overwrite the user's data
+      setAddress(merged);
+      setAuto(new Set(filled));
       toast.success('Endereço preenchido pelo CEP.');
     } catch {
       toast.error('CEP não encontrado. Preencha o endereço manualmente.');
@@ -101,10 +116,11 @@ export function VendorForm({ companyId, initial, onSaved, onCancel }: {
     if (!isPj || onlyDigits(document).length !== 14) return;
     try {
       const r = await api.lookupCnpj(onlyDigits(document));
-      setName(r.razaoSocial);
-      setTradeName(r.nomeFantasia ?? '');
-      setNameAuto(new Set(['name', 'tradeName']));
-      if (r.address) setAddress({ ...emptyAddress, ...r.address, complement: '' });
+      const autoFilled = new Set<'name' | 'tradeName'>();
+      if (!name.trim()) { setName(r.razaoSocial); autoFilled.add('name'); }
+      if (!tradeName.trim() && r.nomeFantasia) { setTradeName(r.nomeFantasia); autoFilled.add('tradeName'); }
+      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address!).address);
+      if (autoFilled.size) setNameAuto(autoFilled);
       toast.success('Dados preenchidos pelo CNPJ.');
     } catch {
       toast.error('CNPJ não encontrado. Preencha os dados manualmente.');
@@ -197,10 +213,11 @@ export function CustomerForm({ companyId, initial, onSaved, onCancel }: {
     if (!isPj || onlyDigits(document).length !== 14) return;
     try {
       const r = await api.lookupCnpj(onlyDigits(document));
-      setName(r.razaoSocial);
-      setTradeName(r.nomeFantasia ?? '');
-      setNameAuto(new Set(['name', 'tradeName']));
-      if (r.address) setAddress({ ...emptyAddress, ...r.address, complement: '' });
+      const autoFilled = new Set<'name' | 'tradeName'>();
+      if (!name.trim()) { setName(r.razaoSocial); autoFilled.add('name'); }
+      if (!tradeName.trim() && r.nomeFantasia) { setTradeName(r.nomeFantasia); autoFilled.add('tradeName'); }
+      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address!).address);
+      if (autoFilled.size) setNameAuto(autoFilled);
       toast.success('Dados preenchidos pelo CNPJ.');
     } catch {
       toast.error('CNPJ não encontrado. Preencha os dados manualmente.');
