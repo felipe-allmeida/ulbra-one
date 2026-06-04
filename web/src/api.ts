@@ -81,6 +81,81 @@ export interface CostCenter {
   unitIds: string[];
 }
 
+/** 0 = Individual (PF), 1 = Company (PJ). */
+export enum PersonType { Individual = 0, Company = 1 }
+
+export interface Address {
+  cep: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
+export interface Vendor {
+  id: string;
+  companyId: string;
+  personType: PersonType;
+  name: string;
+  tradeName: string | null;
+  document: string;
+  email: string | null;
+  phone: string | null;
+  address: Address | null;
+  paymentTerms: string | null;
+  bankInfo: string | null;
+  active: boolean;
+}
+
+export interface Customer {
+  id: string;
+  companyId: string;
+  personType: PersonType;
+  name: string;
+  tradeName: string | null;
+  document: string;
+  email: string | null;
+  phone: string | null;
+  address: Address | null;
+  creditLimit: number | null;
+  active: boolean;
+}
+
+export interface Employee {
+  id: string;
+  companyId: string;
+  name: string;
+  document: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  unitId: string;
+  costCenterId: string | null;
+  hireDate: string;
+  address: Address | null;
+  active: boolean;
+}
+
+export type VendorInput = Omit<Vendor, 'id' | 'active'>;
+export type CustomerInput = Omit<Customer, 'id' | 'active'>;
+export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
+
+export interface CepLookup { cep: string; street: string; neighborhood: string; city: string; state: string }
+export interface CnpjLookup {
+  razaoSocial: string;
+  nomeFantasia: string | null;
+  address: { cep: string; street: string; number: string; neighborhood: string; city: string; state: string } | null;
+}
+
+/** Builds list-query string shared by registry resources. */
+function registryQuery(companyId: string, search?: string) {
+  const q = new URLSearchParams({ companyId });
+  if (search?.trim()) q.set('search', search.trim());
+  return q.toString();
+}
+
 export const api = {
   devLogin: (email: string, name: string) =>
     request<{ token: string; user: User }>('/auth/dev-token', {
@@ -123,4 +198,35 @@ export const api = {
   approveTransaction: (id: string) => request<Transaction>(`/transactions/${id}/approve`, { method: 'POST' }),
   rejectTransaction: (id: string, reason: string) => request<Transaction>(`/transactions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   payTransaction: (id: string) => request<Transaction>(`/transactions/${id}/pay`, { method: 'POST' }),
+
+  // ---------- Registry: Vendors ----------
+  listVendors: (companyId: string, search?: string) => request<Vendor[]>(`/vendors?${registryQuery(companyId, search)}`),
+  getVendor: (id: string) => request<Vendor>(`/vendors/${id}`),
+  createVendor: (body: VendorInput) => request<Vendor>('/vendors', { method: 'POST', body: JSON.stringify(body) }),
+  updateVendor: (id: string, body: VendorInput) => request<Vendor>(`/vendors/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deactivateVendor: (id: string) => request<Vendor>(`/vendors/${id}/deactivate`, { method: 'POST' }),
+  activateVendor: (id: string) => request<Vendor>(`/vendors/${id}/activate`, { method: 'POST' }),
+  removeVendor: (id: string) => request<void>(`/vendors/${id}`, { method: 'DELETE' }),
+
+  // ---------- Registry: Customers ----------
+  listCustomers: (companyId: string, search?: string) => request<Customer[]>(`/customers?${registryQuery(companyId, search)}`),
+  getCustomer: (id: string) => request<Customer>(`/customers/${id}`),
+  createCustomer: (body: CustomerInput) => request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
+  updateCustomer: (id: string, body: CustomerInput) => request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deactivateCustomer: (id: string) => request<Customer>(`/customers/${id}/deactivate`, { method: 'POST' }),
+  activateCustomer: (id: string) => request<Customer>(`/customers/${id}/activate`, { method: 'POST' }),
+  removeCustomer: (id: string) => request<void>(`/customers/${id}`, { method: 'DELETE' }),
+
+  // ---------- Registry: Employees ----------
+  listEmployees: (companyId: string, search?: string) => request<Employee[]>(`/employees?${registryQuery(companyId, search)}`),
+  getEmployee: (id: string) => request<Employee>(`/employees/${id}`),
+  createEmployee: (body: EmployeeInput) => request<Employee>('/employees', { method: 'POST', body: JSON.stringify(body) }),
+  updateEmployee: (id: string, body: EmployeeInput) => request<Employee>(`/employees/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deactivateEmployee: (id: string) => request<Employee>(`/employees/${id}/deactivate`, { method: 'POST' }),
+  activateEmployee: (id: string) => request<Employee>(`/employees/${id}/activate`, { method: 'POST' }),
+  removeEmployee: (id: string) => request<void>(`/employees/${id}`, { method: 'DELETE' }),
+
+  // ---------- Registry: Lookups ----------
+  lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),
+  lookupCnpj: (cnpj: string) => request<CnpjLookup>(`/lookup/cnpj/${cnpj}`),
 };
