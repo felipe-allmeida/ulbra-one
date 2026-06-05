@@ -123,7 +123,10 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   // Units come from the center's company (detail) or the selected company (novo).
   const unitsCompanyId = modo === 'novo' ? (empresa?.id ?? '') : (centro?.companyId ?? '');
   const unidades = useUnits(unitsCompanyId).data ?? [];
-  const lancamentos = useTransactions({ costCenterId: centro?.id }, { enabled: !!centro?.id }).data?.items ?? [];
+  // Detail needs all of the center's transactions (activity list + "executado" sum), not just page 1.
+  // pageSize is capped at 100 server-side; a server-computed aggregate is the proper long-term fix.
+  const lancamentos =
+    useTransactions({ costCenterId: centro?.id, pageSize: 100 }, { enabled: !!centro?.id }).data?.items ?? [];
 
   /* ---- NOVO ---- */
   if (modo === 'novo') {
