@@ -1,0 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Common.Application.Persistence;
+
+namespace Ulbra.One.Common.Infrastructure.Persistence;
+
+/// <summary>
+/// EF Core implementation of <see cref="IUnitOfWork"/> over a single <typeparamref name="TContext"/>.
+/// Registered keyed by module so each module binds its own DbContext.
+/// </summary>
+public sealed class EfUnitOfWork<TContext>(TContext db) : IUnitOfWork
+    where TContext : DbContext
+{
+    public IQueryable<T> ReadSet<T>() where T : class => db.Set<T>().AsNoTracking();
+
+    public IQueryable<T> Set<T>() where T : class => db.Set<T>();
+
+    public async Task AddAsync<T>(T entity, CancellationToken ct) where T : class =>
+        await db.Set<T>().AddAsync(entity, ct);
+
+    public void Remove<T>(T entity) where T : class => db.Set<T>().Remove(entity);
+
+    public void RemoveRange<T>(IEnumerable<T> entities) where T : class => db.Set<T>().RemoveRange(entities);
+
+    public Task<int> SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
+}

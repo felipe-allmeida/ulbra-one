@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Core.Infrastructure.Database;
 
 namespace Ulbra.One.Core.Infrastructure;
@@ -15,6 +17,9 @@ public static class CoreModule
         services.AddDbContext<CoreContext>(options =>
             options.UseNpgsql(connectionString)
                    .UseSnakeCaseNamingConvention());
+
+        services.AddKeyedScoped<IUnitOfWork>("core",
+            (sp, _) => new EfUnitOfWork<CoreContext>(sp.GetRequiredService<CoreContext>()));
 
         return services;
     }
