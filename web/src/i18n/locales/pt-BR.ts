@@ -124,6 +124,17 @@ const ptBR = {
     error: 'Não foi possível entrar. Verifique os dados e tente de novo.',
     backToSite: 'Voltar para o site',
   },
+
+  errors: {
+    generic: 'Algo deu errado. Tente novamente em instantes.',
+    boundary: {
+      title: 'Algo deu errado',
+      message:
+        'Encontramos um problema inesperado ao exibir esta página. Você pode tentar novamente ou voltar ao início.',
+      retry: 'Tentar novamente',
+      home: 'Voltar ao início',
+    },
+  },
 } as const;
 
 export default ptBR;

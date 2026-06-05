@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { getErrorMessage } from './apiError';
 
 interface AsyncState<T> {
   loading: boolean;
@@ -23,7 +24,7 @@ export function useAsync<T>(fn: (...args: any[]) => Promise<T>): AsyncState<T> {
         setData(result);
         return result;
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(getErrorMessage(e));
         return null;
       } finally {
         setLoading(false);

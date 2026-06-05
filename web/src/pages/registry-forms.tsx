@@ -13,6 +13,7 @@ import {
 import { Button, Field, Input, MaskedInput, Select } from '../ui';
 import { useToast } from '../toast';
 import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone, isValidCpf, isValidCnpj } from '../format';
+import { getErrorMessage } from '../apiError';
 
 /* ---------- shared local state for an editable address ---------- */
 const emptyAddress: Address = {
@@ -234,7 +235,7 @@ export function VendorForm({
       toast.success(initial ? 'Fornecedor atualizado.' : 'Fornecedor criado.');
       onSaved();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha ao salvar.');
+      toast.error(getErrorMessage(e));
       setSaving(false);
     }
   };
@@ -387,7 +388,7 @@ export function CustomerForm({
       toast.success(initial ? 'Cliente atualizado.' : 'Cliente criado.');
       onSaved();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha ao salvar.');
+      toast.error(getErrorMessage(e));
       setSaving(false);
     }
   };
@@ -519,7 +520,7 @@ export function EmployeeForm({
       toast.success(initial ? 'Colaborador atualizado.' : 'Colaborador criado.');
       onSaved();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha ao salvar.');
+      toast.error(getErrorMessage(e));
       setSaving(false);
     }
   };

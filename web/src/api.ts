@@ -1,3 +1,5 @@
+import { apiErrorFromProblem } from './apiError';
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api';
 
 const TOKEN_KEY = 'ulbra-one.token';
@@ -29,6 +31,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error('Sessão expirada. Faça login novamente.');
   }
   if (!res.ok) {
+    const contentType = res.headers.get('content-type') ?? '';
+    if (contentType.includes('application/problem+json')) {
+      try {
+        const body = await res.json();
+        throw apiErrorFromProblem(res.status, body);
+      } catch (e) {
+        // Re-throw the ApiError we just built; only fall through if JSON parsing failed.
+        if (e instanceof Error && e.name === 'ApiError') throw e;
+      }
+    }
     const text = await res.text();
     throw new Error(text || `${res.status} ${res.statusText}`);
   }

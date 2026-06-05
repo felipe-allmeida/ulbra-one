@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, UserSquare, Power, Trash2, Pencil } from 'lucide-react';
 import { api, PersonType, type Customer } from '../api';
+import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
@@ -48,7 +49,7 @@ export function ClientesPage() {
       setConfirm(null);
       reload();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha na operação.');
+      toast.error(getErrorMessage(e));
     } finally {
       setBusy(false);
     }
