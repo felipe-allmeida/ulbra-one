@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, type Company } from './api';
+import { useQueryClient } from '@tanstack/react-query';
+import { type Company } from './api';
+import { queryKeys, useCompanies } from './queries';
 
 interface AppCtx {
   empresas: Company[];
@@ -13,21 +15,25 @@ const Ctx = createContext<AppCtx>(null!);
 export const useApp = () => useContext(Ctx);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [empresas, setEmpresas] = useState<Company[]>([]);
+  const qc = useQueryClient();
+  const { data } = useCompanies();
+  const empresas = data ?? [];
   const [empresaId, setEmpresaId] = useState('');
 
+  // Keep a valid selection (auto-select first) whenever the company list changes.
+  useEffect(() => {
+    setEmpresaId((cur) => (empresas.find((e) => e.id === cur) ? cur : (empresas[0]?.id ?? '')));
+  }, [empresas]);
+
   const refreshEmpresas = async (selecionar?: string) => {
-    const es = await api.listCompanies();
-    setEmpresas(es);
+    // refetch (not just invalidate) so the fresh list is in cache before we pick a selection.
+    await qc.refetchQueries({ queryKey: queryKeys.companies });
+    const es = qc.getQueryData<Company[]>(queryKeys.companies) ?? empresas;
     setEmpresaId((cur) => {
       const want = selecionar ?? cur;
       return es.find((e) => e.id === want) ? want : (es[0]?.id ?? '');
     });
   };
-
-  useEffect(() => {
-    refreshEmpresas().catch(() => {});
-  }, []);
 
   const value: AppCtx = {
     empresas,

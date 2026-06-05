@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Users, Power, Trash2, Pencil } from 'lucide-react';
-import { api, type Employee, type Unit, type CostCenter } from '../api';
+import { type Employee } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
+import { useCostCenters, useEmployeeAction, useEmployees, useUnits } from '../queries';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
-import { useAsync } from '../useAsync';
 import { maskCpf } from '../format';
 import { EmpresaPicker } from './shared';
 import { EmployeeForm } from './registry-forms';
@@ -14,60 +14,43 @@ export function ColaboradoresPage() {
   const { empresa, empresaId } = useApp();
   const toast = useToast();
   const [search, setSearch] = useState('');
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [drawer, setDrawer] = useState<null | { edit?: Employee }>(null);
   const [confirm, setConfirm] = useState<null | { employee: Employee; action: 'toggle' | 'delete' }>(null);
-  const [busy, setBusy] = useState(false);
 
-  const list = useAsync<Employee[]>(() => api.listEmployees(empresaId, search));
-  const reload = () => {
-    if (empresaId) list.run();
-  };
   useEffect(() => {
-    if (!empresaId) return;
-    const t = setTimeout(reload, 250);
+    const t = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(t);
-  }, [empresaId, search]);
-  useEffect(() => {
-    if (!empresaId) {
-      setUnits([]);
-      setCostCenters([]);
-      return;
-    }
-    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
-      .then(([u, c]) => {
-        setUnits(u);
-        setCostCenters(c);
-      })
-      .catch(() => toast.error('Falha ao carregar unidades/centros de custo.'));
-  }, [empresaId]);
+  }, [search]);
+
+  const list = useEmployees(empresaId, debouncedSearch);
+  const unitsQuery = useUnits(empresaId);
+  const costCentersQuery = useCostCenters(empresaId);
+  const units = unitsQuery.data ?? [];
+  const costCenters = costCentersQuery.data ?? [];
 
   const employees = list.data ?? [];
   const unitName = (id: string) => units.find((u) => u.id === id)?.name ?? '—';
 
-  const onConfirm = async () => {
-    if (!confirm) return;
-    setBusy(true);
-    try {
-      const { employee, action } = confirm;
-      if (action === 'delete') {
-        await api.removeEmployee(employee.id);
-        toast.success('Colaborador excluído.');
-      } else if (employee.active) {
-        await api.deactivateEmployee(employee.id);
-        toast.success('Colaborador desativado.');
-      } else {
-        await api.activateEmployee(employee.id);
-        toast.success('Colaborador ativado.');
-      }
+  const action = useEmployeeAction({
+    onSuccess: (_data, vars) => {
+      toast.success(
+        vars.action === 'delete'
+          ? 'Colaborador excluído.'
+          : vars.action === 'deactivate'
+            ? 'Colaborador desativado.'
+            : 'Colaborador ativado.',
+      );
       setConfirm(null);
-      reload();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const onConfirm = () => {
+    if (!confirm) return;
+    const { employee, action: act } = confirm;
+    const resolved = act === 'delete' ? 'delete' : employee.active ? 'deactivate' : 'activate';
+    action.mutate({ id: employee.id, action: resolved });
   };
 
   return (
@@ -107,13 +90,13 @@ export function ColaboradoresPage() {
               </tr>
             </thead>
             <tbody>
-              {list.loading ? (
+              {list.isLoading ? (
                 <SkeletonRows rows={4} cols={6} />
               ) : list.error ? (
                 <tr>
                   <td colSpan={6} className='t-empty'>
-                    {list.error}{' '}
-                    <button className='backlink' onClick={reload}>
+                    {getErrorMessage(list.error)}{' '}
+                    <button className='backlink' onClick={() => void list.refetch()}>
                       Tentar de novo
                     </button>
                   </td>
@@ -175,10 +158,7 @@ export function ColaboradoresPage() {
             units={units}
             costCenters={costCenters}
             initial={drawer.edit}
-            onSaved={() => {
-              setDrawer(null);
-              reload();
-            }}
+            onSaved={() => setDrawer(null)}
             onCancel={() => setDrawer(null)}
           />
         )}
@@ -209,7 +189,7 @@ export function ColaboradoresPage() {
             )
           }
           danger={confirm.action === 'delete'}
-          busy={busy}
+          busy={action.isPending}
           confirmLabel={confirm.action === 'delete' ? 'Excluir' : confirm.employee.active ? 'Desativar' : 'Ativar'}
           onConfirm={onConfirm}
           onCancel={() => setConfirm(null)}

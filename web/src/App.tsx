@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -26,7 +26,8 @@ import {
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
-import { api, auth } from './api';
+import { auth } from './api';
+import { useMe } from './queries';
 import { iniciais } from './lib';
 import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
@@ -90,17 +91,11 @@ function AppLayout() {
   );
 }
 
-interface Me {
-  name: string;
-  email: string;
-  role: string;
-}
-
 /* ===== SHELL (sidebar + topbar) ===== */
 function Shell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [navOpen, setNavOpen] = useState(false);
-  const [me, setMe] = useState<Me | null>(null);
+  const me = useMe().data ?? null;
   const nav = useNavigate();
   const { pathname } = useLocation();
   const go = (to: string) => {
@@ -108,13 +103,6 @@ function Shell({ children }: { children: ReactNode }) {
     setNavOpen(false);
   };
   const at = (p: string) => pathname.startsWith(`/app/${p}`);
-
-  useEffect(() => {
-    api
-      .me()
-      .then((u) => setMe({ name: u.name, email: u.email, role: u.role }))
-      .catch(() => {});
-  }, []);
 
   const logout = () => {
     auth.clear();

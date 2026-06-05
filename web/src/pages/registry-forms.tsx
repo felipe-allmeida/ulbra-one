@@ -14,6 +14,7 @@ import { Button, Field, Input, MaskedInput, Select } from '../ui';
 import { useToast } from '../toast';
 import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone, isValidCpf, isValidCnpj } from '../format';
 import { getErrorMessage } from '../apiError';
+import { useSaveCustomer, useSaveEmployee, useSaveVendor } from '../queries';
 
 /* ---------- shared local state for an editable address ---------- */
 const emptyAddress: Address = {
@@ -187,7 +188,15 @@ export function VendorForm({
   const [bankInfo, setBankInfo] = useState(initial?.bankInfo ?? '');
   const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
-  const [saving, setSaving] = useState(false);
+
+  const mutation = useSaveVendor({
+    onSuccess: () => {
+      toast.success(initial ? 'Fornecedor atualizado.' : 'Fornecedor criado.');
+      onSaved();
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+  const saving = mutation.isPending;
 
   const isPj = personType === PersonType.Company;
   const docDigits = onlyDigits(document);
@@ -215,29 +224,20 @@ export function VendorForm({
     }
   };
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      const body = {
-        companyId,
-        personType,
-        name: name.trim(),
-        tradeName: tradeName.trim() || null,
-        document: docDigits,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        address: toAddress(address),
-        paymentTerms: paymentTerms.trim() || null,
-        bankInfo: bankInfo.trim() || null,
-      };
-      if (initial) await api.updateVendor(initial.id, body);
-      else await api.createVendor(body);
-      toast.success(initial ? 'Fornecedor atualizado.' : 'Fornecedor criado.');
-      onSaved();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-      setSaving(false);
-    }
+  const save = () => {
+    const body = {
+      companyId,
+      personType,
+      name: name.trim(),
+      tradeName: tradeName.trim() || null,
+      document: docDigits,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      address: toAddress(address),
+      paymentTerms: paymentTerms.trim() || null,
+      bankInfo: bankInfo.trim() || null,
+    };
+    mutation.mutate({ id: initial?.id, body });
   };
 
   return (
@@ -341,7 +341,15 @@ export function CustomerForm({
   const [creditLimit, setCreditLimit] = useState(initial?.creditLimit != null ? String(initial.creditLimit) : '');
   const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
-  const [saving, setSaving] = useState(false);
+
+  const mutation = useSaveCustomer({
+    onSuccess: () => {
+      toast.success(initial ? 'Cliente atualizado.' : 'Cliente criado.');
+      onSaved();
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+  const saving = mutation.isPending;
 
   const isPj = personType === PersonType.Company;
   const docDigits = onlyDigits(document);
@@ -369,28 +377,19 @@ export function CustomerForm({
     }
   };
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      const body = {
-        companyId,
-        personType,
-        name: name.trim(),
-        tradeName: tradeName.trim() || null,
-        document: docDigits,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        address: toAddress(address),
-        creditLimit: creditLimit.trim() ? Number(creditLimit) : null,
-      };
-      if (initial) await api.updateCustomer(initial.id, body);
-      else await api.createCustomer(body);
-      toast.success(initial ? 'Cliente atualizado.' : 'Cliente criado.');
-      onSaved();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-      setSaving(false);
-    }
+  const save = () => {
+    const body = {
+      companyId,
+      personType,
+      name: name.trim(),
+      tradeName: tradeName.trim() || null,
+      document: docDigits,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      address: toAddress(address),
+      creditLimit: creditLimit.trim() ? Number(creditLimit) : null,
+    };
+    mutation.mutate({ id: initial?.id, body });
   };
 
   return (
@@ -493,36 +492,35 @@ export function EmployeeForm({
   const [costCenterId, setCostCenterId] = useState(initial?.costCenterId ?? '');
   const [hireDate, setHireDate] = useState(initial?.hireDate ?? '');
   const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
-  const [saving, setSaving] = useState(false);
+
+  const mutation = useSaveEmployee({
+    onSuccess: () => {
+      toast.success(initial ? 'Colaborador atualizado.' : 'Colaborador criado.');
+      onSaved();
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+  const saving = mutation.isPending;
 
   const docDigits = onlyDigits(document);
   const docValid = docDigits.length === 0 || isValidCpf(docDigits);
   const canSave =
     !!name.trim() && !!role.trim() && !!unitId && !!hireDate && docDigits.length > 0 && docValid && !saving;
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      const body = {
-        companyId,
-        name: name.trim(),
-        document: docDigits,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        role: role.trim(),
-        unitId,
-        costCenterId: costCenterId || null,
-        hireDate,
-        address: toAddress(address),
-      };
-      if (initial) await api.updateEmployee(initial.id, body);
-      else await api.createEmployee(body);
-      toast.success(initial ? 'Colaborador atualizado.' : 'Colaborador criado.');
-      onSaved();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-      setSaving(false);
-    }
+  const save = () => {
+    const body = {
+      companyId,
+      name: name.trim(),
+      document: docDigits,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      role: role.trim(),
+      unitId,
+      costCenterId: costCenterId || null,
+      hireDate,
+      address: toAddress(address),
+    };
+    mutation.mutate({ id: initial?.id, body });
   };
 
   return (

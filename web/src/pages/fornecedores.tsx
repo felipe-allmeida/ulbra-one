@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Truck, Power, Trash2, Pencil } from 'lucide-react';
-import { api, PersonType, type Vendor } from '../api';
+import { PersonType, type Vendor } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
+import { useVendorAction, useVendors } from '../queries';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
-import { useAsync } from '../useAsync';
 import { maskCpf, maskCnpj } from '../format';
 import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
@@ -14,44 +14,38 @@ export function FornecedoresPage() {
   const { empresa, empresaId } = useApp();
   const toast = useToast();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [drawer, setDrawer] = useState<null | { edit?: Vendor }>(null);
   const [confirm, setConfirm] = useState<null | { vendor: Vendor; action: 'toggle' | 'delete' }>(null);
-  const [busy, setBusy] = useState(false);
 
-  const list = useAsync<Vendor[]>(() => api.listVendors(empresaId, search));
-  const reload = () => {
-    if (empresaId) list.run();
-  };
+  // Debounce the search term that feeds the query key (preserves the 250ms UX).
   useEffect(() => {
-    if (!empresaId) return;
-    const t = setTimeout(reload, 250);
+    const t = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(t);
-  }, [empresaId, search]);
+  }, [search]);
 
+  const list = useVendors(empresaId, debouncedSearch);
   const vendors = list.data ?? [];
 
-  const onConfirm = async () => {
-    if (!confirm) return;
-    setBusy(true);
-    try {
-      const { vendor, action } = confirm;
-      if (action === 'delete') {
-        await api.removeVendor(vendor.id);
-        toast.success('Fornecedor excluído.');
-      } else if (vendor.active) {
-        await api.deactivateVendor(vendor.id);
-        toast.success('Fornecedor desativado.');
-      } else {
-        await api.activateVendor(vendor.id);
-        toast.success('Fornecedor ativado.');
-      }
+  const action = useVendorAction({
+    onSuccess: (_data, vars) => {
+      toast.success(
+        vars.action === 'delete'
+          ? 'Fornecedor excluído.'
+          : vars.action === 'deactivate'
+            ? 'Fornecedor desativado.'
+            : 'Fornecedor ativado.',
+      );
       setConfirm(null);
-      reload();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const onConfirm = () => {
+    if (!confirm) return;
+    const { vendor, action: act } = confirm;
+    const resolved = act === 'delete' ? 'delete' : vendor.active ? 'deactivate' : 'activate';
+    action.mutate({ id: vendor.id, action: resolved });
   };
 
   return (
@@ -95,13 +89,13 @@ export function FornecedoresPage() {
               </tr>
             </thead>
             <tbody>
-              {list.loading ? (
+              {list.isLoading ? (
                 <SkeletonRows rows={4} cols={6} />
               ) : list.error ? (
                 <tr>
                   <td colSpan={6} className='t-empty'>
-                    {list.error}{' '}
-                    <button className='backlink' onClick={reload}>
+                    {getErrorMessage(list.error)}{' '}
+                    <button className='backlink' onClick={() => void list.refetch()}>
                       Tentar de novo
                     </button>
                   </td>
@@ -166,10 +160,7 @@ export function FornecedoresPage() {
           <VendorForm
             companyId={empresa.id}
             initial={drawer.edit}
-            onSaved={() => {
-              setDrawer(null);
-              reload();
-            }}
+            onSaved={() => setDrawer(null)}
             onCancel={() => setDrawer(null)}
           />
         )}
@@ -200,7 +191,7 @@ export function FornecedoresPage() {
             )
           }
           danger={confirm.action === 'delete'}
-          busy={busy}
+          busy={action.isPending}
           confirmLabel={confirm.action === 'delete' ? 'Excluir' : confirm.vendor.active ? 'Desativar' : 'Ativar'}
           onConfirm={onConfirm}
           onCancel={() => setConfirm(null)}

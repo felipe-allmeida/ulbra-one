@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Network, Target, Wallet, Zap } from 'lucide-react';
-import { api, type Unit, type CostCenter } from '../api';
 import { useApp } from '../store';
+import { useCostCenters, useUnits } from '../queries';
 import { brl, brlCompact } from '../lib';
 import { Kpi, PageHeader, Panel, EmptyState } from '../ui';
 import { EmpresaPicker } from './shared';
@@ -10,22 +9,8 @@ import { EmpresaPicker } from './shared';
 export function DashboardPage() {
   const { empresas, empresa, empresaId } = useApp();
   const nav = useNavigate();
-  const [unidades, setUnidades] = useState<Unit[]>([]);
-  const [centros, setCentros] = useState<CostCenter[]>([]);
-
-  useEffect(() => {
-    if (!empresaId) {
-      setUnidades([]);
-      setCentros([]);
-      return;
-    }
-    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
-      .then(([u, c]) => {
-        setUnidades(u);
-        setCentros(c);
-      })
-      .catch(() => {});
-  }, [empresaId]);
+  const unidades = useUnits(empresaId).data ?? [];
+  const centros = useCostCenters(empresaId).data ?? [];
 
   const orcamentoTotal = centros.reduce((s, c) => s + c.annualBudget, 0);
   const comAuto = centros.filter((c) => c.autoApprovalLimit > 0).length;

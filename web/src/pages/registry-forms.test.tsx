@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ToastProvider } from '../toast';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders } from '../test/renderWithProviders';
 import { VendorForm } from './registry-forms';
 import { api } from '../api';
 
@@ -16,12 +16,7 @@ vi.mock('../api', async (orig) => {
   };
 });
 
-const renderForm = () =>
-  render(
-    <ToastProvider>
-      <VendorForm companyId='c1' onSaved={() => {}} onCancel={() => {}} />
-    </ToastProvider>,
-  );
+const renderForm = () => renderWithProviders(<VendorForm companyId='c1' onSaved={() => {}} onCancel={() => {}} />);
 
 describe('VendorForm', () => {
   beforeEach(() => vi.clearAllMocks());

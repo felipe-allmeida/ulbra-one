@@ -1,17 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Plus, ChevronLeft, ClipboardCheck, Check, X, Wallet } from 'lucide-react';
-import {
-  api,
-  type Unit,
-  type CostCenter,
-  type Transaction,
-  type TransactionType,
-  type TransactionStatus,
-} from '../api';
+import { type TransactionType, type TransactionStatus } from '../api';
 import { useApp } from '../store';
+import {
+  useApproveTransaction,
+  useCostCenters,
+  useCreateTransaction,
+  usePayTransaction,
+  useRejectTransaction,
+  useTransaction,
+  useTransactions,
+  useUnits,
+} from '../queries';
 import { brl } from '../lib';
-import { Button, Input, Select, Field, PageHeader, Panel, EmptyState, useSave } from '../ui';
+import { getErrorMessage } from '../apiError';
+import { Button, Input, Select, Field, PageHeader, Panel, EmptyState } from '../ui';
 import { EmpresaPicker } from './shared';
 
 const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
@@ -27,21 +31,8 @@ const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString(
 
 /** Mapas id→nome de unidades/centros da empresa (para exibir nomes nas listas). */
 function useNomes(empresaId: string) {
-  const [unidades, setUnidades] = useState<Unit[]>([]);
-  const [centros, setCentros] = useState<CostCenter[]>([]);
-  useEffect(() => {
-    if (!empresaId) {
-      setUnidades([]);
-      setCentros([]);
-      return;
-    }
-    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
-      .then(([u, c]) => {
-        setUnidades(u);
-        setCentros(c);
-      })
-      .catch(() => {});
-  }, [empresaId]);
+  const unidades = useUnits(empresaId).data ?? [];
+  const centros = useCostCenters(empresaId).data ?? [];
   return {
     unidades,
     centros,
@@ -55,18 +46,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
   const { unidadeNome, centroNome } = useNomes(empresaId);
-  const [itens, setItens] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    if (!empresaId) {
-      setItens([]);
-      return;
-    }
-    api
-      .listTransactions({ companyId: empresaId, type: tipo })
-      .then(setItens)
-      .catch(() => {});
-  }, [empresaId, tipo]);
+  const itens = useTransactions({ companyId: empresaId, type: tipo }, { enabled: !!empresaId }).data ?? [];
 
   const titulo = tipo === 'Payable' ? 'Contas a pagar' : 'Contas a receber';
 
@@ -142,20 +122,9 @@ export function AprovacoesPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
   const { unidadeNome, centroNome } = useNomes(empresaId);
-  const [itens, setItens] = useState<Transaction[]>([]);
-  const load = () => {
-    if (empresaId)
-      api
-        .listTransactions({ companyId: empresaId, status: 'Pending' })
-        .then(setItens)
-        .catch(() => {});
-  };
-  useEffect(load, [empresaId]);
-
-  const acao = async (fn: () => Promise<unknown>) => {
-    await fn();
-    load();
-  };
+  const itens = useTransactions({ companyId: empresaId, status: 'Pending' }, { enabled: !!empresaId }).data ?? [];
+  const approve = useApproveTransaction();
+  const reject = useRejectTransaction();
 
   return (
     <>
@@ -194,17 +163,10 @@ export function AprovacoesPage() {
                   </td>
                   <td className='td-action'>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      <Button
-                        className='btn-approve'
-                        icon={<Check />}
-                        onClick={() => acao(() => api.approveTransaction(l.id))}
-                      >
+                      <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: l.id })}>
                         Aprovar
                       </Button>
-                      <Button
-                        icon={<X />}
-                        onClick={() => acao(() => api.rejectTransaction(l.id, 'Rejeitado na triagem'))}
-                      >
+                      <Button icon={<X />} onClick={() => reject.mutate({ id: l.id, reason: 'Rejeitado na triagem' })}>
                         Rejeitar
                       </Button>
                     </div>
@@ -234,8 +196,11 @@ export function NovoLancamentoPage() {
   const [valor, setValor] = useState('');
   const [vencimento, setVencimento] = useState('');
 
-  const { salvando, erro, run } = useSave(async () => {
-    const l = await api.createTransaction({
+  const create = useCreateTransaction({ onSuccess: (l) => nav(`/app/lancamentos/${l.id}`) });
+  const salvando = create.isPending;
+  const erro = create.error ? getErrorMessage(create.error) : null;
+  const run = () =>
+    create.mutate({
       companyId: empresaId,
       unitId: unidadeId,
       costCenterId: centroId,
@@ -245,8 +210,6 @@ export function NovoLancamentoPage() {
       amount: Number(valor) || 0,
       dueDate: vencimento,
     });
-    nav(`/app/lancamentos/${l.id}`);
-  });
 
   const valido = !!unidadeId && !!centroId && !!descricao.trim() && Number(valor) > 0 && !!vencimento;
 
@@ -341,38 +304,23 @@ export function NovoLancamentoPage() {
 export function LancamentoDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const [l, setL] = useState<Transaction | null>(null);
-  const [carregando, setCarregando] = useState(true);
-  const [nomes, setNomes] = useState<{ centro: string; unidade: string }>({ centro: '—', unidade: '—' });
+  const query = useTransaction(id);
+  const l = query.data ?? null;
+  const carregando = query.isLoading;
 
-  async function carregar() {
-    if (!id) return;
-    setCarregando(true);
-    try {
-      const lan = await api.getTransaction(id);
-      setL(lan);
-      const [us, cs] = await Promise.all([api.listUnits(lan.companyId), api.listCostCenters(lan.companyId)]);
-      setNomes({
-        centro: cs.find((c) => c.id === lan.costCenterId)?.name ?? '—',
-        unidade: us.find((u) => u.id === lan.unitId)?.name ?? '—',
-      });
-    } catch {
-      setL(null);
-    } finally {
-      setCarregando(false);
-    }
-  }
-  useEffect(() => {
-    carregar();
-  }, [id]);
+  const units = useUnits(l?.companyId ?? '').data ?? [];
+  const centros = useCostCenters(l?.companyId ?? '').data ?? [];
+  const nomes = {
+    centro: centros.find((c) => c.id === l?.costCenterId)?.name ?? '—',
+    unidade: units.find((u) => u.id === l?.unitId)?.name ?? '—',
+  };
+
+  const approve = useApproveTransaction();
+  const reject = useRejectTransaction();
+  const pay = usePayTransaction();
 
   if (carregando) return <div className='empty-state'>Carregando…</div>;
   if (!l) return <EmptyState icon={<Wallet />} title='Lançamento não encontrado' sub='Ele pode ter sido removido.' />;
-
-  const acao = async (fn: () => Promise<Transaction>) => {
-    const x = await fn();
-    setL(x);
-  };
 
   return (
     <>
@@ -391,17 +339,17 @@ export function LancamentoDetailPage() {
         </div>
         <div className='detail-actions'>
           {l.status === 'Pending' && (
-            <Button className='btn-approve' icon={<Check />} onClick={() => acao(() => api.approveTransaction(l.id))}>
+            <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: l.id })}>
               Aprovar
             </Button>
           )}
           {l.status === 'Pending' && (
-            <Button icon={<X />} onClick={() => acao(() => api.rejectTransaction(l.id, 'Rejeitado'))}>
+            <Button icon={<X />} onClick={() => reject.mutate({ id: l.id, reason: 'Rejeitado' })}>
               Rejeitar
             </Button>
           )}
           {l.status === 'Approved' && (
-            <Button variant='brand' onClick={() => acao(() => api.payTransaction(l.id))}>
+            <Button variant='brand' onClick={() => pay.mutate({ id: l.id })}>
               Marcar como pago
             </Button>
           )}

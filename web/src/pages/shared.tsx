@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { api, type Company, type Unit, type CostCenter } from '../api';
+import { type Company, type Unit, type CostCenter } from '../api';
 import { useApp } from '../store';
-import { Button, Input, Select, Field, ToolbarField, useSave } from '../ui';
+import { useSaveCostCenter } from '../queries';
+import { getErrorMessage } from '../apiError';
+import { Button, Input, Select, Field, ToolbarField } from '../ui';
 
 export function EmpresaPicker() {
   const { empresas, empresaId, setEmpresaId } = useApp();
@@ -76,14 +78,19 @@ export function CentroForm({
   const [limite, setLimite] = useState(initial ? String(initial.autoApprovalLimit) : '');
   const [sel, setSel] = useState<Set<string>>(new Set(initial?.unitIds ?? []));
 
-  const { salvando, erro, run } = useSave(async () => {
-    const o = Number(orc) || 0,
-      l = Number(limite) || 0;
-    const cc = initial
-      ? await api.updateCostCenter(initial.id, codigo.trim(), nome.trim(), o, l, [...sel])
-      : await api.createCostCenter(empresa.id, codigo.trim(), nome.trim(), o, l, [...sel]);
-    onSaved(cc);
-  });
+  const mutation = useSaveCostCenter({ onSuccess: (cc) => onSaved(cc) });
+  const salvando = mutation.isPending;
+  const erro = mutation.error ? getErrorMessage(mutation.error) : null;
+  const run = () =>
+    mutation.mutate({
+      id: initial?.id,
+      companyId: empresa.id,
+      code: codigo.trim(),
+      name: nome.trim(),
+      annualBudget: Number(orc) || 0,
+      autoApprovalLimit: Number(limite) || 0,
+      unitIds: [...sel],
+    });
 
   return (
     <div>

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Target, ChevronLeft, Pencil, Activity, Zap } from 'lucide-react';
-import { api, type Unit, type CostCenter, type Transaction } from '../api';
 import { useApp } from '../store';
+import { useCostCenter, useCostCenters, useTransactions, useUnits } from '../queries';
 import { brlCompact, brl } from '../lib';
 import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
 import { EmpresaPicker, CentroForm } from './shared';
@@ -12,22 +12,8 @@ import { StatusBadge } from './lancamentos';
 export function CentrosListPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
-  const [unidades, setUnidades] = useState<Unit[]>([]);
-  const [centros, setCentros] = useState<CostCenter[]>([]);
-
-  useEffect(() => {
-    if (!empresaId) {
-      setUnidades([]);
-      setCentros([]);
-      return;
-    }
-    Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
-      .then(([u, c]) => {
-        setUnidades(u);
-        setCentros(c);
-      })
-      .catch(() => {});
-  }, [empresaId]);
+  const unidades = useUnits(empresaId).data ?? [];
+  const centros = useCostCenters(empresaId).data ?? [];
 
   const unidadeSigla = useMemo(() => Object.fromEntries(unidades.map((u) => [u.id, u.acronym])), [unidades]);
   const orcamentoTotal = centros.reduce((s, c) => s + c.annualBudget, 0);
@@ -125,37 +111,19 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   const nav = useNavigate();
   const { empresa, empresas } = useApp();
 
-  const [centro, setCentro] = useState<CostCenter | null>(null);
-  const [unidades, setUnidades] = useState<Unit[]>([]);
-  const [lancamentos, setLancamentos] = useState<Transaction[]>([]);
   const [editando, setEditando] = useState(modo === 'novo');
-  const [carregando, setCarregando] = useState(modo === 'detalhe');
+
+  const centroQuery = useCostCenter(modo === 'detalhe' ? id : undefined);
+  const centro = modo === 'detalhe' ? (centroQuery.data ?? null) : null;
+  const carregando = modo === 'detalhe' && centroQuery.isLoading;
 
   // empresa do centro (no detalhe) ou empresa selecionada (no novo)
   const empresaDoCentro = centro ? (empresas.find((e) => e.id === centro.companyId) ?? null) : empresa;
 
-  useEffect(() => {
-    if (modo === 'novo') {
-      if (empresa)
-        api
-          .listUnits(empresa.id)
-          .then(setUnidades)
-          .catch(() => {});
-      return;
-    }
-    if (!id) return;
-    setCarregando(true);
-    api
-      .getCostCenter(id)
-      .then(async (c) => {
-        setCentro(c);
-        const [us, ls] = await Promise.all([api.listUnits(c.companyId), api.listTransactions({ costCenterId: c.id })]);
-        setUnidades(us);
-        setLancamentos(ls);
-      })
-      .catch(() => setCentro(null))
-      .finally(() => setCarregando(false));
-  }, [id, modo, empresa?.id]);
+  // Units come from the center's company (detail) or the selected company (novo).
+  const unitsCompanyId = modo === 'novo' ? (empresa?.id ?? '') : (centro?.companyId ?? '');
+  const unidades = useUnits(unitsCompanyId).data ?? [];
+  const lancamentos = useTransactions({ costCenterId: centro?.id }, { enabled: !!centro?.id }).data ?? [];
 
   /* ---- NOVO ---- */
   if (modo === 'novo') {
@@ -233,10 +201,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
             empresa={empresaDoCentro}
             unidades={unidades}
             initial={centro}
-            onSaved={(cc) => {
-              setCentro(cc);
-              setEditando(false);
-            }}
+            onSaved={() => setEditando(false)}
             onCancel={() => setEditando(false)}
           />
         </div>

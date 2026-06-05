@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, UserSquare, Power, Trash2, Pencil } from 'lucide-react';
-import { api, PersonType, type Customer } from '../api';
+import { PersonType, type Customer } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
+import { useCustomerAction, useCustomers } from '../queries';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
-import { useAsync } from '../useAsync';
 import { maskCpf, maskCnpj } from '../format';
 import { brl } from '../lib';
 import { EmpresaPicker } from './shared';
@@ -15,44 +15,37 @@ export function ClientesPage() {
   const { empresa, empresaId } = useApp();
   const toast = useToast();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [drawer, setDrawer] = useState<null | { edit?: Customer }>(null);
   const [confirm, setConfirm] = useState<null | { customer: Customer; action: 'toggle' | 'delete' }>(null);
-  const [busy, setBusy] = useState(false);
 
-  const list = useAsync<Customer[]>(() => api.listCustomers(empresaId, search));
-  const reload = () => {
-    if (empresaId) list.run();
-  };
   useEffect(() => {
-    if (!empresaId) return;
-    const t = setTimeout(reload, 250);
+    const t = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(t);
-  }, [empresaId, search]);
+  }, [search]);
 
+  const list = useCustomers(empresaId, debouncedSearch);
   const customers = list.data ?? [];
 
-  const onConfirm = async () => {
-    if (!confirm) return;
-    setBusy(true);
-    try {
-      const { customer, action } = confirm;
-      if (action === 'delete') {
-        await api.removeCustomer(customer.id);
-        toast.success('Cliente excluído.');
-      } else if (customer.active) {
-        await api.deactivateCustomer(customer.id);
-        toast.success('Cliente desativado.');
-      } else {
-        await api.activateCustomer(customer.id);
-        toast.success('Cliente ativado.');
-      }
+  const action = useCustomerAction({
+    onSuccess: (_data, vars) => {
+      toast.success(
+        vars.action === 'delete'
+          ? 'Cliente excluído.'
+          : vars.action === 'deactivate'
+            ? 'Cliente desativado.'
+            : 'Cliente ativado.',
+      );
       setConfirm(null);
-      reload();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const onConfirm = () => {
+    if (!confirm) return;
+    const { customer, action: act } = confirm;
+    const resolved = act === 'delete' ? 'delete' : customer.active ? 'deactivate' : 'activate';
+    action.mutate({ id: customer.id, action: resolved });
   };
 
   return (
@@ -96,13 +89,13 @@ export function ClientesPage() {
               </tr>
             </thead>
             <tbody>
-              {list.loading ? (
+              {list.isLoading ? (
                 <SkeletonRows rows={4} cols={6} />
               ) : list.error ? (
                 <tr>
                   <td colSpan={6} className='t-empty'>
-                    {list.error}{' '}
-                    <button className='backlink' onClick={reload}>
+                    {getErrorMessage(list.error)}{' '}
+                    <button className='backlink' onClick={() => void list.refetch()}>
                       Tentar de novo
                     </button>
                   </td>
@@ -167,10 +160,7 @@ export function ClientesPage() {
           <CustomerForm
             companyId={empresa.id}
             initial={drawer.edit}
-            onSaved={() => {
-              setDrawer(null);
-              reload();
-            }}
+            onSaved={() => setDrawer(null)}
             onCancel={() => setDrawer(null)}
           />
         )}
@@ -201,7 +191,7 @@ export function ClientesPage() {
             )
           }
           danger={confirm.action === 'delete'}
-          busy={busy}
+          busy={action.isPending}
           confirmLabel={confirm.action === 'delete' ? 'Excluir' : confirm.customer.active ? 'Desativar' : 'Ativar'}
           onConfirm={onConfirm}
           onCancel={() => setConfirm(null)}

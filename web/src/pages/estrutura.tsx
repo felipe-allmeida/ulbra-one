@@ -1,30 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil } from 'lucide-react';
-import { api, type Company, type Unit } from '../api';
+import { type Company, type Unit } from '../api';
 import { useApp } from '../store';
-import { Button, Input, PageHeader, Panel, useSave } from '../ui';
+import { useCreateCompany, useCreateUnit, useUnits, useUpdateCompany, useUpdateUnit } from '../queries';
+import { getErrorMessage } from '../apiError';
+import { Button, Input, PageHeader, Panel } from '../ui';
 import { EmpresaPicker } from './shared';
 
 export function EstruturaPage() {
   const { empresas, empresa, empresaId, refreshEmpresas } = useApp();
-  const [unidades, setUnidades] = useState<Unit[]>([]);
+  const unidades = useUnits(empresaId).data ?? [];
   const [empresaForm, setEmpresaForm] = useState<null | { edit?: Company }>(null);
   const [unidadeForm, setUnidadeForm] = useState<null | { edit?: Unit }>(null);
-
-  const refreshUnidades = () => {
-    if (empresaId)
-      api
-        .listUnits(empresaId)
-        .then(setUnidades)
-        .catch(() => {});
-  };
-  useEffect(() => {
-    if (!empresaId) {
-      setUnidades([]);
-      return;
-    }
-    refreshUnidades();
-  }, [empresaId]);
 
   return (
     <>
@@ -103,10 +90,7 @@ export function EstruturaPage() {
             empresa={empresa}
             initial={unidadeForm.edit}
             onClose={() => setUnidadeForm(null)}
-            onSaved={() => {
-              refreshUnidades();
-              setUnidadeForm(null);
-            }}
+            onSaved={() => setUnidadeForm(null)}
           />
         )}
         <table>
@@ -163,12 +147,15 @@ function InlineEmpresaForm({
 }) {
   const [razao, setRazao] = useState(initial?.legalName ?? '');
   const [cnpj, setCnpj] = useState(initial?.cnpj ?? '');
-  const { salvando, erro, run } = useSave(async () => {
-    const e = initial
-      ? await api.updateCompany(initial.id, razao.trim(), cnpj.trim())
-      : await api.createCompany(razao.trim(), cnpj.trim());
-    onSaved(e);
-  });
+  const create = useCreateCompany({ onSuccess: onSaved });
+  const update = useUpdateCompany({ onSuccess: onSaved });
+  const mutation = initial ? update : create;
+  const salvando = mutation.isPending;
+  const erro = mutation.error ? getErrorMessage(mutation.error) : null;
+  const run = () =>
+    initial
+      ? update.mutate({ id: initial.id, legalName: razao.trim(), cnpj: cnpj.trim() })
+      : create.mutate({ legalName: razao.trim(), cnpj: cnpj.trim() });
   return (
     <div className='inline-form'>
       <div className='grow'>
@@ -201,12 +188,15 @@ function InlineUnidadeForm({
 }) {
   const [nome, setNome] = useState(initial?.name ?? '');
   const [sigla, setSigla] = useState(initial?.acronym ?? '');
-  const { salvando, erro, run } = useSave(async () => {
+  const create = useCreateUnit({ onSuccess: onSaved });
+  const update = useUpdateUnit({ onSuccess: onSaved });
+  const mutation = initial ? update : create;
+  const salvando = mutation.isPending;
+  const erro = mutation.error ? getErrorMessage(mutation.error) : null;
+  const run = () =>
     initial
-      ? await api.updateUnit(initial.id, nome.trim(), sigla.trim())
-      : await api.createUnit(empresa.id, nome.trim(), sigla.trim());
-    onSaved();
-  });
+      ? update.mutate({ id: initial.id, name: nome.trim(), acronym: sigla.trim() })
+      : create.mutate({ companyId: empresa.id, name: nome.trim(), acronym: sigla.trim() });
   return (
     <div className='inline-form'>
       <div className='grow'>
