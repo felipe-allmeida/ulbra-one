@@ -19,6 +19,7 @@
     "checks": "pnpm format:check && pnpm lint && pnpm typecheck"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
     "i18next": "^26.3.1",
     "lucide-react": "^0.477.0",
     "react": "^19.0.0",
@@ -30,6 +31,7 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.0.9",
+    "@tanstack/react-query-devtools": "^5.101.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
