@@ -41,6 +41,7 @@ export interface TransactionsParams {
   status?: TransactionStatus;
   costCenterId?: string;
   page?: number;
+  pageSize?: number;
 }
 
 /* ===================== Queries ===================== */
