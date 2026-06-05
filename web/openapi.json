@@ -7,7 +7,9 @@
   "paths": {
     "/api/auth/google": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "operationId": "GoogleSignIn",
         "requestBody": {
           "content": {
@@ -50,6 +52,16 @@
               }
             }
           },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "501": {
             "description": "Not Implemented",
             "content": {
@@ -65,7 +77,9 @@
     },
     "/api/auth/dev-token": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "operationId": "DevToken",
         "requestBody": {
           "content": {
@@ -88,6 +102,16 @@
               }
             }
           },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found"
           }
@@ -96,7 +120,9 @@
     },
     "/api/auth/me": {
       "get": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "operationId": "Me",
         "responses": {
           "200": {
@@ -114,7 +140,9 @@
     },
     "/api/companies": {
       "get": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "ListCompanies",
         "responses": {
           "200": {
@@ -133,7 +161,9 @@
         }
       },
       "post": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "CreateCompany",
         "requestBody": {
           "content": {
@@ -161,7 +191,9 @@
     },
     "/api/companies/{id}": {
       "put": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "UpdateCompany",
         "parameters": [
           {
@@ -203,7 +235,9 @@
     },
     "/api/units": {
       "get": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "ListUnits",
         "parameters": [
           {
@@ -232,7 +266,9 @@
         }
       },
       "post": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "CreateUnit",
         "requestBody": {
           "content": {
@@ -270,7 +306,9 @@
     },
     "/api/units/{id}": {
       "put": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "UpdateUnit",
         "parameters": [
           {
@@ -312,7 +350,9 @@
     },
     "/api/cost-centers": {
       "get": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "ListCostCenters",
         "parameters": [
           {
@@ -341,7 +381,9 @@
         }
       },
       "post": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "CreateCostCenter",
         "requestBody": {
           "content": {
@@ -389,7 +431,9 @@
     },
     "/api/cost-centers/{id}": {
       "get": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "GetCostCenter",
         "parameters": [
           {
@@ -419,7 +463,9 @@
         }
       },
       "put": {
-        "tags": ["Core"],
+        "tags": [
+          "Core"
+        ],
         "operationId": "UpdateCostCenter",
         "parameters": [
           {
@@ -471,7 +517,9 @@
     },
     "/api/transactions": {
       "get": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "ListTransactions",
         "parameters": [
           {
@@ -503,6 +551,22 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -511,10 +575,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionResponse"
-                  }
+                  "$ref": "#/components/schemas/TransactionResponsePaginatedResponse"
                 }
               }
             }
@@ -522,7 +583,9 @@
         }
       },
       "post": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "CreateTransaction",
         "requestBody": {
           "content": {
@@ -560,7 +623,9 @@
     },
     "/api/transactions/{id}": {
       "get": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "GetTransaction",
         "parameters": [
           {
@@ -592,7 +657,9 @@
     },
     "/api/transactions/{id}/approve": {
       "post": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "ApproveTransaction",
         "parameters": [
           {
@@ -624,7 +691,9 @@
     },
     "/api/transactions/{id}/reject": {
       "post": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "RejectTransaction",
         "parameters": [
           {
@@ -666,7 +735,9 @@
     },
     "/api/transactions/{id}/pay": {
       "post": {
-        "tags": ["Finance"],
+        "tags": [
+          "Finance"
+        ],
         "operationId": "PayTransaction",
         "parameters": [
           {
@@ -708,7 +779,9 @@
     },
     "/api/vendors": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ListVendors",
         "parameters": [
           {
@@ -725,6 +798,22 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -733,10 +822,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VendorResponse"
-                  }
+                  "$ref": "#/components/schemas/VendorResponsePaginatedResponse"
                 }
               }
             }
@@ -744,7 +830,9 @@
         }
       },
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "CreateVendor",
         "requestBody": {
           "content": {
@@ -782,7 +870,9 @@
     },
     "/api/vendors/{id}": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "GetVendor",
         "parameters": [
           {
@@ -819,7 +909,9 @@
         }
       },
       "put": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "UpdateVendor",
         "parameters": [
           {
@@ -876,7 +968,9 @@
         }
       },
       "delete": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeleteVendor",
         "parameters": [
           {
@@ -908,7 +1002,9 @@
     },
     "/api/vendors/{id}/deactivate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeactivateVendor",
         "parameters": [
           {
@@ -947,7 +1043,9 @@
     },
     "/api/vendors/{id}/activate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ActivateVendor",
         "parameters": [
           {
@@ -986,7 +1084,9 @@
     },
     "/api/customers": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ListCustomers",
         "parameters": [
           {
@@ -1003,6 +1103,22 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -1011,10 +1127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CustomerResponse"
-                  }
+                  "$ref": "#/components/schemas/CustomerResponsePaginatedResponse"
                 }
               }
             }
@@ -1022,7 +1135,9 @@
         }
       },
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "CreateCustomer",
         "requestBody": {
           "content": {
@@ -1060,7 +1175,9 @@
     },
     "/api/customers/{id}": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "GetCustomer",
         "parameters": [
           {
@@ -1097,7 +1214,9 @@
         }
       },
       "put": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "UpdateCustomer",
         "parameters": [
           {
@@ -1154,7 +1273,9 @@
         }
       },
       "delete": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeleteCustomer",
         "parameters": [
           {
@@ -1186,7 +1307,9 @@
     },
     "/api/customers/{id}/deactivate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeactivateCustomer",
         "parameters": [
           {
@@ -1225,7 +1348,9 @@
     },
     "/api/customers/{id}/activate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ActivateCustomer",
         "parameters": [
           {
@@ -1264,7 +1389,9 @@
     },
     "/api/employees": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ListEmployees",
         "parameters": [
           {
@@ -1281,6 +1408,22 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -1289,10 +1432,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EmployeeResponse"
-                  }
+                  "$ref": "#/components/schemas/EmployeeResponsePaginatedResponse"
                 }
               }
             }
@@ -1300,7 +1440,9 @@
         }
       },
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "CreateEmployee",
         "requestBody": {
           "content": {
@@ -1338,7 +1480,9 @@
     },
     "/api/employees/{id}": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "GetEmployee",
         "parameters": [
           {
@@ -1375,7 +1519,9 @@
         }
       },
       "put": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "UpdateEmployee",
         "parameters": [
           {
@@ -1432,7 +1578,9 @@
         }
       },
       "delete": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeleteEmployee",
         "parameters": [
           {
@@ -1464,7 +1612,9 @@
     },
     "/api/employees/{id}/deactivate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "DeactivateEmployee",
         "parameters": [
           {
@@ -1503,7 +1653,9 @@
     },
     "/api/employees/{id}/activate": {
       "post": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "ActivateEmployee",
         "parameters": [
           {
@@ -1542,7 +1694,9 @@
     },
     "/api/lookup/cep/{cep}": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "LookupCep",
         "parameters": [
           {
@@ -1573,7 +1727,9 @@
     },
     "/api/lookup/cnpj/{cnpj}": {
       "get": {
-        "tags": ["Registry"],
+        "tags": [
+          "Registry"
+        ],
         "operationId": "LookupCnpj",
         "parameters": [
           {
@@ -1604,7 +1760,9 @@
     },
     "/api/ping": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "operationId": "Ping",
         "responses": {
           "200": {
@@ -1624,7 +1782,15 @@
   "components": {
     "schemas": {
       "AddressRequest": {
-        "required": ["cep", "street", "number", "complement", "neighborhood", "city", "state"],
+        "required": [
+          "cep",
+          "street",
+          "number",
+          "complement",
+          "neighborhood",
+          "city",
+          "state"
+        ],
         "type": "object",
         "properties": {
           "cep": {
@@ -1659,7 +1825,15 @@
         "additionalProperties": false
       },
       "AddressResponse": {
-        "required": ["cep", "street", "number", "complement", "neighborhood", "city", "state"],
+        "required": [
+          "cep",
+          "street",
+          "number",
+          "complement",
+          "neighborhood",
+          "city",
+          "state"
+        ],
         "type": "object",
         "properties": {
           "cep": {
@@ -1688,7 +1862,13 @@
         "additionalProperties": false
       },
       "CepResult": {
-        "required": ["cep", "street", "neighborhood", "city", "state"],
+        "required": [
+          "cep",
+          "street",
+          "neighborhood",
+          "city",
+          "state"
+        ],
         "type": "object",
         "properties": {
           "cep": {
@@ -1710,7 +1890,14 @@
         "additionalProperties": false
       },
       "CnpjAddress": {
-        "required": ["cep", "street", "number", "neighborhood", "city", "state"],
+        "required": [
+          "cep",
+          "street",
+          "number",
+          "neighborhood",
+          "city",
+          "state"
+        ],
         "type": "object",
         "properties": {
           "cep": {
@@ -1735,7 +1922,11 @@
         "additionalProperties": false
       },
       "CnpjResult": {
-        "required": ["razaoSocial", "nomeFantasia", "address"],
+        "required": [
+          "razaoSocial",
+          "nomeFantasia",
+          "address"
+        ],
         "type": "object",
         "properties": {
           "razaoSocial": {
@@ -1752,7 +1943,10 @@
         "additionalProperties": false
       },
       "CompanyRequest": {
-        "required": ["legalName", "cnpj"],
+        "required": [
+          "legalName",
+          "cnpj"
+        ],
         "type": "object",
         "properties": {
           "legalName": {
@@ -1765,7 +1959,12 @@
         "additionalProperties": false
       },
       "CompanyResponse": {
-        "required": ["id", "legalName", "cnpj", "active"],
+        "required": [
+          "id",
+          "legalName",
+          "cnpj",
+          "active"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -1785,7 +1984,16 @@
         "additionalProperties": false
       },
       "CostCenterResponse": {
-        "required": ["id", "companyId", "code", "name", "annualBudget", "autoApprovalLimit", "active", "unitIds"],
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "annualBudget",
+          "autoApprovalLimit",
+          "active",
+          "unitIds"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -1824,7 +2032,14 @@
         "additionalProperties": false
       },
       "CreateCostCenterRequest": {
-        "required": ["companyId", "code", "name", "annualBudget", "autoApprovalLimit", "unitIds"],
+        "required": [
+          "companyId",
+          "code",
+          "name",
+          "annualBudget",
+          "autoApprovalLimit",
+          "unitIds"
+        ],
         "type": "object",
         "properties": {
           "companyId": {
@@ -1856,7 +2071,16 @@
         "additionalProperties": false
       },
       "CreateTransactionRequest": {
-        "required": ["companyId", "unitId", "costCenterId", "type", "description", "counterparty", "amount", "dueDate"],
+        "required": [
+          "companyId",
+          "unitId",
+          "costCenterId",
+          "type",
+          "description",
+          "counterparty",
+          "amount",
+          "dueDate"
+        ],
         "type": "object",
         "properties": {
           "companyId": {
@@ -1892,7 +2116,11 @@
         "additionalProperties": false
       },
       "CreateUnitRequest": {
-        "required": ["companyId", "name", "acronym"],
+        "required": [
+          "companyId",
+          "name",
+          "acronym"
+        ],
         "type": "object",
         "properties": {
           "companyId": {
@@ -2017,8 +2245,46 @@
         },
         "additionalProperties": false
       },
+      "CustomerResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "DevTokenRequest": {
-        "required": ["email", "name"],
+        "required": [
+          "email",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "email": {
@@ -2151,8 +2417,45 @@
         },
         "additionalProperties": false
       },
+      "EmployeeResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "GoogleSignInRequest": {
-        "required": ["idToken"],
+        "required": [
+          "idToken"
+        ],
         "type": "object",
         "properties": {
           "idToken": {
@@ -2162,7 +2465,10 @@
         "additionalProperties": false
       },
       "LoginResponse": {
-        "required": ["token", "user"],
+        "required": [
+          "token",
+          "user"
+        ],
         "type": "object",
         "properties": {
           "token": {
@@ -2175,7 +2481,13 @@
         "additionalProperties": false
       },
       "MeResponse": {
-        "required": ["userId", "name", "email", "role", "isAdmin"],
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "role",
+          "isAdmin"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -2200,11 +2512,18 @@
         "additionalProperties": false
       },
       "PersonType": {
-        "enum": ["Individual", "Company"],
+        "enum": [
+          "Individual",
+          "Company"
+        ],
         "type": "string"
       },
       "PingResponse": {
-        "required": ["status", "service", "utc"],
+        "required": [
+          "status",
+          "service",
+          "utc"
+        ],
         "type": "object",
         "properties": {
           "status": {
@@ -2221,7 +2540,13 @@
         "additionalProperties": false
       },
       "ProblemDetails": {
-        "required": ["type", "title", "status", "detail", "instance"],
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -2249,7 +2574,9 @@
         "additionalProperties": {}
       },
       "RejectRequest": {
-        "required": ["reason"],
+        "required": [
+          "reason"
+        ],
         "type": "object",
         "properties": {
           "reason": {
@@ -2335,16 +2662,65 @@
         },
         "additionalProperties": false
       },
+      "TransactionResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "TransactionStatus": {
-        "enum": ["Pending", "Approved", "Paid", "Rejected"],
+        "enum": [
+          "Pending",
+          "Approved",
+          "Paid",
+          "Rejected"
+        ],
         "type": "string"
       },
       "TransactionType": {
-        "enum": ["Payable", "Receivable"],
+        "enum": [
+          "Payable",
+          "Receivable"
+        ],
         "type": "string"
       },
       "UnitResponse": {
-        "required": ["id", "companyId", "name", "acronym", "active"],
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "acronym",
+          "active"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2368,7 +2744,13 @@
         "additionalProperties": false
       },
       "UpdateCostCenterRequest": {
-        "required": ["code", "name", "annualBudget", "autoApprovalLimit", "unitIds"],
+        "required": [
+          "code",
+          "name",
+          "annualBudget",
+          "autoApprovalLimit",
+          "unitIds"
+        ],
         "type": "object",
         "properties": {
           "code": {
@@ -2396,7 +2778,10 @@
         "additionalProperties": false
       },
       "UpdateUnitRequest": {
-        "required": ["name", "acronym"],
+        "required": [
+          "name",
+          "acronym"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -2409,7 +2794,12 @@
         "additionalProperties": false
       },
       "UserSummary": {
-        "required": ["id", "email", "name", "role"],
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2541,6 +2931,41 @@
           },
           "active": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VendorResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

@@ -596,6 +596,17 @@ export interface components {
             creditLimit: number | null;
             active: boolean;
         };
+        CustomerResponsePaginatedResponse: {
+            items: components["schemas"]["CustomerResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         DevTokenRequest: {
             email: string | null;
             name: string | null;
@@ -634,6 +645,17 @@ export interface components {
             hireDate: string;
             address: components["schemas"]["AddressResponse"];
             active: boolean;
+        };
+        EmployeeResponsePaginatedResponse: {
+            items: components["schemas"]["EmployeeResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
         };
         GoogleSignInRequest: {
             idToken: string;
@@ -694,6 +716,17 @@ export interface components {
             approvedAt: string | null;
             /** Format: date-time */
             paidAt: string | null;
+        };
+        TransactionResponsePaginatedResponse: {
+            items: components["schemas"]["TransactionResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
         };
         /** @enum {string} */
         TransactionStatus: "Pending" | "Approved" | "Paid" | "Rejected";
@@ -757,6 +790,17 @@ export interface components {
             bankInfo: string | null;
             active: boolean;
         };
+        VendorResponsePaginatedResponse: {
+            items: components["schemas"]["VendorResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -806,6 +850,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Not Implemented */
             501: {
                 headers: {
@@ -845,6 +898,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
             };
         };
     };
@@ -1175,6 +1237,8 @@ export interface operations {
                 type?: components["schemas"]["TransactionType"];
                 status?: components["schemas"]["TransactionStatus"];
                 costCenterId?: string;
+                Page?: number;
+                PageSize?: number;
             };
             header?: never;
             path?: never;
@@ -1188,7 +1252,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TransactionResponse"][];
+                    "application/json": components["schemas"]["TransactionResponsePaginatedResponse"];
                 };
             };
         };
@@ -1360,6 +1424,8 @@ export interface operations {
             query?: {
                 companyId?: string;
                 search?: string;
+                Page?: number;
+                PageSize?: number;
             };
             header?: never;
             path?: never;
@@ -1373,7 +1439,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VendorResponse"][];
+                    "application/json": components["schemas"]["VendorResponsePaginatedResponse"];
                 };
             };
         };
@@ -1582,6 +1648,8 @@ export interface operations {
             query?: {
                 companyId?: string;
                 search?: string;
+                Page?: number;
+                PageSize?: number;
             };
             header?: never;
             path?: never;
@@ -1595,7 +1663,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CustomerResponse"][];
+                    "application/json": components["schemas"]["CustomerResponsePaginatedResponse"];
                 };
             };
         };
@@ -1804,6 +1872,8 @@ export interface operations {
             query?: {
                 companyId?: string;
                 search?: string;
+                Page?: number;
+                PageSize?: number;
             };
             header?: never;
             path?: never;
@@ -1817,7 +1887,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EmployeeResponse"][];
+                    "application/json": components["schemas"]["EmployeeResponsePaginatedResponse"];
                 };
             };
         };
