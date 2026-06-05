@@ -13,9 +13,9 @@ internal sealed class RequireAdminFilter : IEndpointFilter
         if (role != "Admin")
         {
             return TypedResults.Problem(
-                detail: "Acesso restrito a administradores.",
+                detail: "Admin access required.",
                 statusCode: StatusCodes.Status403Forbidden,
-                title: "Forbidden");
+                title: "Auth.AdminOnly");
         }
 
         return await next(context);

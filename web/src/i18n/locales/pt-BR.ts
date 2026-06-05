@@ -180,6 +180,7 @@ const ptBR = {
       'Auth.GoogleTokenInvalid': 'Token do Google inválido.',
       'Auth.EmailNotVerified': 'E-mail não verificado pelo Google.',
       'Auth.DomainNotAllowed': 'Domínio não autorizado.',
+      'Auth.AdminOnly': 'Acesso restrito a administradores.',
     },
     boundary: {
       title: 'Algo deu errado',
