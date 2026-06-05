@@ -152,7 +152,7 @@ function Shell({ children }: { children: ReactNode }) {
       {navOpen && <div className='sb-backdrop show' onClick={() => setNavOpen(false)} />}
       <aside className={`sidebar ${navOpen ? 'open' : ''}`}>
         <div className='user-header'>
-          <div className='user-avatar-big'>{me ? iniciais(me.name) : 'U1'}</div>
+          <div className='user-avatar-big'>{me ? iniciais(me.name ?? '') : 'U1'}</div>
           <div className='user-header-info'>
             <div className='user-header-name'>{me?.name ?? t('common.appName')}</div>
             <div className='user-header-role'>{me?.role ?? ''}</div>

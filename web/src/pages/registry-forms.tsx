@@ -216,7 +216,7 @@ export function VendorForm({
         setTradeName(r.nomeFantasia);
         autoFilled.add('tradeName');
       }
-      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address!).address);
+      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address).address);
       if (autoFilled.size) setNameAuto(autoFilled);
       toast.success('Dados preenchidos pelo CNPJ.');
     } catch {
@@ -369,7 +369,7 @@ export function CustomerForm({
         setTradeName(r.nomeFantasia);
         autoFilled.add('tradeName');
       }
-      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address!).address);
+      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address).address);
       if (autoFilled.size) setNameAuto(autoFilled);
       toast.success('Dados preenchidos pelo CNPJ.');
     } catch {

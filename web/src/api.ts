@@ -1,4 +1,8 @@
 import { apiErrorFromProblem } from './apiError';
+import type { components } from './api/schema';
+
+/** All generated OpenAPI component schemas. Source of truth for wire types. */
+type Schemas = components['schemas'];
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api';
 
@@ -48,135 +52,47 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-}
+// ---------- Wire types (aliases to generated OpenAPI schemas) ----------
+// Exported names are kept stable so pages/queries don't need to change.
+export type User = Schemas['UserSummary'];
+export type Company = Schemas['CompanyResponse'];
+export type Unit = Schemas['UnitResponse'];
+export type Transaction = Schemas['TransactionResponse'];
+export type CostCenter = Schemas['CostCenterResponse'];
+export type Address = Schemas['AddressResponse'];
 
-export interface Company {
-  id: string;
-  legalName: string;
-  cnpj: string;
-  active: boolean;
-}
+// The DTOs declare `AddressResponse? Address` (nullable), but Swashbuckle can't express the nullability
+// of a nested complex member, so it emits `address` as non-null. Restore the honest `Address | null`.
+type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
+export type Vendor = WithNullableAddress<Schemas['VendorResponse']>;
+export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
+export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
-export interface Unit {
-  id: string;
-  companyId: string;
-  name: string;
-  acronym: string;
-  active: boolean;
-}
+// Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
+export type TransactionType = Schemas['TransactionType'];
+export type TransactionStatus = Schemas['TransactionStatus'];
 
-export type TransactionType = 'Payable' | 'Receivable';
-export type TransactionStatus = 'Pending' | 'Approved' | 'Paid' | 'Rejected';
+/**
+ * Person type. Wire format is the string union <c>'Individual' | 'Company'</c>.
+ * Exposed as a type AND a value object so existing call sites (`PersonType.Company`,
+ * `useState<PersonType>`, equality checks) keep working without churn.
+ */
+export type PersonType = Schemas['PersonType'];
+export const PersonType = {
+  Individual: 'Individual',
+  Company: 'Company',
+} as const satisfies Record<string, PersonType>;
 
-export interface Transaction {
-  id: string;
-  companyId: string;
-  unitId: string;
-  costCenterId: string;
-  type: TransactionType;
-  description: string;
-  counterparty: string;
-  amount: number;
-  dueDate: string;
-  status: TransactionStatus;
-  rejectionReason: string | null;
-  createdAt: string;
-  approvedAt: string | null;
-  paidAt: string | null;
-}
-
-export interface CostCenter {
-  id: string;
-  companyId: string;
-  code: string;
-  name: string;
-  annualBudget: number;
-  autoApprovalLimit: number;
-  active: boolean;
-  unitIds: string[];
-}
-
-/** 0 = Individual (PF), 1 = Company (PJ). */
-export enum PersonType {
-  Individual = 0,
-  Company = 1,
-}
-
-export interface Address {
-  cep: string;
-  street: string;
-  number: string;
-  complement: string | null;
-  neighborhood: string;
-  city: string;
-  state: string;
-}
-
-export interface Vendor {
-  id: string;
-  companyId: string;
-  personType: PersonType;
-  name: string;
-  tradeName: string | null;
-  document: string;
-  email: string | null;
-  phone: string | null;
-  address: Address | null;
-  paymentTerms: string | null;
-  bankInfo: string | null;
-  active: boolean;
-}
-
-export interface Customer {
-  id: string;
-  companyId: string;
-  personType: PersonType;
-  name: string;
-  tradeName: string | null;
-  document: string;
-  email: string | null;
-  phone: string | null;
-  address: Address | null;
-  creditLimit: number | null;
-  active: boolean;
-}
-
-export interface Employee {
-  id: string;
-  companyId: string;
-  name: string;
-  document: string;
-  email: string | null;
-  phone: string | null;
-  role: string;
-  unitId: string;
-  costCenterId: string | null;
-  hireDate: string;
-  address: Address | null;
-  active: boolean;
-}
-
+// Request bodies for the registry create/update methods. Derived from the response shapes (minus
+// server-owned fields) rather than the generated *Request schemas: Swashbuckle can't reliably express
+// the nullability of nested record members (e.g. `AddressRequest? Address`), so the generated request
+// types would force a non-null address. These Omit-derived types match what the forms actually send.
 export type VendorInput = Omit<Vendor, 'id' | 'active'>;
 export type CustomerInput = Omit<Customer, 'id' | 'active'>;
 export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
 
-export interface CepLookup {
-  cep: string;
-  street: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-}
-export interface CnpjLookup {
-  razaoSocial: string;
-  nomeFantasia: string | null;
-  address: { cep: string; street: string; number: string; neighborhood: string; city: string; state: string } | null;
-}
+export type CepLookup = Schemas['CepResult'];
+export type CnpjLookup = Schemas['CnpjResult'];
 
 /** Builds list-query string shared by registry resources. */
 function registryQuery(companyId: string, search?: string) {
@@ -187,11 +103,11 @@ function registryQuery(companyId: string, search?: string) {
 
 export const api = {
   devLogin: (email: string, name: string) =>
-    request<{ token: string; user: User }>('/auth/dev-token', {
+    request<Schemas['LoginResponse']>('/auth/dev-token', {
       method: 'POST',
       body: JSON.stringify({ email, name }),
     }),
-  me: () => request<{ userId: string; name: string; email: string; role: string; isAdmin: boolean }>('/auth/me'),
+  me: () => request<Schemas['MeResponse']>('/auth/me'),
 
   listCompanies: () => request<Company[]>('/companies'),
   createCompany: (legalName: string, cnpj: string) =>
