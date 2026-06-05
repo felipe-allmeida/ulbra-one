@@ -26,6 +26,8 @@ Run from `web/` (pnpm):
 | `pnpm typecheck`    | `tsc --noEmit`                                          |
 | `pnpm test`         | Vitest (run once)                                       |
 | `pnpm test:watch`   | Vitest watch mode                                       |
+| `pnpm test:e2e`     | Playwright smoke E2E (needs running stack — see below)  |
+| `pnpm test:e2e:ui`  | Playwright E2E in interactive UI mode                   |
 | `pnpm lint`         | ESLint                                                  |
 | `pnpm lint:fix`     | ESLint with `--fix`                                     |
 | `pnpm format`       | Prettier `--write` across `web/`                        |
@@ -109,3 +111,39 @@ git config core.hooksPath web/.husky
 ```
 
 CI is the authoritative safety net regardless of the local hook.
+
+## E2E (Playwright)
+
+A single resilient **smoke** flow in `web/e2e/smoke.spec.ts` (landing → "Entrar"
+→ `/login` → dev-login → `/app/inicio` → Fornecedores list renders), plus a
+logged-out redirect check. It's a regression net for routing / auth / render
+breakage — it intentionally does **not** assert on specific business data.
+
+Run it **locally against the running dev stack**:
+
+```bash
+# 1. Bring up the backend (.NET API + postgres + seed) — E2E does NOT start it.
+docker compose up -d            # or: dotnet run --project src/API/Ulbra.One.Api
+curl -s http://localhost:5001/api/ping        # sanity check
+
+# 2. Run the smoke (Playwright starts/reuses a Vite dev server on :5173).
+cd web
+pnpm exec playwright install chromium         # first time only
+pnpm test:e2e
+```
+
+Notes:
+
+- **CORS**: the API (dev) only allows origin `http://localhost:5173`, so the
+  Vite server used by E2E must run on **5173**. The config defaults to that.
+  If 5173 is taken by another (e.g. the `ulbra-one-web` Docker container from
+  `docker compose`), stop that container — running the local dev server on a
+  different port (`E2E_PORT=…`) will fail CORS against the API.
+- `playwright.config.ts` `webServer` reuses an already-running dev server or
+  starts `pnpm dev --port 5173 --strictPort`. `E2E_BASE_URL` / `E2E_PORT`
+  override the target.
+- Playwright specs live in `e2e/` (own `tsconfig.json`); Vitest excludes
+  `e2e/**` so the two runners never collide.
+- **CI**: a full-stack E2E job (spin up postgres + API + seed) is heavy and is a
+  **future follow-up** — it is intentionally NOT wired into
+  `.github/workflows/web-ci.yml`. E2E is run locally for now.
