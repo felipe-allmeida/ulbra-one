@@ -108,6 +108,7 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
+    await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
