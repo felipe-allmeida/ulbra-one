@@ -27,7 +27,7 @@ public sealed class UnitsEndpoint : IEndpoint
         group.MapPost("/", async (CreateUnitRequest req, CoreContext db, CancellationToken ct) =>
         {
             if (!await db.Companies.AnyAsync(e => e.Id == req.CompanyId, ct))
-                return Results.Problem($"Empresa {req.CompanyId} não encontrada.", statusCode: StatusCodes.Status404NotFound);
+                return Results.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
 
             var unit = new Unit(req.CompanyId, req.Name, req.Acronym);
             db.Units.Add(unit);

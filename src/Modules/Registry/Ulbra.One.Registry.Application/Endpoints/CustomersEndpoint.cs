@@ -32,7 +32,7 @@ public sealed class CustomersEndpoint : IEndpoint
         {
             var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
             return (customer is null
-                ? Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Cliente não encontrado."))
+                ? Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Customer not found."))
                 : Result.Success(customer)).ToOk();
         }).WithName("GetCustomer");
 
@@ -49,7 +49,7 @@ public sealed class CustomersEndpoint : IEndpoint
         {
             var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
             if (customer is null)
-                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Cliente não encontrado.")).ToOk();
+                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
             customer.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,
                 req.Address.ToAddress(), req.CreditLimit);
             await db.SaveChangesAsync(ct);
@@ -60,7 +60,7 @@ public sealed class CustomersEndpoint : IEndpoint
         {
             var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
             if (customer is null)
-                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Cliente não encontrado.")).ToOk();
+                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
             customer.Deactivate();
             await db.SaveChangesAsync(ct);
             return Result.Success(customer).ToOk();
@@ -70,7 +70,7 @@ public sealed class CustomersEndpoint : IEndpoint
         {
             var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
             if (customer is null)
-                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Cliente não encontrado.")).ToOk();
+                return Result.Failure<CustomerEntity>(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
             customer.Activate();
             await db.SaveChangesAsync(ct);
             return Result.Success(customer).ToOk();
@@ -80,7 +80,7 @@ public sealed class CustomersEndpoint : IEndpoint
         {
             var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
             if (customer is null)
-                return Result.Failure(Error.NotFound("Customer.NotFound", "Cliente não encontrado.")).ToOk();
+                return Result.Failure(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
             customer.MarkDeleted(timeProvider.GetUtcNow());
             await db.SaveChangesAsync(ct);
             return Result.Success().ToOk();

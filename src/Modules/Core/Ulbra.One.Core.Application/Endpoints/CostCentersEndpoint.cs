@@ -47,11 +47,11 @@ public sealed class CostCentersEndpoint : IEndpoint
         group.MapPost("/", async (CreateCostCenterRequest req, CoreContext db, CancellationToken ct) =>
         {
             if (!await db.Companies.AnyAsync(e => e.Id == req.CompanyId, ct))
-                return Results.Problem($"Empresa {req.CompanyId} não encontrada.", statusCode: StatusCodes.Status404NotFound);
+                return Results.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
 
             var unitIds = (req.UnitIds ?? []).Distinct().ToArray();
             if (!await UnitsValid(db, req.CompanyId, unitIds, ct))
-                return Results.Problem("Uma ou mais unidades não pertencem a esta empresa.", statusCode: StatusCodes.Status400BadRequest);
+                return Results.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
 
             var costCenter = new CostCenter(req.CompanyId, req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
             db.CostCenters.Add(costCenter);
@@ -69,7 +69,7 @@ public sealed class CostCentersEndpoint : IEndpoint
 
             var unitIds = (req.UnitIds ?? []).Distinct().ToArray();
             if (!await UnitsValid(db, costCenter.CompanyId, unitIds, ct))
-                return Results.Problem("Uma ou mais unidades não pertencem a esta empresa.", statusCode: StatusCodes.Status400BadRequest);
+                return Results.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
 
             costCenter.Update(req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
 

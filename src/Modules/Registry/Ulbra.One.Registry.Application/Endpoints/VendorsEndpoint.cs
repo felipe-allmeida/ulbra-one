@@ -32,7 +32,7 @@ public sealed class VendorsEndpoint : IEndpoint
         {
             var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
             return (vendor is null
-                ? Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Fornecedor não encontrado."))
+                ? Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Vendor not found."))
                 : Result.Success(vendor)).ToOk();
         }).WithName("GetVendor");
 
@@ -49,7 +49,7 @@ public sealed class VendorsEndpoint : IEndpoint
         {
             var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
             if (vendor is null)
-                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Fornecedor não encontrado.")).ToOk();
+                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
             vendor.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,
                 req.Address.ToAddress(), req.PaymentTerms, req.BankInfo);
             await db.SaveChangesAsync(ct);
@@ -60,7 +60,7 @@ public sealed class VendorsEndpoint : IEndpoint
         {
             var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
             if (vendor is null)
-                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Fornecedor não encontrado.")).ToOk();
+                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
             vendor.Deactivate();
             await db.SaveChangesAsync(ct);
             return Result.Success(vendor).ToOk();
@@ -70,7 +70,7 @@ public sealed class VendorsEndpoint : IEndpoint
         {
             var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
             if (vendor is null)
-                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Fornecedor não encontrado.")).ToOk();
+                return Result.Failure<VendorEntity>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
             vendor.Activate();
             await db.SaveChangesAsync(ct);
             return Result.Success(vendor).ToOk();
@@ -80,7 +80,7 @@ public sealed class VendorsEndpoint : IEndpoint
         {
             var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
             if (vendor is null)
-                return Result.Failure(Error.NotFound("Vendor.NotFound", "Fornecedor não encontrado.")).ToOk();
+                return Result.Failure(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
             vendor.MarkDeleted(timeProvider.GetUtcNow());
             await db.SaveChangesAsync(ct);
             return Result.Success().ToOk();

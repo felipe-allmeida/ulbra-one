@@ -38,7 +38,7 @@ public sealed class AuthEndpoint : IEndpoint
     {
         var opt = options.Value;
         if (string.IsNullOrWhiteSpace(opt.ClientId))
-            return Results.Problem("Google ClientId não configurado.", statusCode: StatusCodes.Status501NotImplemented);
+            return Results.Problem(detail: "Google ClientId is not configured.", statusCode: StatusCodes.Status501NotImplemented, title: "Auth.GoogleNotConfigured");
 
         GoogleTokenPayload payload;
         try
@@ -47,11 +47,11 @@ public sealed class AuthEndpoint : IEndpoint
         }
         catch (Exception)
         {
-            return Results.Problem("Token Google inválido.", statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Problem(detail: "Invalid Google token.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.GoogleTokenInvalid");
         }
 
         if (!payload.EmailVerified)
-            return Results.Problem("E-mail não verificado pelo Google.", statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Problem(detail: "Email not verified by Google.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.EmailNotVerified");
 
         var email = payload.Email.ToLowerInvariant();
 
@@ -59,7 +59,7 @@ public sealed class AuthEndpoint : IEndpoint
         {
             var domain = email.Contains('@') ? email[(email.IndexOf('@') + 1)..] : string.Empty;
             if (!opt.AllowedDomains.Contains(domain, StringComparer.OrdinalIgnoreCase))
-                return Results.Problem($"Domínio '{domain}' não autorizado.", statusCode: StatusCodes.Status403Forbidden);
+                return Results.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
         }
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);

@@ -38,12 +38,12 @@ public sealed class TransactionsEndpoint : IEndpoint
         group.MapPost("/", async (CreateTransactionRequest req, FinanceContext db, CoreContext core, CancellationToken ct) =>
         {
             var cc = await core.CostCenters.FirstOrDefaultAsync(c => c.Id == req.CostCenterId && c.CompanyId == req.CompanyId, ct);
-            if (cc is null) return Results.Problem("Centro de custo inválido para esta empresa.", statusCode: StatusCodes.Status400BadRequest);
+            if (cc is null) return Results.Problem(detail: "Cost center is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.CostCenterInvalid");
 
             var unitOk = await core.Units.AnyAsync(u => u.Id == req.UnitId && u.CompanyId == req.CompanyId, ct);
-            if (!unitOk) return Results.Problem("Unidade inválida para esta empresa.", statusCode: StatusCodes.Status400BadRequest);
+            if (!unitOk) return Results.Problem(detail: "Unit is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.UnitInvalid");
 
-            if (req.Amount <= 0) return Results.Problem("Valor deve ser maior que zero.", statusCode: StatusCodes.Status400BadRequest);
+            if (req.Amount <= 0) return Results.Problem(detail: "Amount must be greater than zero.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.AmountInvalid");
 
             var t = new Transaction(req.CompanyId, req.UnitId, req.CostCenterId, req.Type,
                 req.Description, req.Counterparty, req.Amount, req.DueDate);

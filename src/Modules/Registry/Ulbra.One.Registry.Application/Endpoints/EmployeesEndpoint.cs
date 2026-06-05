@@ -32,7 +32,7 @@ public sealed class EmployeesEndpoint : IEndpoint
         {
             var employee = await db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
             return (employee is null
-                ? Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Colaborador não encontrado."))
+                ? Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Employee not found."))
                 : Result.Success(employee)).ToOk();
         }).WithName("GetEmployee");
 
@@ -49,7 +49,7 @@ public sealed class EmployeesEndpoint : IEndpoint
         {
             var employee = await db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
             if (employee is null)
-                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Colaborador não encontrado.")).ToOk();
+                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Employee not found.")).ToOk();
             employee.Update(req.Name, req.Document, req.Email, req.Phone, req.Role,
                 req.UnitId, req.CostCenterId, req.HireDate, req.Address.ToAddress());
             await db.SaveChangesAsync(ct);
@@ -60,7 +60,7 @@ public sealed class EmployeesEndpoint : IEndpoint
         {
             var employee = await db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
             if (employee is null)
-                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Colaborador não encontrado.")).ToOk();
+                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Employee not found.")).ToOk();
             employee.Deactivate();
             await db.SaveChangesAsync(ct);
             return Result.Success(employee).ToOk();
@@ -70,7 +70,7 @@ public sealed class EmployeesEndpoint : IEndpoint
         {
             var employee = await db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
             if (employee is null)
-                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Colaborador não encontrado.")).ToOk();
+                return Result.Failure<EmployeeEntity>(Error.NotFound("Employee.NotFound", "Employee not found.")).ToOk();
             employee.Activate();
             await db.SaveChangesAsync(ct);
             return Result.Success(employee).ToOk();
@@ -80,7 +80,7 @@ public sealed class EmployeesEndpoint : IEndpoint
         {
             var employee = await db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
             if (employee is null)
-                return Result.Failure(Error.NotFound("Employee.NotFound", "Colaborador não encontrado.")).ToOk();
+                return Result.Failure(Error.NotFound("Employee.NotFound", "Employee not found.")).ToOk();
             employee.MarkDeleted(timeProvider.GetUtcNow());
             await db.SaveChangesAsync(ct);
             return Result.Success().ToOk();

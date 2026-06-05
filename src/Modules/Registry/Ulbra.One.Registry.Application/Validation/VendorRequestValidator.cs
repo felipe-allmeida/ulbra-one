@@ -15,6 +15,6 @@ public sealed class VendorRequestValidator : AbstractValidator<VendorRequest>
             .Must((req, doc) => req.PersonType == PersonType.Company
                 ? DocumentValidator.IsValidCnpj(doc)
                 : DocumentValidator.IsValidCpf(doc))
-            .WithMessage("Documento (CPF/CNPJ) inválido.");
+            .WithMessage("Invalid document (CPF/CNPJ).").WithErrorCode("Document.Invalid");
     }
 }
