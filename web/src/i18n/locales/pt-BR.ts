@@ -125,6 +125,44 @@ const ptBR = {
     backToSite: 'Voltar para o site',
   },
 
+  forms: {
+    autoHint: 'auto',
+    autoFromCnpj: 'Dados preenchidos pelo CNPJ.',
+    autoFromCep: 'Endereço preenchido pelo CEP.',
+    cnpjNotFound: 'CNPJ não encontrado. Preencha os dados manualmente.',
+    cepNotFound: 'CEP não encontrado. Preencha o endereço manualmente.',
+    docAutoHelp: 'Dados podem ser preenchidos automaticamente.',
+    actions: {
+      cancel: 'Cancelar',
+      create: 'Criar',
+      save: 'Salvar',
+      add: 'Adicionar',
+      saving: 'Salvando…',
+      launch: 'Lançar',
+    },
+  },
+
+  validation: {
+    required: 'Campo obrigatório.',
+    nameRequired: 'Informe o nome.',
+    roleRequired: 'Informe o cargo.',
+    unitRequired: 'Selecione a unidade.',
+    hireDateRequired: 'Informe a data de admissão.',
+    documentRequired: 'Informe o documento.',
+    cpfInvalid: 'CPF inválido.',
+    cnpjInvalid: 'CNPJ inválido.',
+    emailInvalid: 'E-mail inválido.',
+    amountPositive: 'O valor deve ser maior que zero.',
+    nonNegative: 'O valor não pode ser negativo.',
+    codeRequired: 'Informe o código.',
+    cnpjRequired: 'Informe o CNPJ.',
+    acronymRequired: 'Informe a sigla.',
+    dueDateRequired: 'Informe o vencimento.',
+    typeRequired: 'Selecione o tipo.',
+    costCenterRequired: 'Selecione o centro de custo.',
+    descriptionRequired: 'Informe a descrição.',
+  },
+
   errors: {
     generic: 'Algo deu errado. Tente novamente em instantes.',
     codes: {

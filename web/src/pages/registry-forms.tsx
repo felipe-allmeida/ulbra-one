@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
+import { useForm, Controller, type Control, type UseFormSetValue } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import {
   api,
   PersonType,
@@ -12,12 +14,23 @@ import {
 } from '../api';
 import { Button, Field, Input, MaskedInput, Select } from '../ui';
 import { useToast } from '../toast';
-import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone, isValidCpf, isValidCnpj } from '../format';
-import { getErrorMessage } from '../apiError';
+import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone } from '../format';
+import { getErrorMessage, ApiError } from '../apiError';
 import { useSaveCustomer, useSaveEmployee, useSaveVendor } from '../queries';
+import {
+  vendorSchema,
+  customerSchema,
+  employeeSchema,
+  resolver,
+  fieldError,
+  type VendorValues,
+  type CustomerValues,
+  type EmployeeValues,
+  type AddressValues,
+} from './schemas';
 
 /* ---------- shared local state for an editable address ---------- */
-const emptyAddress: Address = {
+const emptyAddress: AddressValues = {
   cep: '',
   street: '',
   number: '',
@@ -27,25 +40,25 @@ const emptyAddress: Address = {
   state: '',
 };
 
-function fromAddress(a: Address | null): Address {
+function fromAddress(a: Address | null): AddressValues {
   return a ? { ...a, complement: a.complement ?? '' } : { ...emptyAddress };
 }
 /** Returns null if the address is entirely blank (so we don't persist empty objects). */
-function toAddress(a: Address): Address | null {
+function toAddress(a: AddressValues): Address | null {
   const filled = a.cep || a.street || a.number || a.neighborhood || a.city || a.state;
   if (!filled) return null;
-  return { ...a, complement: a.complement?.trim() ? a.complement.trim() : null };
+  return { ...a, complement: a.complement.trim() ? a.complement.trim() : null };
 }
 
 /** Fills only the address fields that are currently blank from a lookup result — never clobbers
  *  data the user already typed (important in edit mode). Returns the merged address + filled keys. */
 function mergeAddressEmpty(
-  current: Address,
+  current: AddressValues,
   incoming: Partial<Address>,
-): { address: Address; filled: (keyof Address)[] } {
+): { address: AddressValues; filled: (keyof AddressValues)[] } {
   const out = { ...current };
-  const filled: (keyof Address)[] = [];
-  (['cep', 'street', 'number', 'neighborhood', 'city', 'state'] as (keyof Address)[]).forEach((k) => {
+  const filled: (keyof AddressValues)[] = [];
+  (['cep', 'street', 'number', 'neighborhood', 'city', 'state'] as (keyof AddressValues)[]).forEach((k) => {
     const cur = (current[k] ?? '').toString();
     const inc = (incoming[k] ?? '').toString();
     if (!cur.trim() && inc) {
@@ -56,40 +69,81 @@ function mergeAddressEmpty(
   return { address: out, filled };
 }
 
-const AutoHint = () => (
-  <span className='auto-hint'>
-    <Sparkles /> auto
-  </span>
-);
+function AutoHint() {
+  const { t } = useTranslation();
+  return (
+    <span className='auto-hint'>
+      <Sparkles /> {t('forms.autoHint')}
+    </span>
+  );
+}
 
-/** Address sub-form with CEP auto-fill. `auto` marks which fields were just auto-filled. */
-function AddressFields({ address, setAddress }: { address: Address; setAddress: (a: Address) => void }) {
+/** Maps server-side field errors (ApiError.errors) back into the form via setError.
+ *  Field keys are matched case-insensitively against the form's known fields. */
+function applyServerErrors<T extends Record<string, unknown>>(
+  err: unknown,
+  fields: readonly (keyof T)[],
+  setError: (name: keyof T, error: { type: string; message: string }) => void,
+): boolean {
+  if (!(err instanceof ApiError) || !err.errors) return false;
+  let applied = false;
+  for (const [key, messages] of Object.entries(err.errors)) {
+    const match = fields.find((f) => String(f).toLowerCase() === key.toLowerCase());
+    if (match && messages.length > 0) {
+      setError(match, { type: 'server', message: messages.join(' ') });
+      applied = true;
+    }
+  }
+  return applied;
+}
+
+/** Inline error line under a field. */
+function ErrMsg({ message }: { message?: string }) {
+  const text = fieldError(message);
+  return text ? <div className='field-err'>{text}</div> : null;
+}
+
+/* ---------- Address sub-form with CEP auto-fill ---------- */
+function AddressFields<T extends { address: AddressValues }>({
+  control,
+  setValue,
+  getAddress,
+}: {
+  control: Control<T>;
+  setValue: UseFormSetValue<T>;
+  getAddress: () => AddressValues;
+}) {
   const toast = useToast();
-  const [auto, setAuto] = useState<Set<keyof Address>>(new Set());
-  const set = (patch: Partial<Address>) => setAddress({ ...address, ...patch });
+  const { t } = useTranslation();
+  const [auto, setAuto] = useState<Set<keyof AddressValues>>(new Set());
+
+  // `address` is a known key on T (constrained above); the generic plumbing needs a cast.
+  const setAddr = (a: AddressValues) =>
+    setValue('address' as never, a as never, { shouldValidate: true, shouldDirty: true });
 
   const onCepBlur = async () => {
-    const cep = onlyDigits(address.cep);
+    const current = getAddress();
+    const cep = onlyDigits(current.cep);
     if (cep.length !== 8) return;
     try {
       const r = await api.lookupCep(cep);
-      const { address: merged, filled } = mergeAddressEmpty(address, {
+      const { address: merged, filled } = mergeAddressEmpty(current, {
         street: r.street,
         neighborhood: r.neighborhood,
         city: r.city,
         state: r.state,
       });
       if (filled.length === 0) return; // nothing blank to fill — don't overwrite the user's data
-      setAddress(merged);
+      setAddr(merged);
       setAuto(new Set(filled));
-      toast.success('Endereço preenchido pelo CEP.');
+      toast.success(t('forms.autoFromCep'));
     } catch {
-      toast.error('CEP não encontrado. Preencha o endereço manualmente.');
+      toast.error(t('forms.cepNotFound'));
     }
   };
 
-  const cls = (k: keyof Address) => (auto.has(k) ? 'input-auto' : undefined);
-  const clearAuto = (k: keyof Address) => {
+  const cls = (k: keyof AddressValues) => (auto.has(k) ? 'input-auto' : undefined);
+  const clearAuto = (k: keyof AddressValues) => {
     if (auto.has(k)) {
       const n = new Set(auto);
       n.delete(k);
@@ -97,68 +151,61 @@ function AddressFields({ address, setAddress }: { address: Address; setAddress: 
     }
   };
 
+  // Controlled text input bound to a single address field.
+  const addrField = (k: keyof AddressValues, extra?: { maxLength?: number; upper?: boolean }) => (
+    <Controller
+      control={control}
+      name={'address' as never}
+      render={({ field }) => {
+        const value = field.value as AddressValues;
+        return (
+          <Input
+            className={cls(k)}
+            maxLength={extra?.maxLength}
+            value={value[k] ?? ''}
+            onChange={(e) => {
+              clearAuto(k);
+              const v = extra?.upper ? e.target.value.toUpperCase() : e.target.value;
+              field.onChange({ ...value, [k]: v });
+            }}
+          />
+        );
+      }}
+    />
+  );
+
   return (
     <>
       <div className='form-section'>Endereço</div>
       <div className='form-grid'>
         <Field label='CEP'>
-          <MaskedInput
-            value={address.cep}
-            mask={maskCep}
-            onValueChange={(v) => set({ cep: v })}
-            onBlur={onCepBlur}
-            placeholder='00000-000'
-            inputMode='numeric'
+          <Controller
+            control={control}
+            name={'address' as never}
+            render={({ field }) => {
+              const value = field.value as AddressValues;
+              return (
+                <MaskedInput
+                  value={value.cep}
+                  mask={maskCep}
+                  onValueChange={(v) => field.onChange({ ...value, cep: v })}
+                  onBlur={() => void onCepBlur()}
+                  placeholder='00000-000'
+                  inputMode='numeric'
+                />
+              );
+            }}
           />
         </Field>
-        <Field label='Número'>
-          <Input value={address.number} onChange={(e) => set({ number: e.target.value })} />
-        </Field>
+        <Field label='Número'>{addrField('number')}</Field>
         <div className='span-2'>
-          <Field label={<>Logradouro {auto.has('street') && <AutoHint />}</>}>
-            <Input
-              className={cls('street')}
-              value={address.street}
-              onChange={(e) => {
-                clearAuto('street');
-                set({ street: e.target.value });
-              }}
-            />
-          </Field>
+          <Field label={<>Logradouro {auto.has('street') && <AutoHint />}</>}>{addrField('street')}</Field>
         </div>
-        <Field label='Complemento'>
-          <Input value={address.complement ?? ''} onChange={(e) => set({ complement: e.target.value })} />
-        </Field>
-        <Field label={<>Bairro {auto.has('neighborhood') && <AutoHint />}</>}>
-          <Input
-            className={cls('neighborhood')}
-            value={address.neighborhood}
-            onChange={(e) => {
-              clearAuto('neighborhood');
-              set({ neighborhood: e.target.value });
-            }}
-          />
-        </Field>
-        <Field label={<>Cidade {auto.has('city') && <AutoHint />}</>}>
-          <Input
-            className={cls('city')}
-            value={address.city}
-            onChange={(e) => {
-              clearAuto('city');
-              set({ city: e.target.value });
-            }}
-          />
-        </Field>
+        <Field label='Complemento'>{addrField('complement')}</Field>
+        <Field label={<>Bairro {auto.has('neighborhood') && <AutoHint />}</>}>{addrField('neighborhood')}</Field>
+        <Field label={<>Cidade {auto.has('city') && <AutoHint />}</>}>{addrField('city')}</Field>
         <Field label={<>UF {auto.has('state') && <AutoHint />}</>}>
-          <Input
-            className={cls('state')}
-            maxLength={2}
-            value={address.state}
-            onChange={(e) => {
-              clearAuto('state');
-              set({ state: e.target.value.toUpperCase() });
-            }}
-          />
+          {addrField('state', { maxLength: 2, upper: true })}
         </Field>
       </div>
     </>
@@ -166,6 +213,17 @@ function AddressFields({ address, setAddress }: { address: Address; setAddress: 
 }
 
 /* ============================ VENDOR ============================ */
+const VENDOR_FIELDS = [
+  'personType',
+  'name',
+  'tradeName',
+  'document',
+  'email',
+  'phone',
+  'paymentTerms',
+  'bankInfo',
+] as const;
+
 export function VendorForm({
   companyId,
   initial,
@@ -178,87 +236,108 @@ export function VendorForm({
   onCancel: () => void;
 }) {
   const toast = useToast();
-  const [personType, setPersonType] = useState<PersonType>(initial?.personType ?? PersonType.Company);
-  const [name, setName] = useState(initial?.name ?? '');
-  const [tradeName, setTradeName] = useState(initial?.tradeName ?? '');
-  const [document, setDocument] = useState(initial?.document ?? '');
-  const [email, setEmail] = useState(initial?.email ?? '');
-  const [phone, setPhone] = useState(initial?.phone ?? '');
-  const [paymentTerms, setPaymentTerms] = useState(initial?.paymentTerms ?? '');
-  const [bankInfo, setBankInfo] = useState(initial?.bankInfo ?? '');
-  const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
+  const { t } = useTranslation();
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
+
+  const form = useForm<VendorValues>({
+    resolver: resolver(vendorSchema),
+    mode: 'onChange',
+    defaultValues: {
+      personType: initial?.personType ?? PersonType.Company,
+      name: initial?.name ?? '',
+      tradeName: initial?.tradeName ?? '',
+      document: initial?.document ?? '',
+      email: initial?.email ?? '',
+      phone: initial?.phone ?? '',
+      paymentTerms: initial?.paymentTerms ?? '',
+      bankInfo: initial?.bankInfo ?? '',
+      address: fromAddress(initial?.address ?? null),
+    },
+  });
+  const { control, handleSubmit, setValue, getValues, watch, setError, formState } = form;
 
   const mutation = useSaveVendor({
     onSuccess: () => {
       toast.success(initial ? 'Fornecedor atualizado.' : 'Fornecedor criado.');
       onSaved();
     },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onError: (e) => {
+      if (!applyServerErrors<VendorValues>(e, VENDOR_FIELDS, setError)) toast.error(getErrorMessage(e));
+    },
   });
   const saving = mutation.isPending;
-
+  const personType = watch('personType');
   const isPj = personType === PersonType.Company;
-  const docDigits = onlyDigits(document);
-  const docValid = docDigits.length === 0 || (isPj ? isValidCnpj(docDigits) : isValidCpf(docDigits));
-  const canSave = !!name.trim() && docDigits.length > 0 && docValid && !saving;
 
   const onCnpjBlur = async () => {
+    const document = getValues('document');
     if (!isPj || onlyDigits(document).length !== 14) return;
     try {
       const r = await api.lookupCnpj(onlyDigits(document));
       const autoFilled = new Set<'name' | 'tradeName'>();
-      if (!name.trim()) {
-        setName(r.razaoSocial);
+      if (!getValues('name').trim()) {
+        setValue('name', r.razaoSocial, { shouldValidate: true });
         autoFilled.add('name');
       }
-      if (!tradeName.trim() && r.nomeFantasia) {
-        setTradeName(r.nomeFantasia);
+      if (!getValues('tradeName').trim() && r.nomeFantasia) {
+        setValue('tradeName', r.nomeFantasia);
         autoFilled.add('tradeName');
       }
-      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address).address);
+      if (r.address) {
+        setValue('address', mergeAddressEmpty(getValues('address'), r.address).address, { shouldValidate: true });
+      }
       if (autoFilled.size) setNameAuto(autoFilled);
-      toast.success('Dados preenchidos pelo CNPJ.');
+      toast.success(t('forms.autoFromCnpj'));
     } catch {
-      toast.error('CNPJ não encontrado. Preencha os dados manualmente.');
+      toast.error(t('forms.cnpjNotFound'));
     }
   };
 
-  const save = () => {
-    const body = {
-      companyId,
-      personType,
-      name: name.trim(),
-      tradeName: tradeName.trim() || null,
-      document: docDigits,
-      email: email.trim() || null,
-      phone: phone.trim() || null,
-      address: toAddress(address),
-      paymentTerms: paymentTerms.trim() || null,
-      bankInfo: bankInfo.trim() || null,
-    };
-    mutation.mutate({ id: initial?.id, body });
+  const onValid = (v: VendorValues) => {
+    const docDigits = onlyDigits(v.document);
+    mutation.mutate({
+      id: initial?.id,
+      body: {
+        companyId,
+        personType: v.personType,
+        name: v.name.trim(),
+        tradeName: v.tradeName.trim() || null,
+        document: docDigits,
+        email: v.email.trim() || null,
+        phone: v.phone.trim() || null,
+        address: toAddress(v.address),
+        paymentTerms: v.paymentTerms.trim() || null,
+        bankInfo: v.bankInfo.trim() || null,
+      },
+    });
   };
 
   return (
-    <>
-      <PersonTypeToggle value={personType} onChange={setPersonType} />
+    <form onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
+      <Controller
+        control={control}
+        name='personType'
+        render={({ field }) => <PersonTypeToggle value={field.value} onChange={field.onChange} />}
+      />
       <div className='form-grid'>
         <div className='span-2'>
-          <Field
-            label={isPj ? 'CNPJ' : 'CPF'}
-            help={!docValid ? undefined : 'Dados podem ser preenchidos automaticamente.'}
-          >
-            <MaskedInput
-              value={document}
-              mask={isPj ? maskCnpj : maskCpf}
-              onValueChange={setDocument}
-              onBlur={onCnpjBlur}
-              className={!docValid ? 'input-err' : undefined}
-              placeholder={isPj ? '00.000.000/0000-00' : '000.000.000-00'}
-              inputMode='numeric'
+          <Field label={isPj ? 'CNPJ' : 'CPF'} help={formState.errors.document ? undefined : t('forms.docAutoHelp')}>
+            <Controller
+              control={control}
+              name='document'
+              render={({ field }) => (
+                <MaskedInput
+                  value={field.value}
+                  mask={isPj ? maskCnpj : maskCpf}
+                  onValueChange={field.onChange}
+                  onBlur={() => void onCnpjBlur()}
+                  className={formState.errors.document ? 'input-err' : undefined}
+                  placeholder={isPj ? '00.000.000/0000-00' : '000.000.000-00'}
+                  inputMode='numeric'
+                />
+              )}
             />
-            {!docValid && <div className='field-err'>{isPj ? 'CNPJ inválido.' : 'CPF inválido.'}</div>}
+            <ErrMsg message={formState.errors.document?.message} />
           </Field>
         </div>
         <div className='span-2'>
@@ -269,57 +348,78 @@ export function VendorForm({
               </>
             }
           >
-            <Input
-              className={nameAuto.has('name') ? 'input-auto' : undefined}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
+            <Controller
+              control={control}
+              name='name'
+              render={({ field }) => (
+                <Input className={nameAuto.has('name') ? 'input-auto' : undefined} {...field} autoFocus />
+              )}
             />
+            <ErrMsg message={formState.errors.name?.message} />
           </Field>
         </div>
         {isPj && (
           <div className='span-2'>
             <Field label={<>Nome fantasia {nameAuto.has('tradeName') && <AutoHint />}</>}>
-              <Input
-                className={nameAuto.has('tradeName') ? 'input-auto' : undefined}
-                value={tradeName}
-                onChange={(e) => setTradeName(e.target.value)}
+              <Controller
+                control={control}
+                name='tradeName'
+                render={({ field }) => (
+                  <Input className={nameAuto.has('tradeName') ? 'input-auto' : undefined} {...field} />
+                )}
               />
             </Field>
           </div>
         )}
         <Field label='E-mail'>
-          <Input type='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Controller control={control} name='email' render={({ field }) => <Input type='email' {...field} />} />
+          <ErrMsg message={formState.errors.email?.message} />
         </Field>
         <Field label='Telefone'>
-          <MaskedInput
-            value={phone}
-            mask={maskPhone}
-            onValueChange={setPhone}
-            placeholder='(00) 00000-0000'
-            inputMode='tel'
+          <Controller
+            control={control}
+            name='phone'
+            render={({ field }) => (
+              <MaskedInput
+                value={field.value}
+                mask={maskPhone}
+                onValueChange={field.onChange}
+                placeholder='(00) 00000-0000'
+                inputMode='tel'
+              />
+            )}
           />
         </Field>
       </div>
 
-      <AddressFields address={address} setAddress={setAddress} />
+      <AddressFields control={control} setValue={setValue} getAddress={() => getValues('address')} />
 
       <div className='form-section'>Comercial</div>
       <div className='form-grid'>
         <Field label='Condição de pagamento'>
-          <Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder='ex.: 30 dias' />
+          <Controller
+            control={control}
+            name='paymentTerms'
+            render={({ field }) => <Input {...field} placeholder='ex.: 30 dias' />}
+          />
         </Field>
         <Field label='Dados bancários'>
-          <Input value={bankInfo} onChange={(e) => setBankInfo(e.target.value)} placeholder='Banco / ag. / conta' />
+          <Controller
+            control={control}
+            name='bankInfo'
+            render={({ field }) => <Input {...field} placeholder='Banco / ag. / conta' />}
+          />
         </Field>
       </div>
 
-      <FormActions canSave={canSave} saving={saving} onSave={save} onCancel={onCancel} editing={!!initial} />
-    </>
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+    </form>
   );
 }
 
 /* ============================ CUSTOMER ============================ */
+const CUSTOMER_FIELDS = ['personType', 'name', 'tradeName', 'document', 'email', 'phone', 'creditLimit'] as const;
+
 export function CustomerForm({
   companyId,
   initial,
@@ -332,82 +432,106 @@ export function CustomerForm({
   onCancel: () => void;
 }) {
   const toast = useToast();
-  const [personType, setPersonType] = useState<PersonType>(initial?.personType ?? PersonType.Company);
-  const [name, setName] = useState(initial?.name ?? '');
-  const [tradeName, setTradeName] = useState(initial?.tradeName ?? '');
-  const [document, setDocument] = useState(initial?.document ?? '');
-  const [email, setEmail] = useState(initial?.email ?? '');
-  const [phone, setPhone] = useState(initial?.phone ?? '');
-  const [creditLimit, setCreditLimit] = useState(initial?.creditLimit != null ? String(initial.creditLimit) : '');
-  const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
+  const { t } = useTranslation();
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
+
+  const form = useForm<CustomerValues>({
+    resolver: resolver(customerSchema),
+    mode: 'onChange',
+    defaultValues: {
+      personType: initial?.personType ?? PersonType.Company,
+      name: initial?.name ?? '',
+      tradeName: initial?.tradeName ?? '',
+      document: initial?.document ?? '',
+      email: initial?.email ?? '',
+      phone: initial?.phone ?? '',
+      creditLimit: initial?.creditLimit != null ? String(initial.creditLimit) : '',
+      address: fromAddress(initial?.address ?? null),
+    },
+  });
+  const { control, handleSubmit, setValue, getValues, watch, setError, formState } = form;
 
   const mutation = useSaveCustomer({
     onSuccess: () => {
       toast.success(initial ? 'Cliente atualizado.' : 'Cliente criado.');
       onSaved();
     },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onError: (e) => {
+      if (!applyServerErrors<CustomerValues>(e, CUSTOMER_FIELDS, setError)) toast.error(getErrorMessage(e));
+    },
   });
   const saving = mutation.isPending;
-
+  const personType = watch('personType');
   const isPj = personType === PersonType.Company;
-  const docDigits = onlyDigits(document);
-  const docValid = docDigits.length === 0 || (isPj ? isValidCnpj(docDigits) : isValidCpf(docDigits));
-  const canSave = !!name.trim() && docDigits.length > 0 && docValid && !saving;
 
   const onCnpjBlur = async () => {
+    const document = getValues('document');
     if (!isPj || onlyDigits(document).length !== 14) return;
     try {
       const r = await api.lookupCnpj(onlyDigits(document));
       const autoFilled = new Set<'name' | 'tradeName'>();
-      if (!name.trim()) {
-        setName(r.razaoSocial);
+      if (!getValues('name').trim()) {
+        setValue('name', r.razaoSocial, { shouldValidate: true });
         autoFilled.add('name');
       }
-      if (!tradeName.trim() && r.nomeFantasia) {
-        setTradeName(r.nomeFantasia);
+      if (!getValues('tradeName').trim() && r.nomeFantasia) {
+        setValue('tradeName', r.nomeFantasia);
         autoFilled.add('tradeName');
       }
-      if (r.address) setAddress((prev) => mergeAddressEmpty(prev, r.address).address);
+      if (r.address) {
+        setValue('address', mergeAddressEmpty(getValues('address'), r.address).address, { shouldValidate: true });
+      }
       if (autoFilled.size) setNameAuto(autoFilled);
-      toast.success('Dados preenchidos pelo CNPJ.');
+      toast.success(t('forms.autoFromCnpj'));
     } catch {
-      toast.error('CNPJ não encontrado. Preencha os dados manualmente.');
+      toast.error(t('forms.cnpjNotFound'));
     }
   };
 
-  const save = () => {
-    const body = {
-      companyId,
-      personType,
-      name: name.trim(),
-      tradeName: tradeName.trim() || null,
-      document: docDigits,
-      email: email.trim() || null,
-      phone: phone.trim() || null,
-      address: toAddress(address),
-      creditLimit: creditLimit.trim() ? Number(creditLimit) : null,
-    };
-    mutation.mutate({ id: initial?.id, body });
+  const onValid = (v: CustomerValues) => {
+    const docDigits = onlyDigits(v.document);
+    mutation.mutate({
+      id: initial?.id,
+      body: {
+        companyId,
+        personType: v.personType,
+        name: v.name.trim(),
+        tradeName: v.tradeName.trim() || null,
+        document: docDigits,
+        email: v.email.trim() || null,
+        phone: v.phone.trim() || null,
+        address: toAddress(v.address),
+        creditLimit: v.creditLimit.trim() ? Number(v.creditLimit) : null,
+      },
+    });
   };
 
   return (
-    <>
-      <PersonTypeToggle value={personType} onChange={setPersonType} />
+    <form onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
+      <Controller
+        control={control}
+        name='personType'
+        render={({ field }) => <PersonTypeToggle value={field.value} onChange={field.onChange} />}
+      />
       <div className='form-grid'>
         <div className='span-2'>
           <Field label={isPj ? 'CNPJ' : 'CPF'}>
-            <MaskedInput
-              value={document}
-              mask={isPj ? maskCnpj : maskCpf}
-              onValueChange={setDocument}
-              onBlur={onCnpjBlur}
-              className={!docValid ? 'input-err' : undefined}
-              placeholder={isPj ? '00.000.000/0000-00' : '000.000.000-00'}
-              inputMode='numeric'
+            <Controller
+              control={control}
+              name='document'
+              render={({ field }) => (
+                <MaskedInput
+                  value={field.value}
+                  mask={isPj ? maskCnpj : maskCpf}
+                  onValueChange={field.onChange}
+                  onBlur={() => void onCnpjBlur()}
+                  className={formState.errors.document ? 'input-err' : undefined}
+                  placeholder={isPj ? '00.000.000/0000-00' : '000.000.000-00'}
+                  inputMode='numeric'
+                />
+              )}
             />
-            {!docValid && <div className='field-err'>{isPj ? 'CNPJ inválido.' : 'CPF inválido.'}</div>}
+            <ErrMsg message={formState.errors.document?.message} />
           </Field>
         </div>
         <div className='span-2'>
@@ -418,55 +542,68 @@ export function CustomerForm({
               </>
             }
           >
-            <Input
-              className={nameAuto.has('name') ? 'input-auto' : undefined}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
+            <Controller
+              control={control}
+              name='name'
+              render={({ field }) => (
+                <Input className={nameAuto.has('name') ? 'input-auto' : undefined} {...field} autoFocus />
+              )}
             />
+            <ErrMsg message={formState.errors.name?.message} />
           </Field>
         </div>
         {isPj && (
           <div className='span-2'>
             <Field label={<>Nome fantasia {nameAuto.has('tradeName') && <AutoHint />}</>}>
-              <Input
-                className={nameAuto.has('tradeName') ? 'input-auto' : undefined}
-                value={tradeName}
-                onChange={(e) => setTradeName(e.target.value)}
+              <Controller
+                control={control}
+                name='tradeName'
+                render={({ field }) => (
+                  <Input className={nameAuto.has('tradeName') ? 'input-auto' : undefined} {...field} />
+                )}
               />
             </Field>
           </div>
         )}
         <Field label='E-mail'>
-          <Input type='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Controller control={control} name='email' render={({ field }) => <Input type='email' {...field} />} />
+          <ErrMsg message={formState.errors.email?.message} />
         </Field>
         <Field label='Telefone'>
-          <MaskedInput
-            value={phone}
-            mask={maskPhone}
-            onValueChange={setPhone}
-            placeholder='(00) 00000-0000'
-            inputMode='tel'
+          <Controller
+            control={control}
+            name='phone'
+            render={({ field }) => (
+              <MaskedInput
+                value={field.value}
+                mask={maskPhone}
+                onValueChange={field.onChange}
+                placeholder='(00) 00000-0000'
+                inputMode='tel'
+              />
+            )}
           />
         </Field>
         <Field label='Limite de crédito (R$)'>
-          <Input
-            value={creditLimit}
-            inputMode='numeric'
-            onChange={(e) => setCreditLimit(e.target.value)}
-            placeholder='ex.: 10000'
+          <Controller
+            control={control}
+            name='creditLimit'
+            render={({ field }) => <Input {...field} inputMode='numeric' placeholder='ex.: 10000' />}
           />
+          <ErrMsg message={formState.errors.creditLimit?.message} />
         </Field>
       </div>
 
-      <AddressFields address={address} setAddress={setAddress} />
+      <AddressFields control={control} setValue={setValue} getAddress={() => getValues('address')} />
 
-      <FormActions canSave={canSave} saving={saving} onSave={save} onCancel={onCancel} editing={!!initial} />
-    </>
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+    </form>
   );
 }
 
 /* ============================ EMPLOYEE ============================ */
+const EMPLOYEE_FIELDS = ['name', 'document', 'email', 'phone', 'role', 'unitId', 'costCenterId', 'hireDate'] as const;
+
 export function EmployeeForm({
   companyId,
   units,
@@ -483,109 +620,149 @@ export function EmployeeForm({
   onCancel: () => void;
 }) {
   const toast = useToast();
-  const [name, setName] = useState(initial?.name ?? '');
-  const [document, setDocument] = useState(initial?.document ?? '');
-  const [email, setEmail] = useState(initial?.email ?? '');
-  const [phone, setPhone] = useState(initial?.phone ?? '');
-  const [role, setRole] = useState(initial?.role ?? '');
-  const [unitId, setUnitId] = useState(initial?.unitId ?? '');
-  const [costCenterId, setCostCenterId] = useState(initial?.costCenterId ?? '');
-  const [hireDate, setHireDate] = useState(initial?.hireDate ?? '');
-  const [address, setAddress] = useState<Address>(fromAddress(initial?.address ?? null));
+
+  const form = useForm<EmployeeValues>({
+    resolver: resolver(employeeSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: initial?.name ?? '',
+      document: initial?.document ?? '',
+      email: initial?.email ?? '',
+      phone: initial?.phone ?? '',
+      role: initial?.role ?? '',
+      unitId: initial?.unitId ?? '',
+      costCenterId: initial?.costCenterId ?? '',
+      hireDate: initial?.hireDate ?? '',
+      address: fromAddress(initial?.address ?? null),
+    },
+  });
+  const { control, handleSubmit, setValue, getValues, setError, formState } = form;
 
   const mutation = useSaveEmployee({
     onSuccess: () => {
       toast.success(initial ? 'Colaborador atualizado.' : 'Colaborador criado.');
       onSaved();
     },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onError: (e) => {
+      if (!applyServerErrors<EmployeeValues>(e, EMPLOYEE_FIELDS, setError)) toast.error(getErrorMessage(e));
+    },
   });
   const saving = mutation.isPending;
 
-  const docDigits = onlyDigits(document);
-  const docValid = docDigits.length === 0 || isValidCpf(docDigits);
-  const canSave =
-    !!name.trim() && !!role.trim() && !!unitId && !!hireDate && docDigits.length > 0 && docValid && !saving;
-
-  const save = () => {
-    const body = {
-      companyId,
-      name: name.trim(),
-      document: docDigits,
-      email: email.trim() || null,
-      phone: phone.trim() || null,
-      role: role.trim(),
-      unitId,
-      costCenterId: costCenterId || null,
-      hireDate,
-      address: toAddress(address),
-    };
-    mutation.mutate({ id: initial?.id, body });
+  const onValid = (v: EmployeeValues) => {
+    mutation.mutate({
+      id: initial?.id,
+      body: {
+        companyId,
+        name: v.name.trim(),
+        document: onlyDigits(v.document),
+        email: v.email.trim() || null,
+        phone: v.phone.trim() || null,
+        role: v.role.trim(),
+        unitId: v.unitId,
+        costCenterId: v.costCenterId || null,
+        hireDate: v.hireDate,
+        address: toAddress(v.address),
+      },
+    });
   };
 
   return (
-    <>
+    <form onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
       <div className='form-grid'>
         <div className='span-2'>
           <Field label='Nome'>
-            <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+            <Controller control={control} name='name' render={({ field }) => <Input {...field} autoFocus />} />
+            <ErrMsg message={formState.errors.name?.message} />
           </Field>
         </div>
         <Field label='CPF'>
-          <MaskedInput
-            value={document}
-            mask={maskCpf}
-            onValueChange={setDocument}
-            className={!docValid ? 'input-err' : undefined}
-            placeholder='000.000.000-00'
-            inputMode='numeric'
+          <Controller
+            control={control}
+            name='document'
+            render={({ field }) => (
+              <MaskedInput
+                value={field.value}
+                mask={maskCpf}
+                onValueChange={field.onChange}
+                className={formState.errors.document ? 'input-err' : undefined}
+                placeholder='000.000.000-00'
+                inputMode='numeric'
+              />
+            )}
           />
-          {!docValid && <div className='field-err'>CPF inválido.</div>}
+          <ErrMsg message={formState.errors.document?.message} />
         </Field>
         <Field label='Cargo'>
-          <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder='ex.: Analista' />
+          <Controller
+            control={control}
+            name='role'
+            render={({ field }) => <Input {...field} placeholder='ex.: Analista' />}
+          />
+          <ErrMsg message={formState.errors.role?.message} />
         </Field>
         <Field label='E-mail'>
-          <Input type='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Controller control={control} name='email' render={({ field }) => <Input type='email' {...field} />} />
+          <ErrMsg message={formState.errors.email?.message} />
         </Field>
         <Field label='Telefone'>
-          <MaskedInput
-            value={phone}
-            mask={maskPhone}
-            onValueChange={setPhone}
-            placeholder='(00) 00000-0000'
-            inputMode='tel'
+          <Controller
+            control={control}
+            name='phone'
+            render={({ field }) => (
+              <MaskedInput
+                value={field.value}
+                mask={maskPhone}
+                onValueChange={field.onChange}
+                placeholder='(00) 00000-0000'
+                inputMode='tel'
+              />
+            )}
           />
         </Field>
         <Field label='Unidade'>
-          <Select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
-            <option value=''>— selecione —</option>
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name='unitId'
+            render={({ field }) => (
+              <Select {...field}>
+                <option value=''>— selecione —</option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+          <ErrMsg message={formState.errors.unitId?.message} />
         </Field>
         <Field label='Centro de custo'>
-          <Select value={costCenterId} onChange={(e) => setCostCenterId(e.target.value)}>
-            <option value=''>— opcional —</option>
-            {costCenters.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name='costCenterId'
+            render={({ field }) => (
+              <Select {...field}>
+                <option value=''>— opcional —</option>
+                {costCenters.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
         </Field>
         <Field label='Data de admissão'>
-          <Input type='date' value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
+          <Controller control={control} name='hireDate' render={({ field }) => <Input type='date' {...field} />} />
+          <ErrMsg message={formState.errors.hireDate?.message} />
         </Field>
       </div>
 
-      <AddressFields address={address} setAddress={setAddress} />
+      <AddressFields control={control} setValue={setValue} getAddress={() => getValues('address')} />
 
-      <FormActions canSave={canSave} saving={saving} onSave={save} onCancel={onCancel} editing={!!initial} />
-    </>
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+    </form>
   );
 }
 
@@ -612,24 +789,22 @@ function PersonTypeToggle({ value, onChange }: { value: PersonType; onChange: (v
 }
 
 export function FormActions({
-  canSave,
+  valid,
   saving,
-  onSave,
   onCancel,
   editing,
 }: {
-  canSave: boolean;
+  valid: boolean;
   saving: boolean;
-  onSave: () => void;
   onCancel: () => void;
   editing: boolean;
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
-      <Button onClick={onCancel} disabled={saving}>
+      <Button type='button' onClick={onCancel} disabled={saving}>
         Cancelar
       </Button>
-      <Button variant='brand' disabled={!canSave} onClick={onSave}>
+      <Button type='submit' variant='brand' disabled={!valid || saving}>
         {saving ? 'Salvando…' : editing ? 'Salvar' : 'Criar'}
       </Button>
     </div>
