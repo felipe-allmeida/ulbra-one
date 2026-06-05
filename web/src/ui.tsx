@@ -1,12 +1,13 @@
 import {
   useState,
-  useEffect,
   type ReactNode,
   type InputHTMLAttributes,
   type SelectHTMLAttributes,
   type ButtonHTMLAttributes,
 } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 
 export const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
@@ -138,23 +139,29 @@ export function Modal({
   children: ReactNode;
 }) {
   return (
-    <div className='modal-overlay' onClick={onClose}>
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <div className='modal-head'>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-            <div>
-              <div className='modal-title'>{title}</div>
-              {sub && <div className='modal-sub'>{sub}</div>}
+    <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className='modal-overlay'>
+          <Dialog.Content className='modal' aria-describedby={undefined}>
+            <div className='modal-head'>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <div>
+                  <Dialog.Title className='modal-title'>{title}</Dialog.Title>
+                  {sub && <Dialog.Description className='modal-sub'>{sub}</Dialog.Description>}
+                </div>
+                <Dialog.Close asChild>
+                  <button className='icon-btn' aria-label='Fechar'>
+                    <X />
+                  </button>
+                </Dialog.Close>
+              </div>
             </div>
-            <button className='icon-btn' onClick={onClose} aria-label='Fechar'>
-              <X />
-            </button>
-          </div>
-        </div>
-        <div className='modal-body'>{children}</div>
-        <div className='modal-foot'>{footer}</div>
-      </div>
-    </div>
+            <div className='modal-body'>{children}</div>
+            <div className='modal-foot'>{footer}</div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -176,32 +183,30 @@ export function Drawer({
   children: ReactNode;
   width?: number;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
   return (
-    <div className='drawer-overlay' onClick={onClose}>
-      <aside className='drawer' style={{ width }} onClick={(e) => e.stopPropagation()} role='dialog' aria-label={title}>
-        <div className='drawer-head'>
-          <div>
-            <div className='drawer-title'>{title}</div>
-            {sub && <div className='drawer-sub'>{sub}</div>}
-          </div>
-          <button className='icon-btn' onClick={onClose} aria-label='Fechar'>
-            <X />
-          </button>
-        </div>
-        <div className='drawer-body'>{children}</div>
-        {footer && <div className='drawer-foot'>{footer}</div>}
-      </aside>
-    </div>
+    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className='drawer-overlay'>
+          <Dialog.Content className='drawer' style={{ width }} aria-describedby={undefined} asChild>
+            <aside>
+              <div className='drawer-head'>
+                <div>
+                  <Dialog.Title className='drawer-title'>{title}</Dialog.Title>
+                  {sub && <Dialog.Description className='drawer-sub'>{sub}</Dialog.Description>}
+                </div>
+                <Dialog.Close asChild>
+                  <button className='icon-btn' aria-label='Fechar'>
+                    <X />
+                  </button>
+                </Dialog.Close>
+              </div>
+              <div className='drawer-body'>{children}</div>
+              {footer && <div className='drawer-foot'>{footer}</div>}
+            </aside>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -226,29 +231,44 @@ export function ConfirmDialog({
   onCancel: () => void;
 }) {
   return (
-    <div className='modal-overlay' onClick={onCancel}>
-      <div className='modal confirm-modal' onClick={(e) => e.stopPropagation()} role='alertdialog' aria-label={title}>
-        <div className='confirm-body'>
-          {danger && (
-            <div className='confirm-icon'>
-              <AlertTriangle />
+    <AlertDialog.Root open onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className='modal-overlay'>
+          <AlertDialog.Content className='modal confirm-modal'>
+            <div className='confirm-body'>
+              {danger && (
+                <div className='confirm-icon'>
+                  <AlertTriangle />
+                </div>
+              )}
+              <div>
+                <AlertDialog.Title className='modal-title'>{title}</AlertDialog.Title>
+                <AlertDialog.Description className='confirm-msg' asChild>
+                  <div>{message}</div>
+                </AlertDialog.Description>
+              </div>
             </div>
-          )}
-          <div>
-            <div className='modal-title'>{title}</div>
-            <div className='confirm-msg'>{message}</div>
-          </div>
-        </div>
-        <div className='modal-foot'>
-          <Button onClick={onCancel} disabled={busy}>
-            {cancelLabel}
-          </Button>
-          <button className={cx('btn', danger ? 'btn-danger' : 'btn-brand')} onClick={onConfirm} disabled={busy}>
-            {busy ? 'Aguarde…' : confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+            <div className='modal-foot'>
+              <AlertDialog.Cancel asChild>
+                <Button disabled={busy}>{cancelLabel}</Button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <button
+                  className={cx('btn', danger ? 'btn-danger' : 'btn-brand')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onConfirm();
+                  }}
+                  disabled={busy}
+                >
+                  {busy ? 'Aguarde…' : confirmLabel}
+                </button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Overlay>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   );
 }
 
