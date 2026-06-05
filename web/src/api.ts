@@ -1,10 +1,11 @@
 import { apiErrorFromProblem } from './apiError';
+import { getApiBaseUrl } from './config/env';
 import type { components } from './api/schema';
 
 /** All generated OpenAPI component schemas. Source of truth for wire types. */
 type Schemas = components['schemas'];
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api';
+const BASE_URL = getApiBaseUrl();
 
 const TOKEN_KEY = 'ulbra-one.token';
 
