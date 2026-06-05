@@ -12,7 +12,7 @@ public static class RegistryModule
     public static IServiceCollection AddRegistryModule(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("Database")
-            ?? throw new InvalidOperationException("Connection string 'Database' não configurada.");
+            ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
         services.AddScoped<AuditInterceptor>();
 

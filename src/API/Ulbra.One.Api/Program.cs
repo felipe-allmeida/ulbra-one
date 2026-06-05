@@ -67,7 +67,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
-    ?? throw new InvalidOperationException("Connection string 'Database' não configurada.");
+    ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
 // Modules
 builder.Services.AddIdentityModule(builder.Configuration);

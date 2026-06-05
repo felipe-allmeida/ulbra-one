@@ -60,7 +60,7 @@ public class Transaction
     public void MarkAsPaid()
     {
         if (Status != TransactionStatus.Approved)
-            throw new InvalidOperationException("Só é possível pagar um lançamento aprovado.");
+            throw new InvalidOperationException("Only an approved transaction can be paid.");
         Status = TransactionStatus.Paid;
         PaidAt = DateTime.UtcNow;
     }

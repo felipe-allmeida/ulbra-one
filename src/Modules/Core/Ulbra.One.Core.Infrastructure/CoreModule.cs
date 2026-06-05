@@ -10,7 +10,7 @@ public static class CoreModule
     public static IServiceCollection AddCoreModule(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("Database")
-            ?? throw new InvalidOperationException("Connection string 'Database' não configurada.");
+            ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
         services.AddDbContext<CoreContext>(options =>
             options.UseNpgsql(connectionString)

@@ -31,11 +31,11 @@ public static class DevDataSeeder
         var existing = await core.Companies.CountAsync(ct);
         if (existing > 0)
         {
-            logger.LogInformation("Seed de DEV: banco já populado ({Count} empresa(s)) — pulando. Para regerar: docker compose down -v.", existing);
+            logger.LogInformation("Dev seed: database already populated ({Count} company(ies)) — skipping. To reseed: docker compose down -v.", existing);
             return;
         }
 
-        logger.LogInformation("Seed de DEV: banco vazio — populando dados de exemplo…");
+        logger.LogInformation("Dev seed: database is empty — seeding sample data…");
 
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
 
@@ -160,8 +160,8 @@ public static class DevDataSeeder
         await finance.SaveChangesAsync(ct);
 
         logger.LogInformation(
-            "Seed de DEV concluído: {Companies} empresas, {Units} unidades, {CostCenters} centros de custo, " +
-            "{Vendors} fornecedores, {Customers} clientes, {Employees} colaboradores, {Transactions} lançamentos.",
+            "Dev seed complete: {Companies} companies, {Units} units, {CostCenters} cost centers, " +
+            "{Vendors} vendors, {Customers} customers, {Employees} employees, {Transactions} transactions.",
             2, 4, 6, 6, 4, 5, 15);
     }
 

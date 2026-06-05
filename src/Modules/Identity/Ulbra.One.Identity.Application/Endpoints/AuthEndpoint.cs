@@ -93,7 +93,7 @@ public sealed class AuthEndpoint : IEndpoint
             return Results.NotFound();
 
         var email = (req.Email ?? "dev@ulbra.br").ToLowerInvariant();
-        var name = req.Name ?? "Usuário Dev";
+        var name = req.Name ?? "Dev User";
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
         if (user is null)
