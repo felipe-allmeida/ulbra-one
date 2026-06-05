@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Finance.Domain;
@@ -25,8 +26,16 @@ public static class DevDataSeeder
         var finance = sp.GetRequiredService<FinanceContext>();
         var registry = sp.GetRequiredService<RegistryContext>();
         var time = sp.GetRequiredService<TimeProvider>();
+        var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
-        if (await core.Companies.AnyAsync(ct)) return; // já populado
+        var existing = await core.Companies.CountAsync(ct);
+        if (existing > 0)
+        {
+            logger.LogInformation("Seed de DEV: banco já populado ({Count} empresa(s)) — pulando. Para regerar: docker compose down -v.", existing);
+            return;
+        }
+
+        logger.LogInformation("Seed de DEV: banco vazio — populando dados de exemplo…");
 
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
 
@@ -149,6 +158,11 @@ public static class DevDataSeeder
             Receive(ead.Id, acad, "Mensalidade EAD - turma Pedagogia", "Maria Eduarda Souza", 980m, 18, TransactionStatus.Pending));
 
         await finance.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Seed de DEV concluído: {Companies} empresas, {Units} unidades, {CostCenters} centros de custo, " +
+            "{Vendors} fornecedores, {Customers} clientes, {Employees} colaboradores, {Transactions} lançamentos.",
+            2, 4, 6, 6, 4, 5, 15);
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)
