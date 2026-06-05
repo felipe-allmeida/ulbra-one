@@ -1,0 +1,39 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Domain.Entities;
+
+namespace Ulbra.One.Finance.Application.Endpoints.Transactions.RejectTransaction;
+
+public sealed class RejectTransaction : IEndpoint
+{
+    public sealed record RejectRequest(string? Reason);
+
+    public void Map(IEndpointRouteBuilder builder)
+    {
+        builder.MapPost("/{id:guid}/reject", Handle)
+            .WithName("RejectTransaction")
+            .WithTags("Finance")
+            .RequireAuthorization()
+            .Produces<TransactionResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+    }
+
+    private static async Task<IResult> Handle(
+        Guid id,
+        RejectRequest req,
+        [FromKeyedServices("finance")] IUnitOfWork uow,
+        CancellationToken ct)
+    {
+        var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (t is null) return Results.NotFound();
+        t.Reject(req.Reason);
+        await uow.SaveChangesAsync(ct);
+        return Results.Ok(TransactionResponse.From(t));
+    }
+}

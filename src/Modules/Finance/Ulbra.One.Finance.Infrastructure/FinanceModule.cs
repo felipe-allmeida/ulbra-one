@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Infrastructure.Database;
 
 namespace Ulbra.One.Finance.Infrastructure;
@@ -14,6 +16,9 @@ public static class FinanceModule
 
         services.AddDbContext<FinanceContext>(options =>
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+
+        services.AddKeyedScoped<IUnitOfWork>("finance",
+            (sp, _) => new EfUnitOfWork<FinanceContext>(sp.GetRequiredService<FinanceContext>()));
 
         return services;
     }
