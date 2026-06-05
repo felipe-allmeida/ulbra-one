@@ -127,6 +127,22 @@ const ptBR = {
 
   errors: {
     generic: 'Algo deu errado. Tente novamente em instantes.',
+    codes: {
+      'Company.NotFound': 'Empresa não encontrada.',
+      'CostCenter.UnitsInvalid': 'Uma ou mais unidades não pertencem a esta empresa.',
+      'Transaction.CostCenterInvalid': 'Centro de custo inválido para esta empresa.',
+      'Transaction.UnitInvalid': 'Unidade inválida para esta empresa.',
+      'Transaction.AmountInvalid': 'O valor deve ser maior que zero.',
+      'Vendor.NotFound': 'Fornecedor não encontrado.',
+      'Customer.NotFound': 'Cliente não encontrado.',
+      'Employee.NotFound': 'Colaborador não encontrado.',
+      'Document.Invalid': 'Documento (CPF/CNPJ) inválido.',
+      'Document.CpfInvalid': 'CPF inválido.',
+      'Auth.GoogleNotConfigured': 'Login com Google não está configurado.',
+      'Auth.GoogleTokenInvalid': 'Token do Google inválido.',
+      'Auth.EmailNotVerified': 'E-mail não verificado pelo Google.',
+      'Auth.DomainNotAllowed': 'Domínio não autorizado.',
+    },
     boundary: {
       title: 'Algo deu errado',
       message:

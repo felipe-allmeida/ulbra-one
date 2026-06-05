@@ -43,6 +43,16 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(err)).toBe('CNPJ inválido. Obrigatório.');
   });
 
+  it('maps a known backend error code (title) to pt-BR', () => {
+    const err = new ApiError({ status: 404, title: 'Company.NotFound', detail: 'Company not found.' });
+    expect(getErrorMessage(err)).toBe('Empresa não encontrada.');
+  });
+
+  it('falls back to detail when the title code is unknown', () => {
+    const err = new ApiError({ status: 400, title: 'Some.Unknown.Code', detail: 'Something specific went wrong.' });
+    expect(getErrorMessage(err)).toBe('Something specific went wrong.');
+  });
+
   it('falls back to title when no detail or errors', () => {
     const err = new ApiError({ status: 500, title: 'Internal Server Error' });
     expect(getErrorMessage(err)).toBe('Internal Server Error');

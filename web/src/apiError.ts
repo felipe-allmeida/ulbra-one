@@ -55,11 +55,16 @@ function flattenFieldErrors(errors: FieldErrors): string {
 
 /**
  * Resolves any thrown value into a user-facing message.
- * For an {@link ApiError}: prefers `detail`, then joined validation `errors`, then `title`.
- * For a plain `Error`: its message. Otherwise a generic i18n fallback.
+ * For an {@link ApiError}: if `title` is a known backend error code, returns the
+ * mapped pt-BR text; otherwise prefers `detail`, then joined validation `errors`,
+ * then `title`. For a plain `Error`: its message. Otherwise a generic i18n fallback.
  */
 export function getErrorMessage(e: unknown): string {
   if (e instanceof ApiError) {
+    if (e.title) {
+      const key = 'errors.codes.' + e.title;
+      if (i18n.exists(key)) return i18n.t(key);
+    }
     if (e.detail) return e.detail;
     if (e.errors && Object.keys(e.errors).length > 0) {
       const flat = flattenFieldErrors(e.errors);
