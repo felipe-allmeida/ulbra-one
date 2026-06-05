@@ -64,6 +64,16 @@ builder.Services.AddSwaggerGen(options =>
         Description = "JWT obtido em /api/auth/dev-token ou /api/auth/google"
     };
     options.AddSecurityDefinition("Bearer", jwtScheme);
+
+    // Global JsonStringEnumConverter serializes enums as strings; describe them as string enums in the spec.
+    options.SchemaFilter<Ulbra.One.Api.StringEnumSchemaFilter>();
+
+    // C# non-nullable reference types map to non-nullable schema; nullable members keep `nullable: true`.
+    options.SupportNonNullableReferenceTypes();
+
+    // DTO members are always present on the wire (records); mark every property `required` so generated
+    // TS fields are non-optional. Genuinely nullable members remain `T | null`.
+    options.SchemaFilter<Ulbra.One.Api.RequiredPropertiesSchemaFilter>();
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
