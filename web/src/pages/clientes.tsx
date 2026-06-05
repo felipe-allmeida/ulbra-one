@@ -4,7 +4,7 @@ import { PersonType, type Customer } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
 import { useCustomerAction, useCustomers } from '../queries';
-import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
+import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
 import { maskCpf, maskCnpj } from '../format';
 import { brl } from '../lib';
@@ -16,6 +16,7 @@ export function ClientesPage() {
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState<null | { edit?: Customer }>(null);
   const [confirm, setConfirm] = useState<null | { customer: Customer; action: 'toggle' | 'delete' }>(null);
 
@@ -24,8 +25,13 @@ export function ClientesPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const list = useCustomers(empresaId, debouncedSearch);
-  const customers = list.data ?? [];
+  // Any change to the company or active search resets paging to the first page.
+  useEffect(() => setPage(1), [empresaId, debouncedSearch]);
+
+  const list = useCustomers(empresaId, debouncedSearch, page);
+  const customers = list.data?.items ?? [];
+  const totalPages = list.data?.totalPages ?? 1;
+  const total = list.data?.total ?? 0;
 
   const action = useCustomerAction({
     onSuccess: (_data, vars) => {
@@ -65,7 +71,7 @@ export function ClientesPage() {
         />
       ) : (
         <Panel
-          title={`${customers.length} cliente(s)`}
+          title={`${total} cliente(s)`}
           action={
             <div className='top-search' style={{ width: 260 }}>
               <Search />
@@ -147,6 +153,7 @@ export function ClientesPage() {
               )}
             </tbody>
           </table>
+          <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </Panel>
       )}
 

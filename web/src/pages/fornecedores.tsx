@@ -4,7 +4,7 @@ import { PersonType, type Vendor } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
 import { useVendorAction, useVendors } from '../queries';
-import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
+import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
 import { maskCpf, maskCnpj } from '../format';
 import { EmpresaPicker } from './shared';
@@ -15,6 +15,7 @@ export function FornecedoresPage() {
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState<null | { edit?: Vendor }>(null);
   const [confirm, setConfirm] = useState<null | { vendor: Vendor; action: 'toggle' | 'delete' }>(null);
 
@@ -24,8 +25,13 @@ export function FornecedoresPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const list = useVendors(empresaId, debouncedSearch);
-  const vendors = list.data ?? [];
+  // Any change to the company or active search resets paging to the first page.
+  useEffect(() => setPage(1), [empresaId, debouncedSearch]);
+
+  const list = useVendors(empresaId, debouncedSearch, page);
+  const vendors = list.data?.items ?? [];
+  const totalPages = list.data?.totalPages ?? 1;
+  const total = list.data?.total ?? 0;
 
   const action = useVendorAction({
     onSuccess: (_data, vars) => {
@@ -65,7 +71,7 @@ export function FornecedoresPage() {
         />
       ) : (
         <Panel
-          title={`${vendors.length} fornecedor(es)`}
+          title={`${total} fornecedor(es)`}
           action={
             <div className='top-search' style={{ width: 260 }}>
               <Search />
@@ -147,6 +153,7 @@ export function FornecedoresPage() {
               )}
             </tbody>
           </table>
+          <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </Panel>
       )}
 

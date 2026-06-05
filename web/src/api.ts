@@ -68,6 +68,19 @@ export type Vendor = WithNullableAddress<Schemas['VendorResponse']>;
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
+/**
+ * Envelope returned by the paginated browse lists (transactions + registry).
+ * Mirrors the backend `PaginatedResponse<T>`; kept as a stable hand-written alias
+ * so pages don't depend on the generated, item-type-specific schema names.
+ */
+export interface Paginated<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
@@ -95,9 +108,11 @@ export type CepLookup = Schemas['CepResult'];
 export type CnpjLookup = Schemas['CnpjResult'];
 
 /** Builds list-query string shared by registry resources. */
-function registryQuery(companyId: string, search?: string) {
+function registryQuery(companyId: string, search?: string, page?: number, pageSize?: number) {
   const q = new URLSearchParams({ companyId });
   if (search?.trim()) q.set('search', search.trim());
+  if (page) q.set('page', String(page));
+  if (pageSize) q.set('pageSize', String(pageSize));
   return q.toString();
 }
 
@@ -153,13 +168,17 @@ export const api = {
     type?: TransactionType;
     status?: TransactionStatus;
     costCenterId?: string;
+    page?: number;
+    pageSize?: number;
   }) => {
     const q = new URLSearchParams();
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.type) q.set('type', params.type);
     if (params.status) q.set('status', params.status);
     if (params.costCenterId) q.set('costCenterId', params.costCenterId);
-    return request<Transaction[]>(`/transactions?${q}`);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<Transaction>>(`/transactions?${q}`);
   },
   getTransaction: (id: string) => request<Transaction>(`/transactions/${id}`),
   createTransaction: (body: {
@@ -178,8 +197,8 @@ export const api = {
   payTransaction: (id: string) => request<Transaction>(`/transactions/${id}/pay`, { method: 'POST' }),
 
   // ---------- Registry: Vendors ----------
-  listVendors: (companyId: string, search?: string) =>
-    request<Vendor[]>(`/vendors?${registryQuery(companyId, search)}`),
+  listVendors: (companyId: string, search?: string, page?: number, pageSize?: number) =>
+    request<Paginated<Vendor>>(`/vendors?${registryQuery(companyId, search, page, pageSize)}`),
   getVendor: (id: string) => request<Vendor>(`/vendors/${id}`),
   createVendor: (body: VendorInput) => request<Vendor>('/vendors', { method: 'POST', body: JSON.stringify(body) }),
   updateVendor: (id: string, body: VendorInput) =>
@@ -189,8 +208,8 @@ export const api = {
   removeVendor: (id: string) => request<void>(`/vendors/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Customers ----------
-  listCustomers: (companyId: string, search?: string) =>
-    request<Customer[]>(`/customers?${registryQuery(companyId, search)}`),
+  listCustomers: (companyId: string, search?: string, page?: number, pageSize?: number) =>
+    request<Paginated<Customer>>(`/customers?${registryQuery(companyId, search, page, pageSize)}`),
   getCustomer: (id: string) => request<Customer>(`/customers/${id}`),
   createCustomer: (body: CustomerInput) =>
     request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
@@ -201,8 +220,8 @@ export const api = {
   removeCustomer: (id: string) => request<void>(`/customers/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Employees ----------
-  listEmployees: (companyId: string, search?: string) =>
-    request<Employee[]>(`/employees?${registryQuery(companyId, search)}`),
+  listEmployees: (companyId: string, search?: string, page?: number, pageSize?: number) =>
+    request<Paginated<Employee>>(`/employees?${registryQuery(companyId, search, page, pageSize)}`),
   getEmployee: (id: string) => request<Employee>(`/employees/${id}`),
   createEmployee: (body: EmployeeInput) =>
     request<Employee>('/employees', { method: 'POST', body: JSON.stringify(body) }),

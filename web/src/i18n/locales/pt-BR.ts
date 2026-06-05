@@ -189,6 +189,12 @@ const ptBR = {
       home: 'Voltar ao início',
     },
   },
+
+  pagination: {
+    prev: 'Anterior',
+    next: 'Próxima',
+    pageOf: 'Página {{page}} de {{totalPages}}',
+  },
 } as const;
 
 export default ptBR;

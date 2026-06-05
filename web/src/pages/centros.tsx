@@ -123,7 +123,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   // Units come from the center's company (detail) or the selected company (novo).
   const unitsCompanyId = modo === 'novo' ? (empresa?.id ?? '') : (centro?.companyId ?? '');
   const unidades = useUnits(unitsCompanyId).data ?? [];
-  const lancamentos = useTransactions({ costCenterId: centro?.id }, { enabled: !!centro?.id }).data ?? [];
+  const lancamentos = useTransactions({ costCenterId: centro?.id }, { enabled: !!centro?.id }).data?.items ?? [];
 
   /* ---- NOVO ---- */
   if (modo === 'novo') {

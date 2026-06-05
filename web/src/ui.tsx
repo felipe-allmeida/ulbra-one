@@ -6,6 +6,7 @@ import {
   type ButtonHTMLAttributes,
 } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 
@@ -120,6 +121,35 @@ export function Panel({ title, action, children }: { title: string; action?: Rea
         {action}
       </div>
       {children}
+    </div>
+  );
+}
+
+/* ---------- Pager ---------- */
+/**
+ * Simple prev/next pager for paginated browse lists. Renders nothing when there
+ * is at most one page. `page`/`totalPages` are 1-based.
+ */
+export function Pager({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number;
+  totalPages: number;
+  onPage: (page: number) => void;
+}) {
+  const { t } = useTranslation();
+  if (totalPages <= 1) return null;
+  return (
+    <div className='pager'>
+      <Button onClick={() => onPage(page - 1)} disabled={page <= 1}>
+        {t('pagination.prev')}
+      </Button>
+      <span className='pager-info'>{t('pagination.pageOf', { page, totalPages })}</span>
+      <Button onClick={() => onPage(page + 1)} disabled={page >= totalPages}>
+        {t('pagination.next')}
+      </Button>
     </div>
   );
 }

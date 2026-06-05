@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationOptions,
+} from '@tanstack/react-query';
 import {
   api,
   type Company,
@@ -24,9 +30,9 @@ export const queryKeys = {
   costCenter: (id: string) => ['costCenter', id] as const,
   transactions: (params: TransactionsParams) => ['transactions', params] as const,
   transaction: (id: string) => ['transaction', id] as const,
-  vendors: (companyId: string, search?: string) => ['vendors', companyId, search ?? ''] as const,
-  customers: (companyId: string, search?: string) => ['customers', companyId, search ?? ''] as const,
-  employees: (companyId: string, search?: string) => ['employees', companyId, search ?? ''] as const,
+  vendors: (companyId: string, search?: string, page = 1) => ['vendors', companyId, search ?? '', page] as const,
+  customers: (companyId: string, search?: string, page = 1) => ['customers', companyId, search ?? '', page] as const,
+  employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
 };
 
 export interface TransactionsParams {
@@ -34,6 +40,7 @@ export interface TransactionsParams {
   type?: TransactionType;
   status?: TransactionStatus;
   costCenterId?: string;
+  page?: number;
 }
 
 /* ===================== Queries ===================== */
@@ -75,6 +82,7 @@ export function useTransactions(params: TransactionsParams, options?: { enabled?
     queryKey: queryKeys.transactions(params),
     queryFn: () => api.listTransactions(params),
     enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -86,27 +94,30 @@ export function useTransaction(id: string | undefined) {
   });
 }
 
-export function useVendors(companyId: string, search?: string) {
+export function useVendors(companyId: string, search?: string, page = 1) {
   return useQuery({
-    queryKey: queryKeys.vendors(companyId, search),
-    queryFn: () => api.listVendors(companyId, search),
+    queryKey: queryKeys.vendors(companyId, search, page),
+    queryFn: () => api.listVendors(companyId, search, page),
     enabled: !!companyId,
+    placeholderData: keepPreviousData,
   });
 }
 
-export function useCustomers(companyId: string, search?: string) {
+export function useCustomers(companyId: string, search?: string, page = 1) {
   return useQuery({
-    queryKey: queryKeys.customers(companyId, search),
-    queryFn: () => api.listCustomers(companyId, search),
+    queryKey: queryKeys.customers(companyId, search, page),
+    queryFn: () => api.listCustomers(companyId, search, page),
     enabled: !!companyId,
+    placeholderData: keepPreviousData,
   });
 }
 
-export function useEmployees(companyId: string, search?: string) {
+export function useEmployees(companyId: string, search?: string, page = 1) {
   return useQuery({
-    queryKey: queryKeys.employees(companyId, search),
-    queryFn: () => api.listEmployees(companyId, search),
+    queryKey: queryKeys.employees(companyId, search, page),
+    queryFn: () => api.listEmployees(companyId, search, page),
     enabled: !!companyId,
+    placeholderData: keepPreviousData,
   });
 }
 

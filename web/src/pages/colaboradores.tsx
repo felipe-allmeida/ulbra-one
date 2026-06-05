@@ -4,7 +4,7 @@ import { type Employee } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
 import { useCostCenters, useEmployeeAction, useEmployees, useUnits } from '../queries';
-import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Panel, SkeletonRows } from '../ui';
+import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
 import { maskCpf } from '../format';
 import { EmpresaPicker } from './shared';
@@ -15,6 +15,7 @@ export function ColaboradoresPage() {
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState<null | { edit?: Employee }>(null);
   const [confirm, setConfirm] = useState<null | { employee: Employee; action: 'toggle' | 'delete' }>(null);
 
@@ -23,13 +24,18 @@ export function ColaboradoresPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const list = useEmployees(empresaId, debouncedSearch);
+  // Any change to the company or active search resets paging to the first page.
+  useEffect(() => setPage(1), [empresaId, debouncedSearch]);
+
+  const list = useEmployees(empresaId, debouncedSearch, page);
   const unitsQuery = useUnits(empresaId);
   const costCentersQuery = useCostCenters(empresaId);
   const units = unitsQuery.data ?? [];
   const costCenters = costCentersQuery.data ?? [];
 
-  const employees = list.data ?? [];
+  const employees = list.data?.items ?? [];
+  const totalPages = list.data?.totalPages ?? 1;
+  const total = list.data?.total ?? 0;
   const unitName = (id: string) => units.find((u) => u.id === id)?.name ?? '—';
 
   const action = useEmployeeAction({
@@ -70,7 +76,7 @@ export function ColaboradoresPage() {
         />
       ) : (
         <Panel
-          title={`${employees.length} colaborador(es)`}
+          title={`${total} colaborador(es)`}
           action={
             <div className='top-search' style={{ width: 260 }}>
               <Search />
@@ -143,6 +149,7 @@ export function ColaboradoresPage() {
               )}
             </tbody>
           </table>
+          <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </Panel>
       )}
 

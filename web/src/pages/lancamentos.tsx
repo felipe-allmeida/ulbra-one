@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { Plus, ChevronLeft, ClipboardCheck, Check, X, Wallet } from 'lucide-react';
@@ -17,7 +17,7 @@ import {
 } from '../queries';
 import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
-import { Button, Input, Select, Field, PageHeader, Panel, EmptyState } from '../ui';
+import { Button, Input, Select, Field, PageHeader, Pager, Panel, EmptyState } from '../ui';
 import { EmpresaPicker } from './shared';
 
 const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
@@ -47,8 +47,14 @@ function useNomes(empresaId: string) {
 export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
+  const [page, setPage] = useState(1);
   const { unidadeNome, centroNome } = useNomes(empresaId);
-  const itens = useTransactions({ companyId: empresaId, type: tipo }, { enabled: !!empresaId }).data ?? [];
+  const list = useTransactions({ companyId: empresaId, type: tipo, page }, { enabled: !!empresaId });
+  const itens = list.data?.items ?? [];
+  const totalPages = list.data?.totalPages ?? 1;
+
+  // Reset to the first page whenever the company or the list type changes.
+  useEffect(() => setPage(1), [empresaId, tipo]);
 
   const titulo = tipo === 'Payable' ? 'Contas a pagar' : 'Contas a receber';
 
@@ -82,7 +88,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
           sub='Crie o primeiro lançamento.'
         />
       ) : (
-        <Panel title={`${itens.length} lançamento(s)`}>
+        <Panel title={`${list.data?.total ?? itens.length} lançamento(s)`}>
           <table>
             <thead>
               <tr>
@@ -113,6 +119,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
               ))}
             </tbody>
           </table>
+          <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </Panel>
       )}
     </>
@@ -124,7 +131,8 @@ export function AprovacoesPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
   const { unidadeNome, centroNome } = useNomes(empresaId);
-  const itens = useTransactions({ companyId: empresaId, status: 'Pending' }, { enabled: !!empresaId }).data ?? [];
+  const itens =
+    useTransactions({ companyId: empresaId, status: 'Pending' }, { enabled: !!empresaId }).data?.items ?? [];
   const approve = useApproveTransaction();
   const reject = useRejectTransaction();
 
