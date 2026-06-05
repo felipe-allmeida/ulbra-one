@@ -25,12 +25,16 @@ public sealed class AuthEndpoint : IEndpoint
         var group = builder.MapGroup("/auth").WithTags("Auth");
 
         group.MapPost("/google", GoogleSignIn).WithName("GoogleSignIn")
+            .RequireRateLimiting("auth")
             .Produces<LoginResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .ProducesProblem(StatusCodes.Status501NotImplemented);
         group.MapPost("/dev-token", DevToken).WithName("DevToken")
+            .RequireRateLimiting("auth")
             .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .Produces(StatusCodes.Status404NotFound);
         group.MapGet("/me", Me).WithName("Me").RequireAuthorization()
             .Produces<MeResponse>(StatusCodes.Status200OK);

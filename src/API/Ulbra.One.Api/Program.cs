@@ -1,5 +1,8 @@
+using System.Globalization;
+using System.Threading.RateLimiting;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Core.Application;
 using Ulbra.One.Core.Infrastructure;
@@ -42,6 +45,60 @@ builder.Services.AddCors(options =>
             policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
         }
     });
+});
+
+// Rate limiting (built-in Microsoft.AspNetCore.RateLimiting) — defense-in-depth.
+// Limits are configurable (section "RateLimiting") and effectively disabled in Development so the
+// integration tests + Playwright e2e (which both run under the Development environment and hammer
+// /auth/dev-token) never trip a 429. The protection bites in Staging/Production.
+var rateLimitingEnabled = !builder.Environment.IsDevelopment()
+    && builder.Configuration.GetValue("RateLimiting:Enabled", true);
+
+// Window is shared by the auth and global limiters.
+var rlWindow = TimeSpan.FromMinutes(1);
+var authPermitLimit = builder.Configuration.GetValue("RateLimiting:AuthPermitLimit", 15);
+var globalPermitLimit = builder.Configuration.GetValue("RateLimiting:GlobalPermitLimit", 200);
+
+static string ClientKey(HttpContext ctx) =>
+    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Named "auth" policy: tight IP-keyed fixed window to slow brute-force on credential endpoints.
+    options.AddPolicy("auth", ctx => rateLimitingEnabled
+        ? RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = authPermitLimit,
+            Window = rlWindow,
+        })
+        : RateLimitPartition.GetNoLimiter("disabled"));
+
+    // Generous global fallback so normal app usage never trips.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => rateLimitingEnabled
+        ? RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = globalPermitLimit,
+            Window = rlWindow,
+        })
+        : RateLimitPartition.GetNoLimiter("disabled"));
+
+    options.OnRejected = async (context, ct) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+        }
+
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await TypedResults.Problem(
+            title: "RateLimit.Exceeded",
+            detail: "Too many requests. Please try again later.",
+            statusCode: StatusCodes.Status429TooManyRequests,
+            instance: context.HttpContext.Request.Path).ExecuteAsync(context.HttpContext);
+    };
 });
 
 // Swagger
@@ -124,6 +181,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseRateLimiter();
 app.UseAppExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
