@@ -19,7 +19,7 @@ vi.mock('../api', async (orig) => {
 const renderForm = () =>
   render(
     <ToastProvider>
-      <VendorForm companyId="c1" onSaved={() => {}} onCancel={() => {}} />
+      <VendorForm companyId='c1' onSaved={() => {}} onCancel={() => {}} />
     </ToastProvider>,
   );
 
@@ -39,7 +39,14 @@ describe('VendorForm', () => {
     (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
       razaoSocial: 'ACME LTDA',
       nomeFantasia: 'Acme',
-      address: { cep: '01001000', street: 'Praça da Sé', number: '1', neighborhood: 'Sé', city: 'São Paulo', state: 'SP' },
+      address: {
+        cep: '01001000',
+        street: 'Praça da Sé',
+        number: '1',
+        neighborhood: 'Sé',
+        city: 'São Paulo',
+        state: 'SP',
+      },
     });
 
     renderForm();

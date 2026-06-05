@@ -90,7 +90,10 @@ export interface CostCenter {
 }
 
 /** 0 = Individual (PF), 1 = Company (PJ). */
-export enum PersonType { Individual = 0, Company = 1 }
+export enum PersonType {
+  Individual = 0,
+  Company = 1,
+}
 
 export interface Address {
   cep: string;
@@ -150,7 +153,13 @@ export type VendorInput = Omit<Vendor, 'id' | 'active'>;
 export type CustomerInput = Omit<Customer, 'id' | 'active'>;
 export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
 
-export interface CepLookup { cep: string; street: string; neighborhood: string; city: string; state: string }
+export interface CepLookup {
+  cep: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
 export interface CnpjLookup {
   razaoSocial: string;
   nomeFantasia: string | null;
@@ -167,7 +176,8 @@ function registryQuery(companyId: string, search?: string) {
 export const api = {
   devLogin: (email: string, name: string) =>
     request<{ token: string; user: User }>('/auth/dev-token', {
-      method: 'POST', body: JSON.stringify({ email, name }),
+      method: 'POST',
+      body: JSON.stringify({ email, name }),
     }),
   me: () => request<{ userId: string; name: string; email: string; role: string; isAdmin: boolean }>('/auth/me'),
 
@@ -185,12 +195,37 @@ export const api = {
 
   listCostCenters: (companyId: string) => request<CostCenter[]>(`/cost-centers?companyId=${companyId}`),
   getCostCenter: (id: string) => request<CostCenter>(`/cost-centers/${id}`),
-  createCostCenter: (companyId: string, code: string, name: string, annualBudget: number, autoApprovalLimit: number, unitIds: string[]) =>
-    request<CostCenter>('/cost-centers', { method: 'POST', body: JSON.stringify({ companyId, code, name, annualBudget, autoApprovalLimit, unitIds }) }),
-  updateCostCenter: (id: string, code: string, name: string, annualBudget: number, autoApprovalLimit: number, unitIds: string[]) =>
-    request<CostCenter>(`/cost-centers/${id}`, { method: 'PUT', body: JSON.stringify({ code, name, annualBudget, autoApprovalLimit, unitIds }) }),
+  createCostCenter: (
+    companyId: string,
+    code: string,
+    name: string,
+    annualBudget: number,
+    autoApprovalLimit: number,
+    unitIds: string[],
+  ) =>
+    request<CostCenter>('/cost-centers', {
+      method: 'POST',
+      body: JSON.stringify({ companyId, code, name, annualBudget, autoApprovalLimit, unitIds }),
+    }),
+  updateCostCenter: (
+    id: string,
+    code: string,
+    name: string,
+    annualBudget: number,
+    autoApprovalLimit: number,
+    unitIds: string[],
+  ) =>
+    request<CostCenter>(`/cost-centers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ code, name, annualBudget, autoApprovalLimit, unitIds }),
+    }),
 
-  listTransactions: (params: { companyId?: string; type?: TransactionType; status?: TransactionStatus; costCenterId?: string }) => {
+  listTransactions: (params: {
+    companyId?: string;
+    type?: TransactionType;
+    status?: TransactionStatus;
+    costCenterId?: string;
+  }) => {
     const q = new URLSearchParams();
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.type) q.set('type', params.type);
@@ -200,36 +235,51 @@ export const api = {
   },
   getTransaction: (id: string) => request<Transaction>(`/transactions/${id}`),
   createTransaction: (body: {
-    companyId: string; unitId: string; costCenterId: string; type: TransactionType;
-    description: string; counterparty: string; amount: number; dueDate: string;
+    companyId: string;
+    unitId: string;
+    costCenterId: string;
+    type: TransactionType;
+    description: string;
+    counterparty: string;
+    amount: number;
+    dueDate: string;
   }) => request<Transaction>('/transactions', { method: 'POST', body: JSON.stringify(body) }),
   approveTransaction: (id: string) => request<Transaction>(`/transactions/${id}/approve`, { method: 'POST' }),
-  rejectTransaction: (id: string, reason: string) => request<Transaction>(`/transactions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  rejectTransaction: (id: string, reason: string) =>
+    request<Transaction>(`/transactions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   payTransaction: (id: string) => request<Transaction>(`/transactions/${id}/pay`, { method: 'POST' }),
 
   // ---------- Registry: Vendors ----------
-  listVendors: (companyId: string, search?: string) => request<Vendor[]>(`/vendors?${registryQuery(companyId, search)}`),
+  listVendors: (companyId: string, search?: string) =>
+    request<Vendor[]>(`/vendors?${registryQuery(companyId, search)}`),
   getVendor: (id: string) => request<Vendor>(`/vendors/${id}`),
   createVendor: (body: VendorInput) => request<Vendor>('/vendors', { method: 'POST', body: JSON.stringify(body) }),
-  updateVendor: (id: string, body: VendorInput) => request<Vendor>(`/vendors/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  updateVendor: (id: string, body: VendorInput) =>
+    request<Vendor>(`/vendors/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deactivateVendor: (id: string) => request<Vendor>(`/vendors/${id}/deactivate`, { method: 'POST' }),
   activateVendor: (id: string) => request<Vendor>(`/vendors/${id}/activate`, { method: 'POST' }),
   removeVendor: (id: string) => request<void>(`/vendors/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Customers ----------
-  listCustomers: (companyId: string, search?: string) => request<Customer[]>(`/customers?${registryQuery(companyId, search)}`),
+  listCustomers: (companyId: string, search?: string) =>
+    request<Customer[]>(`/customers?${registryQuery(companyId, search)}`),
   getCustomer: (id: string) => request<Customer>(`/customers/${id}`),
-  createCustomer: (body: CustomerInput) => request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
-  updateCustomer: (id: string, body: CustomerInput) => request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  createCustomer: (body: CustomerInput) =>
+    request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
+  updateCustomer: (id: string, body: CustomerInput) =>
+    request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deactivateCustomer: (id: string) => request<Customer>(`/customers/${id}/deactivate`, { method: 'POST' }),
   activateCustomer: (id: string) => request<Customer>(`/customers/${id}/activate`, { method: 'POST' }),
   removeCustomer: (id: string) => request<void>(`/customers/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Employees ----------
-  listEmployees: (companyId: string, search?: string) => request<Employee[]>(`/employees?${registryQuery(companyId, search)}`),
+  listEmployees: (companyId: string, search?: string) =>
+    request<Employee[]>(`/employees?${registryQuery(companyId, search)}`),
   getEmployee: (id: string) => request<Employee>(`/employees/${id}`),
-  createEmployee: (body: EmployeeInput) => request<Employee>('/employees', { method: 'POST', body: JSON.stringify(body) }),
-  updateEmployee: (id: string, body: EmployeeInput) => request<Employee>(`/employees/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  createEmployee: (body: EmployeeInput) =>
+    request<Employee>('/employees', { method: 'POST', body: JSON.stringify(body) }),
+  updateEmployee: (id: string, body: EmployeeInput) =>
+    request<Employee>(`/employees/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deactivateEmployee: (id: string) => request<Employee>(`/employees/${id}/deactivate`, { method: 'POST' }),
   activateEmployee: (id: string) => request<Employee>(`/employees/${id}/activate`, { method: 'POST' }),
   removeEmployee: (id: string) => request<void>(`/employees/${id}`, { method: 'DELETE' }),

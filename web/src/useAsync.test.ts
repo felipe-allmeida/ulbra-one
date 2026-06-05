@@ -9,8 +9,12 @@ describe('useAsync', () => {
     expect(result.current.loading).toBe(false);
 
     let promise: Promise<unknown>;
-    act(() => { promise = result.current.run(21); });
-    await act(async () => { await promise; });
+    act(() => {
+      promise = result.current.run(21);
+    });
+    await act(async () => {
+      await promise;
+    });
 
     expect(result.current.loading).toBe(false);
     expect(result.current.data).toBe(42);
@@ -18,9 +22,15 @@ describe('useAsync', () => {
   });
 
   it('goes loading -> error and captures the message', async () => {
-    const { result } = renderHook(() => useAsync(async () => { throw new Error('boom'); }));
+    const { result } = renderHook(() =>
+      useAsync(async () => {
+        throw new Error('boom');
+      }),
+    );
 
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

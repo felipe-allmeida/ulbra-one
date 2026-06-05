@@ -14,9 +14,17 @@ export function DashboardPage() {
   const [centros, setCentros] = useState<CostCenter[]>([]);
 
   useEffect(() => {
-    if (!empresaId) { setUnidades([]); setCentros([]); return; }
+    if (!empresaId) {
+      setUnidades([]);
+      setCentros([]);
+      return;
+    }
     Promise.all([api.listUnits(empresaId), api.listCostCenters(empresaId)])
-      .then(([u, c]) => { setUnidades(u); setCentros(c); }).catch(() => {});
+      .then(([u, c]) => {
+        setUnidades(u);
+        setCentros(c);
+      })
+      .catch(() => {});
   }, [empresaId]);
 
   const orcamentoTotal = centros.reduce((s, c) => s + c.annualBudget, 0);
@@ -25,42 +33,81 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Início" sub="Visão geral da estrutura e do orçamento da empresa.">
+      <PageHeader title='Início' sub='Visão geral da estrutura e do orçamento da empresa.'>
         <EmpresaPicker />
       </PageHeader>
 
       {!empresa ? (
-        <EmptyState icon={<Building2 />} title="Nenhuma empresa cadastrada" sub="Cadastre uma empresa em Estrutura para começar." />
+        <EmptyState
+          icon={<Building2 />}
+          title='Nenhuma empresa cadastrada'
+          sub='Cadastre uma empresa em Estrutura para começar.'
+        />
       ) : (
         <>
-          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            <Kpi label="Empresas (grupo)" value={String(empresas.length)} />
-            <Kpi label="Unidades" value={String(unidades.length)} foot={empresa.legalName} />
-            <Kpi label="Centros de custo" value={String(centros.length)} foot={comAuto > 0 ? `${comAuto} com auto-aprovação` : undefined} />
-            <Kpi label="Orçamento total (anual)" value={brlCompact(orcamentoTotal)} />
+          <div className='kpi-grid' style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <Kpi label='Empresas (grupo)' value={String(empresas.length)} />
+            <Kpi label='Unidades' value={String(unidades.length)} foot={empresa.legalName} />
+            <Kpi
+              label='Centros de custo'
+              value={String(centros.length)}
+              foot={comAuto > 0 ? `${comAuto} com auto-aprovação` : undefined}
+            />
+            <Kpi label='Orçamento total (anual)' value={brlCompact(orcamentoTotal)} />
           </div>
 
           {centros.length === 0 ? (
-            <EmptyState icon={<Target />} title="Nenhum centro de custo" sub="Cadastre centros de custo para ver a distribuição do orçamento." />
+            <EmptyState
+              icon={<Target />}
+              title='Nenhum centro de custo'
+              sub='Cadastre centros de custo para ver a distribuição do orçamento.'
+            />
           ) : (
-            <Panel title="Orçamento por centro de custo">
+            <Panel title='Orçamento por centro de custo'>
               {ordenados.map((c) => {
                 const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
                 return (
-                  <div className="bd-row" key={c.id} style={{ cursor: 'pointer' }} onClick={() => nav(`/app/centros/${c.id}`)}>
-                    <div className="bd-name">{c.name} <small>· {c.code}</small></div>
-                    <div className="bd-bar"><div className="bd-fill" style={{ width: `${pct}%` }} /></div>
-                    <div className="bd-val">{brl(c.annualBudget)} <small style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{pct}%</small></div>
+                  <div
+                    className='bd-row'
+                    key={c.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => nav(`/app/centros/${c.id}`)}
+                  >
+                    <div className='bd-name'>
+                      {c.name} <small>· {c.code}</small>
+                    </div>
+                    <div className='bd-bar'>
+                      <div className='bd-fill' style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className='bd-val'>
+                      {brl(c.annualBudget)}{' '}
+                      <small style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{pct}%</small>
+                    </div>
                   </div>
                 );
               })}
             </Panel>
           )}
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', color: 'var(--muted-foreground)', fontSize: 12.5 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Network size={14} /> {unidades.length} unidade(s)</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Wallet size={14} /> {centros.length} centro(s) de custo</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Zap size={14} /> {comAuto} com auto-aprovação</span>
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              marginTop: 16,
+              flexWrap: 'wrap',
+              color: 'var(--muted-foreground)',
+              fontSize: 12.5,
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Network size={14} /> {unidades.length} unidade(s)
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Wallet size={14} /> {centros.length} centro(s) de custo
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Zap size={14} /> {comAuto} com auto-aprovação
+            </span>
           </div>
         </>
       )}

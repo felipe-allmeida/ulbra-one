@@ -25,11 +25,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  useEffect(() => { refreshEmpresas().catch(() => {}); }, []);
+  useEffect(() => {
+    refreshEmpresas().catch(() => {});
+  }, []);
 
   const value: AppCtx = {
-    empresas, empresaId, empresa: empresas.find((e) => e.id === empresaId) ?? null,
-    setEmpresaId, refreshEmpresas,
+    empresas,
+    empresaId,
+    empresa: empresas.find((e) => e.id === empresaId) ?? null,
+    setEmpresaId,
+    refreshEmpresas,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
