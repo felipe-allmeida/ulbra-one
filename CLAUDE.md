@@ -2,6 +2,8 @@
 
 ERP da ULBRA. .NET 10 modular monolith — single deployable, múltiplos bounded contexts.
 
+> Full backend conventions (API design + patterns): [`docs/backend-conventions.md`](docs/backend-conventions.md).
+
 ## Build & Run
 ```bash
 dotnet build
