@@ -16,7 +16,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "checks": "pnpm format:check && pnpm lint && pnpm typecheck"
+    "checks": "pnpm format:check && pnpm lint && pnpm typecheck",
+    "gen:api": "openapi-typescript ./openapi.json -o ./src/api/schema.d.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
@@ -47,6 +48,7 @@
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^17.0.7",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.0.9",

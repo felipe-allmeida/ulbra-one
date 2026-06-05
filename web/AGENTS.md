@@ -33,6 +33,7 @@ Run from `web/` (pnpm):
 | `pnpm format`       | Prettier `--write` across `web/`                        |
 | `pnpm format:check` | Prettier `--check` (CI-safe)                            |
 | `pnpm checks`       | `format:check` + `lint` + `typecheck` (run before push) |
+| `pnpm gen:api`      | Generate `src/api/schema.d.ts` from `openapi.json`      |
 
 CI (`.github/workflows/web-ci.yml`) runs typecheck, lint, test, and build on any
 change under `web/**`.
@@ -60,7 +61,10 @@ change under `web/**`.
 - `ui.tsx` — shared UI primitives (buttons, inputs, drawer, dialogs, etc.).
 - `toast.tsx` — toast notifications. `useAsync.ts` — async state helper.
 - `store.tsx` — app-level data context (`AppDataProvider`).
-- `api.ts` — backend API client + `auth` helpers.
+- `api.ts` — backend API client + `auth` helpers. Wire types are aliases to
+  generated schemas (see "API types" below).
+- `api/schema.d.ts` — **generated** TypeScript types from the backend OpenAPI
+  spec (do not edit by hand; ignored by Prettier/ESLint).
 - `format.ts` / `lib.ts` — formatting and small utilities (BRL, CPF/CNPJ, etc.).
 - `i18n/` — i18n setup and locale bundles.
 - Tests are colocated (`*.test.ts` / `*.test.tsx`).
@@ -111,6 +115,30 @@ git config core.hooksPath web/.husky
 ```
 
 CI is the authoritative safety net regardless of the local hook.
+
+## API types (generated)
+
+Backend response/request types are generated from the API's OpenAPI spec via
+`openapi-typescript`, so the frontend stays in sync with the wire format.
+
+- `web/openapi.json` is a committed copy of the spec (`/swagger/v1/swagger.json`),
+  so generation is reproducible offline.
+- `web/src/api/schema.d.ts` is generated from it: `pnpm gen:api`.
+- `src/api.ts` aliases the generated schemas (e.g.
+  `export type Vendor = Schemas['VendorResponse']`) under the same exported names,
+  so pages/queries don't change. Enums (`TransactionType`, `TransactionStatus`,
+  `PersonType`) are the **string unions** the API serializes (e.g. `'Company'`).
+
+**Refresh after a backend contract change:**
+
+```bash
+# 1. Run the API (Development serves Swagger) and dump the spec.
+dotnet run --project src/API/Ulbra.One.Api          # or docker compose up -d
+curl -s http://localhost:5001/swagger/v1/swagger.json -o web/openapi.json
+
+# 2. Regenerate the TS types and verify.
+cd web && pnpm gen:api && pnpm checks
+```
 
 ## E2E (Playwright)
 
