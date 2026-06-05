@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Results;
 using Ulbra.One.Common.Infrastructure.Validation;
@@ -19,17 +20,17 @@ public sealed class EmployeesEndpoint : IEndpoint
     {
         var group = builder.MapGroup("/employees").WithTags("Registry").RequireAuthorization();
 
-        group.MapGet("/", async (Guid? companyId, string? search, RegistryContext db, CancellationToken ct) =>
+        group.MapGet("/", async (Guid? companyId, string? search, [AsParameters] PaginationQueryParameters pagination, RegistryContext db, CancellationToken ct) =>
         {
             var query = db.Employees.AsQueryable();
             if (companyId is { } cid) query = query.Where(e => e.CompanyId == cid);
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(e => e.Name.Contains(search) || e.Document.Contains(search));
-            var items = await query.OrderBy(e => e.Name).ToListAsync(ct);
-            return Results.Ok(items.Select(EmployeeResponse.From).ToList());
+            var page = await query.OrderBy(e => e.Name).ToPaginatedAsync(pagination, ct);
+            return Results.Ok(page.Map(EmployeeResponse.From));
         })
             .WithName("ListEmployees")
-            .Produces<List<EmployeeResponse>>(StatusCodes.Status200OK);
+            .Produces<PaginatedResponse<EmployeeResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, RegistryContext db, CancellationToken ct) =>
         {

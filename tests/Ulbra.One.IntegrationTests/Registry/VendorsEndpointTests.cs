@@ -12,6 +12,8 @@ public class VendorsEndpointTests(PostgresFixture fixture)
 
     private sealed record VendorResponse(Guid Id, string Name, string Document, bool Active);
 
+    private sealed record Paginated(List<VendorResponse> Items, int Page, int PageSize, int Total, int TotalPages);
+
     private static VendorBody ValidCompany(Guid companyId, string name = "Gráfica Sul Ltda") =>
         new(companyId, 1, name, "Gráfica Sul", "11.222.333/0001-81",
             "contato@gs.com", "5133334444", null, "30 dias", null);
@@ -51,13 +53,14 @@ public class VendorsEndpointTests(PostgresFixture fixture)
         Assert.True(created.Active);
 
         // List (filtered by company)
-        var list = await client.GetFromJsonAsync<List<VendorResponse>>($"/api/vendors?companyId={companyId}");
+        var list = await client.GetFromJsonAsync<Paginated>($"/api/vendors?companyId={companyId}");
         Assert.NotNull(list);
-        Assert.Contains(list!, v => v.Id == created.Id);
+        Assert.Equal(1, list!.Page);
+        Assert.Contains(list.Items, v => v.Id == created.Id);
 
         // Search by name fragment
-        var search = await client.GetFromJsonAsync<List<VendorResponse>>($"/api/vendors?companyId={companyId}&search=Gráfica");
-        Assert.Contains(search!, v => v.Id == created.Id);
+        var search = await client.GetFromJsonAsync<Paginated>($"/api/vendors?companyId={companyId}&search=Gráfica");
+        Assert.Contains(search!.Items, v => v.Id == created.Id);
 
         // Update
         var updateBody = ValidCompany(companyId, "Gráfica Sul Atualizada");
@@ -81,8 +84,8 @@ public class VendorsEndpointTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.OK, deleteRes.StatusCode);
 
         // Soft-deleted vendor is absent from list
-        var afterDelete = await client.GetFromJsonAsync<List<VendorResponse>>($"/api/vendors?companyId={companyId}");
-        Assert.DoesNotContain(afterDelete!, v => v.Id == created.Id);
+        var afterDelete = await client.GetFromJsonAsync<Paginated>($"/api/vendors?companyId={companyId}");
+        Assert.DoesNotContain(afterDelete!.Items, v => v.Id == created.Id);
 
         // And not retrievable by id
         var getRes = await client.GetAsync($"/api/vendors/{created.Id}");

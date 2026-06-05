@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
@@ -22,18 +23,18 @@ public sealed class TransactionsEndpoint : IEndpoint
     {
         var group = builder.MapGroup("/transactions").WithTags("Finance").RequireAuthorization();
 
-        group.MapGet("/", async (FinanceContext db, Guid? companyId, TransactionType? type, TransactionStatus? status, Guid? costCenterId, CancellationToken ct) =>
+        group.MapGet("/", async (FinanceContext db, Guid? companyId, TransactionType? type, TransactionStatus? status, Guid? costCenterId, [AsParameters] PaginationQueryParameters pagination, CancellationToken ct) =>
         {
             var q = db.Transactions.AsQueryable();
             if (companyId is not null) q = q.Where(l => l.CompanyId == companyId);
             if (type is not null) q = q.Where(l => l.Type == type);
             if (status is not null) q = q.Where(l => l.Status == status);
             if (costCenterId is not null) q = q.Where(l => l.CostCenterId == costCenterId);
-            var items = await q.OrderBy(l => l.DueDate).ToListAsync(ct);
-            return TypedResults.Ok(items.Select(TransactionResponse.From).ToList());
+            var page = await q.OrderBy(l => l.DueDate).ToPaginatedAsync(pagination, ct);
+            return TypedResults.Ok(page.Map(TransactionResponse.From));
         })
             .WithName("ListTransactions")
-            .Produces<List<TransactionResponse>>(StatusCodes.Status200OK);
+            .Produces<PaginatedResponse<TransactionResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, FinanceContext db, CancellationToken ct) =>
             await db.Transactions.FirstOrDefaultAsync(l => l.Id == id, ct) is { } l

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Results;
 using Ulbra.One.Common.Infrastructure.Validation;
@@ -19,17 +20,17 @@ public sealed class VendorsEndpoint : IEndpoint
     {
         var group = builder.MapGroup("/vendors").WithTags("Registry").RequireAuthorization();
 
-        group.MapGet("/", async (Guid? companyId, string? search, RegistryContext db, CancellationToken ct) =>
+        group.MapGet("/", async (Guid? companyId, string? search, [AsParameters] PaginationQueryParameters pagination, RegistryContext db, CancellationToken ct) =>
         {
             var query = db.Vendors.AsQueryable();
             if (companyId is { } cid) query = query.Where(v => v.CompanyId == cid);
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(v => v.Name.Contains(search) || v.Document.Contains(search));
-            var items = await query.OrderBy(v => v.Name).ToListAsync(ct);
-            return Results.Ok(items.Select(VendorResponse.From).ToList());
+            var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
+            return Results.Ok(page.Map(VendorResponse.From));
         })
             .WithName("ListVendors")
-            .Produces<List<VendorResponse>>(StatusCodes.Status200OK);
+            .Produces<PaginatedResponse<VendorResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, RegistryContext db, CancellationToken ct) =>
         {

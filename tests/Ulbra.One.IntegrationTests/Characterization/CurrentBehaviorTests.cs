@@ -56,9 +56,11 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         var lan = await ReadJson(lanRes);
         Assert.Equal("Approved", lan.GetProperty("status").GetString());
 
-        // List by company returns it
+        // List by company returns it (paginated envelope)
         var list = await ReadJson(await client.GetAsync($"/api/transactions?companyId={companyId}"));
-        Assert.True(list.GetArrayLength() >= 1);
+        Assert.True(list.GetProperty("items").GetArrayLength() >= 1);
+        Assert.True(list.GetProperty("total").GetInt32() >= 1);
+        Assert.Equal(1, list.GetProperty("page").GetInt32());
     }
 
     [Fact]
