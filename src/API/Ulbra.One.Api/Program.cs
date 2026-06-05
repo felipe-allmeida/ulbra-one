@@ -17,8 +17,12 @@ using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Registry.Infrastructure.Database;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
+using Ulbra.One.Common.Infrastructure.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Observability: OpenTelemetry tracing/metrics + structured JSON logging (config-driven, no-op without a collector).
+builder.AddAppObservability();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
