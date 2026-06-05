@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
 import { Plus, ChevronLeft, ClipboardCheck, Check, X, Wallet } from 'lucide-react';
 import { type TransactionType, type TransactionStatus } from '../api';
+import { resolver, fieldError, transactionSchema, type TransactionValues } from './schemas';
 import { useApp } from '../store';
 import {
   useApproveTransaction,
@@ -188,30 +190,35 @@ export function NovoLancamentoPage() {
   const [sp] = useSearchParams();
   const { unidades, centros } = useNomes(empresaId);
 
-  const [tipo, setTipo] = useState<TransactionType>((sp.get('tipo') as TransactionType) || 'Payable');
-  const [unidadeId, setUnidadeId] = useState('');
-  const [centroId, setCentroId] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [contraparte, setContraparte] = useState('');
-  const [valor, setValor] = useState('');
-  const [vencimento, setVencimento] = useState('');
+  const { control, handleSubmit, watch, formState } = useForm<TransactionValues>({
+    resolver: resolver(transactionSchema),
+    mode: 'onChange',
+    defaultValues: {
+      type: (sp.get('tipo') as TransactionType) || 'Payable',
+      unitId: '',
+      costCenterId: '',
+      description: '',
+      counterparty: '',
+      amount: '',
+      dueDate: '',
+    },
+  });
+  const tipo = watch('type');
 
   const create = useCreateTransaction({ onSuccess: (l) => nav(`/app/lancamentos/${l.id}`) });
   const salvando = create.isPending;
   const erro = create.error ? getErrorMessage(create.error) : null;
-  const run = () =>
+  const onValid = (v: TransactionValues) =>
     create.mutate({
       companyId: empresaId,
-      unitId: unidadeId,
-      costCenterId: centroId,
-      type: tipo,
-      description: descricao.trim(),
-      counterparty: contraparte.trim(),
-      amount: Number(valor) || 0,
-      dueDate: vencimento,
+      unitId: v.unitId,
+      costCenterId: v.costCenterId,
+      type: v.type,
+      description: v.description.trim(),
+      counterparty: v.counterparty.trim(),
+      amount: Number(v.amount) || 0,
+      dueDate: v.dueDate,
     });
-
-  const valido = !!unidadeId && !!centroId && !!descricao.trim() && Number(valor) > 0 && !!vencimento;
 
   return (
     <>
@@ -231,56 +238,92 @@ export function NovoLancamentoPage() {
       {!empresa ? (
         <EmptyState icon={<Wallet />} title='Nenhuma empresa' sub='Cadastre uma empresa primeiro.' />
       ) : (
-        <div className='card-form'>
+        <form className='card-form' onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
           <div className='edit-grid'>
             <Field label='Tipo'>
-              <Select value={tipo} onChange={(e) => setTipo(e.target.value as TransactionType)}>
-                <option value='Payable'>Conta a pagar</option>
-                <option value='Receivable'>Conta a receber</option>
-              </Select>
-            </Field>
-            <Field label='Vencimento'>
-              <Input type='date' value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
-            </Field>
-            <Field label='Unidade'>
-              <Select value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)}>
-                <option value=''>— selecione —</option>
-                {unidades.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.acronym})
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label='Centro de custo'>
-              <Select value={centroId} onChange={(e) => setCentroId(e.target.value)}>
-                <option value=''>— selecione —</option>
-                {centros.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} · {c.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label='Valor (R$)'>
-              <Input
-                value={valor}
-                inputMode='numeric'
-                onChange={(e) => setValor(e.target.value)}
-                placeholder='ex.: 3000'
+              <Controller
+                control={control}
+                name='type'
+                render={({ field }) => (
+                  <Select {...field}>
+                    <option value='Payable'>Conta a pagar</option>
+                    <option value='Receivable'>Conta a receber</option>
+                  </Select>
+                )}
               />
             </Field>
+            <Field label='Vencimento'>
+              <Controller control={control} name='dueDate' render={({ field }) => <Input type='date' {...field} />} />
+              {fieldError(formState.errors.dueDate?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.dueDate?.message)}</div>
+              )}
+            </Field>
+            <Field label='Unidade'>
+              <Controller
+                control={control}
+                name='unitId'
+                render={({ field }) => (
+                  <Select {...field}>
+                    <option value=''>— selecione —</option>
+                    {unidades.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.acronym})
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
+              {fieldError(formState.errors.unitId?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.unitId?.message)}</div>
+              )}
+            </Field>
+            <Field label='Centro de custo'>
+              <Controller
+                control={control}
+                name='costCenterId'
+                render={({ field }) => (
+                  <Select {...field}>
+                    <option value=''>— selecione —</option>
+                    {centros.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.code} · {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
+              {fieldError(formState.errors.costCenterId?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.costCenterId?.message)}</div>
+              )}
+            </Field>
+            <Field label='Valor (R$)'>
+              <Controller
+                control={control}
+                name='amount'
+                render={({ field }) => <Input {...field} inputMode='numeric' placeholder='ex.: 3000' />}
+              />
+              {fieldError(formState.errors.amount?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.amount?.message)}</div>
+              )}
+            </Field>
             <Field label={tipo === 'Payable' ? 'Fornecedor' : 'Cliente'}>
-              <Input value={contraparte} onChange={(e) => setContraparte(e.target.value)} placeholder='ex.: Google' />
+              <Controller
+                control={control}
+                name='counterparty'
+                render={({ field }) => <Input {...field} placeholder='ex.: Google' />}
+              />
             </Field>
           </div>
           <div style={{ marginTop: 14 }}>
             <Field label='Descrição'>
-              <Input
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder='ex.: Campanha de captação'
+              <Controller
+                control={control}
+                name='description'
+                render={({ field }) => <Input {...field} placeholder='ex.: Campanha de captação' />}
               />
+              {fieldError(formState.errors.description?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.description?.message)}</div>
+              )}
             </Field>
           </div>
           {erro && (
@@ -289,12 +332,14 @@ export function NovoLancamentoPage() {
             </div>
           )}
           <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-            <Button variant='brand' disabled={!valido || salvando} onClick={run}>
+            <Button type='submit' variant='brand' disabled={!formState.isValid || salvando}>
               {salvando ? 'Salvando…' : 'Lançar'}
             </Button>
-            <Button onClick={() => nav(-1)}>Cancelar</Button>
+            <Button type='button' onClick={() => nav(-1)}>
+              Cancelar
+            </Button>
           </div>
-        </div>
+        </form>
       )}
     </>
   );

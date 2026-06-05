@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Plus, Pencil } from 'lucide-react';
 import { type Company, type Unit } from '../api';
 import { useApp } from '../store';
@@ -6,6 +7,7 @@ import { useCreateCompany, useCreateUnit, useUnits, useUpdateCompany, useUpdateU
 import { getErrorMessage } from '../apiError';
 import { Button, Input, PageHeader, Panel } from '../ui';
 import { EmpresaPicker } from './shared';
+import { resolver, companySchema, unitSchema, type CompanyValues, type UnitValues } from './schemas';
 
 export function EstruturaPage() {
   const { empresas, empresa, empresaId, refreshEmpresas } = useApp();
@@ -145,33 +147,38 @@ function InlineEmpresaForm({
   onClose: () => void;
   onSaved: (e: Company) => void;
 }) {
-  const [razao, setRazao] = useState(initial?.legalName ?? '');
-  const [cnpj, setCnpj] = useState(initial?.cnpj ?? '');
+  const { register, handleSubmit, formState } = useForm<CompanyValues>({
+    resolver: resolver(companySchema),
+    mode: 'onChange',
+    defaultValues: { legalName: initial?.legalName ?? '', cnpj: initial?.cnpj ?? '' },
+  });
   const create = useCreateCompany({ onSuccess: onSaved });
   const update = useUpdateCompany({ onSuccess: onSaved });
   const mutation = initial ? update : create;
   const salvando = mutation.isPending;
   const erro = mutation.error ? getErrorMessage(mutation.error) : null;
-  const run = () =>
+  const onValid = (v: CompanyValues) =>
     initial
-      ? update.mutate({ id: initial.id, legalName: razao.trim(), cnpj: cnpj.trim() })
-      : create.mutate({ legalName: razao.trim(), cnpj: cnpj.trim() });
+      ? update.mutate({ id: initial.id, legalName: v.legalName.trim(), cnpj: v.cnpj.trim() })
+      : create.mutate({ legalName: v.legalName.trim(), cnpj: v.cnpj.trim() });
   return (
-    <div className='inline-form'>
+    <form className='inline-form' onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
       <div className='grow'>
-        <Input autoFocus placeholder='Razão social' value={razao} onChange={(e) => setRazao(e.target.value)} />
+        <Input autoFocus placeholder='Razão social' {...register('legalName')} />
       </div>
-      <Input placeholder='CNPJ (14 dígitos)' value={cnpj} onChange={(e) => setCnpj(e.target.value)} />
-      <Button variant='brand' disabled={!razao.trim() || !cnpj.trim() || salvando} onClick={run}>
+      <Input placeholder='CNPJ (14 dígitos)' {...register('cnpj')} />
+      <Button type='submit' variant='brand' disabled={!formState.isValid || salvando}>
         {initial ? 'Salvar' : 'Adicionar'}
       </Button>
-      <Button onClick={onClose}>Cancelar</Button>
+      <Button type='button' onClick={onClose}>
+        Cancelar
+      </Button>
       {erro && (
         <div className='create-err' style={{ flexBasis: '100%' }}>
           {erro}
         </div>
       )}
-    </div>
+    </form>
   );
 }
 
@@ -186,32 +193,37 @@ function InlineUnidadeForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [nome, setNome] = useState(initial?.name ?? '');
-  const [sigla, setSigla] = useState(initial?.acronym ?? '');
+  const { register, handleSubmit, formState } = useForm<UnitValues>({
+    resolver: resolver(unitSchema),
+    mode: 'onChange',
+    defaultValues: { name: initial?.name ?? '', acronym: initial?.acronym ?? '' },
+  });
   const create = useCreateUnit({ onSuccess: onSaved });
   const update = useUpdateUnit({ onSuccess: onSaved });
   const mutation = initial ? update : create;
   const salvando = mutation.isPending;
   const erro = mutation.error ? getErrorMessage(mutation.error) : null;
-  const run = () =>
+  const onValid = (v: UnitValues) =>
     initial
-      ? update.mutate({ id: initial.id, name: nome.trim(), acronym: sigla.trim() })
-      : create.mutate({ companyId: empresa.id, name: nome.trim(), acronym: sigla.trim() });
+      ? update.mutate({ id: initial.id, name: v.name.trim(), acronym: v.acronym.trim() })
+      : create.mutate({ companyId: empresa.id, name: v.name.trim(), acronym: v.acronym.trim() });
   return (
-    <div className='inline-form'>
+    <form className='inline-form' onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
       <div className='grow'>
-        <Input autoFocus placeholder='Nome da unidade' value={nome} onChange={(e) => setNome(e.target.value)} />
+        <Input autoFocus placeholder='Nome da unidade' {...register('name')} />
       </div>
-      <Input placeholder='Sigla' value={sigla} onChange={(e) => setSigla(e.target.value)} />
-      <Button variant='brand' disabled={!nome.trim() || !sigla.trim() || salvando} onClick={run}>
+      <Input placeholder='Sigla' {...register('acronym')} />
+      <Button type='submit' variant='brand' disabled={!formState.isValid || salvando}>
         {initial ? 'Salvar' : 'Adicionar'}
       </Button>
-      <Button onClick={onClose}>Cancelar</Button>
+      <Button type='button' onClick={onClose}>
+        Cancelar
+      </Button>
       {erro && (
         <div className='create-err' style={{ flexBasis: '100%' }}>
           {erro}
         </div>
       )}
-    </div>
+    </form>
   );
 }
