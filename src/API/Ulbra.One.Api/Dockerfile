@@ -2,8 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Restore (copy only what the restore graph needs first, for layer caching)
-COPY Directory.Build.props Directory.Packages.props Ulbra.One.slnx ./
+# Restore (copy only what the restore graph needs first, for layer caching).
+# global.json pins the SDK (10.0.100) — copy it before restore so the build honors it.
+COPY global.json Directory.Build.props Directory.Packages.props Ulbra.One.slnx ./
 COPY src/ src/
 RUN dotnet restore src/API/Ulbra.One.Api/Ulbra.One.Api.csproj
 
