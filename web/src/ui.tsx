@@ -38,7 +38,7 @@ export function Select({ className, children, ...p }: SelectHTMLAttributes<HTMLS
   );
 }
 
-/** Campo de formulário (modal): label em cima, ajuda embaixo. */
+/** Form field (modal): label on top, help text below. */
 export function Field({ label, help, children }: { label: ReactNode; help?: string; children: ReactNode }) {
   return (
     <div className='form-field'>
@@ -49,7 +49,7 @@ export function Field({ label, help, children }: { label: ReactNode; help?: stri
   );
 }
 
-/** Campo de toolbar (label maiúsculo compacto). */
+/** Toolbar field (compact uppercase label). */
 export function ToolbarField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className='field'>
@@ -315,7 +315,7 @@ export function Skeleton({
   return <span className={cx('skeleton', className)} style={{ width, height, display: 'inline-block' }} />;
 }
 
-/** Linhas de skeleton para tabelas. */
+/** Skeleton rows for tables. */
 export function SkeletonRows({ rows = 4, cols = 3 }: { rows?: number; cols?: number }) {
   return (
     <>
@@ -350,7 +350,7 @@ export function MaskedInput({ value, mask, onValueChange, className, ...p }: Mas
   );
 }
 
-/** Hook de salvamento com estado de loading + erro. */
+/** Save hook with loading + error state. */
 export function useSave(fn: () => Promise<void>) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);

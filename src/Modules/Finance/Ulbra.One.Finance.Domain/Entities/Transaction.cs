@@ -1,6 +1,6 @@
 namespace Ulbra.One.Finance.Domain.Entities;
 
-/// <summary>Lançamento financeiro (conta a pagar/receber), classificado por Company × Unit × CostCenter.</summary>
+/// <summary>Financial transaction (payable/receivable), classified by Company × Unit × CostCenter.</summary>
 public class Transaction
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
@@ -36,7 +36,7 @@ public class Transaction
         DueDate = dueDate;
     }
 
-    /// <summary>Aprova automaticamente despesas (a pagar) dentro do limite do centro de custo.</summary>
+    /// <summary>Automatically approves expenses (payables) within the cost center's limit.</summary>
     public void ApplyAutoApproval(decimal autoApprovalLimit)
     {
         if (Type == TransactionType.Payable && autoApprovalLimit > 0 && Amount <= autoApprovalLimit)

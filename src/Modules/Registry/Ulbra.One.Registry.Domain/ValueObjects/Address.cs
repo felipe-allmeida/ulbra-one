@@ -1,6 +1,6 @@
 namespace Ulbra.One.Registry.Domain.ValueObjects;
 
-/// <summary>Endereço como value object (EF owned type). Imutável.</summary>
+/// <summary>Address as a value object (EF owned type). Immutable.</summary>
 public sealed record Address(
     string Cep,
     string Street,

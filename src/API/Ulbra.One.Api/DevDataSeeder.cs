@@ -12,9 +12,9 @@ using Ulbra.One.Registry.Infrastructure.Database;
 namespace Ulbra.One.Api;
 
 /// <summary>
-/// Popula o banco de DEV com dados de exemplo (empresas, unidades, centros de custo,
-/// fornecedores, clientes, colaboradores e lançamentos). Idempotente: só roda se não houver
-/// nenhuma empresa cadastrada. Para regerar, recrie o banco (docker compose down -v).
+/// Populates the DEV database with sample data (companies, units, cost centers,
+/// vendors, customers, employees and transactions). Idempotent: only runs if no
+/// company exists. To reseed, recreate the database (docker compose down -v).
 /// </summary>
 public static class DevDataSeeder
 {
@@ -39,19 +39,19 @@ public static class DevDataSeeder
 
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
 
-        // ---------- Empresas (CNPJs do grupo) ----------
+        // ---------- Companies (group CNPJs) ----------
         var celsp = new Company("Comunidade Evangélica Luterana São Paulo - CELSP", "88332466000103");
         var ulbra = new Company("Universidade Luterana do Brasil - ULBRA", "88332466000294");
         core.Companies.AddRange(celsp, ulbra);
 
-        // ---------- Unidades (campus/polos) da ULBRA ----------
+        // ---------- Units (ULBRA campuses/poles) ----------
         var canoas = new Unit(ulbra.Id, "Campus Canoas", "CAN");
         var gravatai = new Unit(ulbra.Id, "Campus Gravataí", "GRA");
         var torres = new Unit(ulbra.Id, "Campus Torres", "TOR");
         var ead = new Unit(ulbra.Id, "Educação a Distância", "EAD");
         core.Units.AddRange(canoas, gravatai, torres, ead);
 
-        // ---------- Centros de custo (transversais às unidades) ----------
+        // ---------- Cost centers (cross-cutting across units) ----------
         var mkt = new CostCenter(ulbra.Id, "MKT", "Marketing e Captação", 600_000m, 5_000m);
         var ti = new CostCenter(ulbra.Id, "TI", "Tecnologia da Informação", 480_000m, 8_000m);
         var rh = new CostCenter(ulbra.Id, "RH", "Recursos Humanos", 250_000m, 3_000m);
@@ -60,7 +60,7 @@ public static class DevDataSeeder
         var bib = new CostCenter(ulbra.Id, "BIB", "Biblioteca", 180_000m, 1_500m);
         core.CostCenters.AddRange(mkt, ti, rh, infra, acad, bib);
 
-        // Cobertura (quais unidades cada centro de custo atende)
+        // Coverage (which units each cost center serves)
         core.CostCenterUnits.AddRange(
             new CostCenterUnit(mkt.Id, canoas.Id), new CostCenterUnit(mkt.Id, gravatai.Id),
             new CostCenterUnit(mkt.Id, torres.Id), new CostCenterUnit(mkt.Id, ead.Id),
@@ -72,7 +72,7 @@ public static class DevDataSeeder
 
         await core.SaveChangesAsync(ct);
 
-        // ---------- Fornecedores ----------
+        // ---------- Vendors ----------
         Address Addr(string cep, string street, string number, string bairro, string city, string uf) =>
             new(cep, street, number, null, bairro, city, uf);
 
@@ -96,7 +96,7 @@ public static class DevDataSeeder
             "à vista", null);
         registry.Vendors.AddRange(vGoogle, vCeee, vMicrosoft, vGrafica, vLimpeza, vJoao);
 
-        // ---------- Clientes ----------
+        // ---------- Customers ----------
         var cPrefCanoas = new CustomerEntity(ulbra.Id, PersonType.Company, "Prefeitura Municipal de Canoas", "PMC",
             "88815415000100", "convenios@canoas.rs.gov.br", "5134634000", Addr("92010000", "Rua Frei Orlando", "199", "Centro", "Canoas", "RS"), 200_000m);
         var cHospital = new CustomerEntity(ulbra.Id, PersonType.Company, "Hospital Universitário de Canoas", "HU",
@@ -107,7 +107,7 @@ public static class DevDataSeeder
             "23185644780", "carlos.lima@aluno.ulbra.br", "51977776666", Addr("94010100", "Rua Dom Pedro II", "300", "Centro", "Gravataí", "RS"), 20_000m);
         registry.Customers.AddRange(cPrefCanoas, cHospital, cMaria, cCarlos);
 
-        // ---------- Colaboradores ----------
+        // ---------- Employees ----------
         registry.Employees.AddRange(
             new EmployeeEntity(ulbra.Id, "Ana Beatriz Ferreira", "11144477735", "ana.ferreira@ulbra.br", "51999991111",
                 "Analista de Marketing", canoas.Id, mkt.Id, today.AddYears(-2), Addr("92020200", "Rua Tiradentes", "120", "Centro", "Canoas", "RS")),
@@ -122,8 +122,8 @@ public static class DevDataSeeder
 
         await registry.SaveChangesAsync(ct);
 
-        // ---------- Lançamentos (contas a pagar / receber) ----------
-        // Cria com helper que aplica o status desejado de forma consistente.
+        // ---------- Transactions (payables / receivables) ----------
+        // Created via a helper that applies the desired status consistently.
         Transaction Pay(Guid unitId, CostCenter cc, string desc, string counterparty, decimal amount, int dueInDays, TransactionStatus status)
         {
             var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Payable, desc, counterparty, amount, today.AddDays(dueInDays));
@@ -138,19 +138,19 @@ public static class DevDataSeeder
         }
 
         finance.Transactions.AddRange(
-            // A pagar — variedade de status e vencimentos
+            // Payables — variety of statuses and due dates
             Pay(canoas.Id, mkt, "Google Ads - campanha vestibular", "Google", 12_000m, -5, TransactionStatus.Approved),
             Pay(canoas.Id, mkt, "Impressão de materiais de captação", "Gráfica Sul", 3_200m, 7, TransactionStatus.Pending),
             Pay(canoas.Id, ti, "Licenças Microsoft 365 (anual)", "Microsoft", 96_000m, 20, TransactionStatus.Pending),
             Pay(canoas.Id, infra, "Conta de energia - Campus Canoas", "CEEE", 48_500m, -2, TransactionStatus.Approved),
             Pay(gravatai.Id, infra, "Conta de energia - Campus Gravataí", "CEEE", 21_300m, 3, TransactionStatus.Pending),
-            Pay(gravatai.Id, infra, "Serviço de limpeza - mensal", "Limpa Bem", 1_800m, 10, TransactionStatus.Approved), // auto-aprovado (<= 2000)
+            Pay(gravatai.Id, infra, "Serviço de limpeza - mensal", "Limpa Bem", 1_800m, 10, TransactionStatus.Approved), // auto-approved (<= 2000)
             Pay(canoas.Id, rh, "Consultoria de clima organizacional", "João Pedro Consultoria", 2_500m, 15, TransactionStatus.Pending),
             Pay(canoas.Id, bib, "Aquisição de acervo - periódicos", "Gráfica Sul", 1_200m, -8, TransactionStatus.Paid),
             Pay(torres.Id, infra, "Reparo hidráulico - bloco B", "Limpa Bem", 5_400m, 30, TransactionStatus.Rejected),
             Pay(canoas.Id, ti, "Servidores - colocation mensal", "Microsoft", 8_900m, 12, TransactionStatus.Approved),
 
-            // A receber
+            // Receivables
             Receive(canoas.Id, acad, "Convênio de estágios 2026/1", "Prefeitura Municipal de Canoas", 80_000m, 5, TransactionStatus.Pending),
             Receive(canoas.Id, acad, "Convênio residência médica", "Hospital Universitário de Canoas", 120_000m, -3, TransactionStatus.Approved),
             Receive(canoas.Id, acad, "Mensalidade - Medicina (Maria Eduarda)", "Maria Eduarda Souza", 6_800m, 8, TransactionStatus.Pending),

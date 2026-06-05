@@ -152,7 +152,7 @@ builder.Services.AddHealthChecks().AddNpgSql(connectionString);
 
 var app = builder.Build();
 
-// Apply migrations on startup (Postgres pode não estar pronto quando a API sobe).
+// Apply migrations on startup (Postgres may not be ready when the API starts up).
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();

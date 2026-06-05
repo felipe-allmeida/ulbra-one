@@ -8,7 +8,7 @@ import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
 import { EmpresaPicker, CentroForm } from './shared';
 import { StatusBadge } from './lancamentos';
 
-/* ===================== LISTA ===================== */
+/* ===================== LIST ===================== */
 export function CentrosListPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
@@ -105,7 +105,7 @@ export function CentrosListPage() {
   );
 }
 
-/* ===================== DETALHE / NOVO ===================== */
+/* ===================== DETAIL / NEW ===================== */
 export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   const { id } = useParams();
   const nav = useNavigate();
@@ -117,18 +117,18 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   const centro = modo === 'detalhe' ? (centroQuery.data ?? null) : null;
   const carregando = modo === 'detalhe' && centroQuery.isLoading;
 
-  // empresa do centro (no detalhe) ou empresa selecionada (no novo)
+  // The center's company (in detail) or the selected company (in new).
   const empresaDoCentro = centro ? (empresas.find((e) => e.id === centro.companyId) ?? null) : empresa;
 
-  // Units come from the center's company (detail) or the selected company (novo).
+  // Units come from the center's company (detail) or the selected company (new).
   const unitsCompanyId = modo === 'novo' ? (empresa?.id ?? '') : (centro?.companyId ?? '');
   const unidades = useUnits(unitsCompanyId).data ?? [];
-  // Detail needs all of the center's transactions (activity list + "executado" sum), not just page 1.
+  // Detail needs all of the center's transactions (activity list + "spent" sum), not just page 1.
   // pageSize is capped at 100 server-side; a server-computed aggregate is the proper long-term fix.
   const lancamentos =
     useTransactions({ costCenterId: centro?.id, pageSize: 100 }, { enabled: !!centro?.id }).data?.items ?? [];
 
-  /* ---- NOVO ---- */
+  /* ---- NEW ---- */
   if (modo === 'novo') {
     return (
       <>
@@ -157,7 +157,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
     );
   }
 
-  /* ---- DETALHE ---- */
+  /* ---- DETAIL ---- */
   if (carregando) return <div className='empty-state'>Carregando…</div>;
   if (!centro || !empresaDoCentro)
     return <EmptyState icon={<Target />} title='Centro de custo não encontrado' sub='Ele pode ter sido removido.' />;

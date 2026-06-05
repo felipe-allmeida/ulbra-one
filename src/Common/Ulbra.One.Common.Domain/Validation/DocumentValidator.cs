@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace Ulbra.One.Common.Domain.Validation;
 
-/// <summary>CPF/CNPJ validation with check-digit (módulo 11) verification.</summary>
+/// <summary>CPF/CNPJ validation with check-digit (mod-11) verification.</summary>
 public static class DocumentValidator
 {
     public static string Normalize(string? document) =>

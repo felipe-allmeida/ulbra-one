@@ -4,7 +4,7 @@ using Ulbra.One.Common.Domain.Validation;
 
 namespace Ulbra.One.Registry.Domain.Entities;
 
-/// <summary>Cliente — pode ser PF ou PJ. Documento normalizado (só dígitos).</summary>
+/// <summary>Customer — may be an individual or a legal entity. Document stored normalized (digits only).</summary>
 public class CustomerEntity : IAuditable, ISoftDeletable
 {
     public Guid Id { get; private set; } = Guid.NewGuid();

@@ -1,6 +1,6 @@
 namespace Ulbra.One.Identity.Domain.Entities;
 
-/// <summary>Usuário autenticado via Google Workspace. Papéis: Admin | User.</summary>
+/// <summary>User authenticated via Google Workspace. Roles: Admin | User.</summary>
 public class User
 {
     public Guid Id { get; private set; } = Guid.NewGuid();

@@ -1,7 +1,7 @@
 namespace Ulbra.One.Core.Domain.Entities;
 
-/// <summary>Associação N:N entre <see cref="CostCenter"/> e <see cref="Unit"/> —
-/// em quais unidades cada centro de custo atua.</summary>
+/// <summary>N:N association between <see cref="CostCenter"/> and <see cref="Unit"/> —
+/// which units each cost center operates in.</summary>
 public class CostCenterUnit
 {
     public Guid CostCenterId { get; private set; }

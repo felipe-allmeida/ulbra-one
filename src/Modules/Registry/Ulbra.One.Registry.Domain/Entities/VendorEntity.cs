@@ -4,7 +4,7 @@ using Ulbra.One.Common.Domain.Validation;
 
 namespace Ulbra.One.Registry.Domain.Entities;
 
-/// <summary>Fornecedor — pode ser PF ou PJ. Documento é armazenado normalizado (só dígitos).</summary>
+/// <summary>Vendor — may be an individual or a legal entity. Document stored normalized (digits only).</summary>
 public class VendorEntity : IAuditable, ISoftDeletable
 {
     public Guid Id { get; private set; } = Guid.NewGuid();

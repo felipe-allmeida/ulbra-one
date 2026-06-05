@@ -4,7 +4,7 @@ using Ulbra.One.Common.Domain.Validation;
 
 namespace Ulbra.One.Registry.Domain.Entities;
 
-/// <summary>Colaborador — sempre PF (CPF). Vinculado a uma Unit e, opcionalmente, a um CostCenter (referências lógicas).</summary>
+/// <summary>Employee — always an individual (CPF). Linked to a Unit and, optionally, a CostCenter (logical references).</summary>
 public class EmployeeEntity : IAuditable, ISoftDeletable
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
@@ -13,7 +13,7 @@ public class EmployeeEntity : IAuditable, ISoftDeletable
     public string Document { get; private set; } = string.Empty; // CPF
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
-    public string Role { get; private set; } = string.Empty; // cargo
+    public string Role { get; private set; } = string.Empty; // job title
     public Guid UnitId { get; private set; }
     public Guid? CostCenterId { get; private set; }
     public DateOnly HireDate { get; private set; }

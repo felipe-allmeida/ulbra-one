@@ -1,7 +1,7 @@
 namespace Ulbra.One.Core.Domain.Entities;
 
-/// <summary>Centro de custo — dimensão funcional (Marketing, TI, RH…) que pertence a uma
-/// <see cref="Company"/> e é transversal: atua em N unidades (ver <see cref="CostCenterUnit"/>).</summary>
+/// <summary>Cost center — functional dimension (Marketing, IT, HR…) that belongs to a
+/// <see cref="Company"/> and is cross-cutting: it operates across N units (see <see cref="CostCenterUnit"/>).</summary>
 public class CostCenter
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
@@ -10,7 +10,7 @@ public class CostCenter
     public string Name { get; private set; } = string.Empty;
     public decimal AnnualBudget { get; private set; }
 
-    /// <summary>Despesas até este valor são aprovadas automaticamente. 0 = nada auto-aprova.</summary>
+    /// <summary>Expenses up to this amount are approved automatically. 0 = nothing auto-approves.</summary>
     public decimal AutoApprovalLimit { get; private set; }
 
     public bool Active { get; private set; } = true;

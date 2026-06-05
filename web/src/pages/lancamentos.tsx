@@ -31,7 +31,7 @@ export const StatusBadge = ({ s }: { s: TransactionStatus }) => (
 );
 const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
-/** Mapas id→nome de unidades/centros da empresa (para exibir nomes nas listas). */
+/** Maps id→name of the company's units/cost centers (to show names in the lists). */
 function useNomes(empresaId: string) {
   const unidades = useUnits(empresaId).data ?? [];
   const centros = useCostCenters(empresaId).data ?? [];
@@ -43,7 +43,7 @@ function useNomes(empresaId: string) {
   };
 }
 
-/* ============ LISTA (Contas a pagar / receber) ============ */
+/* ============ LIST (Payables / receivables) ============ */
 export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
@@ -126,7 +126,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
   );
 }
 
-/* ============ APROVAÇÕES ============ */
+/* ============ APPROVALS ============ */
 export function AprovacoesPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
@@ -191,7 +191,7 @@ export function AprovacoesPage() {
   );
 }
 
-/* ============ NOVO ============ */
+/* ============ NEW ============ */
 export function NovoLancamentoPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
@@ -353,7 +353,7 @@ export function NovoLancamentoPage() {
   );
 }
 
-/* ============ DETALHE ============ */
+/* ============ DETAIL ============ */
 export function LancamentoDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();

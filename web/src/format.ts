@@ -41,7 +41,7 @@ export function maskPhone(value: string): string {
   return out + d.slice(2, 7) + '-' + d.slice(7, 11);
 }
 
-/** Mirrors the backend DocumentValidator módulo-11 algorithm. */
+/** Mirrors the backend DocumentValidator mod-11 check-digit algorithm. */
 export function isValidCpf(value: string): boolean {
   const d = onlyDigits(value);
   if (d.length !== 11) return false;

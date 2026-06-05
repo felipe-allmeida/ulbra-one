@@ -27,7 +27,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   if (res.status === 401) {
-    // Sessão ausente/expirada: limpa o token e manda pro login (sem loop se já estamos lá).
+    // Missing/expired session: clear the token and redirect to login (no loop if already there).
     auth.clear();
     if (!window.location.pathname.startsWith('/login')) {
       window.location.assign('/login');

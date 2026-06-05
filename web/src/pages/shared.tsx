@@ -59,7 +59,7 @@ export function UnidadePicker({
   );
 }
 
-/** Formulário de centro de custo (criar ou editar). */
+/** Cost center form (create or edit). */
 export function CentroForm({
   empresa,
   unidades,

@@ -1,6 +1,6 @@
 namespace Ulbra.One.Core.Domain.Entities;
 
-/// <summary>Pessoa jurídica do grupo (mantenedora, IES, unidade). Raiz do organograma do ERP.</summary>
+/// <summary>Legal entity in the group (holding/IES/unit). Root of the ERP org chart.</summary>
 public class Company
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
