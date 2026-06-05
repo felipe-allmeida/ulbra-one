@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Registry.Infrastructure.Database;
 using Ulbra.One.Registry.Infrastructure.Lookups;
+using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Auditing;
+using Ulbra.One.Common.Infrastructure.Persistence;
 
 namespace Ulbra.One.Registry.Infrastructure;
 
@@ -20,6 +22,9 @@ public static class RegistryModule
             options.UseNpgsql(connectionString)
                    .UseSnakeCaseNamingConvention()
                    .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+
+        services.AddKeyedScoped<IUnitOfWork>("registry",
+            (sp, _) => new EfUnitOfWork<RegistryContext>(sp.GetRequiredService<RegistryContext>()));
 
         services.AddHttpClient<ICepLookup, ViaCepLookup>(c =>
         {
