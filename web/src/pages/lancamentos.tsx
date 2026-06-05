@@ -49,7 +49,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
     <>
       <PageHeader title={titulo} sub={tipo === 'Payable' ? 'Despesas classificadas por centro de custo e unidade.' : 'Receitas previstas e recebidas.'}>
         <EmpresaPicker />
-        <Button variant="brand" icon={<Plus />} disabled={!empresa} onClick={() => nav(`/lancamentos/novo?tipo=${tipo}`)}>Novo lançamento</Button>
+        <Button variant="brand" icon={<Plus />} disabled={!empresa} onClick={() => nav(`/app/lancamentos/novo?tipo=${tipo}`)}>Novo lançamento</Button>
       </PageHeader>
 
       {!empresa ? <EmptyState icon={<Wallet />} title="Nenhuma empresa" sub="Cadastre uma empresa em Estrutura." />
@@ -60,7 +60,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
               <thead><tr><th>Vencimento</th><th>Descrição</th><th>Contraparte</th><th>Centro de custo</th><th>Unidade</th><th style={{ textAlign: 'right' }}>Valor</th><th>Status</th></tr></thead>
               <tbody>
                 {itens.map((l) => (
-                  <tr key={l.id} className="row-click" onClick={() => nav(`/lancamentos/${l.id}`)}>
+                  <tr key={l.id} className="row-click" onClick={() => nav(`/app/lancamentos/${l.id}`)}>
                     <td className="t-mono">{fmtData(l.dueDate)}</td>
                     <td>{l.description}</td>
                     <td>{l.counterparty || '—'}</td>
@@ -102,7 +102,7 @@ export function AprovacoesPage() {
                 {itens.map((l) => (
                   <tr key={l.id}>
                     <td className="t-mono">{fmtData(l.dueDate)}</td>
-                    <td className="row-click" onClick={() => nav(`/lancamentos/${l.id}`)}>{l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterparty}</span></td>
+                    <td className="row-click" onClick={() => nav(`/app/lancamentos/${l.id}`)}>{l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterparty}</span></td>
                     <td>{centroNome[l.costCenterId] ?? '—'} <span style={{ color: 'var(--muted-foreground)' }}>({unidadeNome[l.unitId] ?? '—'})</span></td>
                     <td className="amount-cell" style={{ textAlign: 'right' }}>{brl(l.amount)}</td>
                     <td className="td-action">
@@ -141,14 +141,14 @@ export function NovoLancamentoPage() {
       companyId: empresaId!, unitId: unidadeId, costCenterId: centroId, type: tipo,
       description: descricao.trim(), counterparty: contraparte.trim(), amount: Number(valor) || 0, dueDate: vencimento,
     });
-    nav(`/lancamentos/${l.id}`);
+    nav(`/app/lancamentos/${l.id}`);
   });
 
   const valido = !!unidadeId && !!centroId && !!descricao.trim() && Number(valor) > 0 && !!vencimento;
 
   return (
     <>
-      <button className="backlink" onClick={() => nav(tipo === 'Payable' ? '/contas-pagar' : '/contas-receber')}><ChevronLeft /> Voltar</button>
+      <button className="backlink" onClick={() => nav(tipo === 'Payable' ? '/app/contas-pagar' : '/app/contas-receber')}><ChevronLeft /> Voltar</button>
       <div className="detail-head"><div><h1 className="detail-title">Novo lançamento</h1>
         <div className="detail-sub">{empresa?.legalName ?? 'Selecione uma empresa'}</div></div></div>
 
@@ -220,7 +220,7 @@ export function LancamentoDetailPage() {
 
   return (
     <>
-      <button className="backlink" onClick={() => nav(l.type === 'Payable' ? '/contas-pagar' : '/contas-receber')}><ChevronLeft /> {l.type === 'Payable' ? 'Contas a pagar' : 'Contas a receber'}</button>
+      <button className="backlink" onClick={() => nav(l.type === 'Payable' ? '/app/contas-pagar' : '/app/contas-receber')}><ChevronLeft /> {l.type === 'Payable' ? 'Contas a pagar' : 'Contas a receber'}</button>
       <div className="detail-head">
         <div>
           <h1 className="detail-title">{l.description}</h1>

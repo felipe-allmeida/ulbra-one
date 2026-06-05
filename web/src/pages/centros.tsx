@@ -28,7 +28,7 @@ export function CentrosListPage() {
     <>
       <PageHeader title="Centros de custo" sub="Áreas funcionais da empresa. Um centro de custo (ex.: Marketing) pode atuar em várias unidades.">
         <EmpresaPicker />
-        <Button variant="brand" icon={<Plus />} disabled={!empresa} onClick={() => nav('/centros/novo')}>Novo centro de custo</Button>
+        <Button variant="brand" icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/centros/novo')}>Novo centro de custo</Button>
       </PageHeader>
 
       {!empresa ? (
@@ -49,7 +49,7 @@ export function CentrosListPage() {
                 const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
                 const todas = unidades.length > 0 && c.unitIds.length >= unidades.length;
                 return (
-                  <div className="cc-card" key={c.id} onClick={() => nav(`/centros/${c.id}`)} title="Abrir">
+                  <div className="cc-card" key={c.id} onClick={() => nav(`/app/centros/${c.id}`)} title="Abrir">
                     <div className="cc-card-top">
                       <div><div className="cc-name">{c.name}</div><div className="cc-code">{c.code}</div></div>
                       <div className="cc-orc"><div className="v">{brlCompact(c.annualBudget)}</div><div className="l">orçamento/ano</div></div>
@@ -64,7 +64,7 @@ export function CentrosListPage() {
                   </div>
                 );
               })}
-              <button className="add-card" onClick={() => nav('/centros/novo')}><Plus /> Novo centro de custo</button>
+              <button className="add-card" onClick={() => nav('/app/centros/novo')}><Plus /> Novo centro de custo</button>
             </div>
           )}
         </>
@@ -109,12 +109,12 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   if (modo === 'novo') {
     return (
       <>
-        <button className="backlink" onClick={() => nav('/centros')}><ChevronLeft /> Centros de custo</button>
+        <button className="backlink" onClick={() => nav('/app/centros')}><ChevronLeft /> Centros de custo</button>
         <div className="detail-head"><div><h1 className="detail-title">Novo centro de custo</h1>
           <div className="detail-sub">{empresa?.legalName ?? 'Selecione uma empresa'}</div></div></div>
         {empresa
           ? <div className="card-form"><CentroForm empresa={empresa} unidades={unidades}
-              onSaved={(cc) => nav(`/centros/${cc.id}`)} onCancel={() => nav('/centros')} /></div>
+              onSaved={(cc) => nav(`/app/centros/${cc.id}`)} onCancel={() => nav('/app/centros')} /></div>
           : <EmptyState icon={<Target />} title="Nenhuma empresa" sub="Cadastre uma empresa primeiro." />}
       </>
     );
@@ -135,7 +135,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
 
   return (
     <>
-      <button className="backlink" onClick={() => nav('/centros')}><ChevronLeft /> Centros de custo</button>
+      <button className="backlink" onClick={() => nav('/app/centros')}><ChevronLeft /> Centros de custo</button>
       <div className="detail-head">
         <div>
           <h1 className="detail-title"><Target size={20} /> {centro.name}</h1>
@@ -167,7 +167,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
                 <thead><tr><th>Vencimento</th><th>Descrição</th><th>Tipo</th><th style={{ textAlign: 'right' }}>Valor</th><th>Status</th></tr></thead>
                 <tbody>
                   {lancamentos.map((l) => (
-                    <tr key={l.id} className="row-click" onClick={() => nav(`/lancamentos/${l.id}`)}>
+                    <tr key={l.id} className="row-click" onClick={() => nav(`/app/lancamentos/${l.id}`)}>
                       <td className="t-mono">{fmtData(l.dueDate)}</td>
                       <td>{l.description}</td>
                       <td>{l.type === 'Payable' ? 'A pagar' : 'A receber'}</td>

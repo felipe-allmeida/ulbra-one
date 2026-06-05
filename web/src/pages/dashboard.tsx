@@ -47,7 +47,7 @@ export function DashboardPage() {
               {ordenados.map((c) => {
                 const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
                 return (
-                  <div className="bd-row" key={c.id} style={{ cursor: 'pointer' }} onClick={() => nav(`/centros/${c.id}`)}>
+                  <div className="bd-row" key={c.id} style={{ cursor: 'pointer' }} onClick={() => nav(`/app/centros/${c.id}`)}>
                     <div className="bd-name">{c.name} <small>· {c.code}</small></div>
                     <div className="bd-bar"><div className="bd-fill" style={{ width: `${pct}%` }} /></div>
                     <div className="bd-val">{brl(c.annualBudget)} <small style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{pct}%</small></div>

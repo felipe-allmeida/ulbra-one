@@ -20,6 +20,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (res.status === 401) {
+    // Sessão ausente/expirada: limpa o token e manda pro login (sem loop se já estamos lá).
+    auth.clear();
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.assign('/login');
+    }
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `${res.status} ${res.statusText}`);
