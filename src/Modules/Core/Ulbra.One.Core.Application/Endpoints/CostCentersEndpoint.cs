@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Core.Infrastructure.Database;
 
@@ -25,15 +26,15 @@ public sealed class CostCentersEndpoint : IEndpoint
             if (companyId is not null) query = query.Where(c => c.CompanyId == companyId);
 
             var costCenters = await query.OrderBy(c => c.Code)
-                .Select(c => new
-                {
+                .Select(c => new CostCenterResponse(
                     c.Id, c.CompanyId, c.Code, c.Name, c.AnnualBudget, c.AutoApprovalLimit, c.Active,
-                    unitIds = db.CostCenterUnits.Where(x => x.CostCenterId == c.Id).Select(x => x.UnitId).ToList(),
-                })
+                    db.CostCenterUnits.Where(x => x.CostCenterId == c.Id).Select(x => x.UnitId).ToList()))
                 .ToListAsync(ct);
 
-            return Results.Ok(costCenters);
-        }).WithName("ListCostCenters");
+            return TypedResults.Ok(costCenters);
+        })
+            .WithName("ListCostCenters")
+            .Produces<List<CostCenterResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, CoreContext db, CancellationToken ct) =>
         {
@@ -42,7 +43,10 @@ public sealed class CostCentersEndpoint : IEndpoint
             var unitIds = await db.CostCenterUnits
                 .Where(x => x.CostCenterId == id).Select(x => x.UnitId).ToArrayAsync(ct);
             return Results.Ok(Project(costCenter, unitIds));
-        }).WithName("GetCostCenter");
+        })
+            .WithName("GetCostCenter")
+            .Produces<CostCenterResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (CreateCostCenterRequest req, CoreContext db, CancellationToken ct) =>
         {
@@ -60,7 +64,11 @@ public sealed class CostCentersEndpoint : IEndpoint
 
             await db.SaveChangesAsync(ct);
             return Results.Created($"/api/cost-centers/{costCenter.Id}", Project(costCenter, unitIds));
-        }).WithName("CreateCostCenter");
+        })
+            .WithName("CreateCostCenter")
+            .Produces<CostCenterResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateCostCenterRequest req, CoreContext db, CancellationToken ct) =>
         {
@@ -81,7 +89,11 @@ public sealed class CostCentersEndpoint : IEndpoint
 
             await db.SaveChangesAsync(ct);
             return Results.Ok(Project(costCenter, unitIds));
-        }).WithName("UpdateCostCenter");
+        })
+            .WithName("UpdateCostCenter")
+            .Produces<CostCenterResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
     private static async Task<bool> UnitsValid(CoreContext db, Guid companyId, Guid[] unitIds, CancellationToken ct)
@@ -93,8 +105,6 @@ public sealed class CostCentersEndpoint : IEndpoint
         return valid.Count == unitIds.Length;
     }
 
-    private static object Project(CostCenter c, Guid[] unitIds) => new
-    {
-        c.Id, c.CompanyId, c.Code, c.Name, c.AnnualBudget, c.AutoApprovalLimit, c.Active, unitIds,
-    };
+    private static CostCenterResponse Project(CostCenter c, Guid[] unitIds) =>
+        CostCenterResponse.From(c, unitIds);
 }

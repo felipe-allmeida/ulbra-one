@@ -7,15 +7,13 @@ namespace Ulbra.One.Core.Application.Endpoints;
 
 public sealed class PingEndpoint : IEndpoint
 {
+    public sealed record PingResponse(string Status, string Service, DateTime Utc);
+
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/ping", () => Results.Ok(new
-        {
-            status = "ok",
-            service = "ulbra-one",
-            utc = DateTime.UtcNow
-        }))
+        builder.MapGet("/ping", () => TypedResults.Ok(new PingResponse("ok", "ulbra-one", DateTime.UtcNow)))
         .WithName("Ping")
-        .WithTags("System");
+        .WithTags("System")
+        .Produces<PingResponse>(StatusCodes.Status200OK);
     }
 }

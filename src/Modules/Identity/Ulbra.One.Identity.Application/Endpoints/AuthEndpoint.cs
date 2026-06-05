@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
 using Ulbra.One.Identity.Infrastructure;
@@ -23,9 +24,16 @@ public sealed class AuthEndpoint : IEndpoint
     {
         var group = builder.MapGroup("/auth").WithTags("Auth");
 
-        group.MapPost("/google", GoogleSignIn).WithName("GoogleSignIn");
-        group.MapPost("/dev-token", DevToken).WithName("DevToken");
-        group.MapGet("/me", Me).WithName("Me").RequireAuthorization();
+        group.MapPost("/google", GoogleSignIn).WithName("GoogleSignIn")
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status501NotImplemented);
+        group.MapPost("/dev-token", DevToken).WithName("DevToken")
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+        group.MapGet("/me", Me).WithName("Me").RequireAuthorization()
+            .Produces<MeResponse>(StatusCodes.Status200OK);
     }
 
     private static async Task<IResult> GoogleSignIn(
@@ -79,7 +87,7 @@ public sealed class AuthEndpoint : IEndpoint
         await db.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role } });
+        return Results.Ok(new LoginResponse(token, new UserSummary(user.Id, user.Email, user.Name, user.Role)));
     }
 
     private static async Task<IResult> DevToken(
@@ -105,16 +113,9 @@ public sealed class AuthEndpoint : IEndpoint
         await db.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role } });
+        return Results.Ok(new LoginResponse(token, new UserSummary(user.Id, user.Email, user.Name, user.Role)));
     }
 
     private static IResult Me(UserContext user) =>
-        Results.Ok(new
-        {
-            userId = user.UserId,
-            name = user.UserName,
-            email = user.UserEmail,
-            role = user.Role,
-            isAdmin = user.IsAdmin
-        });
+        Results.Ok(new MeResponse(user.UserId, user.UserName, user.UserEmail, user.Role, user.IsAdmin));
 }

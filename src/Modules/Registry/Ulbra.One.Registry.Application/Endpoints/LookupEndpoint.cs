@@ -16,12 +16,16 @@ public sealed class LookupEndpoint : IEndpoint
         {
             var result = await lookup.FindAsync(cep, ct);
             return result is null ? Results.NotFound() : Results.Ok(result);
-        }).WithName("LookupCep");
+        }).WithName("LookupCep")
+            .Produces<CepResult>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/cnpj/{cnpj}", async (string cnpj, ICnpjLookup lookup, CancellationToken ct) =>
         {
             var result = await lookup.FindAsync(cnpj, ct);
             return result is null ? Results.NotFound() : Results.Ok(result);
-        }).WithName("LookupCnpj");
+        }).WithName("LookupCnpj")
+            .Produces<CnpjResult>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
     }
 }

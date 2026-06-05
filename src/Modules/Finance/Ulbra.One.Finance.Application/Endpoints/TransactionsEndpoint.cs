@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Core.Infrastructure.Database;
+using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Finance.Infrastructure.Database;
@@ -28,12 +29,18 @@ public sealed class TransactionsEndpoint : IEndpoint
             if (type is not null) q = q.Where(l => l.Type == type);
             if (status is not null) q = q.Where(l => l.Status == status);
             if (costCenterId is not null) q = q.Where(l => l.CostCenterId == costCenterId);
-            return Results.Ok(await q.OrderBy(l => l.DueDate).ToListAsync(ct));
-        }).WithName("ListTransactions");
+            var items = await q.OrderBy(l => l.DueDate).ToListAsync(ct);
+            return TypedResults.Ok(items.Select(TransactionResponse.From).ToList());
+        })
+            .WithName("ListTransactions")
+            .Produces<List<TransactionResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, FinanceContext db, CancellationToken ct) =>
-            await db.Transactions.FirstOrDefaultAsync(l => l.Id == id, ct) is { } l ? Results.Ok(l) : Results.NotFound())
-            .WithName("GetTransaction");
+            await db.Transactions.FirstOrDefaultAsync(l => l.Id == id, ct) is { } l
+                ? Results.Ok(TransactionResponse.From(l)) : Results.NotFound())
+            .WithName("GetTransaction")
+            .Produces<TransactionResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (CreateTransactionRequest req, FinanceContext db, CoreContext core, CancellationToken ct) =>
         {
@@ -51,14 +58,23 @@ public sealed class TransactionsEndpoint : IEndpoint
 
             db.Transactions.Add(t);
             await db.SaveChangesAsync(ct);
-            return Results.Created($"/api/transactions/{t.Id}", t);
-        }).WithName("CreateTransaction");
+            return Results.Created($"/api/transactions/{t.Id}", TransactionResponse.From(t));
+        })
+            .WithName("CreateTransaction")
+            .Produces<TransactionResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/{id:guid}/approve", async (Guid id, FinanceContext db, CancellationToken ct) =>
-            await Transition(db, id, l => l.Approve(), ct)).WithName("ApproveTransaction");
+            await Transition(db, id, l => l.Approve(), ct))
+            .WithName("ApproveTransaction")
+            .Produces<TransactionResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/{id:guid}/reject", async (Guid id, RejectRequest req, FinanceContext db, CancellationToken ct) =>
-            await Transition(db, id, l => l.Reject(req.Reason), ct)).WithName("RejectTransaction");
+            await Transition(db, id, l => l.Reject(req.Reason), ct))
+            .WithName("RejectTransaction")
+            .Produces<TransactionResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/{id:guid}/pay", async (Guid id, FinanceContext db, CancellationToken ct) =>
         {
@@ -67,8 +83,12 @@ public sealed class TransactionsEndpoint : IEndpoint
             try { t.MarkAsPaid(); }
             catch (InvalidOperationException ex) { return Results.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict); }
             await db.SaveChangesAsync(ct);
-            return Results.Ok(t);
-        }).WithName("PayTransaction");
+            return Results.Ok(TransactionResponse.From(t));
+        })
+            .WithName("PayTransaction")
+            .Produces<TransactionResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     private static async Task<IResult> Transition(FinanceContext db, Guid id, Action<Transaction> action, CancellationToken ct)
@@ -77,6 +97,6 @@ public sealed class TransactionsEndpoint : IEndpoint
         if (t is null) return Results.NotFound();
         action(t);
         await db.SaveChangesAsync(ct);
-        return Results.Ok(t);
+        return Results.Ok(TransactionResponse.From(t));
     }
 }

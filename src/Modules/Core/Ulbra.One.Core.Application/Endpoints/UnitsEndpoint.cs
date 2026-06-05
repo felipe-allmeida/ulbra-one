@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Core.Infrastructure.Database;
 
@@ -21,8 +22,11 @@ public sealed class UnitsEndpoint : IEndpoint
         {
             var query = db.Units.AsQueryable();
             if (companyId is not null) query = query.Where(u => u.CompanyId == companyId);
-            return Results.Ok(await query.OrderBy(u => u.Name).ToListAsync(ct));
-        }).WithName("ListUnits");
+            var units = await query.OrderBy(u => u.Name).ToListAsync(ct);
+            return TypedResults.Ok(units.Select(UnitResponse.From).ToList());
+        })
+            .WithName("ListUnits")
+            .Produces<List<UnitResponse>>(StatusCodes.Status200OK);
 
         group.MapPost("/", async (CreateUnitRequest req, CoreContext db, CancellationToken ct) =>
         {
@@ -32,8 +36,11 @@ public sealed class UnitsEndpoint : IEndpoint
             var unit = new Unit(req.CompanyId, req.Name, req.Acronym);
             db.Units.Add(unit);
             await db.SaveChangesAsync(ct);
-            return Results.Created($"/api/units/{unit.Id}", unit);
-        }).WithName("CreateUnit");
+            return Results.Created($"/api/units/{unit.Id}", UnitResponse.From(unit));
+        })
+            .WithName("CreateUnit")
+            .Produces<UnitResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateUnitRequest req, CoreContext db, CancellationToken ct) =>
         {
@@ -41,7 +48,10 @@ public sealed class UnitsEndpoint : IEndpoint
             if (unit is null) return Results.NotFound();
             unit.Update(req.Name, req.Acronym);
             await db.SaveChangesAsync(ct);
-            return Results.Ok(unit);
-        }).WithName("UpdateUnit");
+            return Results.Ok(UnitResponse.From(unit));
+        })
+            .WithName("UpdateUnit")
+            .Produces<UnitResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
     }
 }
