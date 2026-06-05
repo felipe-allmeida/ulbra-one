@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Identity.Infrastructure.Services;
 
@@ -17,6 +19,9 @@ public static class IdentityModule
         services.AddDbContext<IdentityContext>(options =>
             options.UseNpgsql(connectionString)
                    .UseSnakeCaseNamingConvention());
+
+        services.AddKeyedScoped<IUnitOfWork>("identity", (sp, _) =>
+            new EfUnitOfWork<IdentityContext>(sp.GetRequiredService<IdentityContext>()));
 
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
 
