@@ -1,0 +1,66 @@
+name: API CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Directory.Packages.props'
+      - 'Directory.Build.props'
+      - 'Ulbra.One.slnx'
+      - 'global.json'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Directory.Packages.props'
+      - 'Directory.Build.props'
+      - 'Ulbra.One.slnx'
+      - 'global.json'
+      - '.github/workflows/api-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore Ulbra.One.slnx
+
+      - name: Build (Release)
+        run: dotnet build Ulbra.One.slnx -c Release --no-restore
+
+      # Unit tests: fast, no Docker required.
+      - name: Run unit tests
+        run: dotnet test tests/Ulbra.One.UnitTests -c Release --no-build
+
+      # Integration tests: Testcontainers spins up its own PostgreSQL via the
+      # Docker daemon preinstalled on ubuntu-latest (no services block needed).
+      - name: Run integration tests
+        run: dotnet test tests/Ulbra.One.IntegrationTests -c Release --no-build
