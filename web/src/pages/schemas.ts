@@ -108,15 +108,26 @@ export const employeeSchema = z.object({
 });
 export type EmployeeValues = z.infer<typeof employeeSchema>;
 
-export const transactionSchema = z.object({
-  type: z.enum(['Payable', 'Receivable']),
-  unitId: z.string().min(1, { message: 'validation.unitRequired' }),
-  costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
-  description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
-  counterparty: z.string(),
-  amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
-  dueDate: z.string().min(1, { message: 'validation.dueDateRequired' }),
-});
+export const transactionSchema = z
+  .object({
+    type: z.enum(['Payable', 'Receivable']),
+    unitId: z.string().min(1, { message: 'validation.unitRequired' }),
+    costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
+    description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
+    vendorId: z.string().nullable(),
+    customerId: z.string().nullable(),
+    amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+    dueDate: z.string().min(1, { message: 'validation.dueDateRequired' }),
+  })
+  .superRefine((val, ctx) => {
+    // A payable must link to a vendor; a receivable to a customer.
+    if (val.type === 'Payable' && !val.vendorId) {
+      ctx.addIssue({ code: 'custom', message: 'validation.vendorRequired', path: ['vendorId'] });
+    }
+    if (val.type === 'Receivable' && !val.customerId) {
+      ctx.addIssue({ code: 'custom', message: 'validation.customerRequired', path: ['customerId'] });
+    }
+  });
 export type TransactionValues = z.infer<typeof transactionSchema>;
 
 export const companySchema = z.object({

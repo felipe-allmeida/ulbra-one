@@ -232,7 +232,7 @@ export function VendorForm({
 }: {
   companyId: string;
   initial?: Vendor;
-  onSaved: () => void;
+  onSaved: (saved: Vendor) => void;
   onCancel: () => void;
 }) {
   const toast = useToast();
@@ -257,9 +257,9 @@ export function VendorForm({
   const { control, handleSubmit, setValue, getValues, watch, setError, formState } = form;
 
   const mutation = useSaveVendor({
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success(initial ? 'Fornecedor atualizado.' : 'Fornecedor criado.');
-      onSaved();
+      onSaved(saved);
     },
     onError: (e) => {
       if (!applyServerErrors<VendorValues>(e, VENDOR_FIELDS, setError)) toast.error(getErrorMessage(e));
@@ -428,7 +428,7 @@ export function CustomerForm({
 }: {
   companyId: string;
   initial?: Customer;
-  onSaved: () => void;
+  onSaved: (saved: Customer) => void;
   onCancel: () => void;
 }) {
   const toast = useToast();
@@ -452,9 +452,9 @@ export function CustomerForm({
   const { control, handleSubmit, setValue, getValues, watch, setError, formState } = form;
 
   const mutation = useSaveCustomer({
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success(initial ? 'Cliente atualizado.' : 'Cliente criado.');
-      onSaved();
+      onSaved(saved);
     },
     onError: (e) => {
       if (!applyServerErrors<CustomerValues>(e, CUSTOMER_FIELDS, setError)) toast.error(getErrorMessage(e));

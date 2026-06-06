@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Plus, ChevronLeft, ClipboardCheck, Check, X, Wallet } from 'lucide-react';
 import { type TransactionType, type TransactionStatus } from '../api';
 import { resolver, fieldError, transactionSchema, type TransactionValues } from './schemas';
@@ -9,16 +10,19 @@ import {
   useApproveTransaction,
   useCostCenters,
   useCreateTransaction,
+  useCustomers,
   usePayTransaction,
   useRejectTransaction,
   useTransaction,
   useTransactions,
   useUnits,
+  useVendors,
 } from '../queries';
 import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
-import { Button, Input, Select, Field, PageHeader, Pager, Panel, EmptyState } from '../ui';
+import { Button, Input, Select, Field, PageHeader, Pager, Panel, EmptyState, Combobox, Drawer } from '../ui';
 import { EmpresaPicker } from './shared';
+import { CustomerForm, VendorForm } from './registry-forms';
 
 const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
   Pending: { cls: 'badge-pendente', label: 'Pendente' },
@@ -192,13 +196,110 @@ export function AprovacoesPage() {
 }
 
 /* ============ NEW ============ */
+
+/**
+ * Counterparty picker: a searchable Combobox bound to vendors (Payable) or
+ * customers (Receivable), with an inline "+ Novo" action that opens a Drawer to
+ * create one and auto-selects it on success.
+ */
+function CounterpartyPicker({
+  tipo,
+  companyId,
+  value,
+  onChange,
+  invalid,
+}: {
+  tipo: TransactionType;
+  companyId: string;
+  value: string | null;
+  onChange: (id: string | null) => void;
+  invalid?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isPayable = tipo === 'Payable';
+
+  // Debounce the search term feeding the query (same 250ms UX as registry pages).
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const vendors = useVendors(isPayable ? companyId : '', debouncedSearch);
+  const customers = useCustomers(isPayable ? '' : companyId, debouncedSearch);
+  const query = isPayable ? vendors : customers;
+  const items = (query.data?.items ?? []).map((p) => ({
+    id: p.id,
+    label: p.name,
+    sub: p.tradeName ?? p.document,
+  }));
+
+  return (
+    <>
+      <Combobox
+        value={value}
+        onChange={onChange}
+        items={items}
+        invalid={invalid}
+        loading={query.isLoading}
+        placeholder={
+          isPayable ? t('transactions.counterparty.selectVendor') : t('transactions.counterparty.selectCustomer')
+        }
+        searchPlaceholder={
+          isPayable ? t('transactions.counterparty.searchVendor') : t('transactions.counterparty.searchCustomer')
+        }
+        emptyText={
+          isPayable ? t('transactions.counterparty.emptyVendor') : t('transactions.counterparty.emptyCustomer')
+        }
+        onSearch={setSearch}
+        footer={
+          <Button type='button' variant='ghost' icon={<Plus />} onClick={() => setDrawerOpen(true)}>
+            {isPayable ? t('transactions.counterparty.newVendor') : t('transactions.counterparty.newCustomer')}
+          </Button>
+        }
+      />
+      <Drawer
+        open={drawerOpen}
+        title={
+          isPayable ? t('transactions.counterparty.newVendorTitle') : t('transactions.counterparty.newCustomerTitle')
+        }
+        onClose={() => setDrawerOpen(false)}
+      >
+        {drawerOpen &&
+          (isPayable ? (
+            <VendorForm
+              companyId={companyId}
+              onSaved={(v) => {
+                onChange(v.id);
+                setDrawerOpen(false);
+              }}
+              onCancel={() => setDrawerOpen(false)}
+            />
+          ) : (
+            <CustomerForm
+              companyId={companyId}
+              onSaved={(c) => {
+                onChange(c.id);
+                setDrawerOpen(false);
+              }}
+              onCancel={() => setDrawerOpen(false)}
+            />
+          ))}
+      </Drawer>
+    </>
+  );
+}
+
 export function NovoLancamentoPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
+  const { t } = useTranslation();
   const [sp] = useSearchParams();
   const { unidades, centros } = useNomes(empresaId);
 
-  const { control, handleSubmit, watch, formState } = useForm<TransactionValues>({
+  const { control, handleSubmit, watch, setValue, formState } = useForm<TransactionValues>({
     resolver: resolver(transactionSchema),
     mode: 'onChange',
     defaultValues: {
@@ -206,7 +307,8 @@ export function NovoLancamentoPage() {
       unitId: '',
       costCenterId: '',
       description: '',
-      counterparty: '',
+      vendorId: null,
+      customerId: null,
       amount: '',
       dueDate: '',
     },
@@ -223,11 +325,8 @@ export function NovoLancamentoPage() {
       costCenterId: v.costCenterId,
       type: v.type,
       description: v.description.trim(),
-      // TODO(frontend slice): replace the free-text counterparty field with a Vendor/Customer
-      // picker and send the real vendorId (Payable) / customerId (Receivable). The backend now
-      // requires one of them, so this form will 400 until the picker is wired (next slice).
-      vendorId: v.type === 'Payable' ? null : undefined,
-      customerId: v.type === 'Receivable' ? null : undefined,
+      vendorId: v.type === 'Payable' ? v.vendorId : undefined,
+      customerId: v.type === 'Receivable' ? v.customerId : undefined,
       amount: Number(v.amount) || 0,
       dueDate: v.dueDate,
     });
@@ -257,7 +356,15 @@ export function NovoLancamentoPage() {
                 control={control}
                 name='type'
                 render={({ field }) => (
-                  <Select {...field}>
+                  <Select
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Switching type invalidates the previous counterparty selection.
+                      setValue('vendorId', null, { shouldValidate: true });
+                      setValue('customerId', null, { shouldValidate: true });
+                    }}
+                  >
                     <option value='Payable'>Conta a pagar</option>
                     <option value='Receivable'>Conta a receber</option>
                   </Select>
@@ -318,12 +425,31 @@ export function NovoLancamentoPage() {
                 <div className='field-err'>{fieldError(formState.errors.amount?.message)}</div>
               )}
             </Field>
-            <Field label={tipo === 'Payable' ? 'Fornecedor' : 'Cliente'}>
+            <Field
+              label={
+                tipo === 'Payable'
+                  ? t('transactions.counterparty.vendorLabel')
+                  : t('transactions.counterparty.customerLabel')
+              }
+            >
               <Controller
                 control={control}
-                name='counterparty'
-                render={({ field }) => <Input {...field} placeholder='ex.: Google' />}
+                name={tipo === 'Payable' ? 'vendorId' : 'customerId'}
+                render={({ field }) => (
+                  <CounterpartyPicker
+                    tipo={tipo}
+                    companyId={empresaId}
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id)}
+                    invalid={tipo === 'Payable' ? !!formState.errors.vendorId : !!formState.errors.customerId}
+                  />
+                )}
               />
+              {fieldError((tipo === 'Payable' ? formState.errors.vendorId : formState.errors.customerId)?.message) && (
+                <div className='field-err'>
+                  {fieldError((tipo === 'Payable' ? formState.errors.vendorId : formState.errors.customerId)?.message)}
+                </div>
+              )}
             </Field>
           </div>
           <div style={{ marginTop: 14 }}>
