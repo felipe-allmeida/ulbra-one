@@ -169,7 +169,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CompanyRequest"
+                "$ref": "#/components/schemas/CreateCompanyRequest"
               }
             }
           },
@@ -201,8 +201,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -210,7 +209,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CompanyRequest"
+                "$ref": "#/components/schemas/UpdateCompanyRequest"
               }
             }
           },
@@ -244,8 +243,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -316,8 +314,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -359,8 +356,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -441,8 +437,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -473,8 +468,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -526,8 +520,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -548,8 +541,7 @@
             "name": "costCenterId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -633,8 +625,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -667,8 +658,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -701,8 +691,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -745,8 +734,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -788,8 +776,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -880,8 +867,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -919,8 +905,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -978,8 +963,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1012,8 +996,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1053,8 +1036,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1093,8 +1075,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1185,8 +1166,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1224,8 +1204,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1283,8 +1262,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1317,8 +1295,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1358,8 +1335,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1398,8 +1374,7 @@
             "name": "companyId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1490,8 +1465,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1529,8 +1503,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1588,8 +1561,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1622,8 +1594,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1663,8 +1634,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1942,22 +1912,6 @@
         },
         "additionalProperties": false
       },
-      "CompanyRequest": {
-        "required": [
-          "legalName",
-          "cnpj"
-        ],
-        "type": "object",
-        "properties": {
-          "legalName": {
-            "type": "string"
-          },
-          "cnpj": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
       "CompanyResponse": {
         "required": [
           "id",
@@ -1969,7 +1923,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "legalName": {
             "type": "string"
@@ -1998,11 +1952,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "code": {
             "type": "string"
@@ -2025,8 +1979,24 @@
             "type": "array",
             "items": {
               "type": "string",
-              "format": "uuid"
+              "example": "unit_3fa85f64571742199730000000000000"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateCompanyRequest": {
+        "required": [
+          "legalName",
+          "cnpj"
+        ],
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -2044,7 +2014,7 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "code": {
             "type": "string"
@@ -2064,7 +2034,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "format": "uuid"
+              "example": "unit_3fa85f64571742199730000000000000"
             }
           }
         },
@@ -2085,15 +2055,15 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "unitId": {
             "type": "string",
-            "format": "uuid"
+            "example": "unit_3fa85f64571742199730000000000000"
           },
           "costCenterId": {
             "type": "string",
-            "format": "uuid"
+            "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "type": {
             "$ref": "#/components/schemas/TransactionType"
@@ -2125,7 +2095,7 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string"
@@ -2152,7 +2122,7 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "personType": {
             "$ref": "#/components/schemas/PersonType"
@@ -2204,11 +2174,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "customer_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "personType": {
             "$ref": "#/components/schemas/PersonType"
@@ -2315,7 +2285,7 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string"
@@ -2336,12 +2306,12 @@
           },
           "unitId": {
             "type": "string",
-            "format": "uuid"
+            "example": "unit_3fa85f64571742199730000000000000"
           },
           "costCenterId": {
             "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "nullable": true,
+            "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "hireDate": {
             "type": "string",
@@ -2372,11 +2342,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "employee_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string"
@@ -2397,12 +2367,12 @@
           },
           "unitId": {
             "type": "string",
-            "format": "uuid"
+            "example": "unit_3fa85f64571742199730000000000000"
           },
           "costCenterId": {
             "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "nullable": true,
+            "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "hireDate": {
             "type": "string",
@@ -2491,7 +2461,8 @@
         "type": "object",
         "properties": {
           "userId": {
-            "type": "string"
+            "type": "string",
+            "example": "user_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string",
@@ -2571,7 +2542,7 @@
             "nullable": true
           }
         },
-        "additionalProperties": {}
+        "additionalProperties": { }
       },
       "RejectRequest": {
         "required": [
@@ -2607,19 +2578,19 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "transaction_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "unitId": {
             "type": "string",
-            "format": "uuid"
+            "example": "unit_3fa85f64571742199730000000000000"
           },
           "costCenterId": {
             "type": "string",
-            "format": "uuid"
+            "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "type": {
             "$ref": "#/components/schemas/TransactionType"
@@ -2725,11 +2696,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "unit_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string"
@@ -2739,6 +2710,22 @@
           },
           "active": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCompanyRequest": {
+        "required": [
+          "legalName",
+          "cnpj"
+        ],
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -2771,7 +2758,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "format": "uuid"
+              "example": "unit_3fa85f64571742199730000000000000"
             }
           }
         },
@@ -2804,7 +2791,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "user_3fa85f64571742199730000000000000"
           },
           "email": {
             "type": "string"
@@ -2835,7 +2822,7 @@
         "properties": {
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "personType": {
             "$ref": "#/components/schemas/PersonType"
@@ -2891,11 +2878,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "vendor_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
-            "format": "uuid"
+            "example": "company_3fa85f64571742199730000000000000"
           },
           "personType": {
             "$ref": "#/components/schemas/PersonType"

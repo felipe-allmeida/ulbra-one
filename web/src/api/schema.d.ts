@@ -510,21 +510,17 @@ export interface components {
             nomeFantasia: string | null;
             address: components["schemas"]["CnpjAddress"];
         };
-        CompanyRequest: {
-            legalName: string;
-            cnpj: string;
-        };
         CompanyResponse: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             id: string;
             legalName: string;
             cnpj: string;
             active: boolean;
         };
         CostCenterResponse: {
-            /** Format: uuid */
+            /** @example cost_center_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             code: string;
             name: string;
@@ -535,8 +531,12 @@ export interface components {
             active: boolean;
             unitIds: string[];
         };
+        CreateCompanyRequest: {
+            legalName: string;
+            cnpj: string;
+        };
         CreateCostCenterRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             code: string;
             name: string;
@@ -547,11 +547,11 @@ export interface components {
             unitIds: string[];
         };
         CreateTransactionRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
-            /** Format: uuid */
+            /** @example unit_3fa85f64571742199730000000000000 */
             unitId: string;
-            /** Format: uuid */
+            /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
             type: components["schemas"]["TransactionType"];
             description: string;
@@ -562,13 +562,13 @@ export interface components {
             dueDate: string;
         };
         CreateUnitRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             name: string;
             acronym: string;
         };
         CustomerRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             personType: components["schemas"]["PersonType"];
             name: string;
@@ -581,9 +581,9 @@ export interface components {
             creditLimit: number | null;
         };
         CustomerResponse: {
-            /** Format: uuid */
+            /** @example customer_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             personType: components["schemas"]["PersonType"];
             name: string;
@@ -612,34 +612,34 @@ export interface components {
             name: string | null;
         };
         EmployeeRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             name: string;
             document: string;
             email: string | null;
             phone: string | null;
             role: string;
-            /** Format: uuid */
+            /** @example unit_3fa85f64571742199730000000000000 */
             unitId: string;
-            /** Format: uuid */
+            /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string | null;
             /** Format: date */
             hireDate: string;
             address: components["schemas"]["AddressRequest"];
         };
         EmployeeResponse: {
-            /** Format: uuid */
+            /** @example employee_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             name: string;
             document: string;
             email: string | null;
             phone: string | null;
             role: string;
-            /** Format: uuid */
+            /** @example unit_3fa85f64571742199730000000000000 */
             unitId: string;
-            /** Format: uuid */
+            /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string | null;
             /** Format: date */
             hireDate: string;
@@ -665,6 +665,7 @@ export interface components {
             user: components["schemas"]["UserSummary"];
         };
         MeResponse: {
+            /** @example user_3fa85f64571742199730000000000000 */
             userId: string;
             name: string | null;
             email: string | null;
@@ -693,13 +694,13 @@ export interface components {
             reason: string | null;
         };
         TransactionResponse: {
-            /** Format: uuid */
+            /** @example transaction_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
-            /** Format: uuid */
+            /** @example unit_3fa85f64571742199730000000000000 */
             unitId: string;
-            /** Format: uuid */
+            /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
             type: components["schemas"]["TransactionType"];
             description: string;
@@ -733,13 +734,17 @@ export interface components {
         /** @enum {string} */
         TransactionType: "Payable" | "Receivable";
         UnitResponse: {
-            /** Format: uuid */
+            /** @example unit_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             name: string;
             acronym: string;
             active: boolean;
+        };
+        UpdateCompanyRequest: {
+            legalName: string;
+            cnpj: string;
         };
         UpdateCostCenterRequest: {
             code: string;
@@ -755,14 +760,14 @@ export interface components {
             acronym: string;
         };
         UserSummary: {
-            /** Format: uuid */
+            /** @example user_3fa85f64571742199730000000000000 */
             id: string;
             email: string;
             name: string;
             role: string;
         };
         VendorRequest: {
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             personType: components["schemas"]["PersonType"];
             name: string;
@@ -775,9 +780,9 @@ export interface components {
             bankInfo: string | null;
         };
         VendorResponse: {
-            /** Format: uuid */
+            /** @example vendor_3fa85f64571742199730000000000000 */
             id: string;
-            /** Format: uuid */
+            /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             personType: components["schemas"]["PersonType"];
             name: string;
@@ -959,7 +964,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyRequest"];
+                "application/json": components["schemas"]["CreateCompanyRequest"];
             };
         };
         responses: {
@@ -985,7 +990,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompanyRequest"];
+                "application/json": components["schemas"]["UpdateCompanyRequest"];
             };
         };
         responses: {

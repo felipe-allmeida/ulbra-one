@@ -126,6 +126,25 @@ builder.Services.AddSwaggerGen(options =>
     };
     options.AddSecurityDefinition("Bearer", jwtScheme);
 
+    // Vertical-slice endpoints declare nested DTOs named `Request`; without disambiguation Swashbuckle
+    // would assign the same schemaId ("Request") to all of them and fail. Prefix nested `Request` types
+    // with their declaring type name (e.g. CreateCostCenterRequest, DevTokenRequest); generics get their
+    // argument names as a prefix (e.g. VendorResponsePaginatedResponse); uniquely-named types keep their
+    // own name (VendorRequest, RejectRequest).
+    static string SchemaId(Type type)
+    {
+        if (type.IsGenericType)
+        {
+            var args = string.Concat(type.GetGenericArguments().Select(SchemaId));
+            var name = type.Name[..type.Name.IndexOf('`')];
+            return args + name;
+        }
+        if (type is { IsNested: true, Name: "Request", DeclaringType: not null })
+            return type.DeclaringType.Name + type.Name;
+        return type.Name;
+    }
+    options.CustomSchemaIds(SchemaId);
+
     // Global JsonStringEnumConverter serializes enums as strings; describe them as string enums in the spec.
     options.SchemaFilter<Ulbra.One.Api.StringEnumSchemaFilter>();
 
