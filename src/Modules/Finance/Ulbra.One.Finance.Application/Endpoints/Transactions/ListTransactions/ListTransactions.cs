@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -25,18 +26,18 @@ public sealed class ListTransactions : IEndpoint
 
     private static async Task<IResult> Handle(
         [FromKeyedServices("finance")] IUnitOfWork uow,
-        Guid? companyId,
+        CompanyId? companyId,
         TransactionType? type,
         TransactionStatus? status,
-        Guid? costCenterId,
+        CostCenterId? costCenterId,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
     {
         var q = uow.ReadSet<Transaction>();
-        if (companyId is not null) q = q.Where(l => l.CompanyId == companyId);
+        if (companyId is { } cid) q = q.Where(l => l.CompanyId == cid.Value);
         if (type is not null) q = q.Where(l => l.Type == type);
         if (status is not null) q = q.Where(l => l.Status == status);
-        if (costCenterId is not null) q = q.Where(l => l.CostCenterId == costCenterId);
+        if (costCenterId is { } ccid) q = q.Where(l => l.CostCenterId == ccid.Value);
         var page = await q.OrderBy(l => l.DueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(TransactionResponse.From));
     }

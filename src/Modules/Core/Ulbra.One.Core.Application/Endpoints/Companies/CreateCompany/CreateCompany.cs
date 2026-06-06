@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Normalization;
 using Ulbra.One.Core.Application.Contracts;
@@ -36,6 +37,6 @@ public sealed class CreateCompany : IEndpoint
         var company = new Company(req.LegalName, req.Cnpj);
         await uow.AddAsync(company, ct);
         await uow.SaveChangesAsync(ct);
-        return TypedResults.Created($"/api/companies/{company.Id}", CompanyResponse.From(company));
+        return TypedResults.Created($"/api/companies/{new CompanyId(company.Id)}", CompanyResponse.From(company));
     }
 }

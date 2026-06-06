@@ -8,7 +8,7 @@ public sealed class VendorRequestValidator : AbstractValidator<VendorRequest>
 {
     public VendorRequestValidator()
     {
-        RuleFor(x => x.CompanyId).NotEmpty();
+        RuleFor(x => x.CompanyId).Must(x => x.Value != Guid.Empty).WithMessage("CompanyId is required.");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
         RuleFor(x => x.Document)

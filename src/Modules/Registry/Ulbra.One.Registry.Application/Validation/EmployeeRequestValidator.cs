@@ -7,8 +7,8 @@ public sealed class EmployeeRequestValidator : AbstractValidator<EmployeeRequest
 {
     public EmployeeRequestValidator()
     {
-        RuleFor(x => x.CompanyId).NotEmpty();
-        RuleFor(x => x.UnitId).NotEmpty();
+        RuleFor(x => x.CompanyId).Must(x => x.Value != Guid.Empty).WithMessage("CompanyId is required.");
+        RuleFor(x => x.UnitId).Must(x => x.Value != Guid.Empty).WithMessage("UnitId is required.");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Role).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));

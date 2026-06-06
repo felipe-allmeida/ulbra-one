@@ -8,7 +8,7 @@ public sealed class CustomerRequestValidator : AbstractValidator<CustomerRequest
 {
     public CustomerRequestValidator()
     {
-        RuleFor(x => x.CompanyId).NotEmpty();
+        RuleFor(x => x.CompanyId).Must(x => x.Value != Guid.Empty).WithMessage("CompanyId is required.");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
         RuleFor(x => x.CreditLimit).GreaterThanOrEqualTo(0).When(x => x.CreditLimit.HasValue);

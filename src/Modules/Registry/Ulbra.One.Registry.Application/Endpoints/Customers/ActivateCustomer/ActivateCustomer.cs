@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Results;
@@ -16,7 +17,7 @@ public sealed class ActivateCustomer : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("/{id:guid}/activate", Handle)
+        builder.MapPost("/{id}/activate", Handle)
             .WithName("ActivateCustomer")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -25,11 +26,11 @@ public sealed class ActivateCustomer : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        CustomerId id,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var customer = await uow.Set<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id, ct);
+        var customer = await uow.Set<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);
         if (customer is null)
             return Result.Failure<CustomerResponse>(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
         customer.Activate();

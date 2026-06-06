@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Results;
@@ -15,7 +16,7 @@ public sealed class DeleteVendor : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("/{id:guid}", Handle)
+        builder.MapDelete("/{id}", Handle)
             .WithName("DeleteVendor")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -24,12 +25,12 @@ public sealed class DeleteVendor : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        VendorId id,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {
-        var vendor = await uow.Set<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id, ct);
+        var vendor = await uow.Set<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id.Value, ct);
         if (vendor is null)
             return Result.Failure(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
         vendor.MarkDeleted(timeProvider.GetUtcNow());

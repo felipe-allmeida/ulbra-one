@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Normalization;
@@ -19,7 +20,7 @@ public sealed class UpdateVendor : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id:guid}", Handle)
+        builder.MapPut("/{id}", Handle)
             .WithName("UpdateVendor")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -31,12 +32,12 @@ public sealed class UpdateVendor : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        VendorId id,
         VendorRequest req,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var vendor = await uow.Set<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id, ct);
+        var vendor = await uow.Set<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id.Value, ct);
         if (vendor is null)
             return Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
         vendor.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,

@@ -33,7 +33,7 @@ public sealed class CreateCustomer : IEndpoint
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var customer = new CustomerEntity(req.CompanyId, req.PersonType, req.Name, req.TradeName,
+        var customer = new CustomerEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,
             req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.CreditLimit);
         await uow.AddAsync(customer, ct);
         await uow.SaveChangesAsync(ct);

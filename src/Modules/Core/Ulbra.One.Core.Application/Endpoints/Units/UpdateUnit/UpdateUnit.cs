@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Normalization;
 using Ulbra.One.Core.Application.Contracts;
@@ -21,7 +22,7 @@ public sealed class UpdateUnit : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id:guid}", Handle)
+        builder.MapPut("/{id}", Handle)
             .WithName("UpdateUnit")
             .WithTags("Core")
             .RequireAuthorization()
@@ -31,12 +32,12 @@ public sealed class UpdateUnit : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        UnitId id,
         Request req,
         [FromKeyedServices("core")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var unit = await uow.Set<Unit>().FirstOrDefaultAsync(u => u.Id == id, ct);
+        var unit = await uow.Set<Unit>().FirstOrDefaultAsync(u => u.Id == id.Value, ct);
         if (unit is null) return Results.NotFound();
         unit.Update(req.Name, req.Acronym);
         await uow.SaveChangesAsync(ct);

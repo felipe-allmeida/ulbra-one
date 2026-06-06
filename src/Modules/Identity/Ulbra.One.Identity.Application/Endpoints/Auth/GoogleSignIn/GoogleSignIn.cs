@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Identity.Application.Contracts;
@@ -83,6 +84,6 @@ public sealed class GoogleSignIn : IEndpoint
         await uow.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new LoginResponse(token, new UserSummary(user.Id, user.Email, user.Name, user.Role)));
+        return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }

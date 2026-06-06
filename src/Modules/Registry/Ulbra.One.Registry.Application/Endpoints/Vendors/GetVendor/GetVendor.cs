@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Results;
@@ -16,7 +17,7 @@ public sealed class GetVendor : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/{id:guid}", Handle)
+        builder.MapGet("/{id}", Handle)
             .WithName("GetVendor")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -25,11 +26,11 @@ public sealed class GetVendor : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        VendorId id,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id, ct);
+        var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id.Value, ct);
         return (vendor is null
             ? Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found."))
             : Result.Success(VendorResponse.From(vendor))).ToOk();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
@@ -22,12 +23,12 @@ public sealed class ListUnits : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid? companyId,
+        CompanyId? companyId,
         [FromKeyedServices("core")] IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<Unit>();
-        if (companyId is not null) query = query.Where(u => u.CompanyId == companyId);
+        if (companyId is { } cid) query = query.Where(u => u.CompanyId == cid.Value);
         var units = await query.OrderBy(u => u.Name).ToListAsync(ct);
         return TypedResults.Ok(units.Select(UnitResponse.From).ToList());
     }

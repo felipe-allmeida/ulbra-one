@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Normalization;
@@ -19,7 +20,7 @@ public sealed class UpdateEmployee : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id:guid}", Handle)
+        builder.MapPut("/{id}", Handle)
             .WithName("UpdateEmployee")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -31,16 +32,16 @@ public sealed class UpdateEmployee : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        EmployeeId id,
         EmployeeRequest req,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var employee = await uow.Set<EmployeeEntity>().FirstOrDefaultAsync(e => e.Id == id, ct);
+        var employee = await uow.Set<EmployeeEntity>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);
         if (employee is null)
             return Result.Failure<EmployeeResponse>(Error.NotFound("Employee.NotFound", "Employee not found.")).ToOk();
         employee.Update(req.Name, req.Document, req.Email, req.Phone, req.Role,
-            req.UnitId, req.CostCenterId, req.HireDate, req.Address.ToAddress());
+            req.UnitId.Value, req.CostCenterId?.Value, req.HireDate, req.Address.ToAddress());
         await uow.SaveChangesAsync(ct);
         return Result.Success(EmployeeResponse.From(employee)).ToOk();
     }

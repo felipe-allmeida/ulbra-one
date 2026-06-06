@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
@@ -16,7 +17,7 @@ public sealed class RejectTransaction : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("/{id:guid}/reject", Handle)
+        builder.MapPost("/{id}/reject", Handle)
             .WithName("RejectTransaction")
             .WithTags("Finance")
             .RequireAuthorization()
@@ -25,12 +26,12 @@ public sealed class RejectTransaction : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        TransactionId id,
         RejectRequest req,
         [FromKeyedServices("finance")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id, ct);
+        var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (t is null) return Results.NotFound();
         t.Reject(req.Reason);
         await uow.SaveChangesAsync(ct);

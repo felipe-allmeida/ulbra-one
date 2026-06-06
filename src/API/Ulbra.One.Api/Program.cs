@@ -135,6 +135,22 @@ builder.Services.AddSwaggerGen(options =>
     // DTO members are always present on the wire (records); mark every property `required` so generated
     // TS fields are non-optional. Genuinely nullable members remain `T | null`.
     options.SchemaFilter<Ulbra.One.Api.RequiredPropertiesSchemaFilter>();
+
+    // Prefixed typed ids serialize as opaque strings (prefix_<guid:N>); describe them as string in the spec
+    // so generated TS keeps them as `string`.
+    static Microsoft.OpenApi.OpenApiSchema IdSchema(string example) => new()
+    {
+        Type = Microsoft.OpenApi.JsonSchemaType.String,
+        Example = System.Text.Json.Nodes.JsonValue.Create(example),
+    };
+    options.MapType<Ulbra.One.Common.Application.Ids.CompanyId>(() => IdSchema("company_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.UnitId>(() => IdSchema("unit_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.CostCenterId>(() => IdSchema("cost_center_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.TransactionId>(() => IdSchema("transaction_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.VendorId>(() => IdSchema("vendor_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.CustomerId>(() => IdSchema("customer_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.EmployeeId>(() => IdSchema("employee_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.UserId>(() => IdSchema("user_3fa85f64571742199730000000000000"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")

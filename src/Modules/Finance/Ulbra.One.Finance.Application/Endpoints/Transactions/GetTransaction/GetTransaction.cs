@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
@@ -14,7 +15,7 @@ public sealed class GetTransaction : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/{id:guid}", Handle)
+        builder.MapGet("/{id}", Handle)
             .WithName("GetTransaction")
             .WithTags("Finance")
             .RequireAuthorization()
@@ -23,10 +24,10 @@ public sealed class GetTransaction : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        TransactionId id,
         [FromKeyedServices("finance")] IUnitOfWork uow,
         CancellationToken ct)
-        => await uow.ReadSet<Transaction>().FirstOrDefaultAsync(l => l.Id == id, ct) is { } l
+        => await uow.ReadSet<Transaction>().FirstOrDefaultAsync(l => l.Id == id.Value, ct) is { } l
             ? Results.Ok(TransactionResponse.From(l))
             : Results.NotFound();
 }

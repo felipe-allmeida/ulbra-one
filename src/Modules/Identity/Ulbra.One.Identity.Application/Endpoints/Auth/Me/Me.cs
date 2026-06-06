@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Identity.Application.Contracts;
 
@@ -19,5 +20,5 @@ public sealed class Me : IEndpoint
     }
 
     private static IResult Handle(UserContext user) =>
-        Results.Ok(new MeResponse(user.UserId, user.UserName, user.UserEmail, user.Role, user.IsAdmin));
+        Results.Ok(new MeResponse(new UserId(Guid.Parse(user.UserId)), user.UserName, user.UserEmail, user.Role, user.IsAdmin));
 }

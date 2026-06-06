@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Normalization;
 using Ulbra.One.Core.Application.Contracts;
@@ -21,7 +22,7 @@ public sealed class UpdateCompany : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id:guid}", Handle)
+        builder.MapPut("/{id}", Handle)
             .WithName("UpdateCompany")
             .WithTags("Core")
             .RequireAuthorization()
@@ -31,12 +32,12 @@ public sealed class UpdateCompany : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        CompanyId id,
         Request req,
         [FromKeyedServices("core")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var company = await uow.Set<Company>().FirstOrDefaultAsync(e => e.Id == id, ct);
+        var company = await uow.Set<Company>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);
         if (company is null) return TypedResults.NotFound();
         company.Update(req.LegalName, req.Cnpj);
         await uow.SaveChangesAsync(ct);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Registry.Application.Contracts;
@@ -22,14 +23,14 @@ public sealed class ListCustomers : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid? companyId,
+        CompanyId? companyId,
         string? search,
         [AsParameters] PaginationQueryParameters pagination,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<CustomerEntity>();
-        if (companyId is { } cid) query = query.Where(c => c.CompanyId == cid);
+        if (companyId is { } cid) query = query.Where(c => c.CompanyId == cid.Value);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(c => c.Name.Contains(search) || c.Document.Contains(search));
         var page = await query.OrderBy(c => c.Name).ToPaginatedAsync(pagination, ct);

@@ -33,7 +33,7 @@ public sealed class CreateVendor : IEndpoint
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var vendor = new VendorEntity(req.CompanyId, req.PersonType, req.Name, req.TradeName,
+        var vendor = new VendorEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,
             req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.PaymentTerms, req.BankInfo);
         await uow.AddAsync(vendor, ct);
         await uow.SaveChangesAsync(ct);

@@ -33,8 +33,8 @@ public sealed class CreateEmployee : IEndpoint
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var employee = new EmployeeEntity(req.CompanyId, req.Name, req.Document, req.Email, req.Phone,
-            req.Role, req.UnitId, req.CostCenterId, req.HireDate, req.Address.ToAddress());
+        var employee = new EmployeeEntity(req.CompanyId.Value, req.Name, req.Document, req.Email, req.Phone,
+            req.Role, req.UnitId.Value, req.CostCenterId?.Value, req.HireDate, req.Address.ToAddress());
         await uow.AddAsync(employee, ct);
         await uow.SaveChangesAsync(ct);
         return Result.Success(EmployeeResponse.From(employee)).ToCreated(e => $"/api/employees/{e.Id}");

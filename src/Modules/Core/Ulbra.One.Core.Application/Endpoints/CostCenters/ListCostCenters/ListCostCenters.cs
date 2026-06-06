@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
@@ -22,20 +23,23 @@ public sealed class ListCostCenters : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid? companyId,
+        CompanyId? companyId,
         [FromKeyedServices("core")] IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<CostCenter>();
-        if (companyId is not null) query = query.Where(c => c.CompanyId == companyId);
+        if (companyId is { } cid) query = query.Where(c => c.CompanyId == cid.Value);
 
         var links = uow.ReadSet<CostCenterUnit>();
-        var costCenters = await query.OrderBy(c => c.Code)
-            .Select(c => new CostCenterResponse(
-                c.Id, c.CompanyId, c.Code, c.Name, c.AnnualBudget, c.AutoApprovalLimit, c.Active,
-                links.Where(x => x.CostCenterId == c.Id).Select(x => x.UnitId).ToList()))
+        var rows = await query.OrderBy(c => c.Code)
+            .Select(c => new
+            {
+                CostCenter = c,
+                UnitIds = links.Where(x => x.CostCenterId == c.Id).Select(x => x.UnitId).ToList(),
+            })
             .ToListAsync(ct);
 
+        var costCenters = rows.Select(r => CostCenterResponse.From(r.CostCenter, r.UnitIds)).ToList();
         return TypedResults.Ok(costCenters);
     }
 }

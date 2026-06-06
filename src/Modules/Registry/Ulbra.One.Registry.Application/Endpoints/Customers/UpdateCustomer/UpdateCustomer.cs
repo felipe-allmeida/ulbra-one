@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Normalization;
@@ -19,7 +20,7 @@ public sealed class UpdateCustomer : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id:guid}", Handle)
+        builder.MapPut("/{id}", Handle)
             .WithName("UpdateCustomer")
             .WithTags("Registry")
             .RequireAuthorization()
@@ -31,12 +32,12 @@ public sealed class UpdateCustomer : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        Guid id,
+        CustomerId id,
         CustomerRequest req,
         [FromKeyedServices("registry")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        var customer = await uow.Set<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id, ct);
+        var customer = await uow.Set<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);
         if (customer is null)
             return Result.Failure<CustomerResponse>(Error.NotFound("Customer.NotFound", "Customer not found.")).ToOk();
         customer.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,

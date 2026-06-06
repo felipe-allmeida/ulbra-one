@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Normalization;
 using Ulbra.One.Core.Application.Contracts;
@@ -15,12 +16,12 @@ public sealed class CreateCostCenter : IEndpoint
 {
     public sealed record Request
     {
-        public Guid CompanyId { get; set; }
+        public CompanyId CompanyId { get; set; }
         [NormalizeText] public string Code { get; set; } = string.Empty;
         [NormalizeText] public string Name { get; set; } = string.Empty;
         public decimal AnnualBudget { get; set; }
         public decimal AutoApprovalLimit { get; set; }
-        public Guid[] UnitIds { get; set; } = [];
+        public UnitId[] UnitIds { get; set; } = [];
     }
 
     public void Map(IEndpointRouteBuilder builder)
@@ -40,19 +41,19 @@ public sealed class CreateCostCenter : IEndpoint
         [FromKeyedServices("core")] IUnitOfWork uow,
         CancellationToken ct)
     {
-        if (!await uow.ReadSet<Company>().AnyAsync(e => e.Id == req.CompanyId, ct))
+        if (!await uow.ReadSet<Company>().AnyAsync(e => e.Id == req.CompanyId.Value, ct))
             return Results.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
 
-        var unitIds = (req.UnitIds ?? []).Distinct().ToArray();
-        if (!await UnitReconciliation.UnitsValid(uow, req.CompanyId, unitIds, ct))
+        var unitIds = (req.UnitIds ?? []).Select(u => u.Value).Distinct().ToArray();
+        if (!await UnitReconciliation.UnitsValid(uow, req.CompanyId.Value, unitIds, ct))
             return Results.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
 
-        var costCenter = new CostCenter(req.CompanyId, req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
+        var costCenter = new CostCenter(req.CompanyId.Value, req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
         await uow.AddAsync(costCenter, ct);
         foreach (var uid in unitIds)
             await uow.AddAsync(new CostCenterUnit(costCenter.Id, uid), ct);
 
         await uow.SaveChangesAsync(ct);
-        return Results.Created($"/api/cost-centers/{costCenter.Id}", CostCenterResponse.From(costCenter, unitIds));
+        return Results.Created($"/api/cost-centers/{new CostCenterId(costCenter.Id)}", CostCenterResponse.From(costCenter, unitIds));
     }
 }
