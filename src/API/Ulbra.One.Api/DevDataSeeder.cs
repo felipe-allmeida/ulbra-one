@@ -124,38 +124,38 @@ public static class DevDataSeeder
 
         // ---------- Transactions (payables / receivables) ----------
         // Created via a helper that applies the desired status consistently.
-        Transaction Pay(Guid unitId, CostCenter cc, string desc, string counterparty, decimal amount, int dueInDays, TransactionStatus status)
+        Transaction Pay(Guid unitId, CostCenter cc, string desc, VendorEntity vendor, decimal amount, int dueInDays, TransactionStatus status)
         {
-            var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Payable, desc, counterparty, amount, today.AddDays(dueInDays));
+            var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Payable, desc, vendor.Id, null, vendor.Name, amount, today.AddDays(dueInDays));
             ApplyStatus(t, status, cc.AutoApprovalLimit);
             return t;
         }
-        Transaction Receive(Guid unitId, CostCenter cc, string desc, string counterparty, decimal amount, int dueInDays, TransactionStatus status)
+        Transaction Receive(Guid unitId, CostCenter cc, string desc, CustomerEntity customer, decimal amount, int dueInDays, TransactionStatus status)
         {
-            var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Receivable, desc, counterparty, amount, today.AddDays(dueInDays));
+            var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Receivable, desc, null, customer.Id, customer.Name, amount, today.AddDays(dueInDays));
             ApplyStatus(t, status, cc.AutoApprovalLimit);
             return t;
         }
 
         finance.Transactions.AddRange(
-            // Payables — variety of statuses and due dates
-            Pay(canoas.Id, mkt, "Google Ads - campanha vestibular", "Google", 12_000m, -5, TransactionStatus.Approved),
-            Pay(canoas.Id, mkt, "Impressão de materiais de captação", "Gráfica Sul", 3_200m, 7, TransactionStatus.Pending),
-            Pay(canoas.Id, ti, "Licenças Microsoft 365 (anual)", "Microsoft", 96_000m, 20, TransactionStatus.Pending),
-            Pay(canoas.Id, infra, "Conta de energia - Campus Canoas", "CEEE", 48_500m, -2, TransactionStatus.Approved),
-            Pay(gravatai.Id, infra, "Conta de energia - Campus Gravataí", "CEEE", 21_300m, 3, TransactionStatus.Pending),
-            Pay(gravatai.Id, infra, "Serviço de limpeza - mensal", "Limpa Bem", 1_800m, 10, TransactionStatus.Approved), // auto-approved (<= 2000)
-            Pay(canoas.Id, rh, "Consultoria de clima organizacional", "João Pedro Consultoria", 2_500m, 15, TransactionStatus.Pending),
-            Pay(canoas.Id, bib, "Aquisição de acervo - periódicos", "Gráfica Sul", 1_200m, -8, TransactionStatus.Paid),
-            Pay(torres.Id, infra, "Reparo hidráulico - bloco B", "Limpa Bem", 5_400m, 30, TransactionStatus.Rejected),
-            Pay(canoas.Id, ti, "Servidores - colocation mensal", "Microsoft", 8_900m, 12, TransactionStatus.Approved),
+            // Payables — variety of statuses and due dates (linked to real vendors)
+            Pay(canoas.Id, mkt, "Google Ads - campanha vestibular", vGoogle, 12_000m, -5, TransactionStatus.Approved),
+            Pay(canoas.Id, mkt, "Impressão de materiais de captação", vGrafica, 3_200m, 7, TransactionStatus.Pending),
+            Pay(canoas.Id, ti, "Licenças Microsoft 365 (anual)", vMicrosoft, 96_000m, 20, TransactionStatus.Pending),
+            Pay(canoas.Id, infra, "Conta de energia - Campus Canoas", vCeee, 48_500m, -2, TransactionStatus.Approved),
+            Pay(gravatai.Id, infra, "Conta de energia - Campus Gravataí", vCeee, 21_300m, 3, TransactionStatus.Pending),
+            Pay(gravatai.Id, infra, "Serviço de limpeza - mensal", vLimpeza, 1_800m, 10, TransactionStatus.Approved), // auto-approved (<= 2000)
+            Pay(canoas.Id, rh, "Consultoria de clima organizacional", vJoao, 2_500m, 15, TransactionStatus.Pending),
+            Pay(canoas.Id, bib, "Aquisição de acervo - periódicos", vGrafica, 1_200m, -8, TransactionStatus.Paid),
+            Pay(torres.Id, infra, "Reparo hidráulico - bloco B", vLimpeza, 5_400m, 30, TransactionStatus.Rejected),
+            Pay(canoas.Id, ti, "Servidores - colocation mensal", vMicrosoft, 8_900m, 12, TransactionStatus.Approved),
 
-            // Receivables
-            Receive(canoas.Id, acad, "Convênio de estágios 2026/1", "Prefeitura Municipal de Canoas", 80_000m, 5, TransactionStatus.Pending),
-            Receive(canoas.Id, acad, "Convênio residência médica", "Hospital Universitário de Canoas", 120_000m, -3, TransactionStatus.Approved),
-            Receive(canoas.Id, acad, "Mensalidade - Medicina (Maria Eduarda)", "Maria Eduarda Souza", 6_800m, 8, TransactionStatus.Pending),
-            Receive(gravatai.Id, acad, "Mensalidade - Direito (Carlos Henrique)", "Carlos Henrique Lima", 2_400m, -1, TransactionStatus.Paid),
-            Receive(ead.Id, acad, "Mensalidade EAD - turma Pedagogia", "Maria Eduarda Souza", 980m, 18, TransactionStatus.Pending));
+            // Receivables (linked to real customers)
+            Receive(canoas.Id, acad, "Convênio de estágios 2026/1", cPrefCanoas, 80_000m, 5, TransactionStatus.Pending),
+            Receive(canoas.Id, acad, "Convênio residência médica", cHospital, 120_000m, -3, TransactionStatus.Approved),
+            Receive(canoas.Id, acad, "Mensalidade - Medicina (Maria Eduarda)", cMaria, 6_800m, 8, TransactionStatus.Pending),
+            Receive(gravatai.Id, acad, "Mensalidade - Direito (Carlos Henrique)", cCarlos, 2_400m, -1, TransactionStatus.Paid),
+            Receive(ead.Id, acad, "Mensalidade EAD - turma Pedagogia", cMaria, 980m, 18, TransactionStatus.Pending));
 
         await finance.SaveChangesAsync(ct);
 
