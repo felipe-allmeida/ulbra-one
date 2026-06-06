@@ -188,7 +188,8 @@ export const api = {
     costCenterId: string;
     type: TransactionType;
     description: string;
-    counterparty: string;
+    vendorId?: string | null;
+    customerId?: string | null;
     amount: number;
     dueDate: string;
   }) => request<Transaction>('/transactions', { method: 'POST', body: JSON.stringify(body) }),

@@ -555,7 +555,10 @@ export interface components {
             costCenterId: string;
             type: components["schemas"]["TransactionType"];
             description: string;
-            counterparty: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string | null;
+            /** @example customer_3fa85f64571742199730000000000000 */
+            customerId: string | null;
             /** Format: double */
             amount: number;
             /** Format: date */
@@ -704,7 +707,11 @@ export interface components {
             costCenterId: string;
             type: components["schemas"]["TransactionType"];
             description: string;
-            counterparty: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string | null;
+            /** @example customer_3fa85f64571742199730000000000000 */
+            customerId: string | null;
+            counterpartyName: string;
             /** Format: double */
             amount: number;
             /** Format: date */
@@ -1242,6 +1249,8 @@ export interface operations {
                 type?: components["schemas"]["TransactionType"];
                 status?: components["schemas"]["TransactionStatus"];
                 costCenterId?: string;
+                vendorId?: string;
+                customerId?: string;
                 Page?: number;
                 PageSize?: number;
             };

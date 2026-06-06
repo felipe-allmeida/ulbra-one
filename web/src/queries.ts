@@ -217,7 +217,8 @@ export function useCreateTransaction(
       costCenterId: string;
       type: TransactionType;
       description: string;
-      counterparty: string;
+      vendorId?: string | null;
+      customerId?: string | null;
       amount: number;
       dueDate: string;
     }

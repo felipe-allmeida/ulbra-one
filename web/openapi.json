@@ -545,6 +545,20 @@
             }
           },
           {
+            "name": "vendorId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -2047,7 +2061,8 @@
           "costCenterId",
           "type",
           "description",
-          "counterparty",
+          "vendorId",
+          "customerId",
           "amount",
           "dueDate"
         ],
@@ -2071,8 +2086,15 @@
           "description": {
             "type": "string"
           },
-          "counterparty": {
-            "type": "string"
+          "vendorId": {
+            "type": "string",
+            "nullable": true,
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "customerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "customer_3fa85f64571742199730000000000000"
           },
           "amount": {
             "type": "number",
@@ -2565,7 +2587,9 @@
           "costCenterId",
           "type",
           "description",
-          "counterparty",
+          "vendorId",
+          "customerId",
+          "counterpartyName",
           "amount",
           "dueDate",
           "status",
@@ -2598,7 +2622,17 @@
           "description": {
             "type": "string"
           },
-          "counterparty": {
+          "vendorId": {
+            "type": "string",
+            "nullable": true,
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "customerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "customer_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
             "type": "string"
           },
           "amount": {

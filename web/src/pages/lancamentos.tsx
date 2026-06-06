@@ -106,7 +106,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
                 <tr key={l.id} className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
                   <td className='t-mono'>{fmtData(l.dueDate)}</td>
                   <td>{l.description}</td>
-                  <td>{l.counterparty || '—'}</td>
+                  <td>{l.counterpartyName || '—'}</td>
                   <td>{centroNome[l.costCenterId] ?? '—'}</td>
                   <td className='t-mono'>{unidadeNome[l.unitId] ?? '—'}</td>
                   <td className='amount-cell' style={{ textAlign: 'right' }}>
@@ -162,7 +162,7 @@ export function AprovacoesPage() {
                 <tr key={l.id}>
                   <td className='t-mono'>{fmtData(l.dueDate)}</td>
                   <td className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
-                    {l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterparty}</span>
+                    {l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterpartyName}</span>
                   </td>
                   <td>
                     {centroNome[l.costCenterId] ?? '—'}{' '}
@@ -223,7 +223,11 @@ export function NovoLancamentoPage() {
       costCenterId: v.costCenterId,
       type: v.type,
       description: v.description.trim(),
-      counterparty: v.counterparty.trim(),
+      // TODO(frontend slice): replace the free-text counterparty field with a Vendor/Customer
+      // picker and send the real vendorId (Payable) / customerId (Receivable). The backend now
+      // requires one of them, so this form will 400 until the picker is wired (next slice).
+      vendorId: v.type === 'Payable' ? null : undefined,
+      customerId: v.type === 'Receivable' ? null : undefined,
       amount: Number(v.amount) || 0,
       dueDate: v.dueDate,
     });
@@ -387,7 +391,7 @@ export function LancamentoDetailPage() {
         <div>
           <h1 className='detail-title'>{l.description}</h1>
           <div className='detail-sub'>
-            {l.type === 'Payable' ? 'Conta a pagar' : 'Conta a receber'} · {l.counterparty || '—'}
+            {l.type === 'Payable' ? 'Conta a pagar' : 'Conta a receber'} · {l.counterpartyName || '—'}
           </div>
         </div>
         <div className='detail-actions'>
