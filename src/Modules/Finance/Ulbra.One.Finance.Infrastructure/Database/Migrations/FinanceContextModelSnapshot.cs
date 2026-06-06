@@ -47,15 +47,19 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("cost_center_id");
 
-                    b.Property<string>("Counterparty")
+                    b.Property<string>("CounterpartyName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("counterparty");
+                        .HasColumnName("counterparty_name");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -88,6 +92,10 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("unit_id");
 
+                    b.Property<Guid?>("VendorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vendor_id");
+
                     b.HasKey("Id")
                         .HasName("pk_transactions");
 
@@ -96,6 +104,12 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
 
                     b.HasIndex("CostCenterId")
                         .HasDatabaseName("ix_transactions_cost_center_id");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_transactions_customer_id");
+
+                    b.HasIndex("VendorId")
+                        .HasDatabaseName("ix_transactions_vendor_id");
 
                     b.HasIndex("Type", "Status")
                         .HasDatabaseName("ix_transactions_type_status");

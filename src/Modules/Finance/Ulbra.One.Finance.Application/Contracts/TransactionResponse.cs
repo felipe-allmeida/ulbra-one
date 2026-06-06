@@ -13,7 +13,9 @@ public sealed record TransactionResponse(
     CostCenterId CostCenterId,
     TransactionType Type,
     string Description,
-    string Counterparty,
+    VendorId? VendorId,
+    CustomerId? CustomerId,
+    string CounterpartyName,
     decimal Amount,
     DateOnly DueDate,
     TransactionStatus Status,
@@ -24,6 +26,9 @@ public sealed record TransactionResponse(
 {
     public static TransactionResponse From(Transaction t) => new(
         new TransactionId(t.Id), new CompanyId(t.CompanyId), new UnitId(t.UnitId), new CostCenterId(t.CostCenterId),
-        t.Type, t.Description, t.Counterparty,
+        t.Type, t.Description,
+        t.VendorId is { } v ? new VendorId(v) : null,
+        t.CustomerId is { } c ? new CustomerId(c) : null,
+        t.CounterpartyName,
         t.Amount, t.DueDate, t.Status, t.RejectionReason, t.CreatedAt, t.ApprovedAt, t.PaidAt);
 }

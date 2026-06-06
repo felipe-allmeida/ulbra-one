@@ -30,6 +30,8 @@ public sealed class ListTransactions : IEndpoint
         TransactionType? type,
         TransactionStatus? status,
         CostCenterId? costCenterId,
+        VendorId? vendorId,
+        CustomerId? customerId,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
     {
@@ -38,6 +40,8 @@ public sealed class ListTransactions : IEndpoint
         if (type is not null) q = q.Where(l => l.Type == type);
         if (status is not null) q = q.Where(l => l.Status == status);
         if (costCenterId is { } ccid) q = q.Where(l => l.CostCenterId == ccid.Value);
+        if (vendorId is { } vid) q = q.Where(l => l.VendorId == vid.Value);
+        if (customerId is { } custid) q = q.Where(l => l.CustomerId == custid.Value);
         var page = await q.OrderBy(l => l.DueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(TransactionResponse.From));
     }
