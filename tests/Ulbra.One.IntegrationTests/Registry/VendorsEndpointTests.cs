@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Ulbra.One.Common.Application.Ids;
 
 namespace Ulbra.One.IntegrationTests.Registry;
 
@@ -7,14 +8,14 @@ namespace Ulbra.One.IntegrationTests.Registry;
 public class VendorsEndpointTests(PostgresFixture fixture)
 {
     private sealed record VendorBody(
-        Guid CompanyId, int PersonType, string Name, string? TradeName, string Document,
+        string CompanyId, int PersonType, string Name, string? TradeName, string Document,
         string? Email, string? Phone, object? Address, string? PaymentTerms, string? BankInfo);
 
-    private sealed record VendorResponse(Guid Id, string Name, string Document, bool Active);
+    private sealed record VendorResponse(string Id, string Name, string Document, bool Active);
 
     private sealed record Paginated(List<VendorResponse> Items, int Page, int PageSize, int Total, int TotalPages);
 
-    private static VendorBody ValidCompany(Guid companyId, string name = "Gráfica Sul Ltda") =>
+    private static VendorBody ValidCompany(string companyId, string name = "Gráfica Sul Ltda") =>
         new(companyId, 1, name, "Gráfica Sul", "11.222.333/0001-81",
             "contato@gs.com", "5133334444", null, "30 dias", null);
 
@@ -32,7 +33,7 @@ public class VendorsEndpointTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var body = ValidCompany(Guid.NewGuid()) with { Document = "11222333000100" };
+        var body = ValidCompany(new CompanyId(Guid.NewGuid()).ToString()) with { Document = "11222333000100" };
         var res = await client.PostAsJsonAsync("/api/vendors", body);
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -42,7 +43,7 @@ public class VendorsEndpointTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = Guid.NewGuid();
+        var companyId = new CompanyId(Guid.NewGuid()).ToString();
 
         // Create
         var createRes = await client.PostAsJsonAsync("/api/vendors", ValidCompany(companyId));
@@ -97,7 +98,7 @@ public class VendorsEndpointTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = Guid.NewGuid();
+        var companyId = new CompanyId(Guid.NewGuid()).ToString();
 
         // Create then soft-delete a vendor.
         var first = await (await client.PostAsJsonAsync("/api/vendors", ValidCompany(companyId)))

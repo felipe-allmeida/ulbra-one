@@ -30,12 +30,12 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         // Company
         var empRes = await client.PostAsJsonAsync("/api/companies", new { legalName = "ACME SA", cnpj = "11222333000181" });
         Assert.Equal(HttpStatusCode.Created, empRes.StatusCode);
-        var companyId = (await ReadJson(empRes)).GetProperty("id").GetGuid();
+        var companyId = (await ReadJson(empRes)).GetProperty("id").GetString();
 
         // Unit
         var uniRes = await client.PostAsJsonAsync("/api/units", new { companyId, name = "Campus Centro", acronym = "CC" });
         Assert.Equal(HttpStatusCode.Created, uniRes.StatusCode);
-        var unitId = (await ReadJson(uniRes)).GetProperty("id").GetGuid();
+        var unitId = (await ReadJson(uniRes)).GetProperty("id").GetString();
 
         // Cost center with auto-approval
         var ccRes = await client.PostAsJsonAsync("/api/cost-centers", new
@@ -44,7 +44,7 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
             annualBudget = 100000m, autoApprovalLimit = 5000m, unitIds = new[] { unitId }
         });
         Assert.Equal(HttpStatusCode.Created, ccRes.StatusCode);
-        var centroId = (await ReadJson(ccRes)).GetProperty("id").GetGuid();
+        var centroId = (await ReadJson(ccRes)).GetProperty("id").GetString();
 
         // Transaction under the auto-approval limit -> should be auto-approved
         var lanRes = await client.PostAsJsonAsync("/api/transactions", new
@@ -70,18 +70,18 @@ public class CurrentBehaviorTests(PostgresFixture fixture)
         var client = await f.CreateAdminClientAsync();
 
         var companyId = (await ReadJson(await client.PostAsJsonAsync("/api/companies",
-            new { legalName = "Beta SA", cnpj = "11444777000161" }))).GetProperty("id").GetGuid();
+            new { legalName = "Beta SA", cnpj = "11444777000161" }))).GetProperty("id").GetString();
         var unitId = (await ReadJson(await client.PostAsJsonAsync("/api/units",
-            new { companyId, name = "Sede", acronym = "SE" }))).GetProperty("id").GetGuid();
+            new { companyId, name = "Sede", acronym = "SE" }))).GetProperty("id").GetString();
         var centroId = (await ReadJson(await client.PostAsJsonAsync("/api/cost-centers",
             new { companyId, code = "TI", name = "TI", annualBudget = 50000m, autoApprovalLimit = 0m, unitIds = new[] { unitId } })))
-            .GetProperty("id").GetGuid();
+            .GetProperty("id").GetString();
 
         var lanId = (await ReadJson(await client.PostAsJsonAsync("/api/transactions", new
         {
             companyId, unitId, costCenterId = centroId, type = "Payable",
             description = "Servidor", counterparty = "AWS", amount = 20000m, dueDate = "2026-08-01"
-        }))).GetProperty("id").GetGuid();
+        }))).GetProperty("id").GetString();
 
         Assert.Equal("Pending", (await ReadJson(await client.GetAsync($"/api/transactions/{lanId}"))).GetProperty("status").GetString());
 
