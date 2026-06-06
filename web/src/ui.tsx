@@ -1,14 +1,19 @@
 import {
+  useEffect,
+  useId,
+  useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type InputHTMLAttributes,
   type SelectHTMLAttributes,
   type ButtonHTMLAttributes,
 } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, ChevronsUpDown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import * as Popover from '@radix-ui/react-popover';
 
 export const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
@@ -329,6 +334,171 @@ export function SkeletonRows({ rows = 4, cols = 3 }: { rows?: number; cols?: num
         </tr>
       ))}
     </>
+  );
+}
+
+/* ---------- Combobox (searchable single-select) ---------- */
+export interface ComboboxItem {
+  id: string;
+  label: string;
+  sub?: string;
+}
+
+/**
+ * Accessible, searchable single-select built on Radix Popover. Renders the
+ * selected item's label in the trigger; typing in the search field filters the
+ * list (locally, and optionally upstream via `onSearch`). Keyboard: arrows move
+ * the active option, Enter selects it, Esc closes. The optional `footer` slot is
+ * a sticky action at the bottom of the list (used for "+ Novo").
+ */
+export function Combobox({
+  value,
+  onChange,
+  items,
+  placeholder,
+  searchPlaceholder,
+  onSearch,
+  loading,
+  footer,
+  emptyText,
+  disabled,
+  invalid,
+}: {
+  value: string | null;
+  onChange: (id: string | null) => void;
+  items: ComboboxItem[];
+  placeholder?: string;
+  searchPlaceholder?: string;
+  onSearch?: (q: string) => void;
+  loading?: boolean;
+  footer?: ReactNode;
+  emptyText?: string;
+  disabled?: boolean;
+  invalid?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listId = useId();
+
+  const selected = items.find((i) => i.id === value) ?? null;
+
+  // Local filter on top of whatever the caller already filtered upstream.
+  const filtered = query.trim()
+    ? items.filter((i) => (i.label + ' ' + (i.sub ?? '')).toLowerCase().includes(query.trim().toLowerCase()))
+    : items;
+
+  // Keep the active index in range as the filtered list changes.
+  useEffect(() => {
+    setActive((a) => (filtered.length === 0 ? 0 : Math.min(a, filtered.length - 1)));
+  }, [filtered.length]);
+
+  const updateQuery = (q: string) => {
+    setQuery(q);
+    setActive(0);
+    onSearch?.(q);
+  };
+
+  const choose = (id: string) => {
+    onChange(id);
+    setOpen(false);
+    setQuery('');
+    onSearch?.('');
+  };
+
+  const onKeyDown = (e: ReactKeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((a) => Math.min(a + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((a) => Math.max(a - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const item = filtered[active];
+      if (item) choose(item.id);
+    }
+  };
+
+  return (
+    <Popover.Root
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) {
+          setQuery('');
+          onSearch?.('');
+        }
+      }}
+    >
+      <Popover.Trigger asChild>
+        <button
+          type='button'
+          className={cx('combobox-trigger', invalid && 'input-err')}
+          disabled={disabled}
+          aria-haspopup='listbox'
+        >
+          <span className={cx('combobox-value', !selected && 'combobox-placeholder')}>
+            {selected ? selected.label : (placeholder ?? t('combobox.placeholder'))}
+          </span>
+          <ChevronsUpDown className='combobox-caret' />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          className='combobox-panel'
+          align='start'
+          sideOffset={4}
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
+        >
+          <div className='combobox-search'>
+            <input
+              ref={inputRef}
+              className='combobox-input'
+              value={query}
+              placeholder={searchPlaceholder ?? t('combobox.search')}
+              onChange={(e) => updateQuery(e.target.value)}
+              onKeyDown={onKeyDown}
+              role='combobox'
+              aria-expanded={open}
+              aria-controls={listId}
+              aria-autocomplete='list'
+            />
+          </div>
+          <div className='combobox-list' id={listId} role='listbox'>
+            {loading ? (
+              <div className='combobox-empty'>{t('combobox.loading')}</div>
+            ) : filtered.length === 0 ? (
+              <div className='combobox-empty'>{emptyText ?? t('combobox.empty')}</div>
+            ) : (
+              filtered.map((item, idx) => (
+                <button
+                  type='button'
+                  key={item.id}
+                  role='option'
+                  aria-selected={item.id === value}
+                  className={cx('combobox-option', idx === active && 'active', item.id === value && 'selected')}
+                  onMouseEnter={() => setActive(idx)}
+                  onClick={() => choose(item.id)}
+                >
+                  <span className='combobox-option-main'>
+                    <span className='combobox-option-label'>{item.label}</span>
+                    {item.sub && <span className='combobox-option-sub'>{item.sub}</span>}
+                  </span>
+                  {item.id === value && <Check className='combobox-check' />}
+                </button>
+              ))
+            )}
+          </div>
+          {footer && <div className='combobox-foot'>{footer}</div>}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 

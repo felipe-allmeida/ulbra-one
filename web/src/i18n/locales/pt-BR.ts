@@ -161,6 +161,32 @@ const ptBR = {
     typeRequired: 'Selecione o tipo.',
     costCenterRequired: 'Selecione o centro de custo.',
     descriptionRequired: 'Informe a descrição.',
+    vendorRequired: 'Selecione o fornecedor.',
+    customerRequired: 'Selecione o cliente.',
+  },
+
+  combobox: {
+    placeholder: 'Selecione…',
+    search: 'Buscar…',
+    loading: 'Carregando…',
+    empty: 'Nenhum resultado.',
+  },
+
+  transactions: {
+    counterparty: {
+      vendorLabel: 'Fornecedor',
+      customerLabel: 'Cliente',
+      selectVendor: 'Selecione o fornecedor',
+      selectCustomer: 'Selecione o cliente',
+      searchVendor: 'Buscar fornecedor…',
+      searchCustomer: 'Buscar cliente…',
+      emptyVendor: 'Nenhum fornecedor encontrado.',
+      emptyCustomer: 'Nenhum cliente encontrado.',
+      newVendor: '+ Novo fornecedor',
+      newCustomer: '+ Novo cliente',
+      newVendorTitle: 'Novo fornecedor',
+      newCustomerTitle: 'Novo cliente',
+    },
   },
 
   errors: {
