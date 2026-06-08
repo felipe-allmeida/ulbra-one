@@ -23,6 +23,7 @@ import {
   Truck,
   UserSquare,
   Contact,
+  Tag,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -33,6 +34,13 @@ import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
 import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
+import {
+  ContasPagarPage,
+  NovaContaPagarPage,
+  ContaPagarDetailPage,
+  EditarContaPagarPage,
+} from './pages/contas-a-pagar';
+import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { FornecedoresPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
@@ -54,6 +62,11 @@ export default function App() {
       >
         <Route index element={<Navigate to='inicio' replace />} />
         <Route path='inicio' element={<DashboardPage />} />
+        <Route path='contas-a-pagar' element={<ContasPagarPage />} />
+        <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
+        <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
+        <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
+        <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
         <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
         <Route path='aprovacoes' element={<AprovacoesPage />} />
@@ -125,6 +138,14 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.registry')} <b>/ {t('nav.employees')}</b>
     </>
+  ) : at('contas-a-pagar') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
+    </>
+  ) : at('categorias-despesa') ? (
+    <>
+      {t('nav.sections.registry')} <b>/ {t('nav.expenseCategories')}</b>
+    </>
   ) : at('contas-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
@@ -172,8 +193,8 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem
             icon={<ArrowUpRight />}
             label={t('nav.accountsPayable')}
-            active={at('contas-pagar')}
-            onClick={() => go('/app/contas-pagar')}
+            active={at('contas-a-pagar')}
+            onClick={() => go('/app/contas-a-pagar')}
           />
           <NavItem
             icon={<ArrowDownLeft />}
@@ -216,6 +237,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.employees')}
             active={at('colaboradores')}
             onClick={() => go('/app/colaboradores')}
+          />
+          <NavItem
+            icon={<Tag />}
+            label={t('nav.expenseCategories')}
+            active={at('categorias-despesa')}
+            onClick={() => go('/app/categorias-despesa')}
           />
           <Section>{t('nav.sections.structure')}</Section>
           <NavItem
