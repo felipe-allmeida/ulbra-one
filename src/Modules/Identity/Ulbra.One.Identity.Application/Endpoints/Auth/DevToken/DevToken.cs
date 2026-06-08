@@ -53,9 +53,31 @@ public sealed class DevToken : IEndpoint
         {
             user = new User(email, name, Roles.Admin);
             await uow.AddAsync(user, ct);
+            user.RegisterLogin();
+            try
+            {
+                await uow.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex)
+            {
+                // Concurrent dev-token calls for the same email (e.g. parallel e2e
+                // workers) race to create the user; the unique email index makes all
+                // but one INSERT fail. Detach the rejected insert and load the row the
+                // winning request created, then proceed with that user.
+                foreach (var entry in ex.Entries)
+                    entry.State = EntityState.Detached;
+                user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
+                if (user is null)
+                    throw;
+                user.RegisterLogin();
+                await uow.SaveChangesAsync(ct);
+            }
         }
-        user.RegisterLogin();
-        await uow.SaveChangesAsync(ct);
+        else
+        {
+            user.RegisterLogin();
+            await uow.SaveChangesAsync(ct);
+        }
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
         return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));

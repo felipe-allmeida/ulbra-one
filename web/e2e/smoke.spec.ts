@@ -94,6 +94,77 @@ test('login -> contas a pagar list -> detail with parcelas', async ({ page }) =>
   await expect(parcelas.locator('table tbody tr').first()).toBeVisible();
 });
 
+test('login -> contas a pagar -> dar baixa on an open installment', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Contas a Pagar.
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Contas a pagar' }).click();
+  await expect(page).toHaveURL(/\/app\/contas-a-pagar$/);
+  await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
+
+  // Scope to the ULBRA company that owns the seeded payables.
+  const picker = page.locator('select').first();
+  const ulbra = picker.locator('option', { hasText: /ULBRA/i }).first();
+  if (await ulbra.count()) {
+    await picker.selectOption({ label: (await ulbra.textContent())!.trim() });
+  }
+
+  // Find a row for a payable that is Approved with an installment still open: the
+  // status cell shows the "Aberta" installment badge, which the list only renders
+  // for Approved payables. That's exactly the row a baixa can act on. The list is
+  // paginated and ordered by due date, so the row may not be on page 1 — page
+  // forward with "Próxima" until it appears.
+  await expect(page.locator('table tbody tr.row-click').first()).toBeVisible();
+  const openRow = page.locator('table tbody tr.row-click', { hasText: 'Aberta' }).first();
+  const nextPage = page.getByRole('button', { name: 'Próxima' });
+  for (let i = 0; i < 10 && (await openRow.count()) === 0; i++) {
+    if (!(await nextPage.isVisible()) || (await nextPage.isDisabled())) break;
+    await nextPage.click();
+    await expect(page.locator('table tbody tr.row-click').first()).toBeVisible();
+  }
+  await expect(openRow).toBeVisible();
+  await openRow.click();
+
+  // Detail page for the chosen payable.
+  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  const parcelas = page.locator('.panel', { hasText: 'Parcelas' });
+  await expect(parcelas).toBeVisible();
+
+  // The open installment row carries the "Dar baixa" action button.
+  const baixaButton = parcelas.getByRole('button', { name: 'Dar baixa' }).first();
+  await expect(baixaButton).toBeVisible();
+  await baixaButton.click();
+
+  // The baixa drawer (Radix dialog) opens with the payment form.
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByRole('heading', { name: 'Dar baixa na parcela' })).toBeVisible();
+
+  // "Data efetiva" and "Valor pago" come pre-filled (today / remaining). We only
+  // need to choose a bank account and submit — no monetary-value assertions.
+  const bankSelect = drawer.locator('select').first();
+  // Pick the first real account (index 0 is the "— selecione —" placeholder).
+  await bankSelect.selectOption({ index: 1 });
+
+  // "Forma de pagamento" defaults to PIX; leave it. Submit the baixa.
+  await drawer.getByRole('button', { name: 'Dar baixa', exact: true }).click();
+
+  // After a successful baixa the drawer closes and the installment badge flips to
+  // "Paga" — asserting that confirms the write went through end-to-end. For a
+  // single-installment payable the payable status also becomes "Liquidada".
+  await expect(drawer).toBeHidden();
+  await expect(parcelas.locator('tbody tr', { hasText: 'Paga' }).first()).toBeVisible();
+});
+
 test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
   // Fresh context => no token in localStorage.
   const context = await browser.newContext();
