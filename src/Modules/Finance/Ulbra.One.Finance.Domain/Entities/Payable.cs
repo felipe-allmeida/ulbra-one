@@ -122,6 +122,22 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void AddAttachment(PayableAttachment attachment) => _attachments.Add(attachment);
 
+    public Installment? FindInstallment(Guid installmentId) =>
+        _installments.FirstOrDefault(i => i.Id == installmentId);
+
+    public Payment? FindPayment(Guid paymentId) =>
+        _installments.SelectMany(i => i.Payments).FirstOrDefault(p => p.Id == paymentId);
+
+    public bool IsPayable => Status is PayableStatus.Approved or PayableStatus.Settled;
+
+    public void RecomputeSettlement()
+    {
+        if (Status is PayableStatus.Rejected or PayableStatus.Cancelled) return;
+        Status = _installments.All(i => i.Status == InstallmentStatus.Paid)
+            ? PayableStatus.Settled
+            : PayableStatus.Approved;
+    }
+
     private void EnsureMutable()
     {
         if (Status is not (PayableStatus.PendingApproval or PayableStatus.Approved))
