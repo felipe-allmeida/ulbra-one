@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Object Storage -->
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.21" />
     <!-- ASP.NET Core / OpenAPI -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.0.1" />

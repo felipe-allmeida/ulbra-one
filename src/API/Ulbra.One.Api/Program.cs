@@ -18,6 +18,7 @@ using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Registry.Infrastructure.Database;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
+using Ulbra.One.Common.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -181,6 +182,7 @@ builder.Services.AddCoreModule(builder.Configuration);
 builder.Services.AddFinanceModule(builder.Configuration);
 builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
+builder.Services.AddObjectStorage(builder.Configuration);
 
 // Health checks
 builder.Services.AddHealthChecks().AddNpgSql(connectionString);

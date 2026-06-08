@@ -3,6 +3,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="FluentValidation" />
