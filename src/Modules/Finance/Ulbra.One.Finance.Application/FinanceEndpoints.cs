@@ -14,6 +14,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RegisterPayment;
@@ -21,6 +22,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
@@ -61,6 +63,8 @@ public static class FinanceEndpoints
         payables.MapEndpoint<DeleteAttachment>();
         payables.MapEndpoint<RegisterPayment>();
         payables.MapEndpoint<ReversePayment>();
+        payables.MapEndpoint<UploadPaymentProof>();
+        payables.MapEndpoint<DownloadPaymentProof>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");
         bankAccounts.MapEndpoint<ListBankAccounts>();

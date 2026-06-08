@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace Ulbra.One.IntegrationTests.Finance;
@@ -335,6 +337,111 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/payments/payment_{Guid.NewGuid():N}/reverse", new { reason = "x" });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         Assert.Equal("Payment.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Payment proof (comprovante) upload/download
+    // ---------------------------------------------------------------------------
+
+    private static MultipartFormDataContent FileContent(byte[] bytes, string fileName, string contentType)
+    {
+        var content = new MultipartFormDataContent();
+        var fileBytes = new ByteArrayContent(bytes);
+        fileBytes.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        content.Add(fileBytes, "file", fileName);
+        return content;
+    }
+
+    private static byte[] ValidPdf() =>
+        Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+
+    private static async Task<string> RegisterPaymentAsync(HttpClient client, string payableId, string installmentId, string bankId, decimal amount)
+    {
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
+        {
+            paymentDate = "2026-07-09",
+            amount,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        return (await ReadJson(res)).GetProperty("installments")[0].GetProperty("payments")[0].GetProperty("id").GetString()!;
+    }
+
+    [Fact]
+    public async Task GetPayable_Returns_Payments_Under_Installments()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
+        var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
+
+        var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        var payments = body.GetProperty("installments")[0].GetProperty("payments");
+        Assert.Equal(1, payments.GetArrayLength());
+        Assert.Equal(paymentId, payments[0].GetProperty("id").GetString());
+        Assert.False(payments[0].GetProperty("hasProof").GetBoolean());
+    }
+
+    [Fact]
+    public async Task UploadProof_ValidPdf_Returns_201_And_GetPayable_Shows_HasProof_And_Download_Returns_Bytes()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
+        var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
+
+        var pdf = ValidPdf();
+        using var content = FileContent(pdf, "comprovante.pdf", "application/pdf");
+        var uploadRes = await client.PostAsync($"/api/payables/{payableId}/payments/{paymentId}/proof", content);
+        Assert.Equal(HttpStatusCode.Created, uploadRes.StatusCode);
+        Assert.True((await ReadJson(uploadRes)).GetProperty("hasProof").GetBoolean());
+
+        var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.True(body.GetProperty("installments")[0].GetProperty("payments")[0].GetProperty("hasProof").GetBoolean());
+
+        var downloadRes = await client.GetAsync($"/api/payables/{payableId}/payments/{paymentId}/proof");
+        Assert.Equal(HttpStatusCode.OK, downloadRes.StatusCode);
+        Assert.Equal(pdf, await downloadRes.Content.ReadAsByteArrayAsync());
+    }
+
+    [Fact]
+    public async Task UploadProof_To_NonExistent_Payment_Returns_404()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var payableId = await CreatePayableAsync(client, seed, 1500m);
+
+        using var content = FileContent(ValidPdf(), "comprovante.pdf", "application/pdf");
+        var res = await client.PostAsync($"/api/payables/{payableId}/payments/payment_{Guid.NewGuid():N}/proof", content);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payment.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task UploadProof_Oversized_Returns_400_TooLarge()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
+        var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
+
+        var big = new byte[26 * 1024 * 1024];
+        Encoding.ASCII.GetBytes("%PDF-1.4\n").CopyTo(big, 0);
+        using var content = FileContent(big, "grande.pdf", "application/pdf");
+        var res = await client.PostAsync($"/api/payables/{payableId}/payments/{paymentId}/proof", content);
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("File.TooLarge", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     // ---------------------------------------------------------------------------

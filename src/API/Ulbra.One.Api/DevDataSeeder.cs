@@ -159,13 +159,17 @@ public static class DevDataSeeder
             return p;
         }
 
+        var pLimpeza = PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10); // auto-approved (<= 2000)
+        var pGoogle = PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5);
+        if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve();
+
         await finance.Payables.AddRangeAsync(new[]
         {
             // À vista
-            PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5),
+            pGoogle,
             PayableVista(infra, "Conta de energia - Campus Canoas", vCeee, Cat("Energia elétrica"), "NF-CEEE-77120", 48_500m, -2),
             PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3),
-            PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10), // auto-approved (<= 2000)
+            pLimpeza,
             PayableVista(rh, "Consultoria de clima organizacional", vJoao, Cat("Serviços de terceiros (PJ)"), null, 2_500m, 15),
             PayableVista(bib, "Aquisição de acervo - periódicos", vGrafica, Cat("Acervo e assinaturas (biblioteca)"), "NF-GS-1207", 1_200m, -8),
         }, ct);
@@ -194,6 +198,33 @@ public static class DevDataSeeder
             Receive(ead.Id, acad, "Mensalidade EAD - turma Pedagogia", cMaria, 980m, 18, TransactionStatus.Pending));
 
         await finance.SaveChangesAsync(ct);
+
+        // ---------- Payments (baixa) — show settled & partially-paid states in the UI ----------
+        if (!await finance.Payments.AnyAsync(ct))
+        {
+            var ulbraBank = await finance.BankAccounts.FirstAsync(b => b.CompanyId == ulbra.Id, ct);
+            var now = time.GetUtcNow();
+            var paidOn = today.AddDays(-1);
+
+            // Full payment → settles the Google Ads payable.
+            var fullInstallment = pGoogle.Installments[0];
+            var fullPayment = new Payment(fullInstallment.Id, pGoogle.Id, paidOn, fullInstallment.Amount,
+                ulbraBank.Id, PaymentMethod.Pix, 0, 0, 0, null, Guid.Empty, now);
+            fullInstallment.RegisterPayment(fullPayment);
+            pGoogle.RecomputeSettlement();
+            await finance.Payments.AddAsync(fullPayment, ct);
+
+            // Partial payment → leaves the limpeza payable partially paid.
+            var partialInstallment = pLimpeza.Installments[0];
+            var partialPayment = new Payment(partialInstallment.Id, pLimpeza.Id, paidOn,
+                Math.Round(partialInstallment.Amount / 2, 2), ulbraBank.Id, PaymentMethod.Boleto, 0, 0, 0, null, Guid.Empty, now);
+            partialInstallment.RegisterPayment(partialPayment);
+            pLimpeza.RecomputeSettlement();
+            await finance.Payments.AddAsync(partialPayment, ct);
+
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: 2 payments seeded (1 full/settled, 1 partial).");
+        }
 
         logger.LogInformation(
             "Dev seed complete: {Companies} companies, {Units} units, {CostCenters} cost centers, " +
