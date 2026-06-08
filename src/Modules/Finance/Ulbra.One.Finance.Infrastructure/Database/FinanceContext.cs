@@ -64,6 +64,7 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.DueDate);
             e.HasIndex(x => x.Status);
             e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(x => x.Payments).AutoInclude();
         });
 
         modelBuilder.Entity<PayableAttachment>(e =>
