@@ -1498,6 +1498,440 @@
         }
       }
     },
+    "/api/payables/{id}/installments/{installmentId}/payments": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RegisterPayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "installmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/payments/{paymentId}/reverse": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ReversePayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/payments/{paymentId}/proof": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UploadPaymentProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DownloadPaymentProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/bank-accounts": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ListBankAccounts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankAccountResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CreateBankAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-accounts/{id}": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdateBankAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DeleteBankAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vendors": {
       "get": {
         "tags": [
@@ -2564,6 +2998,69 @@
         },
         "additionalProperties": false
       },
+      "BankAccountResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "bankCode",
+          "bankName",
+          "agency",
+          "accountNumber",
+          "accountDigit",
+          "accountType",
+          "alias",
+          "openingBalance",
+          "active"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "bankCode": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "agency": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountDigit": {
+            "type": "string"
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/BankAccountType"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "openingBalance": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BankAccountType": {
+        "enum": [
+          "Checking",
+          "Savings"
+        ],
+        "type": "string"
+      },
       "CancelPayableCancelRequest": {
         "required": [
           "reason"
@@ -2727,6 +3224,53 @@
               "type": "string",
               "example": "unit_3fa85f64571742199730000000000000"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateBankAccountRequest": {
+        "required": [
+          "companyId",
+          "bankCode",
+          "bankName",
+          "agency",
+          "accountNumber",
+          "accountDigit",
+          "accountType",
+          "alias",
+          "openingBalance"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "bankCode": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "agency": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountDigit": {
+            "type": "string"
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/BankAccountType"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "openingBalance": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3334,7 +3878,8 @@
           "dueDate",
           "amount",
           "status",
-          "paidAmount"
+          "paidAmount",
+          "payments"
         ],
         "type": "object",
         "properties": {
@@ -3360,6 +3905,12 @@
           "paidAmount": {
             "type": "number",
             "format": "double"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentResponse"
+            }
           }
         },
         "additionalProperties": false
@@ -3665,6 +4216,92 @@
         ],
         "type": "string"
       },
+      "PaymentMethod": {
+        "enum": [
+          "Pix",
+          "Ted",
+          "Boleto",
+          "Cash",
+          "DirectDebit",
+          "Other"
+        ],
+        "type": "string"
+      },
+      "PaymentResponse": {
+        "required": [
+          "id",
+          "installmentId",
+          "paymentDate",
+          "amount",
+          "bankAccountId",
+          "method",
+          "interest",
+          "fine",
+          "discount",
+          "notes",
+          "isReversed",
+          "reversalReason",
+          "hasProof",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "payment_3fa85f64571742199730000000000000"
+          },
+          "installmentId": {
+            "type": "string",
+            "example": "installment_3fa85f64571742199730000000000000"
+          },
+          "paymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "fine": {
+            "type": "number",
+            "format": "double"
+          },
+          "discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "isReversed": {
+            "type": "boolean"
+          },
+          "reversalReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasProof": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "PersonType": {
         "enum": [
           "Individual",
@@ -3727,6 +4364,53 @@
         },
         "additionalProperties": { }
       },
+      "RegisterPaymentRequest": {
+        "required": [
+          "paymentDate",
+          "amount",
+          "bankAccountId",
+          "method",
+          "interest",
+          "fine",
+          "discount",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "fine": {
+            "type": "number",
+            "format": "double"
+          },
+          "discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RejectPayableRejectRequest": {
         "required": [
           "reason"
@@ -3741,6 +4425,19 @@
         "additionalProperties": false
       },
       "RejectTransactionRejectRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReversePaymentRequest": {
         "required": [
           "reason"
         ],
@@ -3915,6 +4612,52 @@
           },
           "acronym": {
             "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateBankAccountRequest": {
+        "required": [
+          "bankCode",
+          "bankName",
+          "agency",
+          "accountNumber",
+          "accountDigit",
+          "accountType",
+          "alias",
+          "openingBalance",
+          "active"
+        ],
+        "type": "object",
+        "properties": {
+          "bankCode": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "agency": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountDigit": {
+            "type": "string"
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/BankAccountType"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "openingBalance": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "active": {
             "type": "boolean"

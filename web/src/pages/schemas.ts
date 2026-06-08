@@ -170,6 +170,30 @@ export function previewInstallments(total: number, count: number, firstDue: stri
   return rows;
 }
 
+export const bankAccountSchema = z.object({
+  bankCode: z.string().trim().min(1, { message: 'validation.bankCodeRequired' }),
+  bankName: z.string().trim().min(1, { message: 'validation.bankNameRequired' }),
+  agency: z.string().trim().min(1, { message: 'validation.agencyRequired' }),
+  accountNumber: z.string().trim().min(1, { message: 'validation.accountNumberRequired' }),
+  accountDigit: z.string(),
+  accountType: z.enum(['Checking', 'Savings']),
+  alias: z.string().trim().min(1, { message: 'validation.aliasRequired' }),
+  openingBalance: nonNegativeNumberString,
+});
+export type BankAccountValues = z.infer<typeof bankAccountSchema>;
+
+export const paymentSchema = z.object({
+  paymentDate: z.string().min(1, { message: 'validation.paymentDateRequired' }),
+  amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+  bankAccountId: z.string().min(1, { message: 'validation.bankAccountRequired' }),
+  method: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']),
+  interest: nonNegativeNumberString,
+  fine: nonNegativeNumberString,
+  discount: nonNegativeNumberString,
+  notes: z.string(),
+});
+export type PaymentValues = z.infer<typeof paymentSchema>;
+
 export const companySchema = z.object({
   legalName: z.string().trim().min(1, { message: 'validation.nameRequired' }),
   cnpj: z.string().trim().min(1, { message: 'validation.cnpjRequired' }),

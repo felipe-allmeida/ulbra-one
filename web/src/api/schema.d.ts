@@ -372,6 +372,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/{id}/installments/{installmentId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RegisterPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/payments/{paymentId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReversePayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/payments/{paymentId}/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DownloadPaymentProof"];
+        put?: never;
+        post: operations["UploadPaymentProof"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListBankAccounts"];
+        put?: never;
+        post: operations["CreateBankAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateBankAccount"];
+        post?: never;
+        delete: operations["DeleteBankAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -634,6 +714,24 @@ export interface components {
             city: string;
             state: string;
         };
+        BankAccountResponse: {
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            bankCode: string;
+            bankName: string;
+            agency: string;
+            accountNumber: string;
+            accountDigit: string;
+            accountType: components["schemas"]["BankAccountType"];
+            alias: string;
+            /** Format: double */
+            openingBalance: number | null;
+            active: boolean;
+        };
+        /** @enum {string} */
+        BankAccountType: "Checking" | "Savings";
         CancelPayableCancelRequest: {
             reason: string | null;
         };
@@ -677,6 +775,19 @@ export interface components {
             autoApprovalLimit: number;
             active: boolean;
             unitIds: string[];
+        };
+        CreateBankAccountRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            bankCode: string;
+            bankName: string;
+            agency: string;
+            accountNumber: string;
+            accountDigit: string;
+            accountType: components["schemas"]["BankAccountType"];
+            alias: string;
+            /** Format: double */
+            openingBalance: number | null;
         };
         CreateCompanyRequest: {
             legalName: string;
@@ -864,6 +975,7 @@ export interface components {
             status: components["schemas"]["InstallmentStatus"];
             /** Format: double */
             paidAmount: number;
+            payments: components["schemas"]["PaymentResponse"][];
         };
         /** @enum {string} */
         InstallmentStatus: "Open" | "PartiallyPaid" | "Paid";
@@ -954,6 +1066,33 @@ export interface components {
         /** @enum {string} */
         PayableStatus: "PendingApproval" | "Approved" | "Rejected" | "Cancelled" | "Settled";
         /** @enum {string} */
+        PaymentMethod: "Pix" | "Ted" | "Boleto" | "Cash" | "DirectDebit" | "Other";
+        PaymentResponse: {
+            /** @example payment_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+            /** Format: date */
+            paymentDate: string;
+            /** Format: double */
+            amount: number;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: double */
+            interest: number;
+            /** Format: double */
+            fine: number;
+            /** Format: double */
+            discount: number;
+            notes: string | null;
+            isReversed: boolean;
+            reversalReason: string | null;
+            hasProof: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
         PersonType: "Individual" | "Company";
         PingResponse: {
             status: string;
@@ -971,10 +1110,29 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        RegisterPaymentRequest: {
+            /** Format: date */
+            paymentDate: string;
+            /** Format: double */
+            amount: number;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: double */
+            interest: number;
+            /** Format: double */
+            fine: number;
+            /** Format: double */
+            discount: number;
+            notes: string | null;
+        };
         RejectPayableRejectRequest: {
             reason: string | null;
         };
         RejectTransactionRejectRequest: {
+            reason: string | null;
+        };
+        ReversePaymentRequest: {
             reason: string | null;
         };
         TransactionResponse: {
@@ -1028,6 +1186,18 @@ export interface components {
             companyId: string;
             name: string;
             acronym: string;
+            active: boolean;
+        };
+        UpdateBankAccountRequest: {
+            bankCode: string;
+            bankName: string;
+            agency: string;
+            accountNumber: string;
+            accountDigit: string;
+            accountType: components["schemas"]["BankAccountType"];
+            alias: string;
+            /** Format: double */
+            openingBalance: number | null;
             active: boolean;
         };
         UpdateCompanyRequest: {
@@ -2233,6 +2403,312 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RegisterPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                installmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReversePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DownloadPaymentProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UploadPaymentProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListBankAccounts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountResponse"][];
+                };
+            };
+        };
+    };
+    CreateBankAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateBankAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteBankAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

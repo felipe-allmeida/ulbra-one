@@ -96,6 +96,41 @@ export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
 
+// ---------- Bank accounts + payments (baixa) ----------
+export type BankAccount = Schemas['BankAccountResponse'];
+export type Payment = Schemas['PaymentResponse'];
+// Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
+export type BankAccountType = Schemas['BankAccountType'];
+export type PaymentMethod = Schemas['PaymentMethod'];
+
+/** Request body for creating a bank account. */
+export interface BankAccountInput {
+  companyId: string;
+  bankCode: string;
+  bankName: string;
+  agency: string;
+  accountNumber: string;
+  accountDigit: string;
+  accountType: BankAccountType;
+  alias: string;
+  openingBalance?: number | null;
+}
+
+/** Request body for updating a bank account (no companyId; `active` toggles status). */
+export type BankAccountUpdateInput = Omit<BankAccountInput, 'companyId'> & { active: boolean };
+
+/** Request body for registering a payment (baixa) against an installment. */
+export interface RegisterPaymentInput {
+  paymentDate: string;
+  amount: number;
+  bankAccountId: string;
+  method: PaymentMethod;
+  interest?: number;
+  fine?: number;
+  discount?: number;
+  notes?: string | null;
+}
+
 /** Request body for creating/updating a payable. `installments` lists explicit dues; `generate` derives them. */
 export interface PayableInput {
   companyId: string;
@@ -270,6 +305,47 @@ export const api = {
     `${BASE_URL}/payables/${id}/attachments/${attachmentId}`,
   deletePayableAttachment: (id: string, attachmentId: string) =>
     request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
+
+  // ---------- Payments (baixa) ----------
+  registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>
+    request<Payment>(`/payables/${payableId}/installments/${installmentId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  reversePayment: (payableId: string, paymentId: string, reason: string) =>
+    request<Payment>(`/payables/${payableId}/payments/${paymentId}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  /** Uploads a payment proof via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  uploadPaymentProof: async (payableId: string, paymentId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/payables/${payableId}/payments/${paymentId}/proof`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<Payment>;
+  },
+  /** Direct download URL for a payment proof (auth handled by the browser session / token in caller). */
+  downloadPaymentProofUrl: (payableId: string, paymentId: string) =>
+    `${BASE_URL}/payables/${payableId}/payments/${paymentId}/proof`,
+
+  // ---------- Bank accounts ----------
+  listBankAccounts: (companyId: string, includeInactive?: boolean) => {
+    const q = new URLSearchParams({ companyId });
+    if (includeInactive) q.set('includeInactive', 'true');
+    return request<BankAccount[]>(`/bank-accounts?${q}`);
+  },
+  createBankAccount: (body: BankAccountInput) =>
+    request<BankAccount>('/bank-accounts', { method: 'POST', body: JSON.stringify(body) }),
+  updateBankAccount: (id: string, body: BankAccountUpdateInput) =>
+    request<BankAccount>(`/bank-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteBankAccount: (id: string) => request<void>(`/bank-accounts/${id}`, { method: 'DELETE' }),
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>

@@ -7,6 +7,9 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
+  type BankAccount,
+  type BankAccountInput,
+  type BankAccountUpdateInput,
   type Company,
   type CostCenter,
   type Customer,
@@ -18,6 +21,8 @@ import {
   type PayableAttachment,
   type PayableInput,
   type PayableStatus,
+  type Payment,
+  type RegisterPaymentInput,
   type Transaction,
   type TransactionStatus,
   type TransactionType,
@@ -41,6 +46,7 @@ export const queryKeys = {
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
+  bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
 };
 
 export interface PayablesParams {
@@ -163,6 +169,14 @@ export function useExpenseCategories(includeInactive = false) {
   return useQuery({
     queryKey: queryKeys.expenseCategories(includeInactive),
     queryFn: () => api.listExpenseCategories(includeInactive),
+  });
+}
+
+export function useBankAccounts(companyId: string, includeInactive = false) {
+  return useQuery({
+    queryKey: queryKeys.bankAccounts(companyId, includeInactive),
+    queryFn: () => api.listBankAccounts(companyId, includeInactive),
+    enabled: !!companyId,
   });
 }
 
@@ -454,6 +468,70 @@ export function useDeleteExpenseCategory(options?: UseMutationOptions<void, unkn
   return useInvalidatingMutation(
     ({ id }) => api.deleteExpenseCategory(id),
     (qc) => void qc.invalidateQueries({ queryKey: ['expenseCategories'] }),
+    options,
+  );
+}
+
+/* ---------- Bank accounts ---------- */
+export function useSaveBankAccount(
+  options?: UseMutationOptions<
+    BankAccount,
+    unknown,
+    { id?: string; create?: BankAccountInput; update?: BankAccountUpdateInput }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ id, create, update }) => (id ? api.updateBankAccount(id, update!) : api.createBankAccount(create!)),
+    (qc, data) => void qc.invalidateQueries({ queryKey: queryKeys.bankAccounts(data.companyId) }),
+    options,
+  );
+}
+
+export function useDeleteBankAccount(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteBankAccount(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['bankAccounts'] }),
+    options,
+  );
+}
+
+/* ---------- Payments (baixa) ---------- */
+/** Invalidates the payables lists + the single payable cache after a payment change. */
+function invalidatePayablePayment(qc: ReturnType<typeof useQueryClient>, payableId: string) {
+  void qc.invalidateQueries({ queryKey: ['payables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.payable(payableId) });
+}
+
+export function useRegisterPayment(
+  options?: UseMutationOptions<
+    Payment,
+    unknown,
+    { payableId: string; installmentId: string; body: RegisterPaymentInput }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ payableId, installmentId, body }) => api.registerPayment(payableId, installmentId, body),
+    (qc, _data, vars) => invalidatePayablePayment(qc, vars.payableId),
+    options,
+  );
+}
+
+export function useReversePayment(
+  options?: UseMutationOptions<Payment, unknown, { payableId: string; paymentId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ payableId, paymentId, reason }) => api.reversePayment(payableId, paymentId, reason),
+    (qc, _data, vars) => invalidatePayablePayment(qc, vars.payableId),
+    options,
+  );
+}
+
+export function useUploadPaymentProof(
+  options?: UseMutationOptions<Payment, unknown, { payableId: string; paymentId: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ payableId, paymentId, file }) => api.uploadPaymentProof(payableId, paymentId, file),
+    (qc, _data, vars) => invalidatePayablePayment(qc, vars.payableId),
     options,
   );
 }

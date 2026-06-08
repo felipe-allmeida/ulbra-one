@@ -166,6 +166,13 @@ const ptBR = {
     customerRequired: 'Selecione o cliente.',
     installmentCountInvalid: 'Informe pelo menos 2 parcelas.',
     categoryNameRequired: 'Informe o nome da categoria.',
+    bankCodeRequired: 'Informe o código do banco.',
+    bankNameRequired: 'Informe o nome do banco.',
+    agencyRequired: 'Informe a agência.',
+    accountNumberRequired: 'Informe o número da conta.',
+    aliasRequired: 'Informe o apelido da conta.',
+    paymentDateRequired: 'Informe a data do pagamento.',
+    bankAccountRequired: 'Selecione a conta bancária.',
   },
 
   combobox: {
