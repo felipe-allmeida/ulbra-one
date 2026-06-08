@@ -2,20 +2,34 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Plus, ChevronLeft, Check, X, Wallet, Pencil, Download, Trash2, Paperclip } from 'lucide-react';
+import { Plus, ChevronLeft, Check, X, Wallet, Pencil, Download, Trash2, Paperclip, Receipt, Undo2 } from 'lucide-react';
 import {
+  api,
   auth,
   type Payable,
   type PayableInput,
   type PayableStatus,
+  type Installment,
   type InstallmentStatus,
   type PayableAttachment,
+  type Payment,
+  type PaymentMethod,
+  type RegisterPaymentInput,
 } from '../api';
 import { getApiBaseUrl } from '../config/env';
-import { resolver, fieldError, payableSchema, previewInstallments, type PayableValues } from './schemas';
+import {
+  resolver,
+  fieldError,
+  payableSchema,
+  paymentSchema,
+  previewInstallments,
+  type PayableValues,
+  type PaymentValues,
+} from './schemas';
 import { useApp } from '../store';
 import {
   useApprovePayable,
+  useBankAccounts,
   useCancelPayable,
   useCostCenters,
   useCreatePayable,
@@ -23,9 +37,12 @@ import {
   useExpenseCategories,
   usePayable,
   usePayables,
+  useRegisterPayment,
   useRejectPayable,
+  useReversePayment,
   useUpdatePayable,
   useUploadPayableAttachment,
+  useUploadPaymentProof,
   useVendors,
 } from '../queries';
 import { brl } from '../lib';
@@ -620,6 +637,298 @@ async function downloadAttachment(payableId: string, att: PayableAttachment): Pr
   URL.revokeObjectURL(objectUrl);
 }
 
+/**
+ * Downloads a payment proof. Same authed-fetch→blob approach as the attachment
+ * download: a plain `<a href>` can't send the Bearer token, so we fetch with the
+ * Authorization header, turn the response into an object-URL blob, and trigger a
+ * programmatic download.
+ */
+async function downloadPaymentProof(payableId: string, payment: Payment): Promise<void> {
+  const url = api.downloadPaymentProofUrl(payableId, payment.id);
+  const headers = new Headers();
+  if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`${res.status}`);
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = `comprovante-${payment.id}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+const PAYMENT_METHODS: PaymentMethod[] = ['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other'];
+
+/* ============ Baixa (register payment) form ============ */
+function PaymentForm({
+  payable,
+  installment,
+  onDone,
+  onCancel,
+}: {
+  payable: Payable;
+  installment: Installment;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const { t } = useTranslation();
+  const contas = useBankAccounts(payable.companyId).data ?? [];
+  const [file, setFile] = useState<File | null>(null);
+
+  const remaining = Math.round((installment.amount - installment.paidAmount) * 100) / 100;
+
+  const { control, handleSubmit, formState } = useForm<PaymentValues>({
+    resolver: resolver(paymentSchema),
+    mode: 'onChange',
+    defaultValues: {
+      paymentDate: new Date().toISOString().slice(0, 10),
+      amount: String(remaining > 0 ? remaining : installment.amount),
+      bankAccountId: '',
+      method: 'Pix',
+      interest: '',
+      fine: '',
+      discount: '',
+      notes: '',
+    },
+  });
+
+  const register = useRegisterPayment();
+  const uploadProof = useUploadPaymentProof();
+  const saving = register.isPending || uploadProof.isPending;
+  const erro = register.error
+    ? getErrorMessage(register.error)
+    : uploadProof.error
+      ? getErrorMessage(uploadProof.error)
+      : null;
+
+  const onValid = (v: PaymentValues) => {
+    const body: RegisterPaymentInput = {
+      paymentDate: v.paymentDate,
+      amount: Number(v.amount),
+      bankAccountId: v.bankAccountId,
+      method: v.method,
+      interest: v.interest.trim() === '' ? 0 : Number(v.interest),
+      fine: v.fine.trim() === '' ? 0 : Number(v.fine),
+      discount: v.discount.trim() === '' ? 0 : Number(v.discount),
+      notes: v.notes.trim() || null,
+    };
+    register.mutate(
+      { payableId: payable.id, installmentId: installment.id, body },
+      {
+        onSuccess: (payment) => {
+          if (file) {
+            uploadProof.mutate({ payableId: payable.id, paymentId: payment.id, file }, { onSuccess: () => onDone() });
+          } else {
+            onDone();
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <form onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
+      <div className='edit-grid'>
+        <Field label={t('payments.fields.paymentDate')}>
+          <Controller control={control} name='paymentDate' render={({ field }) => <Input type='date' {...field} />} />
+          {fieldError(formState.errors.paymentDate?.message) && (
+            <div className='field-err'>{fieldError(formState.errors.paymentDate?.message)}</div>
+          )}
+        </Field>
+        <Field label={t('payments.fields.amount')}>
+          <Controller
+            control={control}
+            name='amount'
+            render={({ field }) => <Input {...field} inputMode='numeric' />}
+          />
+          {fieldError(formState.errors.amount?.message) && (
+            <div className='field-err'>{fieldError(formState.errors.amount?.message)}</div>
+          )}
+        </Field>
+        <Field label={t('payments.fields.bankAccount')}>
+          <Controller
+            control={control}
+            name='bankAccountId'
+            render={({ field }) => (
+              <Select {...field}>
+                <option value=''>{t('payments.fields.bankAccountSelect')}</option>
+                {contas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.alias}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+          {fieldError(formState.errors.bankAccountId?.message) && (
+            <div className='field-err'>{fieldError(formState.errors.bankAccountId?.message)}</div>
+          )}
+        </Field>
+        <Field label={t('payments.fields.method')}>
+          <Controller
+            control={control}
+            name='method'
+            render={({ field }) => (
+              <Select {...field}>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>
+                    {t(`payments.methods.${m}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+        </Field>
+        <Field label={t('payments.fields.interest')}>
+          <Controller
+            control={control}
+            name='interest'
+            render={({ field }) => <Input {...field} inputMode='numeric' />}
+          />
+        </Field>
+        <Field label={t('payments.fields.fine')}>
+          <Controller control={control} name='fine' render={({ field }) => <Input {...field} inputMode='numeric' />} />
+        </Field>
+        <Field label={t('payments.fields.discount')}>
+          <Controller
+            control={control}
+            name='discount'
+            render={({ field }) => <Input {...field} inputMode='numeric' />}
+          />
+        </Field>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Field label={t('payments.fields.proof')} help={t('payments.fields.proofHelp')}>
+          <Input
+            type='file'
+            accept='application/pdf,image/png,image/jpeg'
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+        </Field>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Field label={t('payments.fields.notes')}>
+          <Controller control={control} name='notes' render={({ field }) => <Input {...field} />} />
+        </Field>
+      </div>
+      {erro && (
+        <div className='create-err' style={{ marginTop: 10 }}>
+          {erro}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+        <Button type='submit' variant='brand' disabled={!formState.isValid || saving}>
+          {saving ? t('payments.actions.registering') : t('payments.actions.register')}
+        </Button>
+        <Button type='button' onClick={onCancel}>
+          {t('forms.actions.cancel')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/* ============ Per-installment payment history + actions ============ */
+function PaymentHistory({ payable, installment }: { payable: Payable; installment: Installment }) {
+  const { t } = useTranslation();
+  const reverse = useReversePayment();
+  const [toReverse, setToReverse] = useState<Payment | null>(null);
+  const [reverseReason, setReverseReason] = useState('');
+  const [downloadErr, setDownloadErr] = useState<string | null>(null);
+
+  const payments = [...installment.payments].sort((a, b) => a.paymentDate.localeCompare(b.paymentDate));
+  if (payments.length === 0) return null;
+
+  return (
+    <>
+      <table>
+        <thead>
+          <tr>
+            <th>{t('payments.columns.date')}</th>
+            <th style={{ textAlign: 'right' }}>{t('payments.columns.amount')}</th>
+            <th>{t('payments.columns.method')}</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((pay) => (
+            <tr key={pay.id}>
+              <td className='t-mono'>{fmtData(pay.paymentDate)}</td>
+              <td className='amount-cell' style={{ textAlign: 'right' }}>
+                {brl(pay.amount)}
+              </td>
+              <td>{t(`payments.methods.${pay.method}`)}</td>
+              <td className='td-action'>
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  {pay.isReversed ? (
+                    <span className='badge-status badge-rejeitado'>{t('payments.reversed')}</span>
+                  ) : (
+                    <>
+                      {pay.hasProof && (
+                        <Button
+                          icon={<Download />}
+                          onClick={() => {
+                            setDownloadErr(null);
+                            downloadPaymentProof(payable.id, pay).catch(() =>
+                              setDownloadErr(t('payments.downloadError')),
+                            );
+                          }}
+                        >
+                          {t('payments.downloadProof')}
+                        </Button>
+                      )}
+                      <Button
+                        icon={<Undo2 />}
+                        onClick={() => {
+                          setReverseReason('');
+                          setToReverse(pay);
+                        }}
+                      >
+                        {t('payments.reverse')}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {downloadErr && <p className='create-err'>{downloadErr}</p>}
+
+      {toReverse && (
+        <ConfirmDialog
+          title={t('payments.reverseDialog.title')}
+          danger
+          busy={reverse.isPending}
+          confirmLabel={t('payments.reverseDialog.confirm')}
+          message={
+            <div>
+              <div style={{ marginBottom: 8 }}>{t('payments.reverseDialog.message')}</div>
+              <Input
+                autoFocus
+                value={reverseReason}
+                placeholder={t('payments.reverseDialog.placeholder')}
+                onChange={(e) => setReverseReason(e.target.value)}
+              />
+            </div>
+          }
+          onConfirm={() =>
+            reverse.mutate(
+              { payableId: payable.id, paymentId: toReverse.id, reason: reverseReason.trim() },
+              { onSuccess: () => setToReverse(null) },
+            )
+          }
+          onCancel={() => setToReverse(null)}
+        />
+      )}
+    </>
+  );
+}
+
 /* ============ DETAIL ============ */
 export function ContaPagarDetailPage() {
   const { id } = useParams();
@@ -642,6 +951,7 @@ export function ContaPagarDetailPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [attToDelete, setAttToDelete] = useState<PayableAttachment | null>(null);
   const [downloadErr, setDownloadErr] = useState<string | null>(null);
+  const [baixaInstallment, setBaixaInstallment] = useState<Installment | null>(null);
 
   if (query.isLoading) return <div className='empty-state'>{t('payables.loading')}</div>;
   if (!p)
@@ -739,6 +1049,7 @@ export function ContaPagarDetailPage() {
               <th>{t('installments.columns.dueDate')}</th>
               <th style={{ textAlign: 'right' }}>{t('installments.columns.amount')}</th>
               <th>{t('installments.columns.status')}</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -756,11 +1067,32 @@ export function ContaPagarDetailPage() {
                   <td>
                     <InstallmentStatusBadge s={inst.status} />
                   </td>
+                  <td className='td-action'>
+                    {p.status === 'Approved' && inst.status !== 'Paid' && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button icon={<Receipt />} onClick={() => setBaixaInstallment(inst)}>
+                          {t('payments.register')}
+                        </Button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
           </tbody>
         </table>
       </Panel>
+
+      {[...p.installments]
+        .sort((a, b) => a.sequence - b.sequence)
+        .filter((inst) => inst.payments.length > 0)
+        .map((inst) => (
+          <Panel
+            key={inst.id}
+            title={`${t('payments.title')} — ${t('installments.label')} ${inst.sequence}/${p.installments.length}`}
+          >
+            <PaymentHistory payable={p} installment={inst} />
+          </Panel>
+        ))}
 
       <Panel title={t('attachments.title')}>
         {p.attachments.length === 0 ? (
@@ -847,6 +1179,26 @@ export function ContaPagarDetailPage() {
           onCancel={() => setCancelOpen(false)}
         />
       )}
+
+      <Drawer
+        open={!!baixaInstallment}
+        title={t('payments.registerTitle')}
+        sub={
+          baixaInstallment
+            ? `${t('installments.label')} ${baixaInstallment.sequence}/${p.installments.length}`
+            : undefined
+        }
+        onClose={() => setBaixaInstallment(null)}
+      >
+        {baixaInstallment && (
+          <PaymentForm
+            payable={p}
+            installment={baixaInstallment}
+            onDone={() => setBaixaInstallment(null)}
+            onCancel={() => setBaixaInstallment(null)}
+          />
+        )}
+      </Drawer>
 
       {attToDelete && (
         <ConfirmDialog
