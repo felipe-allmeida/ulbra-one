@@ -504,7 +504,7 @@ function invalidatePayablePayment(qc: ReturnType<typeof useQueryClient>, payable
 
 export function useRegisterPayment(
   options?: UseMutationOptions<
-    Payment,
+    Payable,
     unknown,
     { payableId: string; installmentId: string; body: RegisterPaymentInput }
   >,
@@ -517,7 +517,7 @@ export function useRegisterPayment(
 }
 
 export function useReversePayment(
-  options?: UseMutationOptions<Payment, unknown, { payableId: string; paymentId: string; reason: string }>,
+  options?: UseMutationOptions<Payable, unknown, { payableId: string; paymentId: string; reason: string }>,
 ) {
   return useInvalidatingMutation(
     ({ payableId, paymentId, reason }) => api.reversePayment(payableId, paymentId, reason),

@@ -308,12 +308,12 @@ export const api = {
 
   // ---------- Payments (baixa) ----------
   registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>
-    request<Payment>(`/payables/${payableId}/installments/${installmentId}/payments`, {
+    request<Payable>(`/payables/${payableId}/installments/${installmentId}/payments`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   reversePayment: (payableId: string, paymentId: string, reason: string) =>
-    request<Payment>(`/payables/${payableId}/payments/${paymentId}/reverse`, {
+    request<Payable>(`/payables/${payableId}/payments/${paymentId}/reverse`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),

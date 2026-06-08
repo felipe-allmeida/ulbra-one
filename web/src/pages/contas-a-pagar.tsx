@@ -718,12 +718,19 @@ function PaymentForm({
     register.mutate(
       { payableId: payable.id, installmentId: installment.id, body },
       {
-        onSuccess: (payment) => {
+        onSuccess: (updated) => {
           if (file) {
-            uploadProof.mutate({ payableId: payable.id, paymentId: payment.id, file }, { onSuccess: () => onDone() });
-          } else {
-            onDone();
+            const inst = updated.installments.find((i) => i.id === installment.id);
+            const newPayment = inst?.payments[inst.payments.length - 1];
+            if (newPayment) {
+              uploadProof.mutate(
+                { payableId: payable.id, paymentId: newPayment.id, file },
+                { onSuccess: () => onDone() },
+              );
+              return;
+            }
           }
+          onDone();
         },
       },
     );
