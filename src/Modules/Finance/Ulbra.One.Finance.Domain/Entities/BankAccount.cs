@@ -1,0 +1,57 @@
+using Ulbra.One.Common.Domain.Auditing;
+
+namespace Ulbra.One.Finance.Domain.Entities;
+
+/// <summary>A bank account owned by a company, used as the outflow account when settling payables.</summary>
+public class BankAccount : IAuditable, ISoftDeletable
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public Guid CompanyId { get; private set; }
+    public string BankCode { get; private set; } = string.Empty;
+    public string BankName { get; private set; } = string.Empty;
+    public string Agency { get; private set; } = string.Empty;
+    public string AccountNumber { get; private set; } = string.Empty;
+    public string AccountDigit { get; private set; } = string.Empty;
+    public BankAccountType AccountType { get; private set; }
+    public string Alias { get; private set; } = string.Empty;
+    public decimal? OpeningBalance { get; private set; }
+    public bool Active { get; private set; } = true;
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; private set; }
+    public string CreatedBy { get; private set; } = string.Empty;
+    public DateTimeOffset UpdatedAt { get; private set; }
+    public string UpdatedBy { get; private set; } = string.Empty;
+
+    private BankAccount() { }
+
+    public BankAccount(Guid companyId, string bankCode, string bankName, string agency, string accountNumber,
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance)
+    {
+        CompanyId = companyId;
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance);
+    }
+
+    public void Update(string bankCode, string bankName, string agency, string accountNumber,
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance) =>
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance);
+
+    private void Apply(string bankCode, string bankName, string agency, string accountNumber,
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance)
+    {
+        BankCode = bankCode.Trim();
+        BankName = bankName.Trim();
+        Agency = agency.Trim();
+        AccountNumber = accountNumber.Trim();
+        AccountDigit = accountDigit.Trim();
+        AccountType = accountType;
+        Alias = alias.Trim();
+        OpeningBalance = openingBalance;
+    }
+
+    public void Activate() => Active = true;
+    public void Deactivate() => Active = false;
+    public void MarkDeleted(DateTimeOffset at) => DeletedAt = at;
+    public void MarkCreated(string userId, DateTimeOffset at) { CreatedBy = userId; CreatedAt = at; MarkUpdated(userId, at); }
+    public void MarkUpdated(string userId, DateTimeOffset at) { UpdatedBy = userId; UpdatedAt = at; }
+}

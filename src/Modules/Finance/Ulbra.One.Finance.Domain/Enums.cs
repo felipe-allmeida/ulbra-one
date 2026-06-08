@@ -9,3 +9,7 @@ public enum PayableOrigin { Manual, Purchase, Payroll, SeniorImport }
 public enum PayableStatus { PendingApproval, Approved, Rejected, Cancelled, Settled }
 
 public enum InstallmentStatus { Open, PartiallyPaid, Paid }
+
+public enum BankAccountType { Checking, Savings }
+
+public enum PaymentMethod { Pix, Ted, Boleto, Cash, DirectDebit, Other }
