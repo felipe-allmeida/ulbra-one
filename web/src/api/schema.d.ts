@@ -703,7 +703,8 @@ export interface components {
             vendorId: string;
             /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
-            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            categoryId: string | null;
             origin: components["schemas"]["PayableOrigin"];
             description: string;
             documentNumber: string | null;
@@ -826,12 +827,9 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
-        ExpenseCategoryId: {
-            /** Format: uuid */
-            value: string;
-        };
         ExpenseCategoryResponse: {
-            id: components["schemas"]["ExpenseCategoryId"];
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            id: string;
             name: string;
             active: boolean;
         };
@@ -848,10 +846,6 @@ export interface components {
         GoogleSignInRequest: {
             idToken: string;
         };
-        InstallmentId: {
-            /** Format: uuid */
-            value: string;
-        };
         InstallmentInput: {
             /** Format: date */
             dueDate: string;
@@ -859,7 +853,8 @@ export interface components {
             amount: number;
         };
         InstallmentResponse: {
-            id: components["schemas"]["InstallmentId"];
+            /** @example installment_3fa85f64571742199730000000000000 */
+            id: string;
             /** Format: int32 */
             sequence: number;
             /** Format: date */
@@ -884,12 +879,9 @@ export interface components {
             role: string | null;
             isAdmin: boolean;
         };
-        PayableAttachmentId: {
-            /** Format: uuid */
-            value: string;
-        };
         PayableAttachmentResponse: {
-            id: components["schemas"]["PayableAttachmentId"];
+            /** @example attachment_3fa85f64571742199730000000000000 */
+            id: string;
             fileName: string;
             contentType: string;
             /** Format: int64 */
@@ -897,13 +889,11 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
-        PayableId: {
-            /** Format: uuid */
-            value: string;
-        };
         PayableListItemResponse: {
-            payableId: components["schemas"]["PayableId"];
-            installmentId: components["schemas"]["InstallmentId"];
+            /** @example payable_3fa85f64571742199730000000000000 */
+            payableId: string;
+            /** @example installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
             /** Format: int32 */
             sequence: number;
             /** Format: int32 */
@@ -912,7 +902,8 @@ export interface components {
             description: string;
             /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
-            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            categoryId: string | null;
             /** Format: date */
             dueDate: string;
             /** Format: double */
@@ -934,7 +925,8 @@ export interface components {
         /** @enum {string} */
         PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport";
         PayableResponse: {
-            id: components["schemas"]["PayableId"];
+            /** @example payable_3fa85f64571742199730000000000000 */
+            id: string;
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
             origin: components["schemas"]["PayableOrigin"];
@@ -947,7 +939,8 @@ export interface components {
             description: string;
             /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
-            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            categoryId: string | null;
             /** Format: double */
             totalAmount: number;
             status: components["schemas"]["PayableStatus"];
@@ -1059,7 +1052,8 @@ export interface components {
             vendorId: string;
             /** @example cost_center_3fa85f64571742199730000000000000 */
             costCenterId: string;
-            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            categoryId: string | null;
             description: string;
             documentNumber: string | null;
             /** Format: date */

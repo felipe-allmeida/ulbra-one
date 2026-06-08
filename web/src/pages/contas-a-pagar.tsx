@@ -77,7 +77,7 @@ function useNames(companyId: string) {
   return {
     centros,
     centroNome: useMemo(() => Object.fromEntries(centros.map((c) => [c.id, c.name])), [centros]),
-    categoriaNome: useMemo(() => Object.fromEntries(categorias.map((c) => [c.id.value, c.name])), [categorias]),
+    categoriaNome: useMemo(() => Object.fromEntries(categorias.map((c) => [c.id, c.name])), [categorias]),
   };
 }
 
@@ -129,9 +129,9 @@ export function ContasPagarPage() {
             <tbody>
               {itens.map((l) => (
                 <tr
-                  key={l.installmentId.value}
+                  key={l.installmentId}
                   className='row-click'
-                  onClick={() => nav(`/app/contas-a-pagar/${l.payableId.value}`)}
+                  onClick={() => nav(`/app/contas-a-pagar/${l.payableId}`)}
                 >
                   <td className='t-mono'>{fmtData(l.dueDate)}</td>
                   <td>{l.description}</td>
@@ -140,7 +140,7 @@ export function ContasPagarPage() {
                     {l.sequence}/{l.installmentCount}
                   </td>
                   <td>{centroNome[l.costCenterId] ?? '—'}</td>
-                  <td>{categoriaNome[l.categoryId.value] ?? '—'}</td>
+                  <td>{(l.categoryId ? categoriaNome[l.categoryId] : null) ?? '—'}</td>
                   <td className='amount-cell' style={{ textAlign: 'right' }}>
                     {brl(l.amount)}
                   </td>
@@ -266,7 +266,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
     return {
       vendorId: initial.vendorId,
       costCenterId: initial.costCenterId,
-      categoryId: initial.categoryId?.value ?? null,
+      categoryId: initial.categoryId ?? null,
       description: initial.description,
       documentNumber: initial.documentNumber ?? '',
       issueDate: initial.issueDate ?? '',
@@ -331,21 +331,21 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const onValid = (v: PayableValues) => {
     const body = buildBody(v);
     if (editing && initial) {
-      update.mutate({ id: initial.id.value, body }, { onSuccess: (p) => nav(`/app/contas-a-pagar/${p.id.value}`) });
+      update.mutate({ id: initial.id, body }, { onSuccess: (p) => nav(`/app/contas-a-pagar/${p.id}`) });
     } else {
       create.mutate(body, {
         onSuccess: (p) => {
           if (file) {
-            upload.mutate({ id: p.id.value, file }, { onSuccess: () => nav(`/app/contas-a-pagar/${p.id.value}`) });
+            upload.mutate({ id: p.id, file }, { onSuccess: () => nav(`/app/contas-a-pagar/${p.id}`) });
           } else {
-            nav(`/app/contas-a-pagar/${p.id.value}`);
+            nav(`/app/contas-a-pagar/${p.id}`);
           }
         },
       });
     }
   };
 
-  const backTo = editing && initial ? `/app/contas-a-pagar/${initial.id.value}` : '/app/contas-a-pagar';
+  const backTo = editing && initial ? `/app/contas-a-pagar/${initial.id}` : '/app/contas-a-pagar';
 
   return (
     <>
@@ -393,7 +393,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                   <Combobox
                     value={field.value ?? null}
                     onChange={(id) => field.onChange(id)}
-                    items={categorias.map((c) => ({ id: c.id.value, label: c.name }))}
+                    items={categorias.map((c) => ({ id: c.id, label: c.name }))}
                     placeholder={t('payables.fields.categoryNone')}
                   />
                 )}
@@ -604,7 +604,7 @@ export function EditarContaPagarPage() {
  * an object-URL blob, and trigger a programmatic download.
  */
 async function downloadAttachment(payableId: string, att: PayableAttachment): Promise<void> {
-  const url = `${getApiBaseUrl()}/payables/${payableId}/attachments/${att.id.value}`;
+  const url = `${getApiBaseUrl()}/payables/${payableId}/attachments/${att.id}`;
   const headers = new Headers();
   if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
   const res = await fetch(url, { headers });
@@ -650,7 +650,7 @@ export function ContaPagarDetailPage() {
     );
 
   const centroNome = centros.find((c) => c.id === p.costCenterId)?.name ?? '—';
-  const categoriaNome = categorias.find((c) => c.id.value === p.categoryId?.value)?.name ?? '—';
+  const categoriaNome = categorias.find((c) => c.id === p.categoryId)?.name ?? '—';
   const editable = p.status === 'PendingApproval' || p.status === 'Approved';
 
   return (
@@ -667,7 +667,7 @@ export function ContaPagarDetailPage() {
         </div>
         <div className='detail-actions'>
           {p.status === 'PendingApproval' && (
-            <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: p.id.value })}>
+            <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: p.id })}>
               {t('payables.actions.approve')}
             </Button>
           )}
@@ -677,7 +677,7 @@ export function ContaPagarDetailPage() {
             </Button>
           )}
           {editable && (
-            <Button icon={<Pencil />} onClick={() => nav(`/app/contas-a-pagar/${p.id.value}/editar`)}>
+            <Button icon={<Pencil />} onClick={() => nav(`/app/contas-a-pagar/${p.id}/editar`)}>
               {t('payables.actions.edit')}
             </Button>
           )}
@@ -745,7 +745,7 @@ export function ContaPagarDetailPage() {
             {[...p.installments]
               .sort((a, b) => a.sequence - b.sequence)
               .map((inst) => (
-                <tr key={inst.id.value}>
+                <tr key={inst.id}>
                   <td className='t-mono'>
                     {inst.sequence}/{p.installments.length}
                   </td>
@@ -771,7 +771,7 @@ export function ContaPagarDetailPage() {
           <table>
             <tbody>
               {p.attachments.map((att) => (
-                <tr key={att.id.value}>
+                <tr key={att.id}>
                   <td>
                     <Paperclip style={{ width: 14, height: 14, verticalAlign: 'middle', marginRight: 6 }} />
                     {att.fileName}
@@ -782,9 +782,7 @@ export function ContaPagarDetailPage() {
                         icon={<Download />}
                         onClick={() => {
                           setDownloadErr(null);
-                          downloadAttachment(p.id.value, att).catch(() =>
-                            setDownloadErr(t('attachments.downloadError')),
-                          );
+                          downloadAttachment(p.id, att).catch(() => setDownloadErr(t('attachments.downloadError')));
                         }}
                       >
                         {t('attachments.download')}
@@ -820,7 +818,7 @@ export function ContaPagarDetailPage() {
             </div>
           }
           onConfirm={() =>
-            reject.mutate({ id: p.id.value, reason: rejectReason.trim() }, { onSuccess: () => setRejectOpen(false) })
+            reject.mutate({ id: p.id, reason: rejectReason.trim() }, { onSuccess: () => setRejectOpen(false) })
           }
           onCancel={() => setRejectOpen(false)}
         />
@@ -844,7 +842,7 @@ export function ContaPagarDetailPage() {
             </div>
           }
           onConfirm={() =>
-            cancel.mutate({ id: p.id.value, reason: cancelReason.trim() }, { onSuccess: () => setCancelOpen(false) })
+            cancel.mutate({ id: p.id, reason: cancelReason.trim() }, { onSuccess: () => setCancelOpen(false) })
           }
           onCancel={() => setCancelOpen(false)}
         />
@@ -859,7 +857,7 @@ export function ContaPagarDetailPage() {
           message={t('attachments.deleteMessage', { name: attToDelete.fileName })}
           onConfirm={() =>
             deleteAttachment.mutate(
-              { id: p.id.value, attachmentId: attToDelete.id.value },
+              { id: p.id, attachmentId: attToDelete.id },
               { onSuccess: () => setAttToDelete(null) },
             )
           }

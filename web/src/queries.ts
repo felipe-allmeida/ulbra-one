@@ -383,7 +383,7 @@ export function useEmployeeAction(
 /** Invalidates the payables lists + the single payable cache after a state change. */
 function invalidatePayable(qc: ReturnType<typeof useQueryClient>, data: Payable) {
   void qc.invalidateQueries({ queryKey: ['payables'] });
-  void qc.invalidateQueries({ queryKey: queryKeys.payable(data.id.value) });
+  void qc.invalidateQueries({ queryKey: queryKeys.payable(data.id) });
 }
 
 export function useCreatePayable(options?: UseMutationOptions<Payable, unknown, PayableInput>) {

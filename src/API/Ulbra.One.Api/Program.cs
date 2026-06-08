@@ -171,6 +171,10 @@ builder.Services.AddSwaggerGen(options =>
     options.MapType<Ulbra.One.Common.Application.Ids.CustomerId>(() => IdSchema("customer_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.EmployeeId>(() => IdSchema("employee_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.UserId>(() => IdSchema("user_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.PayableId>(() => IdSchema("payable_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.InstallmentId>(() => IdSchema("installment_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.ExpenseCategoryId>(() => IdSchema("expense_category_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.PayableAttachmentId>(() => IdSchema("attachment_3fa85f64571742199730000000000000"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")

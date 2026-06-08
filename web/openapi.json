@@ -2826,7 +2826,9 @@
             "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "categoryId": {
-            "$ref": "#/components/schemas/ExpenseCategoryId"
+            "type": "string",
+            "nullable": true,
+            "example": "expense_category_3fa85f64571742199730000000000000"
           },
           "origin": {
             "$ref": "#/components/schemas/PayableOrigin"
@@ -3246,19 +3248,6 @@
         },
         "additionalProperties": false
       },
-      "ExpenseCategoryId": {
-        "required": [
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "ExpenseCategoryResponse": {
         "required": [
           "id",
@@ -3268,7 +3257,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "$ref": "#/components/schemas/ExpenseCategoryId"
+            "type": "string",
+            "example": "expense_category_3fa85f64571742199730000000000000"
           },
           "name": {
             "type": "string"
@@ -3319,19 +3309,6 @@
         },
         "additionalProperties": false
       },
-      "InstallmentId": {
-        "required": [
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "InstallmentInput": {
         "required": [
           "dueDate",
@@ -3362,7 +3339,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "$ref": "#/components/schemas/InstallmentId"
+            "type": "string",
+            "example": "installment_3fa85f64571742199730000000000000"
           },
           "sequence": {
             "type": "integer",
@@ -3442,19 +3420,6 @@
         },
         "additionalProperties": false
       },
-      "PayableAttachmentId": {
-        "required": [
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "PayableAttachmentResponse": {
         "required": [
           "id",
@@ -3466,7 +3431,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "$ref": "#/components/schemas/PayableAttachmentId"
+            "type": "string",
+            "example": "attachment_3fa85f64571742199730000000000000"
           },
           "fileName": {
             "type": "string"
@@ -3481,19 +3447,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
-      "PayableId": {
-        "required": [
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -3516,10 +3469,12 @@
         "type": "object",
         "properties": {
           "payableId": {
-            "$ref": "#/components/schemas/PayableId"
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
           },
           "installmentId": {
-            "$ref": "#/components/schemas/InstallmentId"
+            "type": "string",
+            "example": "installment_3fa85f64571742199730000000000000"
           },
           "sequence": {
             "type": "integer",
@@ -3540,7 +3495,9 @@
             "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "categoryId": {
-            "$ref": "#/components/schemas/ExpenseCategoryId"
+            "type": "string",
+            "nullable": true,
+            "example": "expense_category_3fa85f64571742199730000000000000"
           },
           "dueDate": {
             "type": "string",
@@ -3626,7 +3583,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "$ref": "#/components/schemas/PayableId"
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
           },
           "companyId": {
             "type": "string",
@@ -3659,7 +3617,9 @@
             "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "categoryId": {
-            "$ref": "#/components/schemas/ExpenseCategoryId"
+            "type": "string",
+            "nullable": true,
+            "example": "expense_category_3fa85f64571742199730000000000000"
           },
           "totalAmount": {
             "type": "number",
@@ -4050,7 +4010,9 @@
             "example": "cost_center_3fa85f64571742199730000000000000"
           },
           "categoryId": {
-            "$ref": "#/components/schemas/ExpenseCategoryId"
+            "type": "string",
+            "nullable": true,
+            "example": "expense_category_3fa85f64571742199730000000000000"
           },
           "description": {
             "type": "string"

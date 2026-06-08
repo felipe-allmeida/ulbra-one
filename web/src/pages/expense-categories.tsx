@@ -40,21 +40,21 @@ export function ExpenseCategoriesPage() {
   };
 
   const startRename = (c: ExpenseCategory) => {
-    setEditingId(c.id.value);
+    setEditingId(c.id);
     setEditName(c.name);
   };
 
   const submitRename = (c: ExpenseCategory) => {
-    save.mutate({ id: c.id.value, name: editName.trim(), active: c.active }, { onSuccess: () => setEditingId(null) });
+    save.mutate({ id: c.id, name: editName.trim(), active: c.active }, { onSuccess: () => setEditingId(null) });
   };
 
-  const toggleActive = (c: ExpenseCategory) => save.mutate({ id: c.id.value, name: c.name, active: !c.active });
+  const toggleActive = (c: ExpenseCategory) => save.mutate({ id: c.id, name: c.name, active: !c.active });
 
   const submitDelete = () => {
     if (!toDelete) return;
     setDeleteErr(null);
     remove.mutate(
-      { id: toDelete.id.value },
+      { id: toDelete.id },
       {
         onSuccess: () => setToDelete(null),
         onError: (e) => setDeleteErr(getErrorMessage(e)),
@@ -77,9 +77,9 @@ export function ExpenseCategoriesPage() {
           <table>
             <tbody>
               {categorias.map((c) => (
-                <tr key={c.id.value}>
+                <tr key={c.id}>
                   <td>
-                    {editingId === c.id.value ? (
+                    {editingId === c.id ? (
                       <Input
                         autoFocus
                         value={editName}
@@ -100,7 +100,7 @@ export function ExpenseCategoriesPage() {
                   </td>
                   <td className='td-action'>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      {editingId === c.id.value ? (
+                      {editingId === c.id ? (
                         <>
                           <Button className='btn-approve' icon={<Check />} onClick={() => submitRename(c)}>
                             {t('forms.actions.save')}

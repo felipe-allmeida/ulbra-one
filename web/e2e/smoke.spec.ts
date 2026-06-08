@@ -53,6 +53,47 @@ test('landing -> login -> app dashboard -> fornecedores', async ({ page }) => {
   await expect(page.locator('table tbody tr.row-click').first()).toBeVisible();
 });
 
+test('login -> contas a pagar list -> detail with parcelas', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Contas a Pagar via the sidebar nav item.
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Contas a pagar' }).click();
+  await expect(page).toHaveURL(/\/app\/contas-a-pagar$/);
+  await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
+
+  // The list is scoped to the selected company (EmpresaPicker). Pick the seeded
+  // company that owns the payables — match by the "ULBRA" substring in its legal
+  // name; if absent keep the default and still assert the table renders.
+  const picker = page.locator('select').first();
+  const ulbra = picker.locator('option', { hasText: /ULBRA/i }).first();
+  if (await ulbra.count()) {
+    await picker.selectOption({ label: (await ulbra.textContent())!.trim() });
+  }
+
+  // Data path: the seeder creates 9 payables (incl. parcelado), so multiple
+  // installment rows render. Assert at least one clickable row is visible.
+  const firstRow = page.locator('table tbody tr.row-click').first();
+  await expect(firstRow).toBeVisible();
+
+  // Drill into the detail: clicking a row routes to /app/contas-a-pagar/<id>
+  // and the "Parcelas" panel lists at least one installment row.
+  await firstRow.click();
+  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  const parcelas = page.locator('.panel', { hasText: 'Parcelas' });
+  await expect(parcelas).toBeVisible();
+  await expect(parcelas.locator('table tbody tr').first()).toBeVisible();
+});
+
 test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
   // Fresh context => no token in localStorage.
   const context = await browser.newContext();
