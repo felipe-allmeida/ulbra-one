@@ -5,9 +5,13 @@ using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCat
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
+using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
@@ -39,6 +43,10 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ListPayables>();
         payables.MapEndpoint<GetPayable>();
         payables.MapEndpoint<CreatePayable>();
+        payables.MapEndpoint<UpdatePayable>();
+        payables.MapEndpoint<CancelPayable>();
+        payables.MapEndpoint<ApprovePayable>();
+        payables.MapEndpoint<RejectPayable>();
 
         return builder;
     }

@@ -230,4 +230,254 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var missing = await client.GetAsync($"/api/payables/payable_{Guid.NewGuid():N}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
+
+    // ---------------------------------------------------------------------------
+    // Approve
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Approve_PendingPayable_Returns_200_Approved()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Para aprovar",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 5000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        Assert.Equal(HttpStatusCode.OK, approveRes.StatusCode);
+        var body = await ReadJson(approveRes);
+        Assert.Equal("Approved", body.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Approve_NonExistent_Returns_404_NotFound()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var res = await client.PostAsJsonAsync($"/api/payables/payable_{Guid.NewGuid():N}/approve", new { });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payable.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Reject
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Reject_PendingPayable_Returns_200_Rejected_With_Reason()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Para rejeitar",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 3000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var rejectRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/reject", new { reason = "Fora do orçamento" });
+        Assert.Equal(HttpStatusCode.OK, rejectRes.StatusCode);
+        var body = await ReadJson(rejectRes);
+        Assert.Equal("Rejected", body.GetProperty("status").GetString());
+        Assert.Equal("Fora do orçamento", body.GetProperty("rejectionReason").GetString());
+    }
+
+    [Fact]
+    public async Task Reject_NonExistent_Returns_404_NotFound()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var res = await client.PostAsJsonAsync($"/api/payables/payable_{Guid.NewGuid():N}/reject", new { reason = "motivo" });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payable.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Cancel
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Cancel_PendingPayable_Returns_200_Cancelled_With_Reason()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Para cancelar",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 2000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var cancelRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/cancel", new { reason = "Pedido cancelado pelo cliente" });
+        Assert.Equal(HttpStatusCode.OK, cancelRes.StatusCode);
+        var body = await ReadJson(cancelRes);
+        Assert.Equal("Cancelled", body.GetProperty("status").GetString());
+        Assert.Equal("Pedido cancelado pelo cliente", body.GetProperty("cancelReason").GetString());
+    }
+
+    [Fact]
+    public async Task Cancel_AlreadyCancelled_Returns_409_InvalidState()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Duplo cancelamento",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 1000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var first = await client.PostAsJsonAsync($"/api/payables/{payableId}/cancel", new { reason = "primeiro" });
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+
+        var second = await client.PostAsJsonAsync($"/api/payables/{payableId}/cancel", new { reason = "segundo" });
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal("Payable.InvalidState", (await ReadJson(second)).GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Cancel_NonExistent_Returns_404_NotFound()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var res = await client.PostAsJsonAsync($"/api/payables/payable_{Guid.NewGuid():N}/cancel", new { reason = "motivo" });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payable.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Update
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Update_Payable_Replaces_Installments_And_Proves_Orphan_Removal()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // Create with 3 installments
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Antes da atualização",
+            generate = new { totalAmount = 9000m, count = 3, firstDueDate = "2026-07-10", intervalMonths = 1 },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        // Update with 2 installments and new description
+        var updateRes = await client.PutAsJsonAsync($"/api/payables/{payableId}", new
+        {
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Depois da atualização",
+            installments = new[]
+            {
+                new { dueDate = "2026-08-10", amount = 4000m },
+                new { dueDate = "2026-09-10", amount = 6000m },
+            },
+        });
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+        var updateBody = await ReadJson(updateRes);
+        Assert.Equal(2, updateBody.GetProperty("installments").GetArrayLength());
+        Assert.Equal(10000m, updateBody.GetProperty("totalAmount").GetDecimal());
+
+        // GET and confirm EXACTLY 2 installments (proves orphan removal)
+        var getRes = await client.GetAsync($"/api/payables/{payableId}");
+        Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
+        var getBody = await ReadJson(getRes);
+        Assert.Equal("Depois da atualização", getBody.GetProperty("description").GetString());
+        Assert.Equal(2, getBody.GetProperty("installments").GetArrayLength());
+        Assert.Equal(10000m, getBody.GetProperty("totalAmount").GetDecimal());
+
+        var amounts = getBody.GetProperty("installments").EnumerateArray()
+            .Select(i => i.GetProperty("amount").GetDecimal())
+            .OrderBy(a => a)
+            .ToArray();
+        Assert.Equal(new[] { 4000m, 6000m }, amounts);
+    }
+
+    [Fact]
+    public async Task Update_RejectedPayable_Returns_409_NotEditable()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Para rejeitar e tentar editar",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 500m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var rejectRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/reject", new { reason = "Rejeitado" });
+        Assert.Equal(HttpStatusCode.OK, rejectRes.StatusCode);
+
+        var updateRes = await client.PutAsJsonAsync($"/api/payables/{payableId}", new
+        {
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Tentativa inválida",
+            installments = new[] { new { dueDate = "2026-08-10", amount = 500m } },
+        });
+        Assert.Equal(HttpStatusCode.Conflict, updateRes.StatusCode);
+        Assert.Equal("Payable.NotEditable", (await ReadJson(updateRes)).GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Update_NonExistent_Returns_404_NotFound()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var res = await client.PutAsJsonAsync($"/api/payables/payable_{Guid.NewGuid():N}", new
+        {
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Inexistente",
+            installments = new[] { new { dueDate = "2026-08-10", amount = 100m } },
+        });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payable.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
 }
