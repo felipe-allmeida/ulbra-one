@@ -21,5 +21,6 @@
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
   </ItemGroup>
 </Project>
