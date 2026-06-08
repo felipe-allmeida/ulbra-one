@@ -8,10 +8,13 @@ using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCat
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
@@ -47,6 +50,9 @@ public static class FinanceEndpoints
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
         payables.MapEndpoint<RejectPayable>();
+        payables.MapEndpoint<UploadAttachment>();
+        payables.MapEndpoint<DownloadAttachment>();
+        payables.MapEndpoint<DeleteAttachment>();
 
         return builder;
     }

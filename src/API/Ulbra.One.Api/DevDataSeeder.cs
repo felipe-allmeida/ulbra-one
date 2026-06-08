@@ -28,6 +28,8 @@ public static class DevDataSeeder
         var time = sp.GetRequiredService<TimeProvider>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
+        await SeedExpenseCategoriesAsync(finance, logger, ct);
+
         var existing = await core.Companies.CountAsync(ct);
         if (existing > 0)
         {
@@ -122,14 +124,50 @@ public static class DevDataSeeder
 
         await registry.SaveChangesAsync(ct);
 
-        // ---------- Transactions (payables / receivables) ----------
-        // Created via a helper that applies the desired status consistently.
-        Transaction Pay(Guid unitId, CostCenter cc, string desc, VendorEntity vendor, decimal amount, int dueInDays, TransactionStatus status)
+        // ---------- Payables (accounts-payable aggregate) ----------
+        // Resolve a few categories by name to link payables to.
+        var categories = await finance.ExpenseCategories.ToListAsync(ct);
+        ExpenseCategory? Cat(string name) => categories.FirstOrDefault(c => c.Name == name);
+
+        Payable PayableVista(CostCenter cc, string desc, VendorEntity vendor, ExpenseCategory? category,
+            string? documentNumber, decimal amount, int dueInDays)
         {
-            var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Payable, desc, vendor.Id, null, vendor.Name, amount, today.AddDays(dueInDays));
-            ApplyStatus(t, status, cc.AutoApprovalLimit);
-            return t;
+            var installments = new List<Installment> { new(1, today.AddDays(dueInDays), amount) };
+            var p = new Payable(ulbra.Id, PayableOrigin.Manual, vendor.Id, vendor.Name, documentNumber,
+                today, desc, cc.Id, category?.Id, installments);
+            p.ApplyAutoApproval(cc.AutoApprovalLimit);
+            return p;
         }
+        Payable PayableParcelado(CostCenter cc, string desc, VendorEntity vendor, ExpenseCategory? category,
+            string? documentNumber, decimal total, int count, int firstDueInDays, int intervalMonths = 1)
+        {
+            var installments = Payable.GenerateInstallments(total, count, today.AddDays(firstDueInDays), intervalMonths);
+            var p = new Payable(ulbra.Id, PayableOrigin.Manual, vendor.Id, vendor.Name, documentNumber,
+                today, desc, cc.Id, category?.Id, installments);
+            p.ApplyAutoApproval(cc.AutoApprovalLimit);
+            return p;
+        }
+
+        await finance.Payables.AddRangeAsync(new[]
+        {
+            // À vista
+            PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5),
+            PayableVista(infra, "Conta de energia - Campus Canoas", vCeee, Cat("Energia elétrica"), "NF-CEEE-77120", 48_500m, -2),
+            PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3),
+            PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10), // auto-approved (<= 2000)
+            PayableVista(rh, "Consultoria de clima organizacional", vJoao, Cat("Serviços de terceiros (PJ)"), null, 2_500m, 15),
+            PayableVista(bib, "Aquisição de acervo - periódicos", vGrafica, Cat("Acervo e assinaturas (biblioteca)"), "NF-GS-1207", 1_200m, -8),
+        }, ct);
+
+        await finance.Payables.AddRangeAsync(new[]
+        {
+            // Parcelado
+            PayableParcelado(ti, "Licenças Microsoft 365 (anual)", vMicrosoft, Cat("Software e licenças"), "NF-MS-330021", 96_000m, 12, 20),
+            PayableParcelado(mkt, "Impressão de materiais de captação", vGrafica, Cat("Marketing e captação de alunos"), "NF-GS-1233", 9_600m, 3, 7),
+            PayableParcelado(ti, "Servidores - colocation", vMicrosoft, Cat("Cloud e hospedagem"), "NF-MS-330044", 26_700m, 3, 12),
+        }, ct);
+
+        // ---------- Receivables (kept on Transaction) ----------
         Transaction Receive(Guid unitId, CostCenter cc, string desc, CustomerEntity customer, decimal amount, int dueInDays, TransactionStatus status)
         {
             var t = new Transaction(ulbra.Id, unitId, cc.Id, TransactionType.Receivable, desc, null, customer.Id, customer.Name, amount, today.AddDays(dueInDays));
@@ -138,19 +176,6 @@ public static class DevDataSeeder
         }
 
         finance.Transactions.AddRange(
-            // Payables — variety of statuses and due dates (linked to real vendors)
-            Pay(canoas.Id, mkt, "Google Ads - campanha vestibular", vGoogle, 12_000m, -5, TransactionStatus.Approved),
-            Pay(canoas.Id, mkt, "Impressão de materiais de captação", vGrafica, 3_200m, 7, TransactionStatus.Pending),
-            Pay(canoas.Id, ti, "Licenças Microsoft 365 (anual)", vMicrosoft, 96_000m, 20, TransactionStatus.Pending),
-            Pay(canoas.Id, infra, "Conta de energia - Campus Canoas", vCeee, 48_500m, -2, TransactionStatus.Approved),
-            Pay(gravatai.Id, infra, "Conta de energia - Campus Gravataí", vCeee, 21_300m, 3, TransactionStatus.Pending),
-            Pay(gravatai.Id, infra, "Serviço de limpeza - mensal", vLimpeza, 1_800m, 10, TransactionStatus.Approved), // auto-approved (<= 2000)
-            Pay(canoas.Id, rh, "Consultoria de clima organizacional", vJoao, 2_500m, 15, TransactionStatus.Pending),
-            Pay(canoas.Id, bib, "Aquisição de acervo - periódicos", vGrafica, 1_200m, -8, TransactionStatus.Paid),
-            Pay(torres.Id, infra, "Reparo hidráulico - bloco B", vLimpeza, 5_400m, 30, TransactionStatus.Rejected),
-            Pay(canoas.Id, ti, "Servidores - colocation mensal", vMicrosoft, 8_900m, 12, TransactionStatus.Approved),
-
-            // Receivables (linked to real customers)
             Receive(canoas.Id, acad, "Convênio de estágios 2026/1", cPrefCanoas, 80_000m, 5, TransactionStatus.Pending),
             Receive(canoas.Id, acad, "Convênio residência médica", cHospital, 120_000m, -3, TransactionStatus.Approved),
             Receive(canoas.Id, acad, "Mensalidade - Medicina (Maria Eduarda)", cMaria, 6_800m, 8, TransactionStatus.Pending),
@@ -161,8 +186,34 @@ public static class DevDataSeeder
 
         logger.LogInformation(
             "Dev seed complete: {Companies} companies, {Units} units, {CostCenters} cost centers, " +
-            "{Vendors} vendors, {Customers} customers, {Employees} employees, {Transactions} transactions.",
-            2, 4, 6, 6, 4, 5, 15);
+            "{Vendors} vendors, {Customers} customers, {Employees} employees, {Payables} payables, {Receivables} receivables.",
+            2, 4, 6, 6, 4, 5, 9, 5);
+    }
+
+    private static readonly string[] ExpenseCategoryNames =
+    [
+        "Energia elétrica", "Água e esgoto", "Telecom e Internet", "Aluguel e locações",
+        "Manutenção predial", "Limpeza e conservação", "Segurança e vigilância",
+        "Material didático e laboratório", "Acervo e assinaturas (biblioteca)",
+        "Bolsas e auxílios a estudantes", "Eventos acadêmicos", "Pesquisa e extensão",
+        "Folha e encargos", "Serviços de terceiros (PJ)", "Treinamento e capacitação",
+        "Diárias, viagens e reembolsos", "Software e licenças", "Equipamentos de TI",
+        "Cloud e hospedagem", "Marketing e captação de alunos", "Comissões e parcerias",
+        "Impostos e taxas", "Tarifas bancárias", "Despesas jurídicas e cartório",
+        "Seguros", "Doações e filantropia", "Outros",
+    ];
+
+    private static async Task SeedExpenseCategoriesAsync(FinanceContext finance, ILogger logger, CancellationToken ct)
+    {
+        if (await finance.ExpenseCategories.AnyAsync(ct))
+        {
+            logger.LogInformation("Dev seed: expense categories already present — skipping.");
+            return;
+        }
+
+        finance.ExpenseCategories.AddRange(ExpenseCategoryNames.Select(name => new ExpenseCategory(name)));
+        await finance.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)
