@@ -163,6 +163,7 @@ const ptBR = {
     descriptionRequired: 'Informe a descrição.',
     vendorRequired: 'Selecione o fornecedor.',
     customerRequired: 'Selecione o cliente.',
+    installmentCountInvalid: 'Informe pelo menos 2 parcelas.',
   },
 
   combobox: {

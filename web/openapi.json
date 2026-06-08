@@ -713,7 +713,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RejectRequest"
+                "$ref": "#/components/schemas/RejectTransactionRejectRequest"
               }
             }
           },
@@ -768,6 +768,725 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-categories": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ListExpenseCategories",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseCategoryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CreateExpenseCategory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-categories/{id}": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdateExpenseCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DeleteExpenseCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ListPayables",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PayableStatus"
+            }
+          },
+          {
+            "name": "vendorId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costCenterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dueFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dueTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableListItemResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CreatePayable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdatePayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePayableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CancelPayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPayableCancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/approve": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ApprovePayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/reject": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RejectPayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectPayableRejectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/attachments": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UploadPayableAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableAttachmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/attachments/{attachmentId}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DownloadPayableAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DeletePayableAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1845,6 +2564,19 @@
         },
         "additionalProperties": false
       },
+      "CancelPayableCancelRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CepResult": {
         "required": [
           "cep",
@@ -2050,6 +2782,76 @@
               "type": "string",
               "example": "unit_3fa85f64571742199730000000000000"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateExpenseCategoryRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreatePayableRequest": {
+        "required": [
+          "companyId",
+          "vendorId",
+          "costCenterId",
+          "categoryId",
+          "origin",
+          "description",
+          "documentNumber",
+          "issueDate",
+          "installments",
+          "generate"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "categoryId": {
+            "$ref": "#/components/schemas/ExpenseCategoryId"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
+          },
+          "description": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallmentInput"
+            },
+            "nullable": true
+          },
+          "generate": {
+            "$ref": "#/components/schemas/GenerateInput"
           }
         },
         "additionalProperties": false
@@ -2444,6 +3246,67 @@
         },
         "additionalProperties": false
       },
+      "ExpenseCategoryId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExpenseCategoryResponse": {
+        "required": [
+          "id",
+          "name",
+          "active"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ExpenseCategoryId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GenerateInput": {
+        "required": [
+          "totalAmount",
+          "count",
+          "firstDueDate",
+          "intervalMonths"
+        ],
+        "type": "object",
+        "properties": {
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "intervalMonths": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "GoogleSignInRequest": {
         "required": [
           "idToken"
@@ -2455,6 +3318,81 @@
           }
         },
         "additionalProperties": false
+      },
+      "InstallmentId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstallmentInput": {
+        "required": [
+          "dueDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstallmentResponse": {
+        "required": [
+          "id",
+          "sequence",
+          "dueDate",
+          "amount",
+          "status",
+          "paidAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/InstallmentId"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InstallmentStatus"
+          },
+          "paidAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstallmentStatus": {
+        "enum": [
+          "Open",
+          "PartiallyPaid",
+          "Paid"
+        ],
+        "type": "string"
       },
       "LoginResponse": {
         "required": [
@@ -2503,6 +3441,269 @@
           }
         },
         "additionalProperties": false
+      },
+      "PayableAttachmentId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableAttachmentResponse": {
+        "required": [
+          "id",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PayableAttachmentId"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableListItemResponse": {
+        "required": [
+          "payableId",
+          "installmentId",
+          "sequence",
+          "installmentCount",
+          "counterpartyName",
+          "description",
+          "costCenterId",
+          "categoryId",
+          "dueDate",
+          "amount",
+          "installmentStatus",
+          "payableStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "payableId": {
+            "$ref": "#/components/schemas/PayableId"
+          },
+          "installmentId": {
+            "$ref": "#/components/schemas/InstallmentId"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "categoryId": {
+            "$ref": "#/components/schemas/ExpenseCategoryId"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "installmentStatus": {
+            "$ref": "#/components/schemas/InstallmentStatus"
+          },
+          "payableStatus": {
+            "$ref": "#/components/schemas/PayableStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableListItemResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableOrigin": {
+        "enum": [
+          "Manual",
+          "Purchase",
+          "Payroll",
+          "SeniorImport"
+        ],
+        "type": "string"
+      },
+      "PayableResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "origin",
+          "vendorId",
+          "counterpartyName",
+          "documentNumber",
+          "issueDate",
+          "description",
+          "costCenterId",
+          "categoryId",
+          "totalAmount",
+          "status",
+          "rejectionReason",
+          "cancelReason",
+          "createdAt",
+          "installments",
+          "attachments"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PayableId"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "categoryId": {
+            "$ref": "#/components/schemas/ExpenseCategoryId"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PayableStatus"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallmentResponse"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableAttachmentResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableStatus": {
+        "enum": [
+          "PendingApproval",
+          "Approved",
+          "Rejected",
+          "Cancelled",
+          "Settled"
+        ],
+        "type": "string"
       },
       "PersonType": {
         "enum": [
@@ -2566,7 +3767,20 @@
         },
         "additionalProperties": { }
       },
-      "RejectRequest": {
+      "RejectPayableRejectRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RejectTransactionRejectRequest": {
         "required": [
           "reason"
         ],
@@ -2794,6 +4008,71 @@
               "type": "string",
               "example": "unit_3fa85f64571742199730000000000000"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateExpenseCategoryRequest": {
+        "required": [
+          "name",
+          "active"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdatePayableRequest": {
+        "required": [
+          "vendorId",
+          "costCenterId",
+          "categoryId",
+          "description",
+          "documentNumber",
+          "issueDate",
+          "installments",
+          "generate"
+        ],
+        "type": "object",
+        "properties": {
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "categoryId": {
+            "$ref": "#/components/schemas/ExpenseCategoryId"
+          },
+          "description": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallmentInput"
+            },
+            "nullable": true
+          },
+          "generate": {
+            "$ref": "#/components/schemas/GenerateInput"
           }
         },
         "additionalProperties": false

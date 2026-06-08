@@ -228,6 +228,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/expense-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListExpenseCategories"];
+        put?: never;
+        post: operations["CreateExpenseCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/expense-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateExpenseCategory"];
+        post?: never;
+        delete: operations["DeleteExpenseCategory"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPayables"];
+        put?: never;
+        post: operations["CreatePayable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPayable"];
+        put: operations["UpdatePayable"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CancelPayable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ApprovePayable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RejectPayable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UploadPayableAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DownloadPayableAttachment"];
+        put?: never;
+        post?: never;
+        delete: operations["DeletePayableAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -490,6 +634,9 @@ export interface components {
             city: string;
             state: string;
         };
+        CancelPayableCancelRequest: {
+            reason: string | null;
+        };
         CepResult: {
             cep: string;
             street: string;
@@ -545,6 +692,25 @@ export interface components {
             /** Format: double */
             autoApprovalLimit: number;
             unitIds: string[];
+        };
+        CreateExpenseCategoryRequest: {
+            name: string;
+        };
+        CreatePayableRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            categoryId: components["schemas"]["ExpenseCategoryId"];
+            origin: components["schemas"]["PayableOrigin"];
+            description: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            installments: components["schemas"]["InstallmentInput"][] | null;
+            generate: components["schemas"]["GenerateInput"];
         };
         CreateTransactionRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -660,9 +826,52 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        ExpenseCategoryId: {
+            /** Format: uuid */
+            value: string;
+        };
+        ExpenseCategoryResponse: {
+            id: components["schemas"]["ExpenseCategoryId"];
+            name: string;
+            active: boolean;
+        };
+        GenerateInput: {
+            /** Format: double */
+            totalAmount: number;
+            /** Format: int32 */
+            count: number;
+            /** Format: date */
+            firstDueDate: string;
+            /** Format: int32 */
+            intervalMonths: number;
+        };
         GoogleSignInRequest: {
             idToken: string;
         };
+        InstallmentId: {
+            /** Format: uuid */
+            value: string;
+        };
+        InstallmentInput: {
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+        };
+        InstallmentResponse: {
+            id: components["schemas"]["InstallmentId"];
+            /** Format: int32 */
+            sequence: number;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+            status: components["schemas"]["InstallmentStatus"];
+            /** Format: double */
+            paidAmount: number;
+        };
+        /** @enum {string} */
+        InstallmentStatus: "Open" | "PartiallyPaid" | "Paid";
         LoginResponse: {
             token: string;
             user: components["schemas"]["UserSummary"];
@@ -675,6 +884,82 @@ export interface components {
             role: string | null;
             isAdmin: boolean;
         };
+        PayableAttachmentId: {
+            /** Format: uuid */
+            value: string;
+        };
+        PayableAttachmentResponse: {
+            id: components["schemas"]["PayableAttachmentId"];
+            fileName: string;
+            contentType: string;
+            /** Format: int64 */
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PayableId: {
+            /** Format: uuid */
+            value: string;
+        };
+        PayableListItemResponse: {
+            payableId: components["schemas"]["PayableId"];
+            installmentId: components["schemas"]["InstallmentId"];
+            /** Format: int32 */
+            sequence: number;
+            /** Format: int32 */
+            installmentCount: number;
+            counterpartyName: string;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+            installmentStatus: components["schemas"]["InstallmentStatus"];
+            payableStatus: components["schemas"]["PayableStatus"];
+        };
+        PayableListItemResponsePaginatedResponse: {
+            items: components["schemas"]["PayableListItemResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        /** @enum {string} */
+        PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport";
+        PayableResponse: {
+            id: components["schemas"]["PayableId"];
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            origin: components["schemas"]["PayableOrigin"];
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            counterpartyName: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            categoryId: components["schemas"]["ExpenseCategoryId"];
+            /** Format: double */
+            totalAmount: number;
+            status: components["schemas"]["PayableStatus"];
+            rejectionReason: string | null;
+            cancelReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            installments: components["schemas"]["InstallmentResponse"][];
+            attachments: components["schemas"]["PayableAttachmentResponse"][];
+        };
+        /** @enum {string} */
+        PayableStatus: "PendingApproval" | "Approved" | "Rejected" | "Cancelled" | "Settled";
         /** @enum {string} */
         PersonType: "Individual" | "Company";
         PingResponse: {
@@ -693,7 +978,10 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        RejectRequest: {
+        RejectPayableRejectRequest: {
+            reason: string | null;
+        };
+        RejectTransactionRejectRequest: {
             reason: string | null;
         };
         TransactionResponse: {
@@ -761,6 +1049,23 @@ export interface components {
             /** Format: double */
             autoApprovalLimit: number;
             unitIds: string[];
+        };
+        UpdateExpenseCategoryRequest: {
+            name: string;
+            active: boolean;
+        };
+        UpdatePayableRequest: {
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            categoryId: components["schemas"]["ExpenseCategoryId"];
+            description: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            installments: components["schemas"]["InstallmentInput"][] | null;
+            generate: components["schemas"]["GenerateInput"];
         };
         UpdateUnitRequest: {
             name: string;
@@ -1373,7 +1678,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RejectRequest"];
+                "application/json": components["schemas"]["RejectTransactionRejectRequest"];
             };
         };
         responses: {
@@ -1424,6 +1729,516 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListExpenseCategories: {
+        parameters: {
+            query?: {
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryResponse"][];
+                };
+            };
+        };
+    };
+    CreateExpenseCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateExpenseCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteExpenseCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListPayables: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: components["schemas"]["PayableStatus"];
+                vendorId?: string;
+                costCenterId?: string;
+                categoryId?: string;
+                dueFrom?: string;
+                dueTo?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableListItemResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    CreatePayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePayableRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetPayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdatePayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePayableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CancelPayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelPayableCancelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApprovePayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RejectPayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectPayableRejectRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UploadPayableAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableAttachmentResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DownloadPayableAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DeletePayableAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

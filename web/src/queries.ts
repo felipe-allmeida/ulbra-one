@@ -13,6 +13,11 @@ import {
   type CustomerInput,
   type Employee,
   type EmployeeInput,
+  type ExpenseCategory,
+  type Payable,
+  type PayableAttachment,
+  type PayableInput,
+  type PayableStatus,
   type Transaction,
   type TransactionStatus,
   type TransactionType,
@@ -33,7 +38,22 @@ export const queryKeys = {
   vendors: (companyId: string, search?: string, page = 1) => ['vendors', companyId, search ?? '', page] as const,
   customers: (companyId: string, search?: string, page = 1) => ['customers', companyId, search ?? '', page] as const,
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
+  payables: (params: PayablesParams) => ['payables', params] as const,
+  payable: (id: string) => ['payable', id] as const,
+  expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
 };
+
+export interface PayablesParams {
+  companyId?: string;
+  status?: PayableStatus;
+  vendorId?: string;
+  costCenterId?: string;
+  categoryId?: string;
+  dueFrom?: string;
+  dueTo?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 export interface TransactionsParams {
   companyId?: string;
@@ -119,6 +139,30 @@ export function useEmployees(companyId: string, search?: string, page = 1) {
     queryFn: () => api.listEmployees(companyId, search, page),
     enabled: !!companyId,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function usePayables(params: PayablesParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.payables(params),
+    queryFn: () => api.listPayables(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function usePayable(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payable(id ?? ''),
+    queryFn: () => api.getPayable(id!),
+    enabled: !!id,
+  });
+}
+
+export function useExpenseCategories(includeInactive = false) {
+  return useQuery({
+    queryKey: queryKeys.expenseCategories(includeInactive),
+    queryFn: () => api.listExpenseCategories(includeInactive),
   });
 }
 
@@ -333,4 +377,83 @@ export function useEmployeeAction(
       options?.onSuccess?.(data, vars, ...rest);
     },
   });
+}
+
+/* ---------- Payables ---------- */
+/** Invalidates the payables lists + the single payable cache after a state change. */
+function invalidatePayable(qc: ReturnType<typeof useQueryClient>, data: Payable) {
+  void qc.invalidateQueries({ queryKey: ['payables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.payable(data.id.value) });
+}
+
+export function useCreatePayable(options?: UseMutationOptions<Payable, unknown, PayableInput>) {
+  return useInvalidatingMutation(
+    (body) => api.createPayable(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['payables'] }),
+    options,
+  );
+}
+
+export function useUpdatePayable(
+  options?: UseMutationOptions<Payable, unknown, { id: string; body: Omit<PayableInput, 'origin'> }>,
+) {
+  return useInvalidatingMutation(({ id, body }) => api.updatePayable(id, body), invalidatePayable, options);
+}
+
+export function useApprovePayable(options?: UseMutationOptions<Payable, unknown, { id: string }>) {
+  return useInvalidatingMutation(({ id }) => api.approvePayable(id), invalidatePayable, options);
+}
+
+export function useRejectPayable(options?: UseMutationOptions<Payable, unknown, { id: string; reason: string }>) {
+  return useInvalidatingMutation(({ id, reason }) => api.rejectPayable(id, reason), invalidatePayable, options);
+}
+
+export function useCancelPayable(options?: UseMutationOptions<Payable, unknown, { id: string; reason: string }>) {
+  return useInvalidatingMutation(({ id, reason }) => api.cancelPayable(id, reason), invalidatePayable, options);
+}
+
+export function useUploadPayableAttachment(
+  options?: UseMutationOptions<PayableAttachment, unknown, { id: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, file }) => api.uploadPayableAttachment(id, file),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+export function useDeletePayableAttachment(
+  options?: UseMutationOptions<void, unknown, { id: string; attachmentId: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, attachmentId }) => api.deletePayableAttachment(id, attachmentId),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+/* ---------- Expense categories ---------- */
+export function useSaveExpenseCategory(
+  options?: UseMutationOptions<ExpenseCategory, unknown, { id?: string; name: string; active?: boolean }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, name, active }) =>
+      id ? api.updateExpenseCategory(id, name, active ?? true) : api.createExpenseCategory(name),
+    (qc) => void qc.invalidateQueries({ queryKey: ['expenseCategories'] }),
+    options,
+  );
+}
+
+export function useDeleteExpenseCategory(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteExpenseCategory(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['expenseCategories'] }),
+    options,
+  );
 }

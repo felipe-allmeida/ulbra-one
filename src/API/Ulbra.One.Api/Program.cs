@@ -127,11 +127,11 @@ builder.Services.AddSwaggerGen(options =>
     };
     options.AddSecurityDefinition("Bearer", jwtScheme);
 
-    // Vertical-slice endpoints declare nested DTOs named `Request`; without disambiguation Swashbuckle
-    // would assign the same schemaId ("Request") to all of them and fail. Prefix nested `Request` types
-    // with their declaring type name (e.g. CreateCostCenterRequest, DevTokenRequest); generics get their
-    // argument names as a prefix (e.g. VendorResponsePaginatedResponse); uniquely-named types keep their
-    // own name (VendorRequest, RejectRequest).
+    // Vertical-slice endpoints declare nested DTOs whose names end in `Request` (often just `Request`,
+    // but also reused names like `RejectRequest` across slices). Without disambiguation Swashbuckle would
+    // assign the same schemaId to all of them and fail. Prefix every nested `*Request` type with its
+    // declaring type name (e.g. CreateCostCenterRequest, DevTokenRequest, RejectPayableRejectRequest);
+    // generics get their argument names as a prefix (e.g. VendorResponsePaginatedResponse).
     static string SchemaId(Type type)
     {
         if (type.IsGenericType)
@@ -140,7 +140,7 @@ builder.Services.AddSwaggerGen(options =>
             var name = type.Name[..type.Name.IndexOf('`')];
             return args + name;
         }
-        if (type is { IsNested: true, Name: "Request", DeclaringType: not null })
+        if (type is { IsNested: true, DeclaringType: not null } && type.Name.EndsWith("Request", StringComparison.Ordinal))
             return type.DeclaringType.Name + type.Name;
         return type.Name;
     }

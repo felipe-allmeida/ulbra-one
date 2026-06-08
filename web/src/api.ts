@@ -86,6 +86,30 @@ export interface Paginated<T> {
 export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
+// ---------- Payables (Contas a Pagar) ----------
+export type Payable = Schemas['PayableResponse'];
+export type PayableListItem = Schemas['PayableListItemResponse'];
+export type Installment = Schemas['InstallmentResponse'];
+export type PayableAttachment = Schemas['PayableAttachmentResponse'];
+export type ExpenseCategory = Schemas['ExpenseCategoryResponse'];
+export type PayableOrigin = Schemas['PayableOrigin'];
+export type PayableStatus = Schemas['PayableStatus'];
+export type InstallmentStatus = Schemas['InstallmentStatus'];
+
+/** Request body for creating/updating a payable. `installments` lists explicit dues; `generate` derives them. */
+export interface PayableInput {
+  companyId: string;
+  vendorId: string;
+  costCenterId: string;
+  categoryId?: string | null;
+  origin?: PayableOrigin;
+  description: string;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  installments?: { dueDate: string; amount: number }[];
+  generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
+}
+
 /**
  * Person type. Wire format is the string union <c>'Individual' | 'Company'</c>.
  * Exposed as a type AND a value object so existing call sites (`PersonType.Company`,
@@ -197,6 +221,64 @@ export const api = {
   rejectTransaction: (id: string, reason: string) =>
     request<Transaction>(`/transactions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   payTransaction: (id: string) => request<Transaction>(`/transactions/${id}/pay`, { method: 'POST' }),
+
+  // ---------- Payables (Contas a Pagar) ----------
+  listPayables: (params: {
+    companyId?: string;
+    status?: PayableStatus;
+    vendorId?: string;
+    costCenterId?: string;
+    categoryId?: string;
+    dueFrom?: string;
+    dueTo?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.status) q.set('status', params.status);
+    if (params.vendorId) q.set('vendorId', params.vendorId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.categoryId) q.set('categoryId', params.categoryId);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.page) q.set('Page', String(params.page));
+    if (params.pageSize) q.set('PageSize', String(params.pageSize));
+    return request<Paginated<PayableListItem>>(`/payables?${q}`);
+  },
+  getPayable: (id: string) => request<Payable>(`/payables/${id}`),
+  createPayable: (body: PayableInput) => request<Payable>('/payables', { method: 'POST', body: JSON.stringify(body) }),
+  updatePayable: (id: string, body: Omit<PayableInput, 'origin'>) =>
+    request<Payable>(`/payables/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  approvePayable: (id: string) => request<Payable>(`/payables/${id}/approve`, { method: 'POST' }),
+  rejectPayable: (id: string, reason: string) =>
+    request<Payable>(`/payables/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  cancelPayable: (id: string, reason: string) =>
+    request<Payable>(`/payables/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  /** Uploads an attachment via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  uploadPayableAttachment: async (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/payables/${id}/attachments`, { method: 'POST', headers, body: form });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<PayableAttachment>;
+  },
+  /** Direct download URL for an attachment (auth handled by the browser session / token in caller). */
+  downloadPayableAttachmentUrl: (id: string, attachmentId: string) =>
+    `${BASE_URL}/payables/${id}/attachments/${attachmentId}`,
+  deletePayableAttachment: (id: string, attachmentId: string) =>
+    request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
+
+  // ---------- Expense categories ----------
+  listExpenseCategories: (includeInactive?: boolean) =>
+    request<ExpenseCategory[]>(`/expense-categories${includeInactive ? '?includeInactive=true' : ''}`),
+  createExpenseCategory: (name: string) =>
+    request<ExpenseCategory>('/expense-categories', { method: 'POST', body: JSON.stringify({ name }) }),
+  updateExpenseCategory: (id: string, name: string, active: boolean) =>
+    request<ExpenseCategory>(`/expense-categories/${id}`, { method: 'PUT', body: JSON.stringify({ name, active }) }),
+  deleteExpenseCategory: (id: string) => request<void>(`/expense-categories/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Vendors ----------
   listVendors: (companyId: string, search?: string, page?: number, pageSize?: number) =>

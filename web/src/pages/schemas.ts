@@ -130,6 +130,46 @@ export const transactionSchema = z
   });
 export type TransactionValues = z.infer<typeof transactionSchema>;
 
+export const payableSchema = z
+  .object({
+    vendorId: z.string().min(1, { message: 'validation.vendorRequired' }),
+    costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
+    categoryId: z.string().nullable(),
+    description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
+    documentNumber: z.string(),
+    issueDate: z.string(),
+    mode: z.enum(['single', 'installments']),
+    totalAmount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+    installmentCount: z.string(),
+    firstDueDate: z.string().min(1, { message: 'validation.dueDateRequired' }),
+    intervalMonths: z.string(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.mode === 'installments') {
+      const n = Number(val.installmentCount);
+      if (!Number.isInteger(n) || n < 2) {
+        ctx.addIssue({ code: 'custom', message: 'validation.installmentCountInvalid', path: ['installmentCount'] });
+      }
+    }
+  });
+export type PayableValues = z.infer<typeof payableSchema>;
+
+/** Preview the generated installments for the form (mirrors backend GenerateInstallments). */
+export function previewInstallments(total: number, count: number, firstDue: string, intervalMonths: number) {
+  const each = Math.round((total / count) * 100) / 100;
+  const rows: { sequence: number; dueDate: string; amount: number }[] = [];
+  let acc = 0;
+  const base = new Date(firstDue + 'T00:00:00');
+  for (let i = 0; i < count; i++) {
+    const amount = i === count - 1 ? Math.round((total - acc) * 100) / 100 : each;
+    acc += amount;
+    const d = new Date(base);
+    d.setMonth(d.getMonth() + intervalMonths * i);
+    rows.push({ sequence: i + 1, dueDate: d.toISOString().slice(0, 10), amount });
+  }
+  return rows;
+}
+
 export const companySchema = z.object({
   legalName: z.string().trim().min(1, { message: 'validation.nameRequired' }),
   cnpj: z.string().trim().min(1, { message: 'validation.cnpjRequired' }),
