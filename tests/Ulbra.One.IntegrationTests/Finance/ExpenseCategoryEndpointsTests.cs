@@ -125,4 +125,27 @@ public class ExpenseCategoryEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         Assert.Equal("ExpenseCategory.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
     }
+
+    // ---------------------------------------------------------------------------
+    // Update duplicate name
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Update_Rename_To_Existing_Name_Returns_400_ExpenseCategoryDuplicate()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var resA = await client.PostAsJsonAsync("/api/expense-categories", new { name = "Rename Source A" });
+        Assert.Equal(HttpStatusCode.Created, resA.StatusCode);
+
+        var resB = await client.PostAsJsonAsync("/api/expense-categories", new { name = "Rename Target B" });
+        Assert.Equal(HttpStatusCode.Created, resB.StatusCode);
+        var idB = (await ReadJson(resB)).GetProperty("id").GetString();
+        Assert.NotNull(idB);
+
+        var putRes = await client.PutAsJsonAsync($"/api/expense-categories/{idB}", new { name = "Rename Source A", active = true });
+        Assert.Equal(HttpStatusCode.BadRequest, putRes.StatusCode);
+        Assert.Equal("ExpenseCategory.Duplicate", (await ReadJson(putRes)).GetProperty("title").GetString());
+    }
 }

@@ -20,12 +20,18 @@ public sealed class UpdateExpenseCategory : IEndpoint
         builder.MapPut("/{id}", Handle).WithName("UpdateExpenseCategory").WithTags("Finance")
             .RequireAuthorization().WithRequestNormalizer<Request>()
             .Produces<ExpenseCategoryResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(ExpenseCategoryId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         var cat = await uow.Set<ExpenseCategory>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);
         if (cat is null) return Results.Problem(detail: "Category not found.", statusCode: 404, title: "ExpenseCategory.NotFound");
+        if (string.IsNullOrWhiteSpace(req.Name))
+            return Results.Problem(detail: "Name is required.", statusCode: 400, title: "ExpenseCategory.NameRequired");
+        var duplicate = await uow.ReadSet<ExpenseCategory>().AnyAsync(c => c.Name == req.Name && c.Id != id.Value, ct);
+        if (duplicate)
+            return Results.Problem(detail: "A category with this name already exists.", statusCode: 400, title: "ExpenseCategory.Duplicate");
         cat.Rename(req.Name);
         if (req.Active) cat.Activate(); else cat.Deactivate();
         await uow.SaveChangesAsync(ct);
