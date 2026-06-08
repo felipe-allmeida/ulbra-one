@@ -74,6 +74,17 @@ public static class DevDataSeeder
 
         await core.SaveChangesAsync(ct);
 
+        // ---------- Bank accounts (outflow accounts for payables) ----------
+        if (!await finance.BankAccounts.AnyAsync(ct))
+        {
+            finance.BankAccounts.AddRange(
+                new BankAccount(ulbra.Id, "033", "Banco Santander", "1234", "00012345", "6", BankAccountType.Checking, "Santander - Conta Movimento", 250_000m),
+                new BankAccount(ulbra.Id, "001", "Banco do Brasil", "5678", "00098765", "4", BankAccountType.Checking, "Banco do Brasil - Conta Principal", 180_000m),
+                new BankAccount(celsp.Id, "033", "Banco Santander", "4321", "00054321", "0", BankAccountType.Checking, "Santander - CELSP", 60_000m));
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: 3 bank accounts seeded.");
+        }
+
         // ---------- Vendors ----------
         Address Addr(string cep, string street, string number, string bairro, string city, string uf) =>
             new(cep, street, number, null, bairro, city, uf);

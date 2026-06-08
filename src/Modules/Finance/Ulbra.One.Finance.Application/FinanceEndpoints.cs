@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.BankAccounts.DeleteBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.BankAccounts.ListBankAccounts;
+using Ulbra.One.Finance.Application.Endpoints.BankAccounts.UpdateBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
@@ -53,6 +57,12 @@ public static class FinanceEndpoints
         payables.MapEndpoint<UploadAttachment>();
         payables.MapEndpoint<DownloadAttachment>();
         payables.MapEndpoint<DeleteAttachment>();
+
+        var bankAccounts = builder.MapGroup("/bank-accounts");
+        bankAccounts.MapEndpoint<ListBankAccounts>();
+        bankAccounts.MapEndpoint<CreateBankAccount>();
+        bankAccounts.MapEndpoint<UpdateBankAccount>();
+        bankAccounts.MapEndpoint<DeleteBankAccount>();
 
         return builder;
     }
