@@ -12,6 +12,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
     public DbSet<Installment> Installments => Set<Installment>();
     public DbSet<PayableAttachment> PayableAttachments => Set<PayableAttachment>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +63,7 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.PayableId);
             e.HasIndex(x => x.DueDate);
             e.HasIndex(x => x.Status);
+            e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PayableAttachment>(e =>
@@ -80,6 +83,41 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.HasIndex(x => x.Name).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
+        });
+
+        modelBuilder.Entity<BankAccount>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.BankCode).HasMaxLength(3).IsRequired();
+            e.Property(x => x.BankName).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Agency).HasMaxLength(10).IsRequired();
+            e.Property(x => x.AccountNumber).HasMaxLength(20).IsRequired();
+            e.Property(x => x.AccountDigit).HasMaxLength(2);
+            e.Property(x => x.Alias).HasMaxLength(60).IsRequired();
+            e.Property(x => x.OpeningBalance).HasPrecision(18, 2);
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
+            e.HasIndex(x => x.CompanyId);
+            e.HasIndex(x => new { x.CompanyId, x.BankCode, x.Agency, x.AccountNumber, x.AccountDigit })
+                .IsUnique().HasFilter("deleted_at IS NULL");
+            e.HasQueryFilter(x => x.DeletedAt == null);
+        });
+
+        modelBuilder.Entity<Payment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Interest).HasPrecision(18, 2);
+            e.Property(x => x.Fine).HasPrecision(18, 2);
+            e.Property(x => x.Discount).HasPrecision(18, 2);
+            e.Property(x => x.Notes).HasMaxLength(300);
+            e.Property(x => x.ReversalReason).HasMaxLength(300);
+            e.Property(x => x.ProofFileName).HasMaxLength(260);
+            e.Property(x => x.ProofContentType).HasMaxLength(120);
+            e.Property(x => x.ProofStoragePath).HasMaxLength(300);
+            e.HasIndex(x => x.InstallmentId);
+            e.HasIndex(x => x.PayableId);
+            e.HasIndex(x => x.BankAccountId);
         });
 
         base.OnModelCreating(modelBuilder);
