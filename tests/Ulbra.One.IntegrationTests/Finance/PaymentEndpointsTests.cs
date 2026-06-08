@@ -212,6 +212,27 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Register_With_NonExistent_InstallmentId_Returns_404_InstallmentNotFound()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreatePayableAsync(client, seed, 1500m);
+
+        var nonExistentInstallmentId = $"installment_{Guid.NewGuid():N}";
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{nonExistentInstallmentId}/payments", new
+        {
+            paymentDate = "2026-07-09",
+            amount = 1500m,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("Payable.InstallmentNotFound", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    [Fact]
     public async Task Register_On_AlreadyPaid_Installment_Returns_409_InstallmentSettled()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

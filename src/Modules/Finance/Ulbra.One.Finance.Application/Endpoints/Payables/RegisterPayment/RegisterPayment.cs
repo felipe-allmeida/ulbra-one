@@ -39,7 +39,7 @@ public sealed class RegisterPayment : IEndpoint
         if (!payable.IsPayable) return Results.Problem(detail: "Only an approved payable can be paid.", statusCode: 400, title: "Payable.NotPayable");
 
         var installment = payable.FindInstallment(installmentId.Value);
-        if (installment is null) return Results.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.NotFound");
+        if (installment is null) return Results.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.InstallmentNotFound");
 
         var bankOk = await uow.ReadSet<BankAccount>().AnyAsync(b => b.Id == req.BankAccountId.Value && b.CompanyId == payable.CompanyId, ct);
         if (!bankOk) return Results.Problem(detail: "Bank account is invalid for this company.", statusCode: 400, title: "Payment.BankAccountInvalid");
