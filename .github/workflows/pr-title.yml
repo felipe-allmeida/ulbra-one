@@ -1,0 +1,20 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  check:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          PATTERN='^(feat|fix|chore|ci|refactor|docs|test)\(([A-Z]+-[0-9]+|no-issue)\): .+'
+          if [[ ! "$TITLE" =~ $PATTERN ]]; then
+            echo "::error::PR title '$TITLE' does not match required format: type(SIGLA-NUMERO): descricao (e.g. feat(AEL-188): ticket relations). Sem issue, use o marcador explicito: chore(no-issue): descricao"
+            exit 1
+          fi
+          echo "PR title '$TITLE' is valid"

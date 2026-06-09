@@ -7,4 +7,5 @@ appsettings.*.local.json
 .idea/
 .superpowers/
 docs/superpowers/
-.claude/
+.claude/*
+!.claude/skills/
