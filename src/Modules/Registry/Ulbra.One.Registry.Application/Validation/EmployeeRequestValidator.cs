@@ -13,5 +13,6 @@ public sealed class EmployeeRequestValidator : AbstractValidator<EmployeeRequest
         RuleFor(x => x.Role).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
         RuleFor(x => x.Document).Must(DocumentValidator.IsValidCpf).WithMessage("Invalid CPF.").WithErrorCode("Document.CpfInvalid");
+        RuleFor(x => x.Address!).SetValidator(new AddressRequestValidator()).When(x => x.Address is not null);
     }
 }
