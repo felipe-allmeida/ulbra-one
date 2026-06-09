@@ -5,6 +5,7 @@ obj/
 *.suo
 appsettings.*.local.json
 .idea/
+.vscode/
 .superpowers/
 docs/superpowers/
 .claude/*
