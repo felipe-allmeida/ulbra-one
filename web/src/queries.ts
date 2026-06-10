@@ -57,6 +57,7 @@ export interface PayablesParams {
   categoryId?: string;
   dueFrom?: string;
   dueTo?: string;
+  paid?: boolean;
   page?: number;
   pageSize?: number;
 }

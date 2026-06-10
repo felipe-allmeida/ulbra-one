@@ -266,6 +266,7 @@ export const api = {
     categoryId?: string;
     dueFrom?: string;
     dueTo?: string;
+    paid?: boolean;
     page?: number;
     pageSize?: number;
   }) => {
@@ -277,6 +278,7 @@ export const api = {
     if (params.categoryId) q.set('categoryId', params.categoryId);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.paid !== undefined) q.set('paid', String(params.paid));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
