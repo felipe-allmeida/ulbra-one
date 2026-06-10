@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Auditing;
 using Ulbra.One.Common.Infrastructure.Persistence;
+using Ulbra.One.Finance.Application.Conciliation;
+using Ulbra.One.Finance.Infrastructure.Conciliation;
 using Ulbra.One.Finance.Infrastructure.Database;
 
 namespace Ulbra.One.Finance.Infrastructure;
@@ -24,6 +26,8 @@ public static class FinanceModule
 
         services.AddKeyedScoped<IUnitOfWork>("finance",
             (sp, _) => new EfUnitOfWork<FinanceContext>(sp.GetRequiredService<FinanceContext>()));
+
+        services.AddScoped<IBankStatementParser, OfxStatementParser>();
 
         return services;
     }
