@@ -6,6 +6,8 @@ namespace Ulbra.One.UnitTests.Finance;
 
 public class PayableTests
 {
+    private static readonly DateTimeOffset At = new(2026, 7, 1, 0, 0, 0, TimeSpan.Zero);
+
     private static Payable NewPayable(decimal total, int count = 1) =>
         new(Guid.NewGuid(), PayableOrigin.Manual, Guid.NewGuid(), "CEEE",
             documentNumber: "NF-1", issueDate: new DateOnly(2026, 7, 1), description: "Energia",
@@ -34,15 +36,17 @@ public class PayableTests
     public void Auto_approval_approves_when_total_within_limit()
     {
         var p = NewPayable(500m);
-        p.ApplyAutoApproval(1000m);
+        p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.Approved, p.Status);
+        Assert.Equal("system", p.ApprovedBy);
+        Assert.Equal(At, p.ApprovedAt);
     }
 
     [Fact]
     public void Auto_approval_keeps_pending_when_above_limit()
     {
         var p = NewPayable(1500m);
-        p.ApplyAutoApproval(1000m);
+        p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.PendingApproval, p.Status);
     }
 
@@ -50,9 +54,11 @@ public class PayableTests
     public void Reject_sets_reason_and_state()
     {
         var p = NewPayable(100m);
-        p.Reject("doc faltando");
+        p.Reject("doc faltando", "u1", At);
         Assert.Equal(PayableStatus.Rejected, p.Status);
         Assert.Equal("doc faltando", p.RejectionReason);
+        Assert.Equal("u1", p.RejectedBy);
+        Assert.Equal(At, p.RejectedAt);
     }
 
     [Fact]
@@ -76,9 +82,29 @@ public class PayableTests
     public void Approve_from_pending_succeeds_and_is_idempotent()
     {
         var p = NewPayable(100m);
-        p.Approve();
+        p.Approve("u1", At);
         Assert.Equal(PayableStatus.Approved, p.Status);
-        p.Approve();
+        p.Approve("u1", At);
         Assert.Equal(PayableStatus.Approved, p.Status);
+    }
+
+    [Fact]
+    public void Approve_records_approver_and_timestamp()
+    {
+        var p = NewPayable(100m);
+        p.Approve("u1", At);
+        Assert.Equal("u1", p.ApprovedBy);
+        Assert.Equal(At, p.ApprovedAt);
+        Assert.Null(p.RejectedBy);
+        Assert.Null(p.RejectedAt);
+    }
+
+    [Fact]
+    public void Reject_records_rejecter_and_timestamp()
+    {
+        var p = NewPayable(100m);
+        p.Reject("motivo", "u2", At);
+        Assert.Equal("u2", p.RejectedBy);
+        Assert.Equal(At, p.RejectedAt);
     }
 }

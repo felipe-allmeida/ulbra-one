@@ -45,6 +45,7 @@ public sealed class CreatePayable : IEndpoint
         [FromKeyedServices("finance")] IUnitOfWork uow,
         [FromKeyedServices("core")] IUnitOfWork core,
         [FromKeyedServices("registry")] IUnitOfWork registry,
+        TimeProvider clock,
         CancellationToken ct)
     {
         var companyId = req.CompanyId.Value;
@@ -81,7 +82,7 @@ public sealed class CreatePayable : IEndpoint
 
         var payable = new Payable(companyId, req.Origin, vendor.Id, vendor.Name, req.DocumentNumber, req.IssueDate,
             req.Description, cc.Id, req.CategoryId?.Value, installments);
-        payable.ApplyAutoApproval(cc.AutoApprovalLimit);
+        payable.ApplyAutoApproval(cc.AutoApprovalLimit, clock.GetUtcNow());
 
         await uow.AddAsync(payable, ct);
         await uow.SaveChangesAsync(ct);

@@ -146,7 +146,7 @@ public static class DevDataSeeder
             var installments = new List<Installment> { new(1, today.AddDays(dueInDays), amount) };
             var p = new Payable(ulbra.Id, PayableOrigin.Manual, vendor.Id, vendor.Name, documentNumber,
                 today, desc, cc.Id, category?.Id, installments);
-            p.ApplyAutoApproval(cc.AutoApprovalLimit);
+            p.ApplyAutoApproval(cc.AutoApprovalLimit, time.GetUtcNow());
             return p;
         }
         Payable PayableParcelado(CostCenter cc, string desc, VendorEntity vendor, ExpenseCategory? category,
@@ -155,13 +155,13 @@ public static class DevDataSeeder
             var installments = Payable.GenerateInstallments(total, count, today.AddDays(firstDueInDays), intervalMonths);
             var p = new Payable(ulbra.Id, PayableOrigin.Manual, vendor.Id, vendor.Name, documentNumber,
                 today, desc, cc.Id, category?.Id, installments);
-            p.ApplyAutoApproval(cc.AutoApprovalLimit);
+            p.ApplyAutoApproval(cc.AutoApprovalLimit, time.GetUtcNow());
             return p;
         }
 
         var pLimpeza = PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10); // auto-approved (<= 2000)
         var pGoogle = PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5);
-        if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve();
+        if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve("system", time.GetUtcNow());
 
         await finance.Payables.AddRangeAsync(new[]
         {
