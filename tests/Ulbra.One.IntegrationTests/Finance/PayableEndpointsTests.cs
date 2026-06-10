@@ -260,6 +260,65 @@ public class PayableEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Approve_Records_ApprovedBy_And_ApprovedAt()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Auditoria de aprovação",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 5000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        Assert.Equal(HttpStatusCode.OK, approveRes.StatusCode);
+
+        var getRes = await client.GetAsync($"/api/payables/{payableId}");
+        Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
+        var body = await ReadJson(getRes);
+        Assert.Equal("Approved", body.GetProperty("status").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("approvedBy").GetString()));
+        Assert.NotEqual(default, body.GetProperty("approvedAt").GetDateTimeOffset());
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("rejectedBy").ValueKind);
+    }
+
+    [Fact]
+    public async Task Reject_Records_RejectedBy_And_RejectedAt()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Auditoria de rejeição",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 3000m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var rejectRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/reject", new { reason = "Fora do orçamento" });
+        Assert.Equal(HttpStatusCode.OK, rejectRes.StatusCode);
+
+        var getRes = await client.GetAsync($"/api/payables/{payableId}");
+        Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
+        var body = await ReadJson(getRes);
+        Assert.Equal("Rejected", body.GetProperty("status").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("rejectedBy").GetString()));
+        Assert.NotEqual(default, body.GetProperty("rejectedAt").GetDateTimeOffset());
+    }
+
+    [Fact]
     public async Task Approve_NonExistent_Returns_404_NotFound()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

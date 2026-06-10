@@ -22,6 +22,10 @@ public class Payable : IAuditable, ISoftDeletable
     public PayableStatus Status { get; private set; } = PayableStatus.PendingApproval;
     public string? RejectionReason { get; private set; }
     public string? CancelReason { get; private set; }
+    public string? ApprovedBy { get; private set; }
+    public DateTimeOffset? ApprovedAt { get; private set; }
+    public string? RejectedBy { get; private set; }
+    public DateTimeOffset? RejectedAt { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
@@ -90,26 +94,32 @@ public class Payable : IAuditable, ISoftDeletable
         TotalAmount = list.Sum(i => i.Amount);
     }
 
-    public void ApplyAutoApproval(decimal autoApprovalLimit)
+    public void ApplyAutoApproval(decimal autoApprovalLimit, DateTimeOffset at)
     {
         if (Origin == PayableOrigin.Manual && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit)
-            Approve();
+            Approve("system", at);
     }
 
-    public void Approve()
+    public void Approve(string approvedBy, DateTimeOffset at)
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled)
             throw new InvalidOperationException("Cannot approve a rejected or cancelled payable.");
         Status = PayableStatus.Approved;
         RejectionReason = null;
+        ApprovedBy = approvedBy;
+        ApprovedAt = at;
+        RejectedBy = null;
+        RejectedAt = null;
     }
 
-    public void Reject(string? reason)
+    public void Reject(string? reason, string rejectedBy, DateTimeOffset at)
     {
         if (Status is PayableStatus.Settled or PayableStatus.Cancelled)
             throw new InvalidOperationException("Cannot reject a settled or cancelled payable.");
         Status = PayableStatus.Rejected;
         RejectionReason = reason;
+        RejectedBy = rejectedBy;
+        RejectedAt = at;
     }
 
     public void Cancel(string? reason)

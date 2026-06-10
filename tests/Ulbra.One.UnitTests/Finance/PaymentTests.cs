@@ -10,7 +10,7 @@ public class PaymentTests
     {
         var p = new Payable(Guid.NewGuid(), PayableOrigin.Manual, Guid.NewGuid(), "CEEE", null, null, "Energia",
             Guid.NewGuid(), null, Payable.GenerateInstallments(total, count, new DateOnly(2026, 7, 10), 1));
-        p.Approve();
+        p.Approve("u1", new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero));
         return p;
     }
 

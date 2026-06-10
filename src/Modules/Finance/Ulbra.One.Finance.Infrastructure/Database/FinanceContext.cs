@@ -43,6 +43,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.Property(x => x.TotalAmount).HasPrecision(18, 2);
             e.Property(x => x.RejectionReason).HasMaxLength(500);
             e.Property(x => x.CancelReason).HasMaxLength(500);
+            e.Property(x => x.ApprovedBy).HasMaxLength(64);
+            e.Property(x => x.RejectedBy).HasMaxLength(64);
             e.Property(x => x.CreatedBy).HasMaxLength(64);
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.HasMany(x => x.Installments).WithOne().HasForeignKey(i => i.PayableId).OnDelete(DeleteBehavior.Cascade);

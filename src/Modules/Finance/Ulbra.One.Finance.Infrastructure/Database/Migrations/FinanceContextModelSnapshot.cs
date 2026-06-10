@@ -228,6 +228,15 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("approved_by");
+
                     b.Property<string>("CancelReason")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -283,6 +292,15 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                     b.Property<int>("Origin")
                         .HasColumnType("integer")
                         .HasColumnName("origin");
+
+                    b.Property<DateTimeOffset?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at");
+
+                    b.Property<string>("RejectedBy")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("rejected_by");
 
                     b.Property<string>("RejectionReason")
                         .HasMaxLength(500)
