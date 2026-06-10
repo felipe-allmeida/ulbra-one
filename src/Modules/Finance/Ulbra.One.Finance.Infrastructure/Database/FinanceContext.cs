@@ -14,6 +14,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<BankStatementImport> StatementImports => Set<BankStatementImport>();
+    public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +123,27 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.InstallmentId);
             e.HasIndex(x => x.PayableId);
             e.HasIndex(x => x.BankAccountId);
+        });
+
+        modelBuilder.Entity<BankStatementImport>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.FileName).HasMaxLength(260).IsRequired();
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
+            e.HasIndex(x => new { x.CompanyId, x.BankAccountId });
+        });
+
+        modelBuilder.Entity<BankTransaction>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ExternalId).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Description).HasMaxLength(300);
+            e.HasIndex(x => new { x.BankAccountId, x.ExternalId }).IsUnique();
+            e.HasIndex(x => new { x.CompanyId, x.MatchStatus });
+            e.HasIndex(x => x.ImportId);
+            e.HasIndex(x => x.Date);
         });
 
         base.OnModelCreating(modelBuilder);
