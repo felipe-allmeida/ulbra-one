@@ -1,17 +1,21 @@
 # .NET
 bin/
 obj/
+*.user
+*.suo
+appsettings.*.local.json
 
 # IDE
 .vs/
 .idea/
+.vscode/
 http-client.private.env.json
 docker-compose.override.yml
 
 # Claude Code
-.claude/settings.local.json
+.claude/*
+!.claude/skills/
 CLAUDE.local.md
-.claude/worktrees
 .worktrees
 .superpowers/
 
