@@ -13,6 +13,20 @@ using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
 
+/// <summary>Query-string filters for the Contas a Pagar list. Bound via <c>[AsParameters]</c>.</summary>
+public sealed record ListPayablesRequest
+{
+    public CompanyId? CompanyId { get; set; }
+    public PayableStatus? Status { get; set; }
+    public VendorId? VendorId { get; set; }
+    public CostCenterId? CostCenterId { get; set; }
+    public ExpenseCategoryId? CategoryId { get; set; }
+    public DateOnly? DueFrom { get; set; }
+    public DateOnly? DueTo { get; set; }
+    public bool? Paid { get; set; }
+    public bool? Classified { get; set; }
+}
+
 public sealed class ListPayables : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
@@ -21,17 +35,16 @@ public sealed class ListPayables : IEndpoint
 
     private static async Task<IResult> Handle(
         [FromKeyedServices("finance")] IUnitOfWork uow,
-        CompanyId? companyId, PayableStatus? status, VendorId? vendorId, CostCenterId? costCenterId,
-        ExpenseCategoryId? categoryId, DateOnly? dueFrom, DateOnly? dueTo, bool? classified,
+        [AsParameters] ListPayablesRequest req,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
         var payables = uow.ReadSet<Payable>();
-        if (companyId is { } cid) payables = payables.Where(p => p.CompanyId == cid.Value);
-        if (status is { } st) payables = payables.Where(p => p.Status == st);
-        if (vendorId is { } vid) payables = payables.Where(p => p.VendorId == vid.Value);
-        if (costCenterId is { } ccid) payables = payables.Where(p => p.CostCenterId == ccid.Value);
-        if (categoryId is { } catid) payables = payables.Where(p => p.CategoryId == catid.Value);
-        if (classified is { } cl)
+        if (req.CompanyId is { } cid) payables = payables.Where(p => p.CompanyId == cid.Value);
+        if (req.Status is { } st) payables = payables.Where(p => p.Status == st);
+        if (req.VendorId is { } vid) payables = payables.Where(p => p.VendorId == vid.Value);
+        if (req.CostCenterId is { } ccid) payables = payables.Where(p => p.CostCenterId == ccid.Value);
+        if (req.CategoryId is { } catid) payables = payables.Where(p => p.CategoryId == catid.Value);
+        if (req.Classified is { } cl)
             payables = payables.Where(p => (p.AccountingAccountId != null && p.FinancialAccountId != null) == cl);
 
         // One row per installment (the operational Contas a Pagar list). Project to primitive fields
@@ -51,8 +64,10 @@ public sealed class ListPayables : IEndpoint
             InstallmentStatus = i.Status,
             PayableStatus = p.Status,
         });
-        if (dueFrom is { } from) rows = rows.Where(x => x.DueDate >= from);
-        if (dueTo is { } to) rows = rows.Where(x => x.DueDate <= to);
+        if (req.DueFrom is { } from) rows = rows.Where(x => x.DueDate >= from);
+        if (req.DueTo is { } to) rows = rows.Where(x => x.DueDate <= to);
+        if (req.Paid is true) rows = rows.Where(x => x.InstallmentStatus == InstallmentStatus.Paid);
+        if (req.Paid is false) rows = rows.Where(x => x.InstallmentStatus != InstallmentStatus.Paid);
 
         var page = await rows.OrderBy(x => x.DueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new PayableListItemResponse(

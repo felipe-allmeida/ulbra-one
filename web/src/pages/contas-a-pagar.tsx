@@ -45,6 +45,7 @@ import {
   useUploadPayableAttachment,
   useUploadPaymentProof,
   useVendors,
+  type PayablesParams,
 } from '../queries';
 import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
@@ -67,6 +68,37 @@ import { VendorForm } from './registry-forms';
 const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 /** Formats an ISO date-time (e.g. approvedAt/rejectedAt) as a pt-BR date. */
 const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+
+/** Local date → 'YYYY-MM-DD' (DateOnly wire format). Never toISOString() — UTC-3 would shift the day. */
+const toDateOnly = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+type TabKey = 'all' | 'overdue' | 'thisMonth' | 'future' | 'paid';
+
+/** Maps a tab to ListPayables filters. Computed at call time so "today" stays correct past midnight. */
+function tabToParams(tab: TabKey): Pick<PayablesParams, 'paid' | 'dueFrom' | 'dueTo'> {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (tab) {
+    case 'overdue': // não pagas, vencimento já passou (até ontem)
+      return { paid: false, dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)) };
+    case 'thisMonth': // não pagas, a vencer ainda neste mês (hoje → último dia do mês)
+      return {
+        paid: false,
+        dueFrom: toDateOnly(today),
+        dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+      };
+    case 'future': // não pagas, vencem em meses futuros (a partir do 1º dia do próximo mês)
+      return { paid: false, dueFrom: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 1)) };
+    case 'paid': // parcelas liquidadas (qualquer data)
+      return { paid: true };
+    case 'all':
+    default:
+      return {};
+  }
+}
+
+const TABS: TabKey[] = ['all', 'overdue', 'thisMonth', 'future', 'paid'];
 
 function PayableStatusBadge({ s }: { s: PayableStatus }) {
   const { t } = useTranslation();
@@ -107,12 +139,19 @@ export function ContasPagarPage() {
   const nav = useNavigate();
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+  const [tab, setTab] = useState<TabKey>('all');
   const { centroNome, categoriaNome } = useNames(empresaId);
-  const list = usePayables({ companyId: empresaId, page }, { enabled: !!empresaId });
+  const filters = useMemo(() => tabToParams(tab), [tab]);
+  const list = usePayables({ companyId: empresaId, page, ...filters }, { enabled: !!empresaId });
   const itens = list.data?.items ?? [];
   const totalPages = list.data?.totalPages ?? 1;
 
   useEffect(() => setPage(1), [empresaId]);
+  // Synchronous reset: clear the page alongside the tab switch to avoid a request with an out-of-range page.
+  const changeTab = (k: TabKey) => {
+    setTab(k);
+    setPage(1);
+  };
 
   return (
     <>
@@ -129,10 +168,23 @@ export function ContasPagarPage() {
           title={t('payables.empty.noCompanyTitle')}
           sub={t('payables.empty.noCompanySub')}
         />
-      ) : itens.length === 0 ? (
-        <EmptyState icon={<Wallet />} title={t('payables.empty.noItemsTitle')} sub={t('payables.empty.noItemsSub')} />
       ) : (
-        <Panel title={t('payables.count', { count: list.data?.total ?? itens.length })}>
+        <>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            {TABS.map((k) => (
+              <Button key={k} variant={tab === k ? 'brand' : 'default'} onClick={() => changeTab(k)}>
+                {t(`payables.tabs.${k}`)}
+              </Button>
+            ))}
+          </div>
+          {itens.length === 0 ? (
+            <EmptyState
+              icon={<Wallet />}
+              title={t('payables.empty.noItemsTitle')}
+              sub={t('payables.empty.noItemsSub')}
+            />
+          ) : (
+            <Panel title={t('payables.count', { count: list.data?.total ?? itens.length })}>
           <table>
             <thead>
               <tr>
@@ -175,7 +227,9 @@ export function ContasPagarPage() {
             </tbody>
           </table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
-        </Panel>
+            </Panel>
+          )}
+        </>
       )}
     </>
   );

@@ -50,6 +50,24 @@ public class RequestValidatorTests
     }
 
     [Fact]
+    public void Vendor_Masked_Cep_Is_Valid()
+    {
+        var v = new VendorRequestValidator();
+        var addr = new AddressRequest("01001-000", "Praça da Sé", "1", null, "Sé", "São Paulo", "SP");
+        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null);
+        Assert.True(v.Validate(req).IsValid);
+    }
+
+    [Fact]
+    public void Vendor_Overlong_Cep_Is_Invalid()
+    {
+        var v = new VendorRequestValidator();
+        var addr = new AddressRequest("123456789", "R", "1", null, "B", "C", "SP");
+        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null);
+        Assert.False(v.Validate(req).IsValid);
+    }
+
+    [Fact]
     public void Employee_Requires_Valid_Cpf_And_Unit()
     {
         var v = new EmployeeRequestValidator();

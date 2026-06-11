@@ -47,7 +47,8 @@ function fromAddress(a: Address | null): AddressValues {
 function toAddress(a: AddressValues): Address | null {
   const filled = a.cep || a.street || a.number || a.neighborhood || a.city || a.state;
   if (!filled) return null;
-  return { ...a, complement: a.complement.trim() ? a.complement.trim() : null };
+  // CEP goes unmasked to match the 8-digit column (mirrors how document is stripped on submit).
+  return { ...a, cep: onlyDigits(a.cep), complement: a.complement.trim() ? a.complement.trim() : null };
 }
 
 /** Fills only the address fields that are currently blank from a lookup result — never clobbers

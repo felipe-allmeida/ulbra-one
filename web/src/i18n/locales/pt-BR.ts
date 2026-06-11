@@ -214,6 +214,13 @@ const ptBR = {
     back: 'Contas a pagar',
     count_one: '{{count}} parcela',
     count_other: '{{count}} parcelas',
+    tabs: {
+      all: 'Todas',
+      overdue: 'Vencidas',
+      thisMonth: 'Este mês',
+      future: 'Futuras',
+      paid: 'Pagas',
+    },
     columns: {
       dueDate: 'Vencimento',
       description: 'Descrição',

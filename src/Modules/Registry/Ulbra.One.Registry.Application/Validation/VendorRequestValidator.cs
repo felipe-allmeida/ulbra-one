@@ -16,5 +16,6 @@ public sealed class VendorRequestValidator : AbstractValidator<VendorRequest>
                 ? DocumentValidator.IsValidCnpj(doc)
                 : DocumentValidator.IsValidCpf(doc))
             .WithMessage("Invalid document (CPF/CNPJ).").WithErrorCode("Document.Invalid");
+        RuleFor(x => x.Address!).SetValidator(new AddressRequestValidator()).When(x => x.Address is not null);
     }
 }
