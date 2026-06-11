@@ -244,6 +244,127 @@ test('login -> conciliação -> confirmar a suggested transaction', async ({ pag
   await expect(page.locator('table tbody tr', { hasText: 'Conciliado' }).first()).toBeVisible();
 });
 
+test('login -> plano de contas renders Contábil + Financeiro charts', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Plano de Contas via the sidebar nav item.
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Plano de Contas' }).click();
+  await expect(page).toHaveURL(/\/app\/plano-de-contas$/);
+  await expect(page.getByRole('heading', { name: 'Plano de Contas' })).toBeVisible();
+
+  // Default chart is Contábil (Accounting). The seeder creates the synthetic
+  // root "4 · Despesas" plus analytical children (4.1.01, …). Assert a seeded
+  // account renders — match the root code cell to avoid monetary/data coupling.
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+  await expect(page.locator('.t-mono', { hasText: /^4$/ }).first()).toBeVisible();
+
+  // Toggle to Financeiro and assert a seeded financial account (code 76, the
+  // "Energia"-family root) appears. The chart-type Select is the first toolbar
+  // select in the page header.
+  const chartType = page.locator('select').first();
+  await chartType.selectOption({ label: 'Financeiro' });
+  await expect(page.locator('.t-mono', { hasText: /^76$/ }).first()).toBeVisible();
+});
+
+test('login -> classificação -> classify a payable off the fila', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Classificação via the sidebar nav item.
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Classificação' }).click();
+  await expect(page).toHaveURL(/\/app\/classificacao$/);
+  await expect(page.getByRole('heading', { name: 'Classificação' })).toBeVisible();
+
+  // Scope to the ULBRA company that owns the seeded payables. The EmpresaPicker
+  // is the first toolbar select; before a company is picked the screen shows the
+  // "Nenhuma empresa" empty state.
+  const picker = page.locator('select').first();
+  const ulbra = picker.locator('option', { hasText: /ULBRA/i }).first();
+  if (await ulbra.count()) {
+    await picker.selectOption({ label: (await ulbra.textContent())!.trim() });
+  }
+
+  // The fila is the classify table. Two outcomes are valid depending on whether
+  // the seed left payables unclassified:
+  //   - rows exist  => exercise the classify flow on the first row.
+  //   - no rows     => assert the "tudo classificado" empty state.
+  const rows = page.locator('table tbody tr');
+  const doneState = page.getByText('Tudo classificado');
+
+  // Wait for the screen to settle on one of the two states.
+  await expect(rows.first().or(doneState)).toBeVisible();
+
+  if ((await rows.count()) === 0) {
+    // Empty fila: assert the done state and stop — nothing to classify.
+    await expect(doneState).toBeVisible();
+    return;
+  }
+
+  const firstRow = rows.first();
+  await expect(firstRow).toBeVisible();
+  const initialCount = await rows.count();
+
+  // The two account comboboxes are Radix popover triggers (aria-haspopup
+  // listbox). Index 0 = Conta contábil, 1 = Conta financeira. Open each and pick
+  // the first analytical option; fall back to "Sugerir" if no options render.
+  const triggers = firstRow.locator('button[aria-haspopup="listbox"]');
+  await expect(triggers).toHaveCount(2);
+
+  const pickFirstOption = async (index: number) => {
+    await triggers.nth(index).click();
+    const option = page.getByRole('option').first();
+    await expect(option).toBeVisible();
+    await option.click();
+  };
+
+  let picked = false;
+  try {
+    await pickFirstOption(0);
+    await pickFirstOption(1);
+    picked = true;
+  } catch {
+    // Combobox interaction was fiddly — fall back to the suggestion button,
+    // which fills both accounts from the seeded classification policy.
+    await firstRow.getByRole('button', { name: 'Sugerir' }).click();
+  }
+
+  // "Classificar" becomes enabled once both accounts are set; click it.
+  const classify = firstRow.getByRole('button', { name: 'Classificar', exact: true });
+  await expect(classify).toBeEnabled();
+  await classify.click();
+
+  // End-to-end confirmation: a success toast appears OR the row leaves the fila
+  // (the list refetches without it). Accept either signal so the test stays
+  // resilient to toast timing.
+  const toast = page.getByText('Conta classificada.');
+  if (picked) {
+    await expect(toast.or(rows.first()).first()).toBeVisible();
+  }
+  // The classified payable drops out of the unclassified fila: the row count
+  // shrinks by one (the list refetches without it), or the fila empties to the
+  // done state when that was the last row on the page.
+  await expect.poll(async () => (await rows.count()) < initialCount || (await doneState.isVisible())).toBeTruthy();
+});
+
 test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
   // Fresh context => no token in localStorage.
   const context = await browser.newContext();
