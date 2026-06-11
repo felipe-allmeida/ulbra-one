@@ -16,6 +16,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<BankStatementImport> StatementImports => Set<BankStatementImport>();
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
+    public DbSet<ChartAccount> ChartAccounts => Set<ChartAccount>();
+    public DbSet<ClassificationPolicy> ClassificationPolicies => Set<ClassificationPolicy>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,6 +146,21 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => new { x.CompanyId, x.MatchStatus });
             e.HasIndex(x => x.ImportId);
             e.HasIndex(x => x.Date);
+        });
+
+        modelBuilder.Entity<ChartAccount>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Code).HasMaxLength(40).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(x => new { x.ChartType, x.Code }).IsUnique();
+            e.HasQueryFilter(x => x.DeletedAt == null);
+        });
+
+        modelBuilder.Entity<ClassificationPolicy>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.CompanyId).IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);
