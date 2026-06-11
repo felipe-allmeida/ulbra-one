@@ -29,6 +29,7 @@ public static class DevDataSeeder
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
         await SeedExpenseCategoriesAsync(finance, logger, ct);
+        await SeedChartOfAccountsAsync(finance, logger, ct);
 
         var existing = await core.Companies.CountAsync(ct);
         if (existing > 0)
@@ -288,6 +289,33 @@ public static class DevDataSeeder
         finance.ExpenseCategories.AddRange(ExpenseCategoryNames.Select(name => new ExpenseCategory(name)));
         await finance.SaveChangesAsync(ct);
         logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
+    }
+
+    private static async Task SeedChartOfAccountsAsync(FinanceContext finance, ILogger logger, CancellationToken ct)
+    {
+        if (await finance.ChartAccounts.AnyAsync(ct))
+        {
+            logger.LogInformation("Dev seed: chart of accounts already present — skipping.");
+            return;
+        }
+
+        // ---------- Accounting chart (contábil) ----------
+        var despesasContabil = new ChartAccount(ChartType.Accounting, "4", "Despesas", AccountKind.Synthetic);
+        var energiaContabil = new ChartAccount(ChartType.Accounting, "4.1.01", "Energia elétrica", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+        var alugueisContabil = new ChartAccount(ChartType.Accounting, "4.1.02", "Aluguéis", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+        var servicosContabil = new ChartAccount(ChartType.Accounting, "4.1.03", "Serviços de terceiros", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+
+        // ---------- Financial chart (financeiro) ----------
+        var despesasFinanceiro = new ChartAccount(ChartType.Financial, "76", "Despesas operacionais", AccountKind.Synthetic);
+        var energiaFinanceiro = new ChartAccount(ChartType.Financial, "76.100", "Energia", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+        var aluguelFinanceiro = new ChartAccount(ChartType.Financial, "76.200", "Aluguel", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+        var servicosFinanceiro = new ChartAccount(ChartType.Financial, "76.300", "Serviços", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+
+        finance.ChartAccounts.AddRange(
+            despesasContabil, energiaContabil, alugueisContabil, servicosContabil,
+            despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
+        await finance.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: chart of accounts seeded (2 roots + 6 leaves across Accounting and Financial charts).");
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)

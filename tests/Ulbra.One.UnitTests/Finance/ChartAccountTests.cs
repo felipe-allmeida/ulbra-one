@@ -155,6 +155,18 @@ public class ChartAccountTests
         Assert.Throws<InvalidOperationException>(() => account.Reparent(account));
     }
 
+    // --- SetNature ---
+
+    [Fact]
+    public void SetNature_changes_nature()
+    {
+        var account = NewAnalytical();
+        account.SetNature(AccountNature.Credit);
+        Assert.Equal(AccountNature.Credit, account.Nature);
+        account.SetNature(null);
+        Assert.Null(account.Nature);
+    }
+
     // --- Activate / Deactivate ---
 
     [Fact]

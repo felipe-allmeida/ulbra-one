@@ -56,6 +56,8 @@ public sealed class ChartAccount : IAuditable, ISoftDeletable
         ParentId = parent.Id;
     }
 
+    public void SetNature(AccountNature? nature) => Nature = nature;
+
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 
