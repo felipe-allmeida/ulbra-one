@@ -21,3 +21,9 @@ public enum ImportStatus { Completed, Failed }
 public enum TransactionDirection { Debit, Credit }
 
 public enum MatchStatus { Unmatched, Suggested, Reconciled, Ignored }
+
+public enum ChartType { Accounting, Financial }
+
+public enum AccountKind { Synthetic, Analytical }
+
+public enum AccountNature { Debit, Credit }
