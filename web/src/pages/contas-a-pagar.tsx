@@ -31,6 +31,7 @@ import {
   useApprovePayable,
   useBankAccounts,
   useCancelPayable,
+  useChartAccounts,
   useCostCenters,
   useCreatePayable,
   useDeletePayableAttachment,
@@ -44,6 +45,7 @@ import {
   useUploadPayableAttachment,
   useUploadPaymentProof,
   useVendors,
+  type PayablesParams,
 } from '../queries';
 import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
@@ -64,6 +66,39 @@ import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
 
 const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+/** Formats an ISO date-time (e.g. approvedAt/rejectedAt) as a pt-BR date. */
+const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+
+/** Local date → 'YYYY-MM-DD' (DateOnly wire format). Never toISOString() — UTC-3 would shift the day. */
+const toDateOnly = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+type TabKey = 'all' | 'overdue' | 'thisMonth' | 'future' | 'paid';
+
+/** Maps a tab to ListPayables filters. Computed at call time so "today" stays correct past midnight. */
+function tabToParams(tab: TabKey): Pick<PayablesParams, 'paid' | 'dueFrom' | 'dueTo'> {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (tab) {
+    case 'overdue': // não pagas, vencimento já passou (até ontem)
+      return { paid: false, dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)) };
+    case 'thisMonth': // não pagas, a vencer ainda neste mês (hoje → último dia do mês)
+      return {
+        paid: false,
+        dueFrom: toDateOnly(today),
+        dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+      };
+    case 'future': // não pagas, vencem em meses futuros (a partir do 1º dia do próximo mês)
+      return { paid: false, dueFrom: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 1)) };
+    case 'paid': // parcelas liquidadas (qualquer data)
+      return { paid: true };
+    case 'all':
+    default:
+      return {};
+  }
+}
+
+const TABS: TabKey[] = ['all', 'overdue', 'thisMonth', 'future', 'paid'];
 
 function PayableStatusBadge({ s }: { s: PayableStatus }) {
   const { t } = useTranslation();
@@ -104,12 +139,19 @@ export function ContasPagarPage() {
   const nav = useNavigate();
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+  const [tab, setTab] = useState<TabKey>('all');
   const { centroNome, categoriaNome } = useNames(empresaId);
-  const list = usePayables({ companyId: empresaId, page }, { enabled: !!empresaId });
+  const filters = useMemo(() => tabToParams(tab), [tab]);
+  const list = usePayables({ companyId: empresaId, page, ...filters }, { enabled: !!empresaId });
   const itens = list.data?.items ?? [];
   const totalPages = list.data?.totalPages ?? 1;
 
   useEffect(() => setPage(1), [empresaId]);
+  // Synchronous reset: clear the page alongside the tab switch to avoid a request with an out-of-range page.
+  const changeTab = (k: TabKey) => {
+    setTab(k);
+    setPage(1);
+  };
 
   return (
     <>
@@ -126,10 +168,23 @@ export function ContasPagarPage() {
           title={t('payables.empty.noCompanyTitle')}
           sub={t('payables.empty.noCompanySub')}
         />
-      ) : itens.length === 0 ? (
-        <EmptyState icon={<Wallet />} title={t('payables.empty.noItemsTitle')} sub={t('payables.empty.noItemsSub')} />
       ) : (
-        <Panel title={t('payables.count', { count: list.data?.total ?? itens.length })}>
+        <>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            {TABS.map((k) => (
+              <Button key={k} variant={tab === k ? 'brand' : 'default'} onClick={() => changeTab(k)}>
+                {t(`payables.tabs.${k}`)}
+              </Button>
+            ))}
+          </div>
+          {itens.length === 0 ? (
+            <EmptyState
+              icon={<Wallet />}
+              title={t('payables.empty.noItemsTitle')}
+              sub={t('payables.empty.noItemsSub')}
+            />
+          ) : (
+            <Panel title={t('payables.count', { count: list.data?.total ?? itens.length })}>
           <table>
             <thead>
               <tr>
@@ -172,7 +227,9 @@ export function ContasPagarPage() {
             </tbody>
           </table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
-        </Panel>
+            </Panel>
+          )}
+        </>
       )}
     </>
   );
@@ -252,6 +309,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const { t } = useTranslation();
   const { centros } = useNames(empresaId);
   const categorias = useExpenseCategories().data ?? [];
+  const accountingAccounts =
+    useChartAccounts({ chartType: 'Accounting', kind: 'Analytical', activeOnly: true }).data ?? [];
+  const financialAccounts =
+    useChartAccounts({ chartType: 'Financial', kind: 'Analytical', activeOnly: true }).data ?? [];
+  const accountItems = (accs: typeof accountingAccounts) =>
+    [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -262,6 +325,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
         vendorId: '',
         costCenterId: '',
         categoryId: null,
+        accountingAccountId: null,
+        financialAccountId: null,
         description: '',
         documentNumber: '',
         issueDate: '',
@@ -284,6 +349,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       vendorId: initial.vendorId,
       costCenterId: initial.costCenterId,
       categoryId: initial.categoryId ?? null,
+      accountingAccountId: initial.accountingAccountId ?? null,
+      financialAccountId: initial.financialAccountId ?? null,
       description: initial.description,
       documentNumber: initial.documentNumber ?? '',
       issueDate: initial.issueDate ?? '',
@@ -327,6 +394,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       vendorId: v.vendorId,
       costCenterId: v.costCenterId,
       categoryId: v.categoryId || null,
+      accountingAccountId: v.accountingAccountId || null,
+      financialAccountId: v.financialAccountId || null,
       description: v.description.trim(),
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
@@ -402,7 +471,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 <div className='field-err'>{fieldError(formState.errors.vendorId?.message)}</div>
               )}
             </Field>
-            <Field label={t('payables.fields.category')}>
+            <Field label={t('payables.localGrouping')}>
               <Controller
                 control={control}
                 name='categoryId'
@@ -412,6 +481,34 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     onChange={(id) => field.onChange(id)}
                     items={categorias.map((c) => ({ id: c.id, label: c.name }))}
                     placeholder={t('payables.fields.categoryNone')}
+                  />
+                )}
+              />
+            </Field>
+            <Field label={t('payables.accountingAccount')}>
+              <Controller
+                control={control}
+                name='accountingAccountId'
+                render={({ field }) => (
+                  <Combobox
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id)}
+                    items={accountItems(accountingAccounts)}
+                    placeholder={t('payables.fields.accountNone')}
+                  />
+                )}
+              />
+            </Field>
+            <Field label={t('payables.financialAccount')}>
+              <Controller
+                control={control}
+                name='financialAccountId'
+                render={({ field }) => (
+                  <Combobox
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id)}
+                    items={accountItems(financialAccounts)}
+                    placeholder={t('payables.fields.accountNone')}
                   />
                 )}
               />
@@ -946,6 +1043,8 @@ export function ContaPagarDetailPage() {
 
   const centros = useCostCenters(p?.companyId ?? '').data ?? [];
   const categorias = useExpenseCategories(true).data ?? [];
+  const accountingAccounts = useChartAccounts({ chartType: 'Accounting' }).data ?? [];
+  const financialAccounts = useChartAccounts({ chartType: 'Financial' }).data ?? [];
 
   const approve = useApprovePayable();
   const reject = useRejectPayable();
@@ -968,6 +1067,11 @@ export function ContaPagarDetailPage() {
 
   const centroNome = centros.find((c) => c.id === p.costCenterId)?.name ?? '—';
   const categoriaNome = categorias.find((c) => c.id === p.categoryId)?.name ?? '—';
+  const accountLabel = (accs: typeof accountingAccounts, id: string | null) => {
+    if (!id) return t('payables.notClassified');
+    const a = accs.find((x) => x.id === id);
+    return a ? `${a.code} — ${a.name}` : t('payables.notClassified');
+  };
   const editable = p.status === 'PendingApproval' || p.status === 'Approved';
 
   return (
@@ -978,8 +1082,13 @@ export function ContaPagarDetailPage() {
       <div className='detail-head'>
         <div>
           <h1 className='detail-title'>{p.description}</h1>
-          <div className='detail-sub'>
-            {t('payables.sub')} · {p.counterpartyName || '—'}
+          <div className='detail-sub' style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>
+              {t('payables.sub')} · {p.counterpartyName || '—'}
+            </span>
+            <span className={`badge-status ${p.isClassified ? 'badge-pago' : 'badge-pendente'}`}>
+              {p.isClassified ? t('payables.classified') : t('payables.unclassified')}
+            </span>
           </div>
         </div>
         <div className='detail-actions'>
@@ -1030,6 +1139,18 @@ export function ContaPagarDetailPage() {
           </div>
         </div>
         <div className='info-card'>
+          <div className='info-label'>{t('payables.cards.accountingAccount')}</div>
+          <div className='info-value' style={{ fontSize: 15 }}>
+            {accountLabel(accountingAccounts, p.accountingAccountId)}
+          </div>
+        </div>
+        <div className='info-card'>
+          <div className='info-label'>{t('payables.cards.financialAccount')}</div>
+          <div className='info-value' style={{ fontSize: 15 }}>
+            {accountLabel(financialAccounts, p.financialAccountId)}
+          </div>
+        </div>
+        <div className='info-card'>
           <div className='info-label'>{t('payables.cards.documentNumber')}</div>
           <div className='info-value' style={{ fontSize: 15 }}>
             {p.documentNumber || '—'}
@@ -1047,6 +1168,17 @@ export function ContaPagarDetailPage() {
         <p className='create-err'>{t('payables.rejectionReason', { reason: p.rejectionReason })}</p>
       )}
       {p.cancelReason && <p className='create-err'>{t('payables.cancelReason', { reason: p.cancelReason })}</p>}
+
+      {(p.status === 'Approved' || p.status === 'Settled') && p.approvedBy && p.approvedAt && (
+        <p className='detail-sub'>
+          {t('payables.approvedBy', { user: p.approvedBy, date: fmtDateTime(p.approvedAt) })}
+        </p>
+      )}
+      {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
+        <p className='detail-sub'>
+          {t('payables.rejectedBy', { user: p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
+        </p>
+      )}
 
       <Panel title={t('payables.installmentsTitle')}>
         <table>

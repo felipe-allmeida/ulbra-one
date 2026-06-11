@@ -112,6 +112,20 @@ export type ReceivableOrigin = Schemas['ReceivableOrigin'];
 export type ReceivableStatus = Schemas['ReceivableStatus'];
 export type ReceivableInstallmentStatus = Schemas['ReceivableInstallmentStatus'];
 
+// ---------- Chart of Accounts (Plano de Contas) ----------
+export type ChartAccount = Schemas['ChartAccountResponse'];
+export type ChartType = Schemas['ChartType'];
+export type AccountKind = Schemas['AccountKind'];
+export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
+export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
+
+// ---------- Conciliação OFX (statement imports + bank transactions) ----------
+export type StatementImport = Schemas['StatementImportResponse'];
+export type BankTransaction = Schemas['BankTransactionResponse'];
+// Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
+export type MatchStatus = Schemas['MatchStatus'];
+export type TransactionDirection = Schemas['TransactionDirection'];
+
 /** Request body for creating a bank account. */
 export interface BankAccountInput {
   companyId: string;
@@ -152,6 +166,8 @@ export interface PayableInput {
   issueDate?: string | null;
   installments?: { dueDate: string; amount: number }[];
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
+  accountingAccountId?: string | null;
+  financialAccountId?: string | null;
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
@@ -302,6 +318,8 @@ export const api = {
     categoryId?: string;
     dueFrom?: string;
     dueTo?: string;
+    paid?: boolean;
+    classified?: boolean;
     page?: number;
     pageSize?: number;
   }) => {
@@ -313,6 +331,8 @@ export const api = {
     if (params.categoryId) q.set('categoryId', params.categoryId);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.paid !== undefined) q.set('paid', String(params.paid));
+    if (params.classified !== undefined) q.set('classified', String(params.classified));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
@@ -443,6 +463,107 @@ export const api = {
   updateBankAccount: (id: string, body: BankAccountUpdateInput) =>
     request<BankAccount>(`/bank-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteBankAccount: (id: string) => request<void>(`/bank-accounts/${id}`, { method: 'DELETE' }),
+
+  // ---------- Conciliação OFX (statement imports + bank transactions) ----------
+  /** Imports an OFX statement via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  importStatement: async (bankAccountId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/statement-imports?bankAccountId=${bankAccountId}`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<StatementImport>;
+  },
+  listStatementImports: (companyId?: string, bankAccountId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    if (bankAccountId) q.set('bankAccountId', bankAccountId);
+    return request<StatementImport[]>(`/statement-imports?${q}`);
+  },
+  listBankTransactions: (params: {
+    companyId?: string;
+    bankAccountId?: string;
+    importId?: string;
+    matchStatus?: MatchStatus;
+    dueFrom?: string;
+    dueTo?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.bankAccountId) q.set('bankAccountId', params.bankAccountId);
+    if (params.importId) q.set('importId', params.importId);
+    if (params.matchStatus) q.set('matchStatus', params.matchStatus);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<BankTransaction>>(`/bank-transactions?${q}`);
+  },
+  confirmMatch: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/confirm`, { method: 'POST' }),
+  matchTransaction: (id: string, installmentId: string) =>
+    request<BankTransaction>(`/bank-transactions/${id}/match`, {
+      method: 'POST',
+      body: JSON.stringify({ installmentId }),
+    }),
+  ignoreTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/ignore`, { method: 'POST' }),
+  unmatchTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/unmatch`, { method: 'POST' }),
+
+  // ---------- Chart of Accounts (Plano de Contas) ----------
+  listChartAccounts: (params: { chartType?: ChartType; kind?: AccountKind; activeOnly?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params.chartType) q.set('chartType', params.chartType);
+    if (params.kind) q.set('kind', params.kind);
+    if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
+    return request<ChartAccount[]>(`/chart-accounts?${q}`);
+  },
+  createChartAccount: (body: {
+    chartType: ChartType;
+    code: string;
+    name: string;
+    parentId?: string | null;
+    kind: AccountKind;
+    nature: Schemas['AccountNature'] | null;
+  }) => request<ChartAccount>('/chart-accounts', { method: 'POST', body: JSON.stringify(body) }),
+  updateChartAccount: (
+    id: string,
+    body: {
+      code?: string;
+      name?: string;
+      parentId?: string | null;
+      kind?: AccountKind;
+      nature?: Schemas['AccountNature'] | null;
+      isActive?: boolean;
+    },
+  ) => request<ChartAccount>(`/chart-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteChartAccount: (id: string) => request<void>(`/chart-accounts/${id}`, { method: 'DELETE' }),
+
+  // ---------- Classification ----------
+  classifyPayable: (id: string, body: { accountingAccountId?: string | null; financialAccountId?: string | null }) =>
+    request<Payable>(`/payables/${id}/classify`, { method: 'POST', body: JSON.stringify(body) }),
+  classifyBatch: (body: {
+    payableIds: string[];
+    accountingAccountId?: string | null;
+    financialAccountId?: string | null;
+  }) =>
+    request<{ classifiedCount: number }>('/payables/classify-batch', { method: 'POST', body: JSON.stringify(body) }),
+  classificationSuggestion: (payableId: string) =>
+    request<ClassificationSuggestion>(`/payables/${payableId}/classification-suggestion`),
+
+  // ---------- Classification Policies ----------
+  getClassificationPolicy: (companyId: string) =>
+    request<ClassificationPolicy>(`/classification-policies/${companyId}`),
+  updateClassificationPolicy: (companyId: string, body: { requireToApprove: boolean; requireToPay: boolean }) =>
+    request<ClassificationPolicy>(`/classification-policies/${companyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>

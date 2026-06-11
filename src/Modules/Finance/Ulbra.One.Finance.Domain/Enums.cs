@@ -20,3 +20,17 @@ public enum ReceivableOrigin { Manual, AcademicImport, Rent, MiscRevenue }
 public enum ReceivableStatus { AwaitingReceipt, Received, Cancelled, WrittenOff }
 
 public enum ReceivableInstallmentStatus { Open, PartiallyReceived, Received }
+
+public enum StatementSource { OfxUpload, CsvUpload }
+
+public enum ImportStatus { Completed, Failed }
+
+public enum TransactionDirection { Debit, Credit }
+
+public enum MatchStatus { Unmatched, Suggested, Reconciled, Ignored }
+
+public enum ChartType { Accounting, Financial }
+
+public enum AccountKind { Synthetic, Analytical }
+
+public enum AccountNature { Debit, Credit }

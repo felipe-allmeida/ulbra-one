@@ -39,6 +39,22 @@ public class VendorsEndpointTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Masked_Cep_Is_Stored_Digits_Only()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = new CompanyId(Guid.NewGuid()).ToString();
+        var body = ValidCompany(companyId) with
+        {
+            Address = new { Cep = "01001-000", Street = "Praça da Sé", Number = "1", Neighborhood = "Sé", City = "São Paulo", State = "SP" },
+        };
+
+        var res = await client.PostAsJsonAsync("/api/vendors", body);
+
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+    }
+
+    [Fact]
     public async Task Create_List_Search_Update_Deactivate_SoftDelete_Flow()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

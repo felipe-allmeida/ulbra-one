@@ -2,15 +2,31 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Infrastructure.Extensions;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ConfirmMatch;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.IgnoreTransaction;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ImportStatement;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.MatchManually;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.UnmatchTransaction;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListBankTransactions;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListStatementImports;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.DeleteBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.ListBankAccounts;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.UpdateBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.CreateChartAccount;
+using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.DeleteChartAccount;
+using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.ListChartAccounts;
+using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.UpdateChartAccount;
+using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.GetClassificationPolicy;
+using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.UpdateClassificationPolicy;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassificationSuggestion;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
@@ -74,6 +90,9 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ReversePayment>();
         payables.MapEndpoint<UploadPaymentProof>();
         payables.MapEndpoint<DownloadPaymentProof>();
+        payables.MapEndpoint<ClassifyPayable>();
+        payables.MapEndpoint<ClassifyPayableBatch>();
+        payables.MapEndpoint<ClassificationSuggestion>();
 
         var receivables = builder.MapGroup("/receivables");
         receivables.MapEndpoint<ListReceivables>();
@@ -91,6 +110,27 @@ public static class FinanceEndpoints
         bankAccounts.MapEndpoint<CreateBankAccount>();
         bankAccounts.MapEndpoint<UpdateBankAccount>();
         bankAccounts.MapEndpoint<DeleteBankAccount>();
+
+        var chartAccounts = builder.MapGroup("/chart-accounts");
+        chartAccounts.MapEndpoint<ListChartAccounts>();
+        chartAccounts.MapEndpoint<CreateChartAccount>();
+        chartAccounts.MapEndpoint<UpdateChartAccount>();
+        chartAccounts.MapEndpoint<DeleteChartAccount>();
+
+        var statementImports = builder.MapGroup("/statement-imports");
+        statementImports.MapEndpoint<ImportStatement>();
+        statementImports.MapEndpoint<ListStatementImports>();
+
+        var classificationPolicies = builder.MapGroup("/classification-policies");
+        classificationPolicies.MapEndpoint<GetClassificationPolicy>();
+        classificationPolicies.MapEndpoint<UpdateClassificationPolicy>();
+
+        var bankTransactions = builder.MapGroup("/bank-transactions");
+        bankTransactions.MapEndpoint<ListBankTransactions>();
+        bankTransactions.MapEndpoint<ConfirmMatch>();
+        bankTransactions.MapEndpoint<MatchManually>();
+        bankTransactions.MapEndpoint<IgnoreTransaction>();
+        bankTransactions.MapEndpoint<UnmatchTransaction>();
 
         return builder;
     }

@@ -7,9 +7,14 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
+  type AccountKind,
   type BankAccount,
   type BankAccountInput,
   type BankAccountUpdateInput,
+  type BankTransaction,
+  type ChartAccount,
+  type ChartType,
+  type ClassificationPolicy,
   type Company,
   type CostCenter,
   type Customer,
@@ -17,6 +22,7 @@ import {
   type Employee,
   type EmployeeInput,
   type ExpenseCategory,
+  type MatchStatus,
   type Payable,
   type PayableAttachment,
   type PayableInput,
@@ -28,6 +34,7 @@ import {
   type ReceivableStatus,
   type RegisterPaymentInput,
   type RegisterReceiptInput,
+  type StatementImport,
   type Transaction,
   type TransactionStatus,
   type TransactionType,
@@ -54,7 +61,23 @@ export const queryKeys = {
   receivable: (id: string) => ['receivable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
+  statementImports: (companyId?: string, bankAccountId?: string) =>
+    ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
+  bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
+  chartAccounts: (params: ChartAccountsParams) => ['chartAccounts', params] as const,
+  classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
 };
+
+export interface BankTransactionsParams {
+  companyId?: string;
+  bankAccountId?: string;
+  importId?: string;
+  matchStatus?: MatchStatus;
+  dueFrom?: string;
+  dueTo?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 export interface PayablesParams {
   companyId?: string;
@@ -64,6 +87,8 @@ export interface PayablesParams {
   categoryId?: string;
   dueFrom?: string;
   dueTo?: string;
+  paid?: boolean;
+  classified?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -87,6 +112,12 @@ export interface TransactionsParams {
   costCenterId?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface ChartAccountsParams {
+  chartType?: ChartType;
+  kind?: AccountKind;
+  activeOnly?: boolean;
 }
 
 /* ===================== Queries ===================== */
@@ -213,6 +244,22 @@ export function useBankAccounts(companyId: string, includeInactive = false) {
     queryKey: queryKeys.bankAccounts(companyId, includeInactive),
     queryFn: () => api.listBankAccounts(companyId, includeInactive),
     enabled: !!companyId,
+  });
+}
+
+export function useStatementImports(companyId?: string, bankAccountId?: string) {
+  return useQuery({
+    queryKey: queryKeys.statementImports(companyId, bankAccountId),
+    queryFn: () => api.listStatementImports(companyId, bankAccountId),
+  });
+}
+
+export function useBankTransactions(params: BankTransactionsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.bankTransactions(params),
+    queryFn: () => api.listBankTransactions(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -587,6 +634,28 @@ export function useCreateReceivable(options?: UseMutationOptions<Receivable, unk
   );
 }
 
+/* ---------- Conciliação OFX (statement imports + bank transactions) ---------- */
+/** Invalidates the bank-transaction lists + the statement-import lists after a match/baixa change.
+ * Also invalidates payables, since confirming/matching a transaction registers a baixa. */
+function invalidateConciliation(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+  void qc.invalidateQueries({ queryKey: ['statementImports'] });
+  void qc.invalidateQueries({ queryKey: ['payables'] });
+}
+
+export function useImportStatement(
+  options?: UseMutationOptions<StatementImport, unknown, { bankAccountId: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ bankAccountId, file }) => api.importStatement(bankAccountId, file),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+      void qc.invalidateQueries({ queryKey: ['statementImports'] });
+    },
+    options,
+  );
+}
+
 export function useUpdateReceivable(
   options?: UseMutationOptions<Receivable, unknown, { id: string; body: Omit<ReceivableInput, 'origin'> }>,
 ) {
@@ -618,6 +687,73 @@ export function useRegisterReceipt(
   );
 }
 
+export function useConfirmMatch(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.confirmMatch(id),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useMatchTransaction(
+  options?: UseMutationOptions<BankTransaction, unknown, { id: string; installmentId: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, installmentId }) => api.matchTransaction(id, installmentId),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useIgnoreTransaction(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.ignoreTransaction(id),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useUnmatchTransaction(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.unmatchTransaction(id),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+/* ---------- Chart of Accounts (Plano de Contas) ---------- */
+export function useChartAccounts(params: ChartAccountsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.chartAccounts(params),
+    queryFn: () => api.listChartAccounts(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useCreateChartAccount(
+  options?: UseMutationOptions<ChartAccount, unknown, Parameters<typeof api.createChartAccount>[0]>,
+) {
+  return useInvalidatingMutation(
+    (body) => api.createChartAccount(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
+export function useUpdateChartAccount(
+  options?: UseMutationOptions<
+    ChartAccount,
+    unknown,
+    { id: string; body: Parameters<typeof api.updateChartAccount>[1] }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.updateChartAccount(id, body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
 export function useReverseReceipt(
   options?: UseMutationOptions<Receivable, unknown, { receivableId: string; receiptId: string; reason: string }>,
 ) {
@@ -628,12 +764,82 @@ export function useReverseReceipt(
   );
 }
 
+export function useDeleteChartAccount(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteChartAccount(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
 export function useUploadReceiptProof(
   options?: UseMutationOptions<Receipt, unknown, { receivableId: string; receiptId: string; file: File }>,
 ) {
   return useInvalidatingMutation(
     ({ receivableId, receiptId, file }) => api.uploadReceiptProof(receivableId, receiptId, file),
     (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
+    options,
+  );
+}
+
+/* ---------- Classification ---------- */
+export function useClassifyPayable(
+  options?: UseMutationOptions<
+    Payable,
+    unknown,
+    { id: string; body: { accountingAccountId?: string | null; financialAccountId?: string | null } }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.classifyPayable(id, body),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
+    },
+    options,
+  );
+}
+
+export function useClassifyBatch(
+  options?: UseMutationOptions<{ classifiedCount: number }, unknown, Parameters<typeof api.classifyBatch>[0]>,
+) {
+  return useInvalidatingMutation(
+    (body) => api.classifyBatch(body),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
+    },
+    options,
+  );
+}
+
+export function useClassificationSuggestion(payableId: string | undefined, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['classificationSuggestion', payableId ?? ''],
+    queryFn: () => api.classificationSuggestion(payableId!),
+    enabled: (options?.enabled ?? true) && !!payableId,
+  });
+}
+
+/* ---------- Classification Policies ---------- */
+export function useClassificationPolicy(companyId: string) {
+  return useQuery({
+    queryKey: queryKeys.classificationPolicy(companyId),
+    queryFn: () => api.getClassificationPolicy(companyId),
+    enabled: !!companyId,
+  });
+}
+
+export function useUpdateClassificationPolicy(
+  options?: UseMutationOptions<
+    ClassificationPolicy,
+    unknown,
+    { companyId: string; body: { requireToApprove: boolean; requireToPay: boolean } }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ companyId, body }) => api.updateClassificationPolicy(companyId, body),
+    (qc, data) => void qc.invalidateQueries({ queryKey: queryKeys.classificationPolicy(data.companyId) }),
     options,
   );
 }

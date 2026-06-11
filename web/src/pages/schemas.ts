@@ -135,6 +135,8 @@ export const payableSchema = z
     vendorId: z.string().min(1, { message: 'validation.vendorRequired' }),
     costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
     categoryId: z.string().nullable(),
+    accountingAccountId: z.string().nullable(),
+    financialAccountId: z.string().nullable(),
     description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
     documentNumber: z.string(),
     issueDate: z.string(),

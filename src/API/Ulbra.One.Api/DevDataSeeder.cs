@@ -29,6 +29,7 @@ public static class DevDataSeeder
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
         await SeedExpenseCategoriesAsync(finance, logger, ct);
+        await SeedChartOfAccountsAsync(finance, logger, ct);
 
         var existing = await core.Companies.CountAsync(ct);
         if (existing > 0)
@@ -163,12 +164,17 @@ public static class DevDataSeeder
         var pGoogle = PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5);
         if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve("system", time.GetUtcNow());
 
+        var pEnergiaGravatai = PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3);
+        // Above INFRA's auto-approval limit (2_000), so approve explicitly: its open
+        // installment is the counterpart of the seeded Suggested bank transaction and
+        // a reconciliation can only confirm against an approved payable.
+        if (pEnergiaGravatai.Status != PayableStatus.Approved) pEnergiaGravatai.Approve("system", time.GetUtcNow());
         await finance.Payables.AddRangeAsync(new[]
         {
             // À vista
             pGoogle,
             PayableVista(infra, "Conta de energia - Campus Canoas", vCeee, Cat("Energia elétrica"), "NF-CEEE-77120", 48_500m, -2),
-            PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3),
+            pEnergiaGravatai,
             pLimpeza,
             PayableVista(rh, "Consultoria de clima organizacional", vJoao, Cat("Serviços de terceiros (PJ)"), null, 2_500m, 15),
             PayableVista(bib, "Aquisição de acervo - periódicos", vGrafica, Cat("Acervo e assinaturas (biblioteca)"), "NF-GS-1207", 1_200m, -8),
@@ -199,6 +205,28 @@ public static class DevDataSeeder
 
         await finance.SaveChangesAsync(ct);
 
+        // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
+        // Look up seeded analytical accounts by code; classify energy payables (accounting 4.1.01 + financial 76.100)
+        // and the cleaning/services payable (4.1.03 + 76.300). Idempotent: only classify when not yet classified.
+        var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.01", ct);
+        var finEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.100", ct);
+        var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.03", ct);
+        var finServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.300", ct);
+
+        if (pEnergiaGravatai.AccountingAccountId == null)
+            pEnergiaGravatai.Classify(accEnergia.Id, finEnergia.Id);
+        if (pLimpeza.AccountingAccountId == null)
+            pLimpeza.Classify(accServicos.Id, finServicos.Id);
+        await finance.SaveChangesAsync(ct);
+
+        // ---------- Classification policy (per company, both flags OFF so existing flows are unaffected) ----------
+        foreach (var company in new[] { celsp, ulbra })
+        {
+            if (!await finance.ClassificationPolicies.AnyAsync(p => p.CompanyId == company.Id, ct))
+                await finance.ClassificationPolicies.AddAsync(new ClassificationPolicy(company.Id), ct);
+        }
+        await finance.SaveChangesAsync(ct);
+
         // ---------- Payments (baixa) — show settled & partially-paid states in the UI ----------
         if (!await finance.Payments.AnyAsync(ct))
         {
@@ -224,6 +252,33 @@ public static class DevDataSeeder
 
             await finance.SaveChangesAsync(ct);
             logger.LogInformation("Dev seed: 2 payments seeded (1 full/settled, 1 partial).");
+        }
+
+        // ---------- Bank statement import + transactions (conciliação) ----------
+        if (!await finance.BankTransactions.AnyAsync(ct))
+        {
+            var ulbraBank = await finance.BankAccounts.FirstAsync(b => b.CompanyId == ulbra.Id, ct);
+            var now = time.GetUtcNow();
+            var energyInstallment = pEnergiaGravatai.Installments[0];
+
+            var import = new BankStatementImport(
+                ulbra.Id, ulbraBank.Id, StatementSource.OfxUpload, "extrato-santander.ofx",
+                today.AddDays(-7), today.AddDays(7), 2, 2, 0);
+
+            // Debit that exactly matches the open energy installment within the date window → Suggested.
+            var debit = new BankTransaction(import.Id, ulbra.Id, ulbraBank.Id, "SEED-TXN-DEBIT-1",
+                today, -energyInstallment.Amount, "PAG FORNEC CEEE", now);
+            debit.Suggest(energyInstallment.Id);
+
+            // Credit with no counterpart → stays Unmatched.
+            var credit = new BankTransaction(import.Id, ulbra.Id, ulbraBank.Id, "SEED-TXN-CREDIT-1",
+                today, 2_500m, "DEPOSITO", now);
+
+            await finance.StatementImports.AddAsync(import, ct);
+            await finance.BankTransactions.AddAsync(debit, ct);
+            await finance.BankTransactions.AddAsync(credit, ct);
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: 1 statement import + 2 bank transactions seeded (1 suggested debit, 1 unmatched credit).");
         }
 
         logger.LogInformation(
@@ -256,6 +311,33 @@ public static class DevDataSeeder
         finance.ExpenseCategories.AddRange(ExpenseCategoryNames.Select(name => new ExpenseCategory(name)));
         await finance.SaveChangesAsync(ct);
         logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
+    }
+
+    private static async Task SeedChartOfAccountsAsync(FinanceContext finance, ILogger logger, CancellationToken ct)
+    {
+        if (await finance.ChartAccounts.AnyAsync(ct))
+        {
+            logger.LogInformation("Dev seed: chart of accounts already present — skipping.");
+            return;
+        }
+
+        // ---------- Accounting chart (contábil) ----------
+        var despesasContabil = new ChartAccount(ChartType.Accounting, "4", "Despesas", AccountKind.Synthetic);
+        var energiaContabil = new ChartAccount(ChartType.Accounting, "4.1.01", "Energia elétrica", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+        var alugueisContabil = new ChartAccount(ChartType.Accounting, "4.1.02", "Aluguéis", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+        var servicosContabil = new ChartAccount(ChartType.Accounting, "4.1.03", "Serviços de terceiros", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+
+        // ---------- Financial chart (financeiro) ----------
+        var despesasFinanceiro = new ChartAccount(ChartType.Financial, "76", "Despesas operacionais", AccountKind.Synthetic);
+        var energiaFinanceiro = new ChartAccount(ChartType.Financial, "76.100", "Energia", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+        var aluguelFinanceiro = new ChartAccount(ChartType.Financial, "76.200", "Aluguel", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+        var servicosFinanceiro = new ChartAccount(ChartType.Financial, "76.300", "Serviços", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
+
+        finance.ChartAccounts.AddRange(
+            despesasContabil, energiaContabil, alugueisContabil, servicosContabil,
+            despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
+        await finance.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: chart of accounts seeded (2 roots + 6 leaves across Accounting and Financial charts).");
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)
