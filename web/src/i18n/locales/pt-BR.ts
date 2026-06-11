@@ -31,6 +31,7 @@ const ptBR = {
     employees: 'Colaboradores',
     expenseCategories: 'Categorias de despesa',
     bankAccounts: 'Contas bancárias',
+    conciliacao: 'Conciliação bancária',
     companiesUnits: 'Empresas e unidades',
     integrations: 'Integrações',
     settings: 'Configurações',
@@ -290,6 +291,8 @@ const ptBR = {
     },
     rejectionReason: 'Motivo da rejeição: {{reason}}',
     cancelReason: 'Motivo do cancelamento: {{reason}}',
+    approvedBy: 'Aprovado por {{user}} em {{date}}',
+    rejectedBy: 'Rejeitado por {{user}} em {{date}}',
     empty: {
       noCompanyTitle: 'Nenhuma empresa',
       noCompanySub: 'Cadastre uma empresa em Estrutura.',
@@ -455,6 +458,67 @@ const ptBR = {
     },
   },
 
+  conciliacao: {
+    title: 'Conciliação bancária',
+    subtitle: 'Importe o extrato OFX e concilie os lançamentos com as parcelas a pagar.',
+    bankAccount: 'Conta bancária',
+    bankAccountSelect: '— selecione —',
+    upload: {
+      label: 'Importar extrato OFX',
+      help: 'Selecione um arquivo .ofx para importar os lançamentos.',
+      button: 'Importar OFX',
+      importing: 'Importando…',
+      needBankAccount: 'Selecione uma conta bancária para importar.',
+    },
+    summary: {
+      title: 'Extrato importado',
+      counts: '{{total}} lançamentos · {{newCount}} novos · {{duplicateCount}} duplicados',
+    },
+    filter: {
+      label: 'Status',
+      all: 'Todos',
+    },
+    columns: {
+      date: 'Data',
+      description: 'Descrição',
+      amount: 'Valor',
+      status: 'Status',
+      actions: 'Ações',
+    },
+    status: {
+      Unmatched: 'Não conciliado',
+      Suggested: 'Sugerido',
+      Reconciled: 'Conciliado',
+      Ignored: 'Ignorado',
+    },
+    suggested: 'Casa com uma parcela em aberto.',
+    actions: {
+      confirm: 'Confirmar',
+      ignore: 'Ignorar',
+      matchManual: 'Conciliar manual',
+      unmatch: 'Desfazer',
+    },
+    matchDialog: {
+      title: 'Conciliar manualmente',
+      sub: 'Selecione a parcela em aberto que corresponde a este lançamento.',
+      installment: 'Parcela',
+      select: '— selecione a parcela —',
+      search: 'Buscar parcela…',
+      empty: 'Nenhuma parcela em aberto.',
+      confirm: 'Conciliar',
+      matching: 'Conciliando…',
+    },
+    empty: {
+      noCompanyTitle: 'Nenhuma empresa',
+      noCompanySub: 'Cadastre uma empresa em Estrutura.',
+      noBankAccountTitle: 'Selecione uma conta bancária',
+      noBankAccountSub: 'Escolha a conta bancária para ver os lançamentos do extrato.',
+      noItemsTitle: 'Nenhum lançamento',
+      noItemsSub: 'Importe um extrato OFX para começar a conciliar.',
+    },
+    loading: 'Carregando…',
+  },
+
   errors: {
     generic: 'Algo deu errado. Tente novamente em instantes.',
     codes: {
@@ -504,6 +568,13 @@ const ptBR = {
       'File.Empty': 'O arquivo está vazio.',
       'File.TooLarge': 'O arquivo é muito grande.',
       'File.UnsupportedType': 'Tipo de arquivo não suportado. Envie PDF, PNG ou JPG.',
+      'Statement.ParseFailed': 'Não foi possível ler o arquivo OFX. Verifique o arquivo e tente novamente.',
+      'BankTransaction.NotFound': 'Lançamento não encontrado.',
+      'BankTransaction.NotSuggested': 'Este lançamento não possui uma sugestão para confirmar.',
+      'BankTransaction.AlreadyReconciled': 'Este lançamento já foi conciliado.',
+      'BankTransaction.NotReconciled': 'Este lançamento não está conciliado.',
+      'Match.AmountMismatch': 'O valor do lançamento não confere com o da parcela.',
+      'Match.InstallmentInvalid': 'Parcela inválida para esta conciliação.',
     },
     boundary: {
       title: 'Algo deu errado',

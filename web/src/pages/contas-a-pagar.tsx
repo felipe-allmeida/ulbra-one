@@ -64,6 +64,8 @@ import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
 
 const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+/** Formats an ISO date-time (e.g. approvedAt/rejectedAt) as a pt-BR date. */
+const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 function PayableStatusBadge({ s }: { s: PayableStatus }) {
   const { t } = useTranslation();
@@ -1047,6 +1049,17 @@ export function ContaPagarDetailPage() {
         <p className='create-err'>{t('payables.rejectionReason', { reason: p.rejectionReason })}</p>
       )}
       {p.cancelReason && <p className='create-err'>{t('payables.cancelReason', { reason: p.cancelReason })}</p>}
+
+      {(p.status === 'Approved' || p.status === 'Settled') && p.approvedBy && p.approvedAt && (
+        <p className='detail-sub'>
+          {t('payables.approvedBy', { user: p.approvedBy, date: fmtDateTime(p.approvedAt) })}
+        </p>
+      )}
+      {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
+        <p className='detail-sub'>
+          {t('payables.rejectedBy', { user: p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
+        </p>
+      )}
 
       <Panel title={t('payables.installmentsTitle')}>
         <table>

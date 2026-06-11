@@ -25,6 +25,7 @@ import {
   Contact,
   Tag,
   Landmark,
+  ArrowLeftRight,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -43,6 +44,7 @@ import {
 } from './pages/contas-a-pagar';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
+import { ConciliacaoPage } from './pages/conciliacao';
 import { FornecedoresPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
@@ -70,6 +72,7 @@ export default function App() {
         <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
+        <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
         <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
         <Route path='aprovacoes' element={<AprovacoesPage />} />
@@ -153,6 +156,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.registry')} <b>/ {t('nav.bankAccounts')}</b>
     </>
+  ) : at('conciliacao') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.conciliacao')}</b>
+    </>
   ) : at('contas-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
@@ -215,6 +222,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.approvals')}
             active={at('aprovacoes')}
             onClick={() => go('/app/aprovacoes')}
+          />
+          <NavItem
+            icon={<ArrowLeftRight />}
+            label={t('nav.conciliacao')}
+            active={at('conciliacao')}
+            onClick={() => go('/app/conciliacao')}
           />
           <NavItem
             icon={<Target />}
