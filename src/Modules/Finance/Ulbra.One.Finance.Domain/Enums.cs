@@ -13,3 +13,17 @@ public enum InstallmentStatus { Open, PartiallyPaid, Paid }
 public enum BankAccountType { Checking, Savings }
 
 public enum PaymentMethod { Pix, Ted, Boleto, Cash, DirectDebit, Other }
+
+public enum StatementSource { OfxUpload, CsvUpload }
+
+public enum ImportStatus { Completed, Failed }
+
+public enum TransactionDirection { Debit, Credit }
+
+public enum MatchStatus { Unmatched, Suggested, Reconciled, Ignored }
+
+public enum ChartType { Accounting, Financial }
+
+public enum AccountKind { Synthetic, Analytical }
+
+public enum AccountNature { Debit, Credit }

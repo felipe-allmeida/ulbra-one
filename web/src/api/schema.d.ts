@@ -420,6 +420,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/{id}/classify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ClassifyPayable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/classify-batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ClassifyPayableBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/classification-suggestion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ClassificationSuggestion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-accounts": {
         parameters: {
             query?: never;
@@ -447,6 +495,150 @@ export interface paths {
         put: operations["UpdateBankAccount"];
         post?: never;
         delete: operations["DeleteBankAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chart-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListChartAccounts"];
+        put?: never;
+        post: operations["CreateChartAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chart-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateChartAccount"];
+        post?: never;
+        delete: operations["DeleteChartAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/statement-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListStatementImports"];
+        put?: never;
+        post: operations["ImportStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classification-policies/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetClassificationPolicy"];
+        put: operations["UpdateClassificationPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListBankTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConfirmMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MatchManually"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IgnoreTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UnmatchTransaction"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -696,6 +888,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        AccountKind: "Synthetic" | "Analytical";
+        /** @enum {string} */
+        AccountNature: "Debit" | "Credit";
         AddressRequest: {
             cep: string | null;
             street: string | null;
@@ -732,6 +928,36 @@ export interface components {
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
+        BankTransactionResponse: {
+            /** @example bank_txn_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            amount: number;
+            direction: components["schemas"]["TransactionDirection"];
+            description: string;
+            matchStatus: components["schemas"]["MatchStatus"];
+            /** @example installment_3fa85f64571742199730000000000000 */
+            suggestedInstallmentId: string | null;
+            /** @example payment_3fa85f64571742199730000000000000 */
+            matchedPaymentId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        BankTransactionResponsePaginatedResponse: {
+            items: components["schemas"]["BankTransactionResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         CancelPayableCancelRequest: {
             reason: string | null;
         };
@@ -741,6 +967,47 @@ export interface components {
             neighborhood: string;
             city: string;
             state: string;
+        };
+        ChartAccountResponse: {
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            id: string;
+            chartType: components["schemas"]["ChartType"];
+            code: string;
+            name: string;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            kind: components["schemas"]["AccountKind"];
+            nature: components["schemas"]["AccountNature"];
+            isActive: boolean;
+        };
+        /** @enum {string} */
+        ChartType: "Accounting" | "Financial";
+        ClassificationPolicyResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            requireToApprove: boolean;
+            requireToPay: boolean;
+        };
+        ClassificationSuggestionResponse: {
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
+            /** @example payable_3fa85f64571742199730000000000000 */
+            basedOnPayableId: string | null;
+        };
+        ClassifyPayableBatchRequest: {
+            payableIds: string[];
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
+        };
+        ClassifyPayableRequest: {
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
         };
         CnpjAddress: {
             cep: string;
@@ -789,6 +1056,15 @@ export interface components {
             /** Format: double */
             openingBalance: number | null;
         };
+        CreateChartAccountRequest: {
+            chartType: components["schemas"]["ChartType"];
+            code: string;
+            name: string;
+            kind: components["schemas"]["AccountKind"];
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            nature: components["schemas"]["AccountNature"];
+        };
         CreateCompanyRequest: {
             legalName: string;
             cnpj: string;
@@ -823,6 +1099,10 @@ export interface components {
             issueDate: string | null;
             installments: components["schemas"]["InstallmentInput"][] | null;
             generate: components["schemas"]["GenerateInput"];
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
         };
         CreateTransactionRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -957,6 +1237,8 @@ export interface components {
         GoogleSignInRequest: {
             idToken: string;
         };
+        /** @enum {string} */
+        ImportStatus: "Completed" | "Failed";
         InstallmentInput: {
             /** Format: date */
             dueDate: string;
@@ -983,6 +1265,12 @@ export interface components {
             token: string;
             user: components["schemas"]["UserSummary"];
         };
+        MatchManuallyRequest: {
+            /** @example installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+        };
+        /** @enum {string} */
+        MatchStatus: "Unmatched" | "Suggested" | "Reconciled" | "Ignored";
         MeResponse: {
             /** @example user_3fa85f64571742199730000000000000 */
             userId: string;
@@ -1058,6 +1346,17 @@ export interface components {
             status: components["schemas"]["PayableStatus"];
             rejectionReason: string | null;
             cancelReason: string | null;
+            approvedBy: string | null;
+            /** Format: date-time */
+            approvedAt: string | null;
+            rejectedBy: string | null;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
+            isClassified: boolean;
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
@@ -1132,9 +1431,40 @@ export interface components {
         RejectTransactionRejectRequest: {
             reason: string | null;
         };
+        Response: {
+            /** Format: int32 */
+            classifiedCount: number;
+        };
         ReversePaymentRequest: {
             reason: string | null;
         };
+        StatementImportResponse: {
+            /** @example statement_import_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            source: components["schemas"]["StatementSource"];
+            fileName: string;
+            /** Format: date */
+            periodStart: string | null;
+            /** Format: date */
+            periodEnd: string | null;
+            /** Format: int32 */
+            transactionCount: number;
+            /** Format: int32 */
+            newCount: number;
+            /** Format: int32 */
+            duplicateCount: number;
+            status: components["schemas"]["ImportStatus"];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        StatementSource: "OfxUpload" | "CsvUpload";
+        /** @enum {string} */
+        TransactionDirection: "Debit" | "Credit";
         TransactionResponse: {
             /** @example transaction_3fa85f64571742199730000000000000 */
             id: string;
@@ -1200,6 +1530,17 @@ export interface components {
             openingBalance: number | null;
             active: boolean;
         };
+        UpdateChartAccountRequest: {
+            name: string;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            nature: components["schemas"]["AccountNature"];
+            isActive: boolean;
+        };
+        UpdateClassificationPolicyRequest: {
+            requireToApprove: boolean;
+            requireToPay: boolean;
+        };
         UpdateCompanyRequest: {
             legalName: string;
             cnpj: string;
@@ -1230,6 +1571,10 @@ export interface components {
             issueDate: string | null;
             installments: components["schemas"]["InstallmentInput"][] | null;
             generate: components["schemas"]["GenerateInput"];
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
         };
         UpdateUnitRequest: {
             name: string;
@@ -2049,6 +2394,7 @@ export interface operations {
                 categoryId?: string;
                 dueFrom?: string;
                 dueTo?: string;
+                classified?: boolean;
                 Page?: number;
                 PageSize?: number;
             };
@@ -2580,6 +2926,114 @@ export interface operations {
             };
         };
     };
+    ClassifyPayable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassifyPayableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ClassifyPayableBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassifyPayableBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ClassificationSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassificationSuggestionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ListBankAccounts: {
         parameters: {
             query?: {
@@ -2697,6 +3151,474 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListChartAccounts: {
+        parameters: {
+            query?: {
+                chartType?: components["schemas"]["ChartType"];
+                kind?: components["schemas"]["AccountKind"];
+                activeOnly?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartAccountResponse"][];
+                };
+            };
+        };
+    };
+    CreateChartAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChartAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateChartAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChartAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteChartAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListStatementImports: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportResponse"][];
+                };
+            };
+        };
+    };
+    ImportStatement: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetClassificationPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassificationPolicyResponse"];
+                };
+            };
+        };
+    };
+    UpdateClassificationPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClassificationPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassificationPolicyResponse"];
+                };
+            };
+        };
+    };
+    ListBankTransactions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+                importId?: string;
+                matchStatus?: components["schemas"]["MatchStatus"];
+                dueFrom?: string;
+                dueTo?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    ConfirmMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    MatchManually: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchManuallyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    IgnoreTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UnmatchTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
             };
             /** @description Not Found */
             404: {

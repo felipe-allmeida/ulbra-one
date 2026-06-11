@@ -37,6 +37,8 @@ public sealed class RegisterPayment : IEndpoint
             .FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
         if (!payable.IsPayable) return Results.Problem(detail: "Only an approved payable can be paid.", statusCode: 400, title: "Payable.NotPayable");
+        if (await ClassificationGate.RequiresButMissingAsync(uow, payable, forPay: true, ct))
+            return Results.Problem(detail: "This payable must be classified before it can be paid.", statusCode: 400, title: "Payable.NotClassified");
 
         var installment = payable.FindInstallment(installmentId.Value);
         if (installment is null) return Results.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.InstallmentNotFound");

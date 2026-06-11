@@ -121,6 +121,282 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                     b.ToTable("bank_accounts", "finance");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.BankStatementImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("bank_account_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by");
+
+                    b.Property<int>("DuplicateCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("duplicate_count");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)")
+                        .HasColumnName("file_name");
+
+                    b.Property<int>("NewCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("new_count");
+
+                    b.Property<DateOnly?>("PeriodEnd")
+                        .HasColumnType("date")
+                        .HasColumnName("period_end");
+
+                    b.Property<DateOnly?>("PeriodStart")
+                        .HasColumnType("date")
+                        .HasColumnName("period_start");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer")
+                        .HasColumnName("source");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int>("TransactionCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("transaction_count");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_statement_imports");
+
+                    b.HasIndex("CompanyId", "BankAccountId")
+                        .HasDatabaseName("ix_statement_imports_company_id_bank_account_id");
+
+                    b.ToTable("statement_imports", "finance");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.BankTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("bank_account_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer")
+                        .HasColumnName("direction");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("external_id");
+
+                    b.Property<Guid>("ImportId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("import_id");
+
+                    b.Property<int>("MatchStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("match_status");
+
+                    b.Property<Guid?>("MatchedPaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matched_payment_id");
+
+                    b.Property<Guid?>("SuggestedInstallmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("suggested_installment_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_bank_transactions");
+
+                    b.HasIndex("Date")
+                        .HasDatabaseName("ix_bank_transactions_date");
+
+                    b.HasIndex("ImportId")
+                        .HasDatabaseName("ix_bank_transactions_import_id");
+
+                    b.HasIndex("BankAccountId", "ExternalId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_bank_transactions_bank_account_id_external_id");
+
+                    b.HasIndex("CompanyId", "MatchStatus")
+                        .HasDatabaseName("ix_bank_transactions_company_id_match_status");
+
+                    b.ToTable("bank_transactions", "finance");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ChartAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("ChartType")
+                        .HasColumnType("integer")
+                        .HasColumnName("chart_type");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<int?>("Nature")
+                        .HasColumnType("integer")
+                        .HasColumnName("nature");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_chart_accounts");
+
+                    b.HasIndex("ChartType", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_chart_accounts_chart_type_code")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.ToTable("chart_accounts", "finance");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ClassificationPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("RequireToApprove")
+                        .HasColumnType("boolean")
+                        .HasColumnName("require_to_approve");
+
+                    b.Property<bool>("RequireToPay")
+                        .HasColumnType("boolean")
+                        .HasColumnName("require_to_pay");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_classification_policies");
+
+                    b.HasIndex("CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_classification_policies_company_id");
+
+                    b.ToTable("classification_policies", "finance");
+                });
+
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ExpenseCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -228,6 +504,10 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("AccountingAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("accounting_account_id");
+
                     b.Property<DateTimeOffset?>("ApprovedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("approved_at");
@@ -284,6 +564,10 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)")
                         .HasColumnName("document_number");
+
+                    b.Property<Guid?>("FinancialAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("financial_account_id");
 
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")

@@ -26,7 +26,11 @@ public class Payable : IAuditable, ISoftDeletable
     public DateTimeOffset? ApprovedAt { get; private set; }
     public string? RejectedBy { get; private set; }
     public DateTimeOffset? RejectedAt { get; private set; }
+    public Guid? AccountingAccountId { get; private set; }
+    public Guid? FinancialAccountId { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
+
+    public bool IsClassified => AccountingAccountId is not null && FinancialAccountId is not null;
 
     public DateTimeOffset CreatedAt { get; private set; }
     public string CreatedBy { get; private set; } = string.Empty;
@@ -131,6 +135,13 @@ public class Payable : IAuditable, ISoftDeletable
     }
 
     public void AddAttachment(PayableAttachment attachment) => _attachments.Add(attachment);
+
+    /// <summary>Sets (or clears) the accounting + financial chart accounts that classify this payable.</summary>
+    public void Classify(Guid? accountingAccountId, Guid? financialAccountId)
+    {
+        AccountingAccountId = accountingAccountId;
+        FinancialAccountId = financialAccountId;
+    }
 
     public Installment? FindInstallment(Guid installmentId) =>
         _installments.FirstOrDefault(i => i.Id == installmentId);
