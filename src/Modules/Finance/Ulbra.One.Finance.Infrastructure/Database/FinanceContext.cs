@@ -153,7 +153,7 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasKey(x => x.Id);
             e.Property(x => x.Code).HasMaxLength(40).IsRequired();
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
-            e.HasIndex(x => new { x.ChartType, x.Code }).IsUnique();
+            e.HasIndex(x => new { x.ChartType, x.Code }).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
         });
 

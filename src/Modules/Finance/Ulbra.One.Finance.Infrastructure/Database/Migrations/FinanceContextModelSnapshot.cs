@@ -344,7 +344,8 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
 
                     b.HasIndex("ChartType", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_chart_accounts_chart_type_code");
+                        .HasDatabaseName("ix_chart_accounts_chart_type_code")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("chart_accounts", "finance");
                 });
