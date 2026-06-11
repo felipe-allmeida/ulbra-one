@@ -10,7 +10,7 @@ public sealed record PayableResponse(
     ExpenseCategoryId? CategoryId, decimal TotalAmount, PayableStatus Status, string? RejectionReason,
     string? CancelReason, string? ApprovedBy, DateTimeOffset? ApprovedAt, string? RejectedBy,
     DateTimeOffset? RejectedAt, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
-    DateTimeOffset CreatedAt, IReadOnlyList<InstallmentResponse> Installments,
+    bool IsClassified, DateTimeOffset CreatedAt, IReadOnlyList<InstallmentResponse> Installments,
     IReadOnlyList<PayableAttachmentResponse> Attachments)
 {
     public static PayableResponse From(Payable p) => new(
@@ -20,6 +20,7 @@ public sealed record PayableResponse(
         p.CancelReason, p.ApprovedBy, p.ApprovedAt, p.RejectedBy, p.RejectedAt,
         p.AccountingAccountId is { } a ? new ChartAccountId(a) : null,
         p.FinancialAccountId is { } f ? new ChartAccountId(f) : null,
+        p.IsClassified,
         p.CreatedAt,
         p.Installments.OrderBy(i => i.Sequence).Select(InstallmentResponse.From).ToList(),
         p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList());

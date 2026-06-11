@@ -24,6 +24,8 @@ public sealed class ApprovePayable : IEndpoint
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (await ClassificationGate.RequiresButMissingAsync(uow, p, forPay: false, ct))
+            return Results.Problem(detail: "This payable must be classified before it can be approved.", statusCode: 400, title: "Payable.NotClassified");
         try { p.Approve(user.UserId, clock.GetUtcNow()); }
         catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 409, title: "Payable.InvalidState"); }
         await uow.SaveChangesAsync(ct);

@@ -22,7 +22,7 @@ public sealed class ListPayables : IEndpoint
     private static async Task<IResult> Handle(
         [FromKeyedServices("finance")] IUnitOfWork uow,
         CompanyId? companyId, PayableStatus? status, VendorId? vendorId, CostCenterId? costCenterId,
-        ExpenseCategoryId? categoryId, DateOnly? dueFrom, DateOnly? dueTo,
+        ExpenseCategoryId? categoryId, DateOnly? dueFrom, DateOnly? dueTo, bool? classified,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
         var payables = uow.ReadSet<Payable>();
@@ -31,6 +31,8 @@ public sealed class ListPayables : IEndpoint
         if (vendorId is { } vid) payables = payables.Where(p => p.VendorId == vid.Value);
         if (costCenterId is { } ccid) payables = payables.Where(p => p.CostCenterId == ccid.Value);
         if (categoryId is { } catid) payables = payables.Where(p => p.CategoryId == catid.Value);
+        if (classified is { } cl)
+            payables = payables.Where(p => (p.AccountingAccountId != null && p.FinancialAccountId != null) == cl);
 
         // One row per installment (the operational Contas a Pagar list). Project to primitive fields
         // FIRST so the query and pagination translate to SQL, then wrap Guids into typed IDs in memory.

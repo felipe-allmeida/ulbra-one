@@ -32,6 +32,8 @@ public sealed class CreatePayable : IEndpoint
         public DateOnly? IssueDate { get; set; }
         public List<InstallmentInput>? Installments { get; set; }
         public GenerateInput? Generate { get; set; }
+        public ChartAccountId? AccountingAccountId { get; set; }
+        public ChartAccountId? FinancialAccountId { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -82,6 +84,14 @@ public sealed class CreatePayable : IEndpoint
 
         var payable = new Payable(companyId, req.Origin, vendor.Id, vendor.Name, req.DocumentNumber, req.IssueDate,
             req.Description, cc.Id, req.CategoryId?.Value, installments);
+
+        if (req.AccountingAccountId is not null || req.FinancialAccountId is not null)
+        {
+            var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
+            if (err is not null) return Results.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+            payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+        }
+
         payable.ApplyAutoApproval(cc.AutoApprovalLimit, clock.GetUtcNow());
 
         await uow.AddAsync(payable, ct);

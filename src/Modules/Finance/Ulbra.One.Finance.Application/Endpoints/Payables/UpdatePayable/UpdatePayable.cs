@@ -27,6 +27,8 @@ public sealed class UpdatePayable : IEndpoint
         public DateOnly? IssueDate { get; set; }
         public List<CPCreatePayable.InstallmentInput>? Installments { get; set; }
         public CPCreatePayable.GenerateInput? Generate { get; set; }
+        public ChartAccountId? AccountingAccountId { get; set; }
+        public ChartAccountId? FinancialAccountId { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -72,6 +74,13 @@ public sealed class UpdatePayable : IEndpoint
         var oldInstallments = p.Installments.ToList();
         try { p.Update(vendor.Id, vendor.Name, req.DocumentNumber, req.IssueDate, req.Description, cc.Id, req.CategoryId?.Value, installments); }
         catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 409, title: "Payable.NotEditable"); }
+
+        if (req.AccountingAccountId is not null || req.FinancialAccountId is not null)
+        {
+            var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
+            if (err is not null) return Results.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+            p.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+        }
         // EF does not auto-track changes to the private List<T> backing field, so we manage the
         // installment set explicitly: delete old rows and register new ones.
         uow.RemoveRange(oldInstallments);

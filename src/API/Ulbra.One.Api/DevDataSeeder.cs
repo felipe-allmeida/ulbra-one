@@ -205,6 +205,28 @@ public static class DevDataSeeder
 
         await finance.SaveChangesAsync(ct);
 
+        // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
+        // Look up seeded analytical accounts by code; classify energy payables (accounting 4.1.01 + financial 76.100)
+        // and the cleaning/services payable (4.1.03 + 76.300). Idempotent: only classify when not yet classified.
+        var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.01", ct);
+        var finEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.100", ct);
+        var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.03", ct);
+        var finServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.300", ct);
+
+        if (pEnergiaGravatai.AccountingAccountId == null)
+            pEnergiaGravatai.Classify(accEnergia.Id, finEnergia.Id);
+        if (pLimpeza.AccountingAccountId == null)
+            pLimpeza.Classify(accServicos.Id, finServicos.Id);
+        await finance.SaveChangesAsync(ct);
+
+        // ---------- Classification policy (per company, both flags OFF so existing flows are unaffected) ----------
+        foreach (var company in new[] { celsp, ulbra })
+        {
+            if (!await finance.ClassificationPolicies.AnyAsync(p => p.CompanyId == company.Id, ct))
+                await finance.ClassificationPolicies.AddAsync(new ClassificationPolicy(company.Id), ct);
+        }
+        await finance.SaveChangesAsync(ct);
+
         // ---------- Payments (baixa) — show settled & partially-paid states in the UI ----------
         if (!await finance.Payments.AnyAsync(ct))
         {

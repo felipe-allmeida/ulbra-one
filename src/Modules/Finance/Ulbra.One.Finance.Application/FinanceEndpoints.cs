@@ -16,12 +16,17 @@ using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.CreateChartAccount;
 using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.DeleteChartAccount;
 using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.ListChartAccounts;
 using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.UpdateChartAccount;
+using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.GetClassificationPolicy;
+using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.UpdateClassificationPolicy;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassificationSuggestion;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
@@ -76,6 +81,9 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ReversePayment>();
         payables.MapEndpoint<UploadPaymentProof>();
         payables.MapEndpoint<DownloadPaymentProof>();
+        payables.MapEndpoint<ClassifyPayable>();
+        payables.MapEndpoint<ClassifyPayableBatch>();
+        payables.MapEndpoint<ClassificationSuggestion>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");
         bankAccounts.MapEndpoint<ListBankAccounts>();
@@ -92,6 +100,10 @@ public static class FinanceEndpoints
         var statementImports = builder.MapGroup("/statement-imports");
         statementImports.MapEndpoint<ImportStatement>();
         statementImports.MapEndpoint<ListStatementImports>();
+
+        var classificationPolicies = builder.MapGroup("/classification-policies");
+        classificationPolicies.MapEndpoint<GetClassificationPolicy>();
+        classificationPolicies.MapEndpoint<UpdateClassificationPolicy>();
 
         var bankTransactions = builder.MapGroup("/bank-transactions");
         bankTransactions.MapEndpoint<ListBankTransactions>();
