@@ -194,6 +194,41 @@ export const paymentSchema = z.object({
 });
 export type PaymentValues = z.infer<typeof paymentSchema>;
 
+export const receivableSchema = z
+  .object({
+    payerId: z.string().min(1, { message: 'validation.customerRequired' }),
+    costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
+    description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
+    documentNumber: z.string(),
+    issueDate: z.string(),
+    mode: z.enum(['single', 'installments']),
+    totalAmount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+    installmentCount: z.string(),
+    firstDueDate: z.string().min(1, { message: 'validation.dueDateRequired' }),
+    intervalMonths: z.string(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.mode === 'installments') {
+      const n = Number(val.installmentCount);
+      if (!Number.isInteger(n) || n < 2) {
+        ctx.addIssue({ code: 'custom', message: 'validation.installmentCountInvalid', path: ['installmentCount'] });
+      }
+    }
+  });
+export type ReceivableValues = z.infer<typeof receivableSchema>;
+
+export const receiptSchema = z.object({
+  receiptDate: z.string().min(1, { message: 'validation.receiptDateRequired' }),
+  amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+  bankAccountId: z.string().min(1, { message: 'validation.bankAccountRequired' }),
+  method: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']),
+  interest: nonNegativeNumberString,
+  fine: nonNegativeNumberString,
+  discount: nonNegativeNumberString,
+  notes: z.string(),
+});
+export type ReceiptValues = z.infer<typeof receiptSchema>;
+
 export const companySchema = z.object({
   legalName: z.string().trim().min(1, { message: 'validation.nameRequired' }),
   cnpj: z.string().trim().min(1, { message: 'validation.cnpjRequired' }),

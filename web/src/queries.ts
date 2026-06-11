@@ -22,7 +22,12 @@ import {
   type PayableInput,
   type PayableStatus,
   type Payment,
+  type Receipt,
+  type Receivable,
+  type ReceivableInput,
+  type ReceivableStatus,
   type RegisterPaymentInput,
+  type RegisterReceiptInput,
   type Transaction,
   type TransactionStatus,
   type TransactionType,
@@ -45,6 +50,8 @@ export const queryKeys = {
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
+  receivables: (params: ReceivablesParams) => ['receivables', params] as const,
+  receivable: (id: string) => ['receivable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
 };
@@ -57,6 +64,18 @@ export interface PayablesParams {
   categoryId?: string;
   dueFrom?: string;
   dueTo?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ReceivablesParams {
+  companyId?: string;
+  status?: ReceivableStatus;
+  payerId?: string;
+  costCenterId?: string;
+  dueFrom?: string;
+  dueTo?: string;
+  overdueOnly?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -161,6 +180,23 @@ export function usePayable(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payable(id ?? ''),
     queryFn: () => api.getPayable(id!),
+    enabled: !!id,
+  });
+}
+
+export function useReceivables(params: ReceivablesParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.receivables(params),
+    queryFn: () => api.listReceivables(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useReceivable(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.receivable(id ?? ''),
+    queryFn: () => api.getReceivable(id!),
     enabled: !!id,
   });
 }
@@ -532,6 +568,72 @@ export function useUploadPaymentProof(
   return useInvalidatingMutation(
     ({ payableId, paymentId, file }) => api.uploadPaymentProof(payableId, paymentId, file),
     (qc, _data, vars) => invalidatePayablePayment(qc, vars.payableId),
+    options,
+  );
+}
+
+/* ---------- Receivables (Contas a Receber) ---------- */
+/** Invalidates the receivables lists + the single receivable cache after a state change. */
+function invalidateReceivable(qc: ReturnType<typeof useQueryClient>, data: Receivable) {
+  void qc.invalidateQueries({ queryKey: ['receivables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.receivable(data.id) });
+}
+
+export function useCreateReceivable(options?: UseMutationOptions<Receivable, unknown, ReceivableInput>) {
+  return useInvalidatingMutation(
+    (body) => api.createReceivable(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['receivables'] }),
+    options,
+  );
+}
+
+export function useUpdateReceivable(
+  options?: UseMutationOptions<Receivable, unknown, { id: string; body: Omit<ReceivableInput, 'origin'> }>,
+) {
+  return useInvalidatingMutation(({ id, body }) => api.updateReceivable(id, body), invalidateReceivable, options);
+}
+
+export function useCancelReceivable(options?: UseMutationOptions<Receivable, unknown, { id: string; reason: string }>) {
+  return useInvalidatingMutation(({ id, reason }) => api.cancelReceivable(id, reason), invalidateReceivable, options);
+}
+
+/* ---------- Receipts (baixa de entrada) ---------- */
+/** Invalidates the receivables lists + the single receivable cache after a receipt change. */
+function invalidateReceivableReceipt(qc: ReturnType<typeof useQueryClient>, receivableId: string) {
+  void qc.invalidateQueries({ queryKey: ['receivables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.receivable(receivableId) });
+}
+
+export function useRegisterReceipt(
+  options?: UseMutationOptions<
+    Receivable,
+    unknown,
+    { receivableId: string; installmentId: string; body: RegisterReceiptInput }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, installmentId, body }) => api.registerReceipt(receivableId, installmentId, body),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
+    options,
+  );
+}
+
+export function useReverseReceipt(
+  options?: UseMutationOptions<Receivable, unknown, { receivableId: string; receiptId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, receiptId, reason }) => api.reverseReceipt(receivableId, receiptId, reason),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
+    options,
+  );
+}
+
+export function useUploadReceiptProof(
+  options?: UseMutationOptions<Receipt, unknown, { receivableId: string; receiptId: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, receiptId, file }) => api.uploadReceiptProof(receivableId, receiptId, file),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
     options,
   );
 }
