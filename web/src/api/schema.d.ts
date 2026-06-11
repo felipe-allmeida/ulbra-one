@@ -452,6 +452,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/statement-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListStatementImports"];
+        put?: never;
+        post: operations["ImportStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListBankTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConfirmMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MatchManually"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IgnoreTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UnmatchTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -732,6 +828,36 @@ export interface components {
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
+        BankTransactionResponse: {
+            /** @example bank_txn_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            amount: number;
+            direction: components["schemas"]["TransactionDirection"];
+            description: string;
+            matchStatus: components["schemas"]["MatchStatus"];
+            /** @example installment_3fa85f64571742199730000000000000 */
+            suggestedInstallmentId: string | null;
+            /** @example payment_3fa85f64571742199730000000000000 */
+            matchedPaymentId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        BankTransactionResponsePaginatedResponse: {
+            items: components["schemas"]["BankTransactionResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         CancelPayableCancelRequest: {
             reason: string | null;
         };
@@ -957,6 +1083,8 @@ export interface components {
         GoogleSignInRequest: {
             idToken: string;
         };
+        /** @enum {string} */
+        ImportStatus: "Completed" | "Failed";
         InstallmentInput: {
             /** Format: date */
             dueDate: string;
@@ -983,6 +1111,12 @@ export interface components {
             token: string;
             user: components["schemas"]["UserSummary"];
         };
+        MatchManuallyRequest: {
+            /** @example installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+        };
+        /** @enum {string} */
+        MatchStatus: "Unmatched" | "Suggested" | "Reconciled" | "Ignored";
         MeResponse: {
             /** @example user_3fa85f64571742199730000000000000 */
             userId: string;
@@ -1058,6 +1192,12 @@ export interface components {
             status: components["schemas"]["PayableStatus"];
             rejectionReason: string | null;
             cancelReason: string | null;
+            approvedBy: string | null;
+            /** Format: date-time */
+            approvedAt: string | null;
+            rejectedBy: string | null;
+            /** Format: date-time */
+            rejectedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
@@ -1135,6 +1275,33 @@ export interface components {
         ReversePaymentRequest: {
             reason: string | null;
         };
+        StatementImportResponse: {
+            /** @example statement_import_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            source: components["schemas"]["StatementSource"];
+            fileName: string;
+            /** Format: date */
+            periodStart: string | null;
+            /** Format: date */
+            periodEnd: string | null;
+            /** Format: int32 */
+            transactionCount: number;
+            /** Format: int32 */
+            newCount: number;
+            /** Format: int32 */
+            duplicateCount: number;
+            status: components["schemas"]["ImportStatus"];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        StatementSource: "OfxUpload" | "CsvUpload";
+        /** @enum {string} */
+        TransactionDirection: "Debit" | "Credit";
         TransactionResponse: {
             /** @example transaction_3fa85f64571742199730000000000000 */
             id: string;
@@ -2697,6 +2864,278 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListStatementImports: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportResponse"][];
+                };
+            };
+        };
+    };
+    ImportStatement: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListBankTransactions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+                importId?: string;
+                matchStatus?: components["schemas"]["MatchStatus"];
+                dueFrom?: string;
+                dueTo?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    ConfirmMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    MatchManually: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchManuallyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    IgnoreTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UnmatchTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionResponse"];
+                };
             };
             /** @description Not Found */
             404: {

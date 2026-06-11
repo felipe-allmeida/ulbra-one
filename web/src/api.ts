@@ -103,6 +103,13 @@ export type Payment = Schemas['PaymentResponse'];
 export type BankAccountType = Schemas['BankAccountType'];
 export type PaymentMethod = Schemas['PaymentMethod'];
 
+// ---------- Conciliação OFX (statement imports + bank transactions) ----------
+export type StatementImport = Schemas['StatementImportResponse'];
+export type BankTransaction = Schemas['BankTransactionResponse'];
+// Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
+export type MatchStatus = Schemas['MatchStatus'];
+export type TransactionDirection = Schemas['TransactionDirection'];
+
 /** Request body for creating a bank account. */
 export interface BankAccountInput {
   companyId: string;
@@ -346,6 +353,57 @@ export const api = {
   updateBankAccount: (id: string, body: BankAccountUpdateInput) =>
     request<BankAccount>(`/bank-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteBankAccount: (id: string) => request<void>(`/bank-accounts/${id}`, { method: 'DELETE' }),
+
+  // ---------- Conciliação OFX (statement imports + bank transactions) ----------
+  /** Imports an OFX statement via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  importStatement: async (bankAccountId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/statement-imports?bankAccountId=${bankAccountId}`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<StatementImport>;
+  },
+  listStatementImports: (companyId?: string, bankAccountId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    if (bankAccountId) q.set('bankAccountId', bankAccountId);
+    return request<StatementImport[]>(`/statement-imports?${q}`);
+  },
+  listBankTransactions: (params: {
+    companyId?: string;
+    bankAccountId?: string;
+    importId?: string;
+    matchStatus?: MatchStatus;
+    dueFrom?: string;
+    dueTo?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.bankAccountId) q.set('bankAccountId', params.bankAccountId);
+    if (params.importId) q.set('importId', params.importId);
+    if (params.matchStatus) q.set('matchStatus', params.matchStatus);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<BankTransaction>>(`/bank-transactions?${q}`);
+  },
+  confirmMatch: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/confirm`, { method: 'POST' }),
+  matchTransaction: (id: string, installmentId: string) =>
+    request<BankTransaction>(`/bank-transactions/${id}/match`, {
+      method: 'POST',
+      body: JSON.stringify({ installmentId }),
+    }),
+  ignoreTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/ignore`, { method: 'POST' }),
+  unmatchTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/unmatch`, { method: 'POST' }),
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>

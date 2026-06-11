@@ -10,6 +10,7 @@ import {
   type BankAccount,
   type BankAccountInput,
   type BankAccountUpdateInput,
+  type BankTransaction,
   type Company,
   type CostCenter,
   type Customer,
@@ -17,12 +18,14 @@ import {
   type Employee,
   type EmployeeInput,
   type ExpenseCategory,
+  type MatchStatus,
   type Payable,
   type PayableAttachment,
   type PayableInput,
   type PayableStatus,
   type Payment,
   type RegisterPaymentInput,
+  type StatementImport,
   type Transaction,
   type TransactionStatus,
   type TransactionType,
@@ -47,7 +50,21 @@ export const queryKeys = {
   payable: (id: string) => ['payable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
+  statementImports: (companyId?: string, bankAccountId?: string) =>
+    ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
+  bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
 };
+
+export interface BankTransactionsParams {
+  companyId?: string;
+  bankAccountId?: string;
+  importId?: string;
+  matchStatus?: MatchStatus;
+  dueFrom?: string;
+  dueTo?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 export interface PayablesParams {
   companyId?: string;
@@ -177,6 +194,22 @@ export function useBankAccounts(companyId: string, includeInactive = false) {
     queryKey: queryKeys.bankAccounts(companyId, includeInactive),
     queryFn: () => api.listBankAccounts(companyId, includeInactive),
     enabled: !!companyId,
+  });
+}
+
+export function useStatementImports(companyId?: string, bankAccountId?: string) {
+  return useQuery({
+    queryKey: queryKeys.statementImports(companyId, bankAccountId),
+    queryFn: () => api.listStatementImports(companyId, bankAccountId),
+  });
+}
+
+export function useBankTransactions(params: BankTransactionsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.bankTransactions(params),
+    queryFn: () => api.listBankTransactions(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -532,6 +565,62 @@ export function useUploadPaymentProof(
   return useInvalidatingMutation(
     ({ payableId, paymentId, file }) => api.uploadPaymentProof(payableId, paymentId, file),
     (qc, _data, vars) => invalidatePayablePayment(qc, vars.payableId),
+    options,
+  );
+}
+
+/* ---------- Conciliação OFX (statement imports + bank transactions) ---------- */
+/** Invalidates the bank-transaction lists + the statement-import lists after a match/baixa change.
+ * Also invalidates payables, since confirming/matching a transaction registers a baixa. */
+function invalidateConciliation(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+  void qc.invalidateQueries({ queryKey: ['statementImports'] });
+  void qc.invalidateQueries({ queryKey: ['payables'] });
+}
+
+export function useImportStatement(
+  options?: UseMutationOptions<StatementImport, unknown, { bankAccountId: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ bankAccountId, file }) => api.importStatement(bankAccountId, file),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+      void qc.invalidateQueries({ queryKey: ['statementImports'] });
+    },
+    options,
+  );
+}
+
+export function useConfirmMatch(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.confirmMatch(id),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useMatchTransaction(
+  options?: UseMutationOptions<BankTransaction, unknown, { id: string; installmentId: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, installmentId }) => api.matchTransaction(id, installmentId),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useIgnoreTransaction(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.ignoreTransaction(id),
+    (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+export function useUnmatchTransaction(options?: UseMutationOptions<BankTransaction, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.unmatchTransaction(id),
+    (qc) => invalidateConciliation(qc),
     options,
   );
 }
