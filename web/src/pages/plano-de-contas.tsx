@@ -73,6 +73,8 @@ function ChartAccountForm({
     }
   };
 
+  const isEditing = initial !== undefined;
+
   return (
     <form
       onSubmit={(e) => {
@@ -83,18 +85,26 @@ function ChartAccountForm({
     >
       <div className='edit-grid'>
         <Field label={t('chartAccounts.fields.code')}>
-          <Input
-            autoFocus
-            value={code}
-            placeholder={t('chartAccounts.placeholders.code')}
-            onChange={(e) => setCode(e.target.value)}
-          />
+          {isEditing ? (
+            <Input value={code} disabled />
+          ) : (
+            <Input
+              autoFocus
+              value={code}
+              placeholder={t('chartAccounts.placeholders.code')}
+              onChange={(e) => setCode(e.target.value)}
+            />
+          )}
         </Field>
         <Field label={t('chartAccounts.fields.kind')}>
-          <Select value={kind} onChange={(e) => setKind(e.target.value as AccountKind)}>
-            <option value='Synthetic'>{t('chartAccounts.kinds.Synthetic')}</option>
-            <option value='Analytical'>{t('chartAccounts.kinds.Analytical')}</option>
-          </Select>
+          {isEditing ? (
+            <Input value={t(`chartAccounts.kinds.${kind}`)} disabled />
+          ) : (
+            <Select value={kind} onChange={(e) => setKind(e.target.value as AccountKind)}>
+              <option value='Synthetic'>{t('chartAccounts.kinds.Synthetic')}</option>
+              <option value='Analytical'>{t('chartAccounts.kinds.Analytical')}</option>
+            </Select>
+          )}
         </Field>
       </div>
       <Field label={t('chartAccounts.fields.name')}>

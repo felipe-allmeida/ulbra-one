@@ -403,6 +403,7 @@ const ptBR = {
       code: 'ex.: 1.1.01',
       name: 'ex.: Caixa',
     },
+    immutableAfterCreate: 'Não pode ser alterado após a criação',
     deleteTitle: 'Excluir conta',
     deleteMessage: 'Tem certeza que deseja excluir "{{name}}"?',
     empty: {
