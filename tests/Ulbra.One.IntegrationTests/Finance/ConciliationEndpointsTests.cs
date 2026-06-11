@@ -160,4 +160,57 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var credit = Assert.Single(txns, t => t.Direction == TransactionDirection.Credit);
         Assert.Equal(MatchStatus.Unmatched, credit.MatchStatus);
     }
+
+    [Fact]
+    public async Task ListStatementImports_FiltersByBankAccount_ReturnsImports()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+
+        // Import once so there is at least one record.
+        using var content = OfxFile();
+        var importRes = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, importRes.StatusCode);
+
+        // GET /statement-imports?bankAccountId=…
+        var listRes = await client.GetAsync($"/api/statement-imports?bankAccountId={bankId}");
+        Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
+        var body = await ReadJson(listRes);
+        Assert.Equal(JsonValueKind.Array, body.ValueKind);
+        Assert.True(body.GetArrayLength() >= 1, "Expected at least one statement import.");
+        Assert.All(body.EnumerateArray(), item =>
+            Assert.Equal(bankId, item.GetProperty("bankAccountId").GetString()));
+    }
+
+    [Fact]
+    public async Task ListBankTransactions_FiltersByMatchStatus_ReturnsPaginatedResults()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+
+        using var content = OfxFile();
+        var importRes = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, importRes.StatusCode);
+
+        // Suggested debit
+        var suggestedRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Suggested");
+        Assert.Equal(HttpStatusCode.OK, suggestedRes.StatusCode);
+        var suggestedPage = await ReadJson(suggestedRes);
+        Assert.Equal(1, suggestedPage.GetProperty("total").GetInt32());
+        var suggestedItems = suggestedPage.GetProperty("items");
+        Assert.Equal(1, suggestedItems.GetArrayLength());
+
+        // Unmatched credit
+        var unmatchedRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Unmatched");
+        Assert.Equal(HttpStatusCode.OK, unmatchedRes.StatusCode);
+        var unmatchedPage = await ReadJson(unmatchedRes);
+        Assert.Equal(1, unmatchedPage.GetProperty("total").GetInt32());
+        var unmatchedItems = unmatchedPage.GetProperty("items");
+        Assert.Equal(1, unmatchedItems.GetArrayLength());
+    }
 }

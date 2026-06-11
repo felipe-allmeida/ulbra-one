@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Infrastructure.Extensions;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ImportStatement;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListBankTransactions;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListStatementImports;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.DeleteBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.ListBankAccounts;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.UpdateBankAccount;
@@ -75,6 +77,10 @@ public static class FinanceEndpoints
 
         var statementImports = builder.MapGroup("/statement-imports");
         statementImports.MapEndpoint<ImportStatement>();
+        statementImports.MapEndpoint<ListStatementImports>();
+
+        var bankTransactions = builder.MapGroup("/bank-transactions");
+        bankTransactions.MapEndpoint<ListBankTransactions>();
 
         return builder;
     }
