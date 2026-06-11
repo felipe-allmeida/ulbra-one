@@ -1009,6 +1009,13 @@
             }
           },
           {
+            "name": "classified",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -1754,6 +1761,146 @@
         }
       }
     },
+    "/api/payables/{id}/classify": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ClassifyPayable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifyPayableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/classify-batch": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ClassifyPayableBatch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifyPayableBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/classification-suggestion": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ClassificationSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationSuggestionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bank-accounts": {
       "get": {
         "tags": [
@@ -1932,6 +2079,201 @@
         }
       }
     },
+    "/api/chart-accounts": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ListChartAccounts",
+        "parameters": [
+          {
+            "name": "chartType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ChartType"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AccountKind"
+            }
+          },
+          {
+            "name": "activeOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChartAccountResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CreateChartAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChartAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chart-accounts/{id}": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdateChartAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChartAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DeleteChartAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/statement-imports": {
       "post": {
         "tags": [
@@ -2025,6 +2367,74 @@
                   "items": {
                     "$ref": "#/components/schemas/StatementImportResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classification-policies/{companyId}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetClassificationPolicy",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdateClassificationPolicy",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassificationPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationPolicyResponse"
                 }
               }
             }
@@ -3330,6 +3740,20 @@
   },
   "components": {
     "schemas": {
+      "AccountKind": {
+        "enum": [
+          "Synthetic",
+          "Analytical"
+        ],
+        "type": "string"
+      },
+      "AccountNature": {
+        "enum": [
+          "Debit",
+          "Credit"
+        ],
+        "type": "string"
+      },
       "AddressRequest": {
         "required": [
           "cep",
@@ -3606,6 +4030,151 @@
         },
         "additionalProperties": false
       },
+      "ChartAccountResponse": {
+        "required": [
+          "id",
+          "chartType",
+          "code",
+          "name",
+          "parentId",
+          "kind",
+          "nature",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "chartType": {
+            "$ref": "#/components/schemas/ChartType"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AccountKind"
+          },
+          "nature": {
+            "$ref": "#/components/schemas/AccountNature"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChartType": {
+        "enum": [
+          "Accounting",
+          "Financial"
+        ],
+        "type": "string"
+      },
+      "ClassificationPolicyResponse": {
+        "required": [
+          "companyId",
+          "requireToApprove",
+          "requireToPay"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "requireToApprove": {
+            "type": "boolean"
+          },
+          "requireToPay": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassificationSuggestionResponse": {
+        "required": [
+          "accountingAccountId",
+          "financialAccountId",
+          "basedOnPayableId"
+        ],
+        "type": "object",
+        "properties": {
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "basedOnPayableId": {
+            "type": "string",
+            "nullable": true,
+            "example": "payable_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassifyPayableBatchRequest": {
+        "required": [
+          "payableIds",
+          "accountingAccountId",
+          "financialAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "payableIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "payable_3fa85f64571742199730000000000000"
+            }
+          },
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassifyPayableRequest": {
+        "required": [
+          "accountingAccountId",
+          "financialAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
       "CnpjAddress": {
         "required": [
           "cep",
@@ -3779,6 +4348,40 @@
         },
         "additionalProperties": false
       },
+      "CreateChartAccountRequest": {
+        "required": [
+          "chartType",
+          "code",
+          "name",
+          "kind",
+          "parentId",
+          "nature"
+        ],
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "$ref": "#/components/schemas/ChartType"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AccountKind"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "nature": {
+            "$ref": "#/components/schemas/AccountNature"
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateCompanyRequest": {
         "required": [
           "legalName",
@@ -3857,7 +4460,9 @@
           "documentNumber",
           "issueDate",
           "installments",
-          "generate"
+          "generate",
+          "accountingAccountId",
+          "financialAccountId"
         ],
         "type": "object",
         "properties": {
@@ -3902,6 +4507,16 @@
           },
           "generate": {
             "$ref": "#/components/schemas/GenerateInput"
+          },
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
@@ -4664,6 +5279,9 @@
           "approvedAt",
           "rejectedBy",
           "rejectedAt",
+          "accountingAccountId",
+          "financialAccountId",
+          "isClassified",
           "createdAt",
           "installments",
           "attachments"
@@ -4741,6 +5359,19 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "isClassified": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -4988,6 +5619,19 @@
           "reason": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Response": {
+        "required": [
+          "classifiedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "classifiedCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -5301,6 +5945,48 @@
         },
         "additionalProperties": false
       },
+      "UpdateChartAccountRequest": {
+        "required": [
+          "name",
+          "parentId",
+          "nature",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "nature": {
+            "$ref": "#/components/schemas/AccountNature"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateClassificationPolicyRequest": {
+        "required": [
+          "requireToApprove",
+          "requireToPay"
+        ],
+        "type": "object",
+        "properties": {
+          "requireToApprove": {
+            "type": "boolean"
+          },
+          "requireToPay": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateCompanyRequest": {
         "required": [
           "legalName",
@@ -5376,7 +6062,9 @@
           "documentNumber",
           "issueDate",
           "installments",
-          "generate"
+          "generate",
+          "accountingAccountId",
+          "financialAccountId"
         ],
         "type": "object",
         "properties": {
@@ -5414,6 +6102,16 @@
           },
           "generate": {
             "$ref": "#/components/schemas/GenerateInput"
+          },
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false

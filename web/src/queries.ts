@@ -7,10 +7,14 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
+  type AccountKind,
   type BankAccount,
   type BankAccountInput,
   type BankAccountUpdateInput,
   type BankTransaction,
+  type ChartAccount,
+  type ChartType,
+  type ClassificationPolicy,
   type Company,
   type CostCenter,
   type Customer,
@@ -53,6 +57,8 @@ export const queryKeys = {
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
   bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
+  chartAccounts: (params: ChartAccountsParams) => ['chartAccounts', params] as const,
+  classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
 };
 
 export interface BankTransactionsParams {
@@ -85,6 +91,12 @@ export interface TransactionsParams {
   costCenterId?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface ChartAccountsParams {
+  chartType?: ChartType;
+  kind?: AccountKind;
+  activeOnly?: boolean;
 }
 
 /* ===================== Queries ===================== */
@@ -621,6 +633,109 @@ export function useUnmatchTransaction(options?: UseMutationOptions<BankTransacti
   return useInvalidatingMutation(
     ({ id }) => api.unmatchTransaction(id),
     (qc) => invalidateConciliation(qc),
+    options,
+  );
+}
+
+/* ---------- Chart of Accounts (Plano de Contas) ---------- */
+export function useChartAccounts(params: ChartAccountsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.chartAccounts(params),
+    queryFn: () => api.listChartAccounts(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useCreateChartAccount(
+  options?: UseMutationOptions<ChartAccount, unknown, Parameters<typeof api.createChartAccount>[0]>,
+) {
+  return useInvalidatingMutation(
+    (body) => api.createChartAccount(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
+export function useUpdateChartAccount(
+  options?: UseMutationOptions<
+    ChartAccount,
+    unknown,
+    { id: string; body: Parameters<typeof api.updateChartAccount>[1] }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.updateChartAccount(id, body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
+export function useDeleteChartAccount(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteChartAccount(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
+/* ---------- Classification ---------- */
+export function useClassifyPayable(
+  options?: UseMutationOptions<
+    Payable,
+    unknown,
+    { id: string; body: { accountingAccountId?: string | null; financialAccountId?: string | null } }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.classifyPayable(id, body),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
+    },
+    options,
+  );
+}
+
+export function useClassifyBatch(
+  options?: UseMutationOptions<{ classifiedCount: number }, unknown, Parameters<typeof api.classifyBatch>[0]>,
+) {
+  return useInvalidatingMutation(
+    (body) => api.classifyBatch(body),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
+    },
+    options,
+  );
+}
+
+export function useClassificationSuggestion(payableId: string | undefined, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['classificationSuggestion', payableId ?? ''],
+    queryFn: () => api.classificationSuggestion(payableId!),
+    enabled: (options?.enabled ?? true) && !!payableId,
+  });
+}
+
+/* ---------- Classification Policies ---------- */
+export function useClassificationPolicy(companyId: string) {
+  return useQuery({
+    queryKey: queryKeys.classificationPolicy(companyId),
+    queryFn: () => api.getClassificationPolicy(companyId),
+    enabled: !!companyId,
+  });
+}
+
+export function useUpdateClassificationPolicy(
+  options?: UseMutationOptions<
+    ClassificationPolicy,
+    unknown,
+    { companyId: string; body: { requireToApprove: boolean; requireToPay: boolean } }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ companyId, body }) => api.updateClassificationPolicy(companyId, body),
+    (qc, data) => void qc.invalidateQueries({ queryKey: queryKeys.classificationPolicy(data.companyId) }),
     options,
   );
 }

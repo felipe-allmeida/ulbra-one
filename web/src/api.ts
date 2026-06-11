@@ -103,6 +103,13 @@ export type Payment = Schemas['PaymentResponse'];
 export type BankAccountType = Schemas['BankAccountType'];
 export type PaymentMethod = Schemas['PaymentMethod'];
 
+// ---------- Chart of Accounts (Plano de Contas) ----------
+export type ChartAccount = Schemas['ChartAccountResponse'];
+export type ChartType = Schemas['ChartType'];
+export type AccountKind = Schemas['AccountKind'];
+export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
+export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
+
 // ---------- Conciliação OFX (statement imports + bank transactions) ----------
 export type StatementImport = Schemas['StatementImportResponse'];
 export type BankTransaction = Schemas['BankTransactionResponse'];
@@ -404,6 +411,56 @@ export const api = {
     }),
   ignoreTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/ignore`, { method: 'POST' }),
   unmatchTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/unmatch`, { method: 'POST' }),
+
+  // ---------- Chart of Accounts (Plano de Contas) ----------
+  listChartAccounts: (params: { chartType?: ChartType; kind?: AccountKind; activeOnly?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params.chartType) q.set('chartType', params.chartType);
+    if (params.kind) q.set('kind', params.kind);
+    if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
+    return request<ChartAccount[]>(`/chart-accounts?${q}`);
+  },
+  createChartAccount: (body: {
+    chartType: ChartType;
+    code: string;
+    name: string;
+    parentId?: string | null;
+    kind: AccountKind;
+    nature: Schemas['AccountNature'];
+  }) => request<ChartAccount>('/chart-accounts', { method: 'POST', body: JSON.stringify(body) }),
+  updateChartAccount: (
+    id: string,
+    body: {
+      code?: string;
+      name?: string;
+      parentId?: string | null;
+      kind?: AccountKind;
+      nature?: Schemas['AccountNature'];
+      isActive?: boolean;
+    },
+  ) => request<ChartAccount>(`/chart-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteChartAccount: (id: string) => request<void>(`/chart-accounts/${id}`, { method: 'DELETE' }),
+
+  // ---------- Classification ----------
+  classifyPayable: (id: string, body: { accountingAccountId?: string | null; financialAccountId?: string | null }) =>
+    request<Payable>(`/payables/${id}/classify`, { method: 'POST', body: JSON.stringify(body) }),
+  classifyBatch: (body: {
+    payableIds: string[];
+    accountingAccountId?: string | null;
+    financialAccountId?: string | null;
+  }) =>
+    request<{ classifiedCount: number }>('/payables/classify-batch', { method: 'POST', body: JSON.stringify(body) }),
+  classificationSuggestion: (payableId: string) =>
+    request<ClassificationSuggestion>(`/payables/${payableId}/classification-suggestion`),
+
+  // ---------- Classification Policies ----------
+  getClassificationPolicy: (companyId: string) =>
+    request<ClassificationPolicy>(`/classification-policies/${companyId}`),
+  updateClassificationPolicy: (companyId: string, body: { requireToApprove: boolean; requireToPay: boolean }) =>
+    request<ClassificationPolicy>(`/classification-policies/${companyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>
