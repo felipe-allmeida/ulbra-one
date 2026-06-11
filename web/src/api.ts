@@ -426,7 +426,7 @@ export const api = {
     name: string;
     parentId?: string | null;
     kind: AccountKind;
-    nature: Schemas['AccountNature'];
+    nature: Schemas['AccountNature'] | null;
   }) => request<ChartAccount>('/chart-accounts', { method: 'POST', body: JSON.stringify(body) }),
   updateChartAccount: (
     id: string,
@@ -435,7 +435,7 @@ export const api = {
       name?: string;
       parentId?: string | null;
       kind?: AccountKind;
-      nature?: Schemas['AccountNature'];
+      nature?: Schemas['AccountNature'] | null;
       isActive?: boolean;
     },
   ) => request<ChartAccount>(`/chart-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
