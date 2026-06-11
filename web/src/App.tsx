@@ -27,6 +27,7 @@ import {
   Landmark,
   ArrowLeftRight,
   ListTree,
+  Tags,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -46,6 +47,7 @@ import {
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { PlanoDeContasPage } from './pages/plano-de-contas';
+import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { FornecedoresPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
@@ -75,6 +77,7 @@ export default function App() {
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
         <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
+        <Route path='classificacao' element={<ClassificacaoPage />} />
         <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
         <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
@@ -163,6 +166,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.chartAccounts')}</b>
     </>
+  ) : at('classificacao') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.classification')}</b>
+    </>
   ) : at('conciliacao') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.conciliacao')}</b>
@@ -247,6 +254,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.chartAccounts')}
             active={at('plano-de-contas')}
             onClick={() => go('/app/plano-de-contas')}
+          />
+          <NavItem
+            icon={<Tags />}
+            label={t('nav.classification')}
+            active={at('classificacao')}
+            onClick={() => go('/app/classificacao')}
           />
           <NavItem icon={<FileText />} label={t('nav.reports')} />
           <NavItem icon={<FileBox />} label={t('nav.documents')} />

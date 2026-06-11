@@ -31,6 +31,7 @@ import {
   useApprovePayable,
   useBankAccounts,
   useCancelPayable,
+  useChartAccounts,
   useCostCenters,
   useCreatePayable,
   useDeletePayableAttachment,
@@ -254,6 +255,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const { t } = useTranslation();
   const { centros } = useNames(empresaId);
   const categorias = useExpenseCategories().data ?? [];
+  const accountingAccounts =
+    useChartAccounts({ chartType: 'Accounting', kind: 'Analytical', activeOnly: true }).data ?? [];
+  const financialAccounts =
+    useChartAccounts({ chartType: 'Financial', kind: 'Analytical', activeOnly: true }).data ?? [];
+  const accountItems = (accs: typeof accountingAccounts) =>
+    [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -264,6 +271,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
         vendorId: '',
         costCenterId: '',
         categoryId: null,
+        accountingAccountId: null,
+        financialAccountId: null,
         description: '',
         documentNumber: '',
         issueDate: '',
@@ -286,6 +295,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       vendorId: initial.vendorId,
       costCenterId: initial.costCenterId,
       categoryId: initial.categoryId ?? null,
+      accountingAccountId: initial.accountingAccountId ?? null,
+      financialAccountId: initial.financialAccountId ?? null,
       description: initial.description,
       documentNumber: initial.documentNumber ?? '',
       issueDate: initial.issueDate ?? '',
@@ -329,6 +340,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       vendorId: v.vendorId,
       costCenterId: v.costCenterId,
       categoryId: v.categoryId || null,
+      accountingAccountId: v.accountingAccountId || null,
+      financialAccountId: v.financialAccountId || null,
       description: v.description.trim(),
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
@@ -404,7 +417,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 <div className='field-err'>{fieldError(formState.errors.vendorId?.message)}</div>
               )}
             </Field>
-            <Field label={t('payables.fields.category')}>
+            <Field label={t('payables.localGrouping')}>
               <Controller
                 control={control}
                 name='categoryId'
@@ -414,6 +427,34 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     onChange={(id) => field.onChange(id)}
                     items={categorias.map((c) => ({ id: c.id, label: c.name }))}
                     placeholder={t('payables.fields.categoryNone')}
+                  />
+                )}
+              />
+            </Field>
+            <Field label={t('payables.accountingAccount')}>
+              <Controller
+                control={control}
+                name='accountingAccountId'
+                render={({ field }) => (
+                  <Combobox
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id)}
+                    items={accountItems(accountingAccounts)}
+                    placeholder={t('payables.fields.accountNone')}
+                  />
+                )}
+              />
+            </Field>
+            <Field label={t('payables.financialAccount')}>
+              <Controller
+                control={control}
+                name='financialAccountId'
+                render={({ field }) => (
+                  <Combobox
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id)}
+                    items={accountItems(financialAccounts)}
+                    placeholder={t('payables.fields.accountNone')}
                   />
                 )}
               />
@@ -948,6 +989,8 @@ export function ContaPagarDetailPage() {
 
   const centros = useCostCenters(p?.companyId ?? '').data ?? [];
   const categorias = useExpenseCategories(true).data ?? [];
+  const accountingAccounts = useChartAccounts({ chartType: 'Accounting' }).data ?? [];
+  const financialAccounts = useChartAccounts({ chartType: 'Financial' }).data ?? [];
 
   const approve = useApprovePayable();
   const reject = useRejectPayable();
@@ -970,6 +1013,11 @@ export function ContaPagarDetailPage() {
 
   const centroNome = centros.find((c) => c.id === p.costCenterId)?.name ?? '—';
   const categoriaNome = categorias.find((c) => c.id === p.categoryId)?.name ?? '—';
+  const accountLabel = (accs: typeof accountingAccounts, id: string | null) => {
+    if (!id) return t('payables.notClassified');
+    const a = accs.find((x) => x.id === id);
+    return a ? `${a.code} — ${a.name}` : t('payables.notClassified');
+  };
   const editable = p.status === 'PendingApproval' || p.status === 'Approved';
 
   return (
@@ -980,8 +1028,13 @@ export function ContaPagarDetailPage() {
       <div className='detail-head'>
         <div>
           <h1 className='detail-title'>{p.description}</h1>
-          <div className='detail-sub'>
-            {t('payables.sub')} · {p.counterpartyName || '—'}
+          <div className='detail-sub' style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>
+              {t('payables.sub')} · {p.counterpartyName || '—'}
+            </span>
+            <span className={`badge-status ${p.isClassified ? 'badge-pago' : 'badge-pendente'}`}>
+              {p.isClassified ? t('payables.classified') : t('payables.unclassified')}
+            </span>
           </div>
         </div>
         <div className='detail-actions'>
@@ -1029,6 +1082,18 @@ export function ContaPagarDetailPage() {
           <div className='info-label'>{t('payables.cards.category')}</div>
           <div className='info-value' style={{ fontSize: 15 }}>
             {categoriaNome}
+          </div>
+        </div>
+        <div className='info-card'>
+          <div className='info-label'>{t('payables.cards.accountingAccount')}</div>
+          <div className='info-value' style={{ fontSize: 15 }}>
+            {accountLabel(accountingAccounts, p.accountingAccountId)}
+          </div>
+        </div>
+        <div className='info-card'>
+          <div className='info-label'>{t('payables.cards.financialAccount')}</div>
+          <div className='info-value' style={{ fontSize: 15 }}>
+            {accountLabel(financialAccounts, p.financialAccountId)}
           </div>
         </div>
         <div className='info-card'>

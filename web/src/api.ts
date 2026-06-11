@@ -157,6 +157,8 @@ export interface PayableInput {
   issueDate?: string | null;
   installments?: { dueDate: string; amount: number }[];
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
+  accountingAccountId?: string | null;
+  financialAccountId?: string | null;
 }
 
 /**
@@ -280,6 +282,7 @@ export const api = {
     categoryId?: string;
     dueFrom?: string;
     dueTo?: string;
+    classified?: boolean;
     page?: number;
     pageSize?: number;
   }) => {
@@ -291,6 +294,7 @@ export const api = {
     if (params.categoryId) q.set('categoryId', params.categoryId);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.classified !== undefined) q.set('classified', String(params.classified));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableListItem>>(`/payables?${q}`);

@@ -80,6 +80,7 @@ export interface PayablesParams {
   categoryId?: string;
   dueFrom?: string;
   dueTo?: string;
+  classified?: boolean;
   page?: number;
   pageSize?: number;
 }
