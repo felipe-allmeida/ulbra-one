@@ -165,6 +165,85 @@ test('login -> contas a pagar -> dar baixa on an open installment', async ({ pag
   await expect(parcelas.locator('tbody tr', { hasText: 'Paga' }).first()).toBeVisible();
 });
 
+test('login -> conciliação -> confirmar a suggested transaction', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Conciliação via the sidebar nav item ("Conciliação bancária").
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Conciliação bancária' }).click();
+  await expect(page).toHaveURL(/\/app\/conciliacao$/);
+  await expect(page.getByRole('heading', { name: 'Conciliação bancária' })).toBeVisible();
+
+  // Scope to the ULBRA company that owns the seeded statement import. The
+  // EmpresaPicker is the first toolbar select.
+  const empresaPicker = page.locator('select').first();
+  const ulbra = empresaPicker.locator('option', { hasText: /ULBRA/i }).first();
+  if (await ulbra.count()) {
+    await empresaPicker.selectOption({ label: (await ulbra.textContent())!.trim() });
+  }
+
+  // The upload control for the OFX statement is present once a bank account is set.
+  await expect(page.locator('input[type="file"]')).toBeVisible();
+
+  // The bank-account picker is the toolbar select carrying the "— selecione —"
+  // placeholder. The seed puts a Suggested debit + Unmatched credit on ULBRA's
+  // first account; the API's account ordering isn't guaranteed, so iterate over
+  // the real accounts (skip the placeholder) and stop on the one whose
+  // "Sugerido" worklist is non-empty.
+  const bankPicker = page
+    .locator('select')
+    .filter({ has: page.locator('option', { hasText: '— selecione —' }) })
+    .first();
+  const accountValues = await bankPicker
+    .locator('option')
+    .evaluateAll((opts) => (opts as HTMLOptionElement[]).map((o) => o.value).filter((v) => v !== ''));
+
+  // The Status filter is the select inside the panel header that offers "Sugerido".
+  const statusFilter = page
+    .locator('select')
+    .filter({ has: page.locator('option', { hasText: 'Sugerido' }) })
+    .first();
+
+  const suggestedRows = page.locator('table tbody tr', { hasText: 'Sugerido' });
+
+  let found = false;
+  for (const value of accountValues) {
+    await bankPicker.selectOption(value);
+    // Filter to the Sugerido status; the worklist re-fetches per account+filter.
+    await statusFilter.selectOption({ label: 'Sugerido' });
+    // Allow the worklist query to settle, then check for a suggested row.
+    await page.waitForTimeout(400);
+    if ((await suggestedRows.count()) > 0) {
+      found = true;
+      break;
+    }
+  }
+
+  // At least one account must carry the seeded Suggested transaction.
+  expect(found).toBe(true);
+  await expect(suggestedRows.first()).toBeVisible();
+
+  // Confirm the suggested match. The row's "Confirmar" action reconciles it, so
+  // it leaves the Sugerido worklist and appears under the Conciliado filter.
+  await suggestedRows.first().getByRole('button', { name: 'Confirmar' }).click();
+
+  // It disappears from the Sugerido filter (the worklist shrinks / empties).
+  await expect(suggestedRows).toHaveCount(0);
+
+  // And it now shows up under the Conciliado filter — end-to-end confirmation.
+  await statusFilter.selectOption({ label: 'Conciliado' });
+  await expect(page.locator('table tbody tr', { hasText: 'Conciliado' }).first()).toBeVisible();
+});
+
 test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
   // Fresh context => no token in localStorage.
   const context = await browser.newContext();

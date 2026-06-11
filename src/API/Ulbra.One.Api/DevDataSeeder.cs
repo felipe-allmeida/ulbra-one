@@ -164,6 +164,10 @@ public static class DevDataSeeder
         if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve("system", time.GetUtcNow());
 
         var pEnergiaGravatai = PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3);
+        // Above INFRA's auto-approval limit (2_000), so approve explicitly: its open
+        // installment is the counterpart of the seeded Suggested bank transaction and
+        // a reconciliation can only confirm against an approved payable.
+        if (pEnergiaGravatai.Status != PayableStatus.Approved) pEnergiaGravatai.Approve("system", time.GetUtcNow());
         await finance.Payables.AddRangeAsync(new[]
         {
             // À vista
