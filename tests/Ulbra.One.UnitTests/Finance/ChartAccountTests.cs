@@ -147,6 +147,14 @@ public class ChartAccountTests
         Assert.Throws<InvalidOperationException>(() => child.Reparent(analyticalParent));
     }
 
+    [Fact]
+    public void Reparent_self_throws()
+    {
+        var account = NewSynthetic(ChartType.Accounting);
+
+        Assert.Throws<InvalidOperationException>(() => account.Reparent(account));
+    }
+
     // --- Activate / Deactivate ---
 
     [Fact]
