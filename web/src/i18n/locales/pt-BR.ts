@@ -537,7 +537,13 @@ const ptBR = {
     back: 'Contas a receber',
     count_one: '{{count}} parcela',
     count_other: '{{count}} parcelas',
-    overdueOnly: 'Somente vencidas',
+    tabs: {
+      all: 'Todas',
+      overdue: 'Vencidas',
+      thisMonth: 'Este mês',
+      future: 'Futuras',
+      received: 'Recebidas',
+    },
     columns: {
       dueDate: 'Vencimento',
       description: 'Descrição',

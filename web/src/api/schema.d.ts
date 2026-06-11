@@ -3327,7 +3327,7 @@ export interface operations {
                 costCenterId?: string;
                 dueFrom?: string;
                 dueTo?: string;
-                overdueOnly?: boolean;
+                received?: boolean;
                 Page?: number;
                 PageSize?: number;
             };

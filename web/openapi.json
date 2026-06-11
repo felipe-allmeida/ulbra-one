@@ -1960,7 +1960,7 @@
             }
           },
           {
-            "name": "overdueOnly",
+            "name": "received",
             "in": "query",
             "schema": {
               "type": "boolean"

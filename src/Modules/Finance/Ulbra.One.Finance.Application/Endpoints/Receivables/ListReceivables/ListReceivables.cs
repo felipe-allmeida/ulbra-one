@@ -21,7 +21,7 @@ public sealed class ListReceivables : IEndpoint
     private static async Task<IResult> Handle(
         [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock,
         CompanyId? companyId, ReceivableStatus? status, CustomerId? payerId, CostCenterId? costCenterId,
-        DateOnly? dueFrom, DateOnly? dueTo, bool? overdueOnly,
+        DateOnly? dueFrom, DateOnly? dueTo, bool? received,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
         var today = ReceivableClock.Today(clock);
@@ -52,8 +52,8 @@ public sealed class ListReceivables : IEndpoint
         });
         if (dueFrom is { } from) rows = rows.Where(x => x.DueDate >= from);
         if (dueTo is { } to) rows = rows.Where(x => x.DueDate <= to);
-        if (overdueOnly == true)
-            rows = rows.Where(x => x.InstallmentStatus != ReceivableInstallmentStatus.Received && x.DueDate < today);
+        if (received is true) rows = rows.Where(x => x.InstallmentStatus == ReceivableInstallmentStatus.Received);
+        if (received is false) rows = rows.Where(x => x.InstallmentStatus != ReceivableInstallmentStatus.Received);
 
         var page = await rows.OrderBy(x => x.DueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new ReceivableListItemResponse(

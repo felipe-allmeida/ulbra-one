@@ -399,7 +399,7 @@ export const api = {
     costCenterId?: string;
     dueFrom?: string;
     dueTo?: string;
-    overdueOnly?: boolean;
+    received?: boolean;
     page?: number;
     pageSize?: number;
   }) => {
@@ -410,7 +410,7 @@ export const api = {
     if (params.costCenterId) q.set('costCenterId', params.costCenterId);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);
-    if (params.overdueOnly) q.set('overdueOnly', 'true');
+    if (params.received !== undefined) q.set('received', String(params.received));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<ReceivableListItem>>(`/receivables?${q}`);

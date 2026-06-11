@@ -100,7 +100,7 @@ export interface ReceivablesParams {
   costCenterId?: string;
   dueFrom?: string;
   dueTo?: string;
-  overdueOnly?: boolean;
+  received?: boolean;
   page?: number;
   pageSize?: number;
 }

@@ -122,7 +122,9 @@ public class ReceivableEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
         await CreateReceivableAsync(client, seed, 800m, dueDate: "2020-01-10"); // long past due
 
-        var body = await ReadJson(await client.GetAsync($"/api/receivables?companyId={seed.CompanyId}&overdueOnly=true"));
+        // "Vencidas" tab semantics: not received + due before today.
+        var body = await ReadJson(
+            await client.GetAsync($"/api/receivables?companyId={seed.CompanyId}&received=false&dueTo=2020-12-31"));
         var items = body.GetProperty("items");
         Assert.True(items.GetArrayLength() >= 1);
         Assert.True(items[0].GetProperty("isOverdue").GetBoolean());

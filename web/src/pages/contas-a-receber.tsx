@@ -26,6 +26,7 @@ import {
 } from './schemas';
 import { useApp } from '../store';
 import {
+  type ReceivablesParams,
   useBankAccounts,
   useCancelReceivable,
   useCostCenters,
@@ -57,6 +58,39 @@ import { EmpresaPicker } from './shared';
 import { CustomerForm } from './registry-forms';
 
 const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+
+const toDateOnly = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+type TabKey = 'all' | 'overdue' | 'thisMonth' | 'future' | 'received';
+
+/** Maps a tab to ListReceivables filters. Computed at call time so "today" stays correct past midnight. */
+function tabToParams(tab: TabKey): Pick<ReceivablesParams, 'received' | 'dueFrom' | 'dueTo'> {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (tab) {
+    case 'overdue': // não recebidas, vencimento já passou (até ontem)
+      return {
+        received: false,
+        dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)),
+      };
+    case 'thisMonth': // não recebidas, a vencer ainda neste mês (hoje → último dia do mês)
+      return {
+        received: false,
+        dueFrom: toDateOnly(today),
+        dueTo: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+      };
+    case 'future': // não recebidas, vencem em meses futuros (a partir do 1º dia do próximo mês)
+      return { received: false, dueFrom: toDateOnly(new Date(today.getFullYear(), today.getMonth() + 1, 1)) };
+    case 'received': // parcelas recebidas (qualquer data)
+      return { received: true };
+    case 'all':
+    default:
+      return {};
+  }
+}
+
+const TABS: TabKey[] = ['all', 'overdue', 'thisMonth', 'future', 'received'];
 
 function ReceivableStatusBadge({ s }: { s: ReceivableStatus }) {
   const { t } = useTranslation();
@@ -99,13 +133,19 @@ export function ContasReceberPage() {
   const nav = useNavigate();
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [tab, setTab] = useState<TabKey>('all');
   const { centroNome } = useNames(empresaId);
-  const list = useReceivables({ companyId: empresaId, page, overdueOnly }, { enabled: !!empresaId });
+  const filters = useMemo(() => tabToParams(tab), [tab]);
+  const list = useReceivables({ companyId: empresaId, page, ...filters }, { enabled: !!empresaId });
   const itens = list.data?.items ?? [];
   const totalPages = list.data?.totalPages ?? 1;
 
-  useEffect(() => setPage(1), [empresaId, overdueOnly]);
+  useEffect(() => setPage(1), [empresaId]);
+  // Synchronous reset: clear the page alongside the tab switch to avoid a request with an out-of-range page.
+  const changeTab = (k: TabKey) => {
+    setTab(k);
+    setPage(1);
+  };
 
   return (
     <>
@@ -122,64 +162,71 @@ export function ContasReceberPage() {
           title={t('receivables.empty.noCompanyTitle')}
           sub={t('receivables.empty.noCompanySub')}
         />
-      ) : itens.length === 0 && !overdueOnly ? (
-        <EmptyState
-          icon={<HandCoins />}
-          title={t('receivables.empty.noItemsTitle')}
-          sub={t('receivables.empty.noItemsSub')}
-        />
       ) : (
-        <Panel title={t('receivables.count', { count: list.data?.total ?? itens.length })}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', cursor: 'pointer' }}>
-            <input type='checkbox' checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />
-            {t('receivables.overdueOnly')}
-          </label>
-          <table>
-            <thead>
-              <tr>
-                <th>{t('receivables.columns.dueDate')}</th>
-                <th>{t('receivables.columns.description')}</th>
-                <th>{t('receivables.columns.payer')}</th>
-                <th>{t('receivables.columns.installment')}</th>
-                <th>{t('receivables.columns.costCenter')}</th>
-                <th style={{ textAlign: 'right' }}>{t('receivables.columns.amount')}</th>
-                <th>{t('receivables.columns.status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {itens.map((l) => (
-                <tr
-                  key={l.installmentId}
-                  className='row-click'
-                  onClick={() => nav(`/app/contas-a-receber/${l.receivableId}`)}
-                >
-                  <td className='t-mono' style={l.isOverdue ? { color: 'var(--danger, #dc2626)' } : undefined}>
-                    {fmtData(l.dueDate)}
-                  </td>
-                  <td>{l.description}</td>
-                  <td>{l.payerName || '—'}</td>
-                  <td className='t-mono'>
-                    {l.sequence}/{l.installmentCount}
-                  </td>
-                  <td>{centroNome[l.costCenterId] ?? '—'}</td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brl(l.amount)}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <ReceivableStatusBadge s={l.receivableStatus} />
-                      {l.receivableStatus === 'AwaitingReceipt' && (
-                        <ReceivableInstallmentStatusBadge s={l.installmentStatus} />
-                      )}
-                      {l.isOverdue && <OverdueBadge />}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pager page={page} totalPages={totalPages} onPage={setPage} />
-        </Panel>
+        <>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            {TABS.map((k) => (
+              <Button key={k} variant={tab === k ? 'brand' : 'default'} onClick={() => changeTab(k)}>
+                {t(`receivables.tabs.${k}`)}
+              </Button>
+            ))}
+          </div>
+          {itens.length === 0 ? (
+            <EmptyState
+              icon={<HandCoins />}
+              title={t('receivables.empty.noItemsTitle')}
+              sub={t('receivables.empty.noItemsSub')}
+            />
+          ) : (
+            <Panel title={t('receivables.count', { count: list.data?.total ?? itens.length })}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('receivables.columns.dueDate')}</th>
+                    <th>{t('receivables.columns.description')}</th>
+                    <th>{t('receivables.columns.payer')}</th>
+                    <th>{t('receivables.columns.installment')}</th>
+                    <th>{t('receivables.columns.costCenter')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('receivables.columns.amount')}</th>
+                    <th>{t('receivables.columns.status')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itens.map((l) => (
+                    <tr
+                      key={l.installmentId}
+                      className='row-click'
+                      onClick={() => nav(`/app/contas-a-receber/${l.receivableId}`)}
+                    >
+                      <td className='t-mono' style={l.isOverdue ? { color: 'var(--danger, #dc2626)' } : undefined}>
+                        {fmtData(l.dueDate)}
+                      </td>
+                      <td>{l.description}</td>
+                      <td>{l.payerName || '—'}</td>
+                      <td className='t-mono'>
+                        {l.sequence}/{l.installmentCount}
+                      </td>
+                      <td>{centroNome[l.costCenterId] ?? '—'}</td>
+                      <td className='amount-cell' style={{ textAlign: 'right' }}>
+                        {brl(l.amount)}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <ReceivableStatusBadge s={l.receivableStatus} />
+                          {l.receivableStatus === 'AwaitingReceipt' && (
+                            <ReceivableInstallmentStatusBadge s={l.installmentStatus} />
+                          )}
+                          {l.isOverdue && <OverdueBadge />}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pager page={page} totalPages={totalPages} onPage={setPage} />
+            </Panel>
+          )}
+        </>
       )}
     </>
   );
