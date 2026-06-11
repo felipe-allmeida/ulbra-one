@@ -151,7 +151,13 @@ export function ContasReceberPage() {
     <>
       <PageHeader title={t('receivables.title')} sub={t('receivables.subtitle')}>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/contas-a-receber/novo')}>
+        <Button
+          variant='brand'
+          icon={<Plus />}
+          disabled={!empresa}
+          style={{ alignSelf: 'flex-end' }}
+          onClick={() => nav('/app/contas-a-receber/novo')}
+        >
           {t('receivables.new')}
         </Button>
       </PageHeader>
