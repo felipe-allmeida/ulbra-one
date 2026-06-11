@@ -2,7 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Infrastructure.Extensions;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ConfirmMatch;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.IgnoreTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ImportStatement;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.MatchManually;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.UnmatchTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListBankTransactions;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListStatementImports;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.DeleteBankAccount;
@@ -81,6 +85,10 @@ public static class FinanceEndpoints
 
         var bankTransactions = builder.MapGroup("/bank-transactions");
         bankTransactions.MapEndpoint<ListBankTransactions>();
+        bankTransactions.MapEndpoint<ConfirmMatch>();
+        bankTransactions.MapEndpoint<MatchManually>();
+        bankTransactions.MapEndpoint<IgnoreTransaction>();
+        bankTransactions.MapEndpoint<UnmatchTransaction>();
 
         return builder;
     }

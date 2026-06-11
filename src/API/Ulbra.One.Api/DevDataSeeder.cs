@@ -163,12 +163,13 @@ public static class DevDataSeeder
         var pGoogle = PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5);
         if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve("system", time.GetUtcNow());
 
+        var pEnergiaGravatai = PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3);
         await finance.Payables.AddRangeAsync(new[]
         {
             // À vista
             pGoogle,
             PayableVista(infra, "Conta de energia - Campus Canoas", vCeee, Cat("Energia elétrica"), "NF-CEEE-77120", 48_500m, -2),
-            PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3),
+            pEnergiaGravatai,
             pLimpeza,
             PayableVista(rh, "Consultoria de clima organizacional", vJoao, Cat("Serviços de terceiros (PJ)"), null, 2_500m, 15),
             PayableVista(bib, "Aquisição de acervo - periódicos", vGrafica, Cat("Acervo e assinaturas (biblioteca)"), "NF-GS-1207", 1_200m, -8),
@@ -224,6 +225,33 @@ public static class DevDataSeeder
 
             await finance.SaveChangesAsync(ct);
             logger.LogInformation("Dev seed: 2 payments seeded (1 full/settled, 1 partial).");
+        }
+
+        // ---------- Bank statement import + transactions (conciliação) ----------
+        if (!await finance.BankTransactions.AnyAsync(ct))
+        {
+            var ulbraBank = await finance.BankAccounts.FirstAsync(b => b.CompanyId == ulbra.Id, ct);
+            var now = time.GetUtcNow();
+            var energyInstallment = pEnergiaGravatai.Installments[0];
+
+            var import = new BankStatementImport(
+                ulbra.Id, ulbraBank.Id, StatementSource.OfxUpload, "extrato-santander.ofx",
+                today.AddDays(-7), today.AddDays(7), 2, 2, 0);
+
+            // Debit that exactly matches the open energy installment within the date window → Suggested.
+            var debit = new BankTransaction(import.Id, ulbra.Id, ulbraBank.Id, "SEED-TXN-DEBIT-1",
+                today, -energyInstallment.Amount, "PAG FORNEC CEEE", now);
+            debit.Suggest(energyInstallment.Id);
+
+            // Credit with no counterpart → stays Unmatched.
+            var credit = new BankTransaction(import.Id, ulbra.Id, ulbraBank.Id, "SEED-TXN-CREDIT-1",
+                today, 2_500m, "DEPOSITO", now);
+
+            await finance.StatementImports.AddAsync(import, ct);
+            await finance.BankTransactions.AddAsync(debit, ct);
+            await finance.BankTransactions.AddAsync(credit, ct);
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: 1 statement import + 2 bank transactions seeded (1 suggested debit, 1 unmatched credit).");
         }
 
         logger.LogInformation(

@@ -67,7 +67,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         return (await ReadJson(res)).GetProperty("id").GetString()!;
     }
 
-    private static async Task CreateApprovedPayableAsync(HttpClient client, Seed seed, decimal amount, string dueDate)
+    private static async Task<string> CreateApprovedPayableAsync(HttpClient client, Seed seed, decimal amount, string dueDate)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -81,6 +81,32 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        return payableId;
+    }
+
+    private static async Task ImportAsync(HttpClient client, string bankId)
+    {
+        using var content = OfxFile();
+        var res = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+    }
+
+    private static async Task<JsonElement> SingleTransactionAsync(HttpClient client, string bankId, string matchStatus)
+    {
+        var res = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&matchStatus={matchStatus}");
+        res.EnsureSuccessStatusCode();
+        var page = await ReadJson(res);
+        var items = page.GetProperty("items");
+        Assert.Equal(1, items.GetArrayLength());
+        return items[0];
+    }
+
+    private static async Task<JsonElement> GetInstallmentAsync(HttpClient client, string payableId)
+    {
+        var res = await client.GetAsync($"/api/payables/{payableId}");
+        res.EnsureSuccessStatusCode();
+        var body = await ReadJson(res);
+        return body.GetProperty("installments")[0];
     }
 
     private const string OfxContent = """
@@ -212,5 +238,130 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         Assert.Equal(1, unmatchedPage.GetProperty("total").GetInt32());
         var unmatchedItems = unmatchedPage.GetProperty("items");
         Assert.Equal(1, unmatchedItems.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ConfirmMatch_SettlesInstallment_AndReconcilesTransaction()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId);
+
+        var suggested = await SingleTransactionAsync(client, bankId, "Suggested");
+        var txnId = suggested.GetProperty("id").GetString()!;
+
+        var confirmRes = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/confirm", new { });
+        Assert.Equal(HttpStatusCode.OK, confirmRes.StatusCode);
+        var confirmed = await ReadJson(confirmRes);
+        Assert.Equal("Reconciled", confirmed.GetProperty("matchStatus").GetString());
+
+        var installment = await GetInstallmentAsync(client, payableId);
+        Assert.Equal("Paid", installment.GetProperty("status").GetString());
+        Assert.Equal(1, installment.GetProperty("payments").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ConfirmMatch_NonSuggested_Returns409()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId);
+
+        var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
+        var txnId = credit.GetProperty("id").GetString()!;
+
+        var res = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/confirm", new { });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        var body = await ReadJson(res);
+        Assert.Equal("BankTransaction.NotSuggested", body.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task MatchManually_EqualRemaining_Reconciles_WrongAmount_Returns400()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId);
+
+        // The credit (2500) is Unmatched; match it manually.
+        var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
+        var creditTxnId = credit.GetProperty("id").GetString()!;
+
+        // Wrong-amount installment: a 1000 installment vs. the 2500 credit → AmountMismatch.
+        var wrongPayableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        var wrongInstallment = await GetInstallmentAsync(client, wrongPayableId);
+        var wrongInstallmentId = wrongInstallment.GetProperty("id").GetString()!;
+
+        var wrongRes = await client.PostAsJsonAsync($"/api/bank-transactions/{creditTxnId}/match",
+            new { installmentId = wrongInstallmentId });
+        Assert.Equal(HttpStatusCode.BadRequest, wrongRes.StatusCode);
+        Assert.Equal("Match.AmountMismatch", (await ReadJson(wrongRes)).GetProperty("title").GetString());
+
+        // Correct-amount installment: a 2500 installment that equals the credit → reconciles.
+        var rightPayableId = await CreateApprovedPayableAsync(client, seed, 2500.00m, "2026-07-12");
+        var rightInstallment = await GetInstallmentAsync(client, rightPayableId);
+        var rightInstallmentId = rightInstallment.GetProperty("id").GetString()!;
+
+        var rightRes = await client.PostAsJsonAsync($"/api/bank-transactions/{creditTxnId}/match",
+            new { installmentId = rightInstallmentId });
+        Assert.Equal(HttpStatusCode.OK, rightRes.StatusCode);
+        Assert.Equal("Reconciled", (await ReadJson(rightRes)).GetProperty("matchStatus").GetString());
+
+        var settled = await GetInstallmentAsync(client, rightPayableId);
+        Assert.Equal("Paid", settled.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task IgnoreTransaction_MarksIgnored()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId);
+
+        var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
+        var txnId = credit.GetProperty("id").GetString()!;
+
+        var res = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/ignore", new { });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        Assert.Equal("Ignored", (await ReadJson(res)).GetProperty("matchStatus").GetString());
+    }
+
+    [Fact]
+    public async Task UnmatchTransaction_ReopensInstallment_AndUnmatchesTransaction()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var payableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId);
+
+        var suggested = await SingleTransactionAsync(client, bankId, "Suggested");
+        var txnId = suggested.GetProperty("id").GetString()!;
+
+        var confirmRes = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/confirm", new { });
+        Assert.Equal(HttpStatusCode.OK, confirmRes.StatusCode);
+
+        var paid = await GetInstallmentAsync(client, payableId);
+        Assert.Equal("Paid", paid.GetProperty("status").GetString());
+
+        var unmatchRes = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/unmatch", new { });
+        Assert.Equal(HttpStatusCode.OK, unmatchRes.StatusCode);
+        Assert.Equal("Unmatched", (await ReadJson(unmatchRes)).GetProperty("matchStatus").GetString());
+
+        var reopened = await GetInstallmentAsync(client, payableId);
+        Assert.Equal("Open", reopened.GetProperty("status").GetString());
     }
 }
