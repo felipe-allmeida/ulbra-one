@@ -110,6 +110,11 @@ export type AccountKind = Schemas['AccountKind'];
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
 
+// ---------- Aging de Contas a Pagar ----------
+export type AgingReport = Schemas['AgingReportResponse'];
+export type AgingItem = Schemas['AgingItemResponse'];
+export type AgingBucket = Schemas['AgingBucket'];
+
 // ---------- Conciliação OFX (statement imports + bank transactions) ----------
 export type StatementImport = Schemas['StatementImportResponse'];
 export type BankTransaction = Schemas['BankTransactionResponse'];
@@ -465,6 +470,27 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+
+  // ---------- Aging de Contas a Pagar ----------
+  aging: (companyId: string, asOf?: string): Promise<AgingReport> => {
+    const q = new URLSearchParams({ companyId });
+    if (asOf) q.set('asOf', asOf);
+    return request<AgingReport>(`/payables/aging?${q}`);
+  },
+  agingItems: (params: {
+    companyId: string;
+    bucket?: AgingBucket;
+    vendorId?: string;
+    costCenterId?: string;
+    asOf?: string;
+  }): Promise<AgingItem[]> => {
+    const q = new URLSearchParams({ companyId: params.companyId });
+    if (params.bucket) q.set('bucket', params.bucket);
+    if (params.vendorId) q.set('vendorId', params.vendorId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.asOf) q.set('asOf', params.asOf);
+    return request<AgingItem[]>(`/payables/aging/items?${q}`);
+  },
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>

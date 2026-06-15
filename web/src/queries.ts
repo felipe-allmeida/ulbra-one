@@ -8,6 +8,7 @@ import {
 import {
   api,
   type AccountKind,
+  type AgingBucket,
   type BankAccount,
   type BankAccountInput,
   type BankAccountUpdateInput,
@@ -59,6 +60,8 @@ export const queryKeys = {
   bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
   chartAccounts: (params: ChartAccountsParams) => ['chartAccounts', params] as const,
   classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
+  aging: (companyId: string, asOf?: string) => ['aging', companyId, asOf ?? ''] as const,
+  agingItems: (params: AgingItemsParams) => ['agingItems', params] as const,
 };
 
 export interface BankTransactionsParams {
@@ -98,6 +101,14 @@ export interface ChartAccountsParams {
   chartType?: ChartType;
   kind?: AccountKind;
   activeOnly?: boolean;
+}
+
+export interface AgingItemsParams {
+  companyId: string;
+  bucket?: AgingBucket;
+  vendorId?: string;
+  costCenterId?: string;
+  asOf?: string;
 }
 
 /* ===================== Queries ===================== */
@@ -644,6 +655,22 @@ export function useChartAccounts(params: ChartAccountsParams, options?: { enable
     queryKey: queryKeys.chartAccounts(params),
     queryFn: () => api.listChartAccounts(params),
     enabled: options?.enabled ?? true,
+  });
+}
+
+export function useAging(companyId: string | undefined, asOf?: string) {
+  return useQuery({
+    queryKey: queryKeys.aging(companyId ?? '', asOf),
+    queryFn: () => api.aging(companyId!, asOf),
+    enabled: !!companyId,
+  });
+}
+
+export function useAgingItems(params: AgingItemsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.agingItems(params),
+    queryFn: () => api.agingItems(params),
+    enabled: options?.enabled ?? !!params.companyId,
   });
 }
 
