@@ -71,6 +71,8 @@ public sealed class ListReceivables : IEndpoint
             new ReceivableId(x.ReceivableId), new ReceivableInstallmentId(x.InstallmentId), x.Sequence, x.InstallmentCount,
             x.PayerName, x.Description, new CostCenterId(x.CostCenterId), x.RevenueCategoryId,
             x.DueDate, x.Amount, x.ReceivedAmount, x.InstallmentStatus, x.ReceivableStatus,
-            x.InstallmentStatus != ReceivableInstallmentStatus.Received && x.DueDate < today)));
+            // A terminal receivable (cancelled / written-off) has no live installments, so none are overdue.
+            (x.ReceivableStatus == ReceivableStatus.AwaitingReceipt || x.ReceivableStatus == ReceivableStatus.Received)
+                && x.InstallmentStatus != ReceivableInstallmentStatus.Received && x.DueDate < today)));
     }
 }

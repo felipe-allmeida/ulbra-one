@@ -131,6 +131,34 @@ public class ReceivableEndpointsTests(PostgresFixture fixture)
     }
 
     // ---------------------------------------------------------------------------
+    // Cancel
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Cancelled_Receivable_Has_No_Overdue_Installments()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var receivableId = await CreateReceivableAsync(client, seed, 800m, dueDate: "2020-01-10"); // long past due
+
+        var cancelRes = await client.PostAsJsonAsync($"/api/receivables/{receivableId}/cancel", new { reason = "test" });
+        Assert.Equal(HttpStatusCode.OK, cancelRes.StatusCode);
+
+        // Detail: header is Cancelled and the (still-Open) installment is no longer flagged overdue.
+        var detail = await ReadJson(await client.GetAsync($"/api/receivables/{receivableId}"));
+        Assert.Equal("Cancelled", detail.GetProperty("status").GetString());
+        Assert.False(detail.GetProperty("installments")[0].GetProperty("isOverdue").GetBoolean());
+
+        // List: the same row is not overdue either.
+        var list = await ReadJson(
+            await client.GetAsync($"/api/receivables?companyId={seed.CompanyId}&received=false&dueTo=2020-12-31"));
+        var items = list.GetProperty("items");
+        Assert.True(items.GetArrayLength() >= 1);
+        Assert.False(items[0].GetProperty("isOverdue").GetBoolean());
+    }
+
+    // ---------------------------------------------------------------------------
     // Register receipt
     // ---------------------------------------------------------------------------
 

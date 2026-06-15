@@ -15,5 +15,5 @@ public sealed record ReceivableResponse(
         new ReceivableId(r.Id), new CompanyId(r.CompanyId), r.Origin, new CustomerId(r.PayerId), r.PayerName,
         r.DocumentNumber, r.IssueDate, r.Description, new CostCenterId(r.CostCenterId),
         r.RevenueCategoryId, r.LedgerAccountId, r.TotalAmount, r.Status, r.CancelReason, r.WriteOffReason, r.CreatedAt,
-        r.Installments.OrderBy(i => i.Sequence).Select(i => ReceivableInstallmentResponse.From(i, today)).ToList());
+        r.Installments.OrderBy(i => i.Sequence).Select(i => ReceivableInstallmentResponse.From(i, today, r.IsReceivable)).ToList());
 }

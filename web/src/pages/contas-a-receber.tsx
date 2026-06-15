@@ -1052,8 +1052,16 @@ export function ContaReceberDetailPage() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <ReceivableInstallmentStatusBadge s={inst.status} />
-                      {inst.isOverdue && <OverdueBadge />}
+                      {r.status === 'Cancelled' || r.status === 'WrittenOff' ? (
+                        // Terminal receivable: the parcela is voided — show the receivable's status
+                        // (e.g. "Cancelada") instead of its stale "Aberta"/overdue badges.
+                        <ReceivableStatusBadge s={r.status} />
+                      ) : (
+                        <>
+                          <ReceivableInstallmentStatusBadge s={inst.status} />
+                          {inst.isOverdue && <OverdueBadge />}
+                        </>
+                      )}
                     </div>
                   </td>
                   <td className='td-action'>
