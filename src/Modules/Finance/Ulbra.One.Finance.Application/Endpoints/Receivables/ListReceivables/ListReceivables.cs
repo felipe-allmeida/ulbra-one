@@ -31,11 +31,11 @@ public sealed class ListReceivables : IEndpoint
             .RequireAuthorization().Produces<PaginatedResponse<ReceivableListItemResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock,
+        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider timeProvider,
         [AsParameters] ListReceivablesRequest req,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
-        var today = ReceivableClock.Today(clock);
+        var today = ReceivableClock.Today(timeProvider);
 
         var receivables = uow.ReadSet<Receivable>();
         if (req.CompanyId is { } cid) receivables = receivables.Where(p => p.CompanyId == cid.Value);

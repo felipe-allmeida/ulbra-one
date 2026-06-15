@@ -7,6 +7,8 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Validation;
+using Ulbra.One.Common.Domain;
+using Ulbra.One.Common.Infrastructure.Results;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -36,21 +38,21 @@ public sealed class UploadReceiptProof : IEndpoint
             .Include(p => p.Installments) // Receipts auto-include
             .FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (receivable is null)
-            return Results.Problem(detail: "Receivable not found.", statusCode: 404, title: "Receivable.NotFound");
+            return Result.Failure<ReceiptResponse>(Error.NotFound("Receivable.NotFound", "Receivable not found.")).ToOk();
 
         var receipt = receivable.FindReceipt(receiptId.Value);
         if (receipt is null)
-            return Results.Problem(detail: "Receipt not found.", statusCode: 404, title: "Receipt.NotFound");
+            return Result.Failure<ReceiptResponse>(Error.NotFound("Receipt.NotFound", "Receipt not found.")).ToOk();
 
         if (file.Length == 0)
-            return Results.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
+            return Result.Failure<ReceiptResponse>(Error.Validation("File.Empty", "File is empty.")).ToOk();
         if (file.Length > MaxFileSizeBytes)
-            return Results.Problem(detail: $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.", statusCode: 400, title: "File.TooLarge");
+            return Result.Failure<ReceiptResponse>(Error.Validation("File.TooLarge", $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.")).ToOk();
 
         await using var stream = file.OpenReadStream();
         var validation = FileContentValidator.Validate(file.FileName, file.ContentType, stream);
         if (validation.IsFailure)
-            return Results.Problem(detail: validation.Error.Description, statusCode: 400, title: "File.UnsupportedType");
+            return Result.Failure<ReceiptResponse>(validation.Error).ToOk();
 
         var key = await storage.SaveAsync(file.FileName, stream, ct);
         receipt.SetProof(file.FileName, file.ContentType, key, file.Length);

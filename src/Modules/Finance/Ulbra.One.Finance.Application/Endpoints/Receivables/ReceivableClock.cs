@@ -6,6 +6,6 @@ internal static class ReceivableClock
 {
     private static readonly TimeSpan BrazilOffset = TimeSpan.FromHours(-3);
 
-    public static DateOnly Today(TimeProvider clock) =>
-        DateOnly.FromDateTime(clock.GetUtcNow().ToOffset(BrazilOffset).DateTime);
+    public static DateOnly Today(TimeProvider timeProvider) =>
+        DateOnly.FromDateTime(timeProvider.GetUtcNow().ToOffset(BrazilOffset).DateTime);
 }

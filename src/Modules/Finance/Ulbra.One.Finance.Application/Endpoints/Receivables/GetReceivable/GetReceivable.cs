@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Domain;
+using Ulbra.One.Common.Infrastructure.Results;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -19,12 +21,13 @@ public sealed class GetReceivable : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(ReceivableId id, [FromKeyedServices("finance")] IUnitOfWork uow,
-        TimeProvider clock, CancellationToken ct)
+        TimeProvider timeProvider, CancellationToken ct)
     {
         // Installments are not auto-included on Receivable (scale); include them explicitly here.
         // Receipts auto-include once installments are loaded.
-        var r = await uow.ReadSet<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (r is null) return Results.Problem(detail: "Receivable not found.", statusCode: 404, title: "Receivable.NotFound");
-        return TypedResults.Ok(ReceivableResponse.From(r, ReceivableClock.Today(clock)));
+        var receivable = await uow.ReadSet<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
+        if (receivable is null)
+            return Result.Failure<ReceivableResponse>(Error.NotFound("Receivable.NotFound", "Receivable not found.")).ToOk();
+        return TypedResults.Ok(ReceivableResponse.From(receivable, ReceivableClock.Today(timeProvider)));
     }
 }

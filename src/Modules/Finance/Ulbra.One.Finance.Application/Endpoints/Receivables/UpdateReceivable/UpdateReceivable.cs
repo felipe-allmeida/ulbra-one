@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Infrastructure.Results;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
 using CRCreateReceivable = Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable.CreateReceivable;
@@ -39,40 +41,49 @@ public sealed class UpdateReceivable : IEndpoint
 
     private static async Task<IResult> Handle(ReceivableId id, UpdateReceivableRequest req,
         [FromKeyedServices("finance")] IUnitOfWork uow, [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry, TimeProvider clock, CancellationToken ct)
+        [FromKeyedServices("registry")] IUnitOfWork registry, TimeProvider timeProvider, CancellationToken ct)
     {
-        var r = await uow.Set<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (r is null) return Results.Problem(detail: "Receivable not found.", statusCode: 404, title: "Receivable.NotFound");
+        var receivable = await uow.Set<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
+        if (receivable is null)
+            return Result.Failure<ReceivableResponse>(Error.NotFound("Receivable.NotFound", "Receivable not found.")).ToOk();
 
-        var cc = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == r.CompanyId, ct);
-        if (cc is null) return Results.Problem(detail: "Cost center is invalid for this company.", statusCode: 400, title: "Receivable.CostCenterInvalid");
-        var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == r.CompanyId, ct);
-        if (customer is null) return Results.Problem(detail: "Customer is invalid for this company.", statusCode: 400, title: "Receivable.CustomerInvalid");
+        var costCenter = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == receivable.CompanyId, ct);
+        if (costCenter is null)
+            return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CostCenterInvalid", "Cost center is invalid for this company.")).ToOk();
+        var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == receivable.CompanyId, ct);
+        if (customer is null)
+            return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInvalid", "Customer is invalid for this company.")).ToOk();
 
         List<ReceivableInstallment> installments;
         if (req.Generate is { } g)
         {
             if (g.TotalAmount <= 0 || g.Count < 1)
-                return Results.Problem(detail: "Invalid installment generation.", statusCode: 400, title: "Receivable.InstallmentsInvalid");
+                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Invalid installment generation.")).ToOk();
             installments = Receivable.GenerateInstallments(g.TotalAmount, g.Count, g.FirstDueDate, g.IntervalMonths);
         }
         else if (req.Installments is { Count: > 0 } rows)
         {
             if (rows.Any(x => x.Amount <= 0))
-                return Results.Problem(detail: "Each installment amount must be greater than zero.", statusCode: 400, title: "Receivable.InstallmentsInvalid");
+                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Each installment amount must be greater than zero.")).ToOk();
             installments = rows.Select((x, i) => new ReceivableInstallment(i + 1, x.DueDate, x.Amount)).ToList();
         }
-        else return Results.Problem(detail: "Provide installments or a generation spec.", statusCode: 400, title: "Receivable.InstallmentsInvalid");
+        else return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Provide installments or a generation spec.")).ToOk();
 
-        var oldInstallments = r.Installments.ToList();
-        try { r.Update(customer.Id, customer.Name, req.DocumentNumber, req.IssueDate, req.Description, cc.Id, req.RevenueCategoryId, req.LedgerAccountId, installments); }
-        catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 409, title: "Receivable.NotEditable"); }
+        var oldInstallments = receivable.Installments.ToList();
+        try
+        {
+            receivable.Update(customer.Id, customer.Name, req.DocumentNumber, req.IssueDate, req.Description, costCenter.Id, req.RevenueCategoryId, req.LedgerAccountId, installments);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(detail: ex.Message, statusCode: 409, title: "Receivable.NotEditable");
+        }
         // EF does not auto-track changes to the private List<T> backing field, so we manage the
         // installment set explicitly: delete old rows and register new ones.
         uow.RemoveRange(oldInstallments);
-        foreach (var inst in r.Installments)
+        foreach (var inst in receivable.Installments)
             await uow.AddAsync(inst, ct);
         await uow.SaveChangesAsync(ct);
-        return TypedResults.Ok(ReceivableResponse.From(r, ReceivableClock.Today(clock)));
+        return TypedResults.Ok(ReceivableResponse.From(receivable, ReceivableClock.Today(timeProvider)));
     }
 }
