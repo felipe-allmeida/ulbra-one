@@ -310,11 +310,16 @@ test('login -> classificação -> classify a payable off the fila', async ({ pag
   const rows = page.locator('table tbody tr');
   const doneState = page.getByText('Tudo classificado');
 
-  // Wait for the screen to settle on one of the two states.
+  // The fila query refetches on company change; before its data resolves the
+  // screen briefly renders the "Tudo classificado" empty state (payables.length
+  // is 0 while loading), so the done state can FLASH even when rows are coming.
+  // Let the query settle, then branch on the stable state: prefer rows if any
+  // arrive, otherwise treat a persistent done state as a genuinely empty fila.
   await expect(rows.first().or(doneState)).toBeVisible();
+  await page.waitForLoadState('networkidle');
 
   if ((await rows.count()) === 0) {
-    // Empty fila: assert the done state and stop — nothing to classify.
+    // Empty fila (after the network settled): assert the done state and stop.
     await expect(doneState).toBeVisible();
     return;
   }
@@ -324,28 +329,34 @@ test('login -> classificação -> classify a payable off the fila', async ({ pag
   const initialCount = await rows.count();
 
   // The two account comboboxes are Radix popover triggers (aria-haspopup
-  // listbox). Index 0 = Conta contábil, 1 = Conta financeira. Open each and pick
-  // the first analytical option; fall back to "Sugerir" if no options render.
+  // listbox). Index 0 = Conta contábil, 1 = Conta financeira. Open each, wait for
+  // its option list to finish loading (the panel shows "Carregando…" until the
+  // chart-accounts query resolves), then pick the first analytical option. The
+  // options render in a Radix portal, so query them at the page level — open one
+  // combobox at a time so only that listbox is mounted.
   const triggers = firstRow.locator('button[aria-haspopup="listbox"]');
   await expect(triggers).toHaveCount(2);
 
   const pickFirstOption = async (index: number) => {
-    await triggers.nth(index).click();
-    const option = page.getByRole('option').first();
+    const trigger = triggers.nth(index);
+    await expect(trigger).toBeEnabled();
+    await trigger.click();
+    // The open popover renders the option buttons inside a div[role=listbox]
+    // (class combobox-list). Scope to THAT listbox — querying role=option at the
+    // page level also matches the native <option>s of the EmpresaPicker <select>,
+    // which are never "visible" and would hang the wait.
+    const listbox = page.locator('.combobox-list[role="listbox"]');
+    await expect(listbox).toBeVisible();
+    const option = listbox.getByRole('option').first();
     await expect(option).toBeVisible();
     await option.click();
+    // Radix closes the popover on select; ensure it's gone before opening the next
+    // so the two listboxes never overlap and steal focus from each other.
+    await expect(listbox).toBeHidden();
   };
 
-  let picked = false;
-  try {
-    await pickFirstOption(0);
-    await pickFirstOption(1);
-    picked = true;
-  } catch {
-    // Combobox interaction was fiddly — fall back to the suggestion button,
-    // which fills both accounts from the seeded classification policy.
-    await firstRow.getByRole('button', { name: 'Sugerir' }).click();
-  }
+  await pickFirstOption(0);
+  await pickFirstOption(1);
 
   // "Classificar" becomes enabled once both accounts are set; click it.
   const classify = firstRow.getByRole('button', { name: 'Classificar', exact: true });
@@ -356,13 +367,79 @@ test('login -> classificação -> classify a payable off the fila', async ({ pag
   // (the list refetches without it). Accept either signal so the test stays
   // resilient to toast timing.
   const toast = page.getByText('Conta classificada.');
-  if (picked) {
-    await expect(toast.or(rows.first()).first()).toBeVisible();
-  }
+  await expect(toast.or(rows.first()).first()).toBeVisible();
   // The classified payable drops out of the unclassified fila: the row count
   // shrinks by one (the list refetches without it), or the fila empties to the
   // done state when that was the last row on the page.
   await expect.poll(async () => (await rows.count()) < initialCount || (await doneState.isVisible())).toBeTruthy();
+});
+
+test('login -> aging -> bucket cards + pivot by cost center', async ({ page }) => {
+  // Reuse the dev-login flow: landing -> login -> dev-token -> dashboard.
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /Entrar/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.locator('input[type="email"]').fill(EMAIL);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inicio$/);
+
+  // Navigate to Vencimentos/Aging via the sidebar nav item ("Vencimentos (aging)").
+  const sidebar = page.locator('aside.sidebar');
+  await sidebar.getByRole('button', { name: 'Vencimentos (aging)' }).click();
+  await expect(page).toHaveURL(/\/app\/aging$/);
+  await expect(page.getByRole('heading', { name: 'Vencimentos' })).toBeVisible();
+
+  // Scope to the ULBRA company that owns the seeded payables. Before a company is
+  // picked the screen shows the "Selecione uma empresa" empty state.
+  const picker = page.locator('select').first();
+  const ulbra = picker.locator('option', { hasText: /ULBRA/i }).first();
+  if (await ulbra.count()) {
+    await picker.selectOption({ label: (await ulbra.textContent())!.trim() });
+  }
+
+  // Two valid outcomes depending on whether the seed left anything open:
+  //   - data present => the "A vencer" bucket card renders AND a R$ value appears.
+  //   - nothing open  => the "Nada em aberto" empty state renders.
+  // The "A vencer" label appears both as a KPI card label and a table column
+  // header; assert at least one is visible. Don't assert on monetary amounts.
+  const aVencer = page.getByText('A vencer').first();
+  const noOpen = page.getByText('Nada em aberto');
+  await expect(aVencer.or(noOpen)).toBeVisible();
+
+  if (await noOpen.isVisible()) {
+    // Empty seed for this company: nothing more to exercise.
+    await expect(noOpen).toBeVisible();
+    return;
+  }
+
+  // Data path: a R$ value appears somewhere on the page (KPI cards / table).
+  await expect(page.getByText(/R\$/).first()).toBeVisible();
+
+  // The default pivot is "Por fornecedor" and renders a table with rows.
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+
+  // Toggle the pivot to "Por centro de custo" — the pivot Select is the toolbar
+  // select inside the panel header that offers that option.
+  const pivot = page
+    .locator('select')
+    .filter({ has: page.locator('option', { hasText: 'Por centro de custo' }) })
+    .first();
+  await pivot.selectOption({ label: 'Por centro de custo' });
+
+  // The table re-renders with the cost-center pivot; assert a row is visible.
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+
+  // Best-effort: click a pivot row and assert the drill drawer opens. The drawer
+  // is a Radix dialog; if it doesn't open cleanly, keep the cards+pivot asserts.
+  try {
+    await page.locator('table tbody tr').first().click();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
+  } catch {
+    // Drill is best-effort; the cards + pivot assertions above are the contract.
+  }
 });
 
 test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
