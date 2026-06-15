@@ -207,7 +207,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task GetAgingReport_ByCostCenter_HasRow_Per_CostCenter_IdOnly()
+    public async Task GetAgingReport_ByCostCenter_HasRow_Per_CostCenter_IdOnly_Ordered_By_Total_Desc()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
@@ -218,12 +218,47 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         var byCostCenter = body.GetProperty("byCostCenter");
         Assert.Equal(2, byCostCenter.GetArrayLength());
 
-        var cc2Row = byCostCenter.EnumerateArray().Single(r => r.GetProperty("costCenterId").GetString() == cc2);
-        Assert.Equal(350m, cc2Row.GetProperty("total").GetDecimal());
-        Assert.False(cc2Row.TryGetProperty("name", out _));
+        // CC2 total = 300 + 50 = 350; CC1 total = 100 + 200 = 300. Ordered desc -> CC2 first.
+        Assert.Equal(cc2, byCostCenter[0].GetProperty("costCenterId").GetString());
+        Assert.Equal(350m, byCostCenter[0].GetProperty("total").GetDecimal());
+        Assert.False(byCostCenter[0].TryGetProperty("name", out _));
 
-        var cc1Row = byCostCenter.EnumerateArray().Single(r => r.GetProperty("costCenterId").GetString() == cc1);
-        Assert.Equal(300m, cc1Row.GetProperty("total").GetDecimal());
+        Assert.Equal(cc1, byCostCenter[1].GetProperty("costCenterId").GetString());
+        Assert.Equal(300m, byCostCenter[1].GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task GetAgingReport_Includes_PendingApproval_Payables()
+    {
+        // Decision locked: aging report includes PendingApproval payables (status != Cancelled/Rejected,
+        // installment not fully Paid). A management view must surface titles due/overdue even if
+        // still awaiting approval.
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var companyId = await CreateCompanyAsync(client);
+        var cc = await CreateCostCenterAsync(client, companyId, "CC-PA", "Pending Approval CC");
+        var vendor = await CreateVendorAsync(client, companyId, "Fornecedor PA", RandomCnpj());
+
+        // Unapproved, non-cancelled payable with an overdue installment (approve: false, no cancel call).
+        // Amount 400 -> should appear in Overdue1To30.
+        await CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(-5), 400m, approve: false);
+
+        var res = await client.GetAsync($"/api/payables/aging?companyId={companyId}");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var body = await ReadJson(res);
+        var totals = body.GetProperty("totals");
+
+        // The pending-approval installment must be included in the bucket and grand total.
+        Assert.Equal(400m, totals.GetProperty("overdue1To30").GetDecimal());
+        Assert.Equal(400m, totals.GetProperty("grandTotal").GetDecimal());
+
+        // The vendor pivot must surface this payable's row.
+        var byVendor = body.GetProperty("byVendor");
+        Assert.Equal(1, byVendor.GetArrayLength());
+        Assert.Equal(vendor, byVendor[0].GetProperty("vendorId").GetString());
+        Assert.Equal(400m, byVendor[0].GetProperty("total").GetDecimal());
     }
 
     [Fact]
