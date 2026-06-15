@@ -908,6 +908,14 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("cancel_reason");
 
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("CancelledById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by_id");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
@@ -1189,6 +1197,13 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_receipts_receivable_installments_installment_id");
+
+                    b.HasOne("Ulbra.One.Finance.Domain.Entities.Receivable", null)
+                        .WithMany()
+                        .HasForeignKey("ReceivableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_receipts_receivables_receivable_id");
                 });
 
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ReceivableInstallment", b =>

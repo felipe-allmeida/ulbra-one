@@ -54,6 +54,9 @@ public sealed class UploadReceiptProof : IEndpoint
         if (validation.IsFailure)
             return Result.Failure<ReceiptResponse>(validation.Error).ToOk();
 
+        // Defensive: the validator already restores the position after its magic-byte read, but
+        // resetting here keeps SaveAsync correct independent of that internal contract.
+        stream.Position = 0;
         var key = await storage.SaveAsync(file.FileName, stream, ct);
         receipt.SetProof(file.FileName, file.ContentType, key, file.Length);
         await uow.SaveChangesAsync(ct);

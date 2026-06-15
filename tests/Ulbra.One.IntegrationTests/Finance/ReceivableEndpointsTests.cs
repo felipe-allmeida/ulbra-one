@@ -98,6 +98,16 @@ public class ReceivableEndpointsTests(PostgresFixture fixture)
         return (await ReadJson(res)).GetProperty("installments")[0].GetProperty("receipts")[0].GetProperty("id").GetString()!;
     }
 
+    private static async Task<HttpResponseMessage> UpdateReceivableAsync(
+        HttpClient client, string receivableId, Seed seed, string description, decimal amount, string dueDate = "2026-06-30") =>
+        await client.PutAsJsonAsync($"/api/receivables/{receivableId}", new
+        {
+            payerId = seed.CustomerId,
+            costCenterId = seed.CostCenterId,
+            description,
+            installments = new[] { new { dueDate, amount } },
+        });
+
     // ---------------------------------------------------------------------------
     // Create / list
     // ---------------------------------------------------------------------------
@@ -156,6 +166,58 @@ public class ReceivableEndpointsTests(PostgresFixture fixture)
         var items = list.GetProperty("items");
         Assert.True(items.GetArrayLength() >= 1);
         Assert.False(items[0].GetProperty("isOverdue").GetBoolean());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Update
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Update_Changes_Description_And_Total()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var receivableId = await CreateReceivableAsync(client, seed, 1500m);
+
+        var res = await UpdateReceivableAsync(client, receivableId, seed, "Mensalidade revisada", 2000m);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+
+        var body = await ReadJson(await client.GetAsync($"/api/receivables/{receivableId}"));
+        Assert.Equal("Mensalidade revisada", body.GetProperty("description").GetString());
+        Assert.Equal(2000m, body.GetProperty("totalAmount").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Update_After_Receipt_Returns_409_NotEditable()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var receivableId = await CreateReceivableAsync(client, seed, 1500m);
+        var (_, installmentId) = await FirstInstallmentAsync(client, receivableId);
+        await RegisterReceiptAsync(client, receivableId, installmentId, bankId, 1500m);
+
+        var res = await UpdateReceivableAsync(client, receivableId, seed, "tentando editar", 1500m);
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("Receivable.NotEditable", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Update_With_Inactive_Customer_Returns_400_CustomerInactive()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var receivableId = await CreateReceivableAsync(client, seed, 1500m);
+
+        var deactivate = await client.PostAsync($"/api/customers/{seed.CustomerId}/deactivate", null);
+        deactivate.EnsureSuccessStatusCode();
+
+        var res = await UpdateReceivableAsync(client, receivableId, seed, "x", 1500m);
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("Receivable.CustomerInactive", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     // ---------------------------------------------------------------------------

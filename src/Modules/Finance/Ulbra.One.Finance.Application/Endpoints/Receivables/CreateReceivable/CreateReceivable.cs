@@ -63,23 +63,12 @@ public sealed class CreateReceivable : IEndpoint
         if (!customer.Active)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInactive", "Customer is inactive.")).ToOk();
 
-        List<ReceivableInstallment> installments;
-        if (req.Generate is { } g)
-        {
-            if (g.TotalAmount <= 0 || g.Count < 1)
-                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Invalid installment generation.")).ToOk();
-            installments = Receivable.GenerateInstallments(g.TotalAmount, g.Count, g.FirstDueDate, g.IntervalMonths);
-        }
-        else if (req.Installments is { Count: > 0 } rows)
-        {
-            if (rows.Any(r => r.Amount <= 0))
-                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Each installment amount must be greater than zero.")).ToOk();
-            installments = rows.Select((r, i) => new ReceivableInstallment(i + 1, r.DueDate, r.Amount)).ToList();
-        }
-        else return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Provide either explicit installments or a generation spec.")).ToOk();
+        var installmentsResult = ReceivableInstallmentsFactory.Build(req.Generate, req.Installments);
+        if (installmentsResult.IsFailure)
+            return Result.Failure<ReceivableResponse>(installmentsResult.Error).ToOk();
 
         var receivable = new Receivable(companyId, req.Origin, customer.Id, customer.Name, req.DocumentNumber, req.IssueDate,
-            req.Description, costCenter.Id, req.RevenueCategoryId, req.LedgerAccountId, installments);
+            req.Description, costCenter.Id, req.RevenueCategoryId, req.LedgerAccountId, installmentsResult.Value);
 
         await uow.AddAsync(receivable, ct);
         await uow.SaveChangesAsync(ct);

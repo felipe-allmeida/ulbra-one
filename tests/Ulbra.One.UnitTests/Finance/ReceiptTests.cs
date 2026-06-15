@@ -113,17 +113,29 @@ public class ReceiptTests
     }
 
     [Fact]
-    public void Cancel_with_receipts_throws_but_clean_cancel_works()
+    public void Cancel_with_receipts_throws_but_clean_cancel_records_audit()
     {
         var withReceipts = NewReceivable(1000m);
         var inst = withReceipts.Installments[0];
         inst.RegisterReceipt(NewReceipt(inst, 400m));
         withReceipts.RecomputeSettlement();
-        Assert.Throws<InvalidOperationException>(() => withReceipts.Cancel("desistiu"));
+        Assert.Throws<InvalidOperationException>(() => withReceipts.Cancel(Guid.NewGuid(), default, "desistiu"));
 
         var clean = NewReceivable(1000m);
-        clean.Cancel("lançado errado");
+        var who = Guid.NewGuid();
+        var at = new DateTimeOffset(2026, 7, 21, 9, 0, 0, TimeSpan.Zero);
+        clean.Cancel(who, at, "lançado errado");
         Assert.Equal(ReceivableStatus.Cancelled, clean.Status);
+        Assert.Equal(who, clean.CancelledById);
+        Assert.Equal(at, clean.CancelledAt);
+    }
+
+    [Fact]
+    public void Receipt_with_non_positive_principal_applied_throws()
+    {
+        var inst = NewReceivable(1000m).Installments[0];
+        // Amount fully offset by interest+fine → PrincipalApplied == 0.
+        Assert.Throws<InvalidOperationException>(() => inst.RegisterReceipt(NewReceipt(inst, amount: 100m, interest: 60m, fine: 40m)));
     }
 
     [Fact]

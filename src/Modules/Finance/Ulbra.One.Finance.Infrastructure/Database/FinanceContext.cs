@@ -177,6 +177,9 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.InstallmentId);
             e.HasIndex(x => x.ReceivableId);
             e.HasIndex(x => x.BankAccountId);
+            // FK on the denormalized receivable_id shortcut (the aggregate root), in addition to the
+            // installment_id FK — prevents orphan receipts if a receivable is ever hard-deleted.
+            e.HasOne<Receivable>().WithMany().HasForeignKey(x => x.ReceivableId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<BankStatementImport>(e =>

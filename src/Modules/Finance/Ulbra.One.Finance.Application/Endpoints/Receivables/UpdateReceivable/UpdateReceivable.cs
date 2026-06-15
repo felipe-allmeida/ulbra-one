@@ -53,26 +53,17 @@ public sealed class UpdateReceivable : IEndpoint
         var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == receivable.CompanyId, ct);
         if (customer is null)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInvalid", "Customer is invalid for this company.")).ToOk();
+        if (!customer.Active)
+            return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInactive", "Customer is inactive.")).ToOk();
 
-        List<ReceivableInstallment> installments;
-        if (req.Generate is { } g)
-        {
-            if (g.TotalAmount <= 0 || g.Count < 1)
-                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Invalid installment generation.")).ToOk();
-            installments = Receivable.GenerateInstallments(g.TotalAmount, g.Count, g.FirstDueDate, g.IntervalMonths);
-        }
-        else if (req.Installments is { Count: > 0 } rows)
-        {
-            if (rows.Any(x => x.Amount <= 0))
-                return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Each installment amount must be greater than zero.")).ToOk();
-            installments = rows.Select((x, i) => new ReceivableInstallment(i + 1, x.DueDate, x.Amount)).ToList();
-        }
-        else return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.InstallmentsInvalid", "Provide installments or a generation spec.")).ToOk();
+        var installmentsResult = ReceivableInstallmentsFactory.Build(req.Generate, req.Installments);
+        if (installmentsResult.IsFailure)
+            return Result.Failure<ReceivableResponse>(installmentsResult.Error).ToOk();
 
         var oldInstallments = receivable.Installments.ToList();
         try
         {
-            receivable.Update(customer.Id, customer.Name, req.DocumentNumber, req.IssueDate, req.Description, costCenter.Id, req.RevenueCategoryId, req.LedgerAccountId, installments);
+            receivable.Update(customer.Id, customer.Name, req.DocumentNumber, req.IssueDate, req.Description, costCenter.Id, req.RevenueCategoryId, req.LedgerAccountId, installmentsResult.Value);
         }
         catch (InvalidOperationException ex)
         {

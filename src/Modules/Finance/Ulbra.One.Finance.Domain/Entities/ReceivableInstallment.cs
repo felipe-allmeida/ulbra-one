@@ -27,6 +27,10 @@ public class ReceivableInstallment
     {
         if (Status == ReceivableInstallmentStatus.Received)
             throw new InvalidOperationException("Installment is already settled.");
+        // Defense-in-depth: the endpoint also validates this, but a domain caller must never
+        // register a non-positive principal (e.g. interest/fine outweighing the amount).
+        if (receipt.PrincipalApplied <= 0)
+            throw new InvalidOperationException("Principal applied must be positive.");
         // Reject over-receipt: the principal applied cannot exceed the outstanding balance.
         if (ReceivedAmount + receipt.PrincipalApplied > Amount)
             throw new InvalidOperationException("Receipt would exceed the installment outstanding balance.");

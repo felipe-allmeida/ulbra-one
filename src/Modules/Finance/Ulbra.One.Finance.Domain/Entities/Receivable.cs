@@ -22,6 +22,8 @@ public class Receivable : IAuditable, ISoftDeletable
     public decimal TotalAmount { get; private set; }
     public ReceivableStatus Status { get; private set; } = ReceivableStatus.AwaitingReceipt;
     public string? CancelReason { get; private set; }
+    public Guid? CancelledById { get; private set; }
+    public DateTimeOffset? CancelledAt { get; private set; }
     public string? WriteOffReason { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -93,7 +95,7 @@ public class Receivable : IAuditable, ISoftDeletable
         TotalAmount = list.Sum(i => i.Amount);
     }
 
-    public void Cancel(string? reason)
+    public void Cancel(Guid cancelledById, DateTimeOffset at, string? reason)
     {
         if (Status is ReceivableStatus.Received or ReceivableStatus.Cancelled or ReceivableStatus.WrittenOff)
             throw new InvalidOperationException("Cannot cancel a received, cancelled or written-off receivable.");
@@ -101,6 +103,8 @@ public class Receivable : IAuditable, ISoftDeletable
             throw new InvalidOperationException("Cannot cancel a receivable that already has receipts. Reverse them first.");
         Status = ReceivableStatus.Cancelled;
         CancelReason = reason;
+        CancelledById = cancelledById;
+        CancelledAt = at;
     }
 
     public void WriteOff(string? reason)
