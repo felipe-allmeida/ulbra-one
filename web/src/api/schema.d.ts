@@ -468,6 +468,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetAgingReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/aging/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetAgingItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-accounts": {
         parameters: {
             query?: never;
@@ -909,6 +941,79 @@ export interface components {
             neighborhood: string;
             city: string;
             state: string;
+        };
+        /** @enum {string} */
+        AgingBucket: "NotYetDue" | "Overdue1To30" | "Overdue31To60" | "Overdue61To90" | "Overdue90Plus";
+        AgingBucketTotals: {
+            /** Format: double */
+            notYetDue: number;
+            /** Format: double */
+            overdue1To30: number;
+            /** Format: double */
+            overdue31To60: number;
+            /** Format: double */
+            overdue61To90: number;
+            /** Format: double */
+            overdue90Plus: number;
+            /** Format: double */
+            grandTotal: number;
+        };
+        AgingByCostCenterRow: {
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: double */
+            notYetDue: number;
+            /** Format: double */
+            overdue1To30: number;
+            /** Format: double */
+            overdue31To60: number;
+            /** Format: double */
+            overdue61To90: number;
+            /** Format: double */
+            overdue90Plus: number;
+            /** Format: double */
+            total: number;
+        };
+        AgingByVendorRow: {
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            name: string;
+            /** Format: double */
+            notYetDue: number;
+            /** Format: double */
+            overdue1To30: number;
+            /** Format: double */
+            overdue31To60: number;
+            /** Format: double */
+            overdue61To90: number;
+            /** Format: double */
+            overdue90Plus: number;
+            /** Format: double */
+            total: number;
+        };
+        AgingItemResponse: {
+            /** @example payable_3fa85f64571742199730000000000000 */
+            payableId: string;
+            /** @example installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            counterpartyName: string;
+            documentNumber: string | null;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: int32 */
+            daysOverdue: number;
+            /** Format: double */
+            remaining: number;
+            bucket: components["schemas"]["AgingBucket"];
+        };
+        AgingReportResponse: {
+            totals: components["schemas"]["AgingBucketTotals"];
+            byVendor: components["schemas"]["AgingByVendorRow"][];
+            byCostCenter: components["schemas"]["AgingByCostCenterRow"][];
         };
         BankAccountResponse: {
             /** @example bank_account_3fa85f64571742199730000000000000 */
@@ -3030,6 +3135,55 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetAgingReport: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingReportResponse"];
+                };
+            };
+        };
+    };
+    GetAgingItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                bucket?: components["schemas"]["AgingBucket"];
+                vendorId?: string;
+                costCenterId?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingItemResponse"][];
                 };
             };
         };
