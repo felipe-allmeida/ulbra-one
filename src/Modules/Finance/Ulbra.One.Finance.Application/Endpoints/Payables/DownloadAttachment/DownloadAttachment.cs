@@ -26,11 +26,11 @@ public sealed class DownloadAttachment : IEndpoint
     {
         var a = await uow.ReadSet<PayableAttachment>()
             .FirstOrDefaultAsync(x => x.Id == attachmentId.Value && x.PayableId == id.Value, ct);
-        if (a is null) return Results.NotFound();
+        if (a is null) return TypedResults.NotFound();
 
         var stream = await storage.GetAsync(a.StoragePath, ct);
-        if (stream is null) return Results.NotFound();
+        if (stream is null) return TypedResults.NotFound();
 
-        return Results.File(stream, a.ContentType, a.FileName);
+        return TypedResults.File(stream, a.ContentType, a.FileName);
     }
 }

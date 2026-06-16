@@ -24,13 +24,13 @@ public sealed class DeleteChartAccount : IEndpoint
         CancellationToken ct)
     {
         var account = await uow.Set<ChartAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
-        if (account is null) return Results.Problem(detail: "Chart account not found.", statusCode: 404, title: "ChartAccount.NotFound");
+        if (account is null) return TypedResults.Problem(detail: "Chart account not found.", statusCode: 404, title: "ChartAccount.NotFound");
 
         var hasChildren = await uow.ReadSet<ChartAccount>().AnyAsync(a => a.ParentId == id.Value, ct);
-        if (hasChildren) return Results.Problem(detail: "Chart account has children; remove or reparent them first.", statusCode: 409, title: "ChartAccount.HasChildren");
+        if (hasChildren) return TypedResults.Problem(detail: "Chart account has children; remove or reparent them first.", statusCode: 409, title: "ChartAccount.HasChildren");
 
         var inUse = await uow.ReadSet<Payable>().AnyAsync(p => p.AccountingAccountId == id.Value || p.FinancialAccountId == id.Value, ct);
-        if (inUse) return Results.Problem(detail: "Chart account is in use by payables; deactivate it instead.", statusCode: 409, title: "ChartAccount.InUse");
+        if (inUse) return TypedResults.Problem(detail: "Chart account is in use by payables; deactivate it instead.", statusCode: 409, title: "ChartAccount.InUse");
 
         account.MarkDeleted(clock.GetUtcNow());
         await uow.SaveChangesAsync(ct);

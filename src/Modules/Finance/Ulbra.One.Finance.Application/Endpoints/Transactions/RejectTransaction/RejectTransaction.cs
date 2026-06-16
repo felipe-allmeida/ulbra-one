@@ -32,9 +32,9 @@ public sealed class RejectTransaction : IEndpoint
         CancellationToken ct)
     {
         var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (t is null) return Results.NotFound();
+        if (t is null) return TypedResults.NotFound();
         t.Reject(req.Reason);
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(TransactionResponse.From(t));
+        return TypedResults.Ok(TransactionResponse.From(t));
     }
 }

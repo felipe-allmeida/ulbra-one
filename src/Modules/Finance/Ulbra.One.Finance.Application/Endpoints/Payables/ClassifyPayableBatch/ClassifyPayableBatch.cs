@@ -26,7 +26,7 @@ public sealed class ClassifyPayableBatch : IEndpoint
         [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
-        if (err is not null) return Results.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+        if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         var ids = req.PayableIds.Select(p => p.Value).ToList();
         var payables = await uow.Set<Payable>().Where(p => ids.Contains(p.Id)).ToListAsync(ct);

@@ -26,15 +26,15 @@ public sealed class UnmatchTransaction : IEndpoint
     {
         var txn = await uow.Set<BankTransaction>().FirstOrDefaultAsync(t => t.Id == id.Value, ct);
         if (txn is null)
-            return Results.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
+            return TypedResults.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
         if (txn.MatchStatus != MatchStatus.Reconciled)
-            return Results.Problem(detail: "Only a reconciled transaction can be unmatched.", statusCode: 409, title: "BankTransaction.NotReconciled");
+            return TypedResults.Problem(detail: "Only a reconciled transaction can be unmatched.", statusCode: 409, title: "BankTransaction.NotReconciled");
 
         var payable = await uow.Set<Payable>()
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
             .FirstOrDefaultAsync(p => p.Installments.Any(i => i.Payments.Any(pay => pay.Id == txn.MatchedPaymentId)), ct);
         if (payable is null)
-            return Results.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
+            return TypedResults.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
 
         var payment = payable.FindPayment(txn.MatchedPaymentId!.Value)!;
         var installment = payable.FindInstallment(payment.InstallmentId)!;

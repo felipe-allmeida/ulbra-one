@@ -36,17 +36,17 @@ public sealed class UploadAttachment : IEndpoint
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null)
-            return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+            return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         if (file.Length == 0)
-            return Results.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
+            return TypedResults.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
         if (file.Length > MaxFileSizeBytes)
-            return Results.Problem(detail: $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.", statusCode: 400, title: "File.TooLarge");
+            return TypedResults.Problem(detail: $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.", statusCode: 400, title: "File.TooLarge");
 
         await using var stream = file.OpenReadStream();
         var validation = FileContentValidator.Validate(file.FileName, file.ContentType, stream);
         if (validation.IsFailure)
-            return Results.Problem(detail: validation.Error.Description, statusCode: 400, title: "File.UnsupportedType");
+            return TypedResults.Problem(detail: validation.Error.Description, statusCode: 400, title: "File.UnsupportedType");
 
         var uploadedById = Guid.Parse(user.UserId);
         var key = await storage.SaveAsync(file.FileName, stream, ct);
@@ -55,7 +55,7 @@ public sealed class UploadAttachment : IEndpoint
         await uow.AddAsync(attachment, ct);
         await uow.SaveChangesAsync(ct);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/api/payables/{id}/attachments/{new PayableAttachmentId(attachment.Id)}",
             PayableAttachmentResponse.From(attachment));
     }

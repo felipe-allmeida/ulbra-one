@@ -33,9 +33,9 @@ public sealed class UpdateChartAccount : IEndpoint
     private static async Task<IResult> Handle(ChartAccountId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         var account = await uow.Set<ChartAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
-        if (account is null) return Results.Problem(detail: "Chart account not found.", statusCode: 404, title: "ChartAccount.NotFound");
+        if (account is null) return TypedResults.Problem(detail: "Chart account not found.", statusCode: 404, title: "ChartAccount.NotFound");
         if (string.IsNullOrWhiteSpace(req.Name))
-            return Results.Problem(detail: "Name is required.", statusCode: 400, title: "ChartAccount.Invalid");
+            return TypedResults.Problem(detail: "Name is required.", statusCode: 400, title: "ChartAccount.Invalid");
 
         account.Rename(req.Name);
 
@@ -44,10 +44,10 @@ public sealed class UpdateChartAccount : IEndpoint
         {
             parent = await uow.Set<ChartAccount>().FirstOrDefaultAsync(a => a.Id == parentId.Value, ct);
             if (parent is null)
-                return Results.Problem(detail: "Parent account not found.", statusCode: 400, title: "ChartAccount.InvalidParent");
+                return TypedResults.Problem(detail: "Parent account not found.", statusCode: 400, title: "ChartAccount.InvalidParent");
         }
         try { account.Reparent(parent); }
-        catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 400, title: "ChartAccount.InvalidParent"); }
+        catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "ChartAccount.InvalidParent"); }
 
         account.SetNature(req.Nature);
         if (req.IsActive) account.Activate(); else account.Deactivate();

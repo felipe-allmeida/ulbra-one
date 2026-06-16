@@ -24,10 +24,10 @@ public sealed class ClassifyPayable : IEndpoint
         [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
-        if (payable is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
-        if (err is not null) return Results.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+        if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
         await uow.SaveChangesAsync(ct);

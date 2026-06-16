@@ -38,10 +38,11 @@ public sealed class CreateCustomer : IEndpoint
 - Domain returns `Result` / `Result<T>`; map to HTTP with `.ToOk()` / `.ToCreated(loc)` (RFC 7807).
 - **Error code goes in Problem `title`** as a stable `Aggregate.Reason` string in English —
   `Payable.CostCenterInvalid`, `Vendor.NotFound`, `Transaction.AmountInvalid`. `detail` = English message.
-- Simple guard clauses can use raw `Results.Problem(...)` with an explicit `title:` code:
+- **Always `TypedResults.*`, never `Results.*`** — typed results give compile-time response types
+  and richer OpenAPI inference. Guard clauses use raw `TypedResults.Problem(...)` with a `title:` code:
 
 ```csharp
-if (cc is null) return Results.Problem(detail: "Cost center is invalid for this company.",
+if (cc is null) return TypedResults.Problem(detail: "Cost center is invalid for this company.",
     statusCode: 400, title: "Payable.CostCenterInvalid");
 ```
 
@@ -72,7 +73,7 @@ if (cc is null) return Results.Problem(detail: "Cost center is invalid for this 
 
 ```csharp
 var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
-return Results.Ok(page.Map(VendorResponse.From));
+return TypedResults.Ok(page.Map(VendorResponse.From));
 ```
 
 ## Persistence access (keyed UoW per module)

@@ -43,7 +43,7 @@ public sealed class DevToken : IEndpoint
         CancellationToken ct)
     {
         if (!env.IsDevelopment())
-            return Results.NotFound();
+            return TypedResults.NotFound();
 
         var email = (req.Email ?? "dev@ulbra.br").ToLowerInvariant();
         var name = req.Name ?? "Dev User";
@@ -80,6 +80,6 @@ public sealed class DevToken : IEndpoint
         }
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
+        return TypedResults.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }

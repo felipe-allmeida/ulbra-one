@@ -24,15 +24,15 @@ internal static class ConciliationBaixa
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
             .FirstOrDefaultAsync(p => p.Installments.Any(i => i.Id == installmentId), ct);
         if (payable is null)
-            return Results.Problem(detail: "The installment is invalid.", statusCode: 400, title: "Match.InstallmentInvalid");
+            return TypedResults.Problem(detail: "The installment is invalid.", statusCode: 400, title: "Match.InstallmentInvalid");
 
         if (!payable.IsPayable)
-            return Results.Problem(detail: "Only an approved payable can be reconciled.", statusCode: 400, title: "Payable.NotPayable");
+            return TypedResults.Problem(detail: "Only an approved payable can be reconciled.", statusCode: 400, title: "Payable.NotPayable");
 
         var installment = payable.FindInstallment(installmentId)!;
         var remaining = installment.Amount - installment.PaidAmount;
         if (installment.Status == InstallmentStatus.Paid || remaining != Math.Abs(txn.Amount))
-            return Results.Problem(detail: "The transaction amount does not match the installment's remaining amount.",
+            return TypedResults.Problem(detail: "The transaction amount does not match the installment's remaining amount.",
                 statusCode: 400, title: "Match.AmountMismatch");
 
         var payment = new Payment(installment.Id, payable.Id, txn.Date, Math.Abs(txn.Amount), txn.BankAccountId,

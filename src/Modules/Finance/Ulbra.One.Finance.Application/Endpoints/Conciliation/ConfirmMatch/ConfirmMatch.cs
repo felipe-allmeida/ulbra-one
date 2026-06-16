@@ -28,9 +28,9 @@ public sealed class ConfirmMatch : IEndpoint
     {
         var txn = await uow.Set<BankTransaction>().FirstOrDefaultAsync(t => t.Id == id.Value, ct);
         if (txn is null)
-            return Results.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
+            return TypedResults.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
         if (txn.MatchStatus != MatchStatus.Suggested)
-            return Results.Problem(detail: "Only a suggested transaction can be confirmed.", statusCode: 409, title: "BankTransaction.NotSuggested");
+            return TypedResults.Problem(detail: "Only a suggested transaction can be confirmed.", statusCode: 409, title: "BankTransaction.NotSuggested");
 
         return await ConciliationBaixa.ReconcileAsync(txn, txn.SuggestedInstallmentId!.Value, user.UserId, uow, clock, ct);
     }

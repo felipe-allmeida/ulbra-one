@@ -37,27 +37,27 @@ public sealed class UploadPaymentProof : IEndpoint
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
             .FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null)
-            return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+            return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         var payment = payable.FindPayment(paymentId.Value);
         if (payment is null)
-            return Results.Problem(detail: "Payment not found.", statusCode: 404, title: "Payment.NotFound");
+            return TypedResults.Problem(detail: "Payment not found.", statusCode: 404, title: "Payment.NotFound");
 
         if (file.Length == 0)
-            return Results.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
+            return TypedResults.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
         if (file.Length > MaxFileSizeBytes)
-            return Results.Problem(detail: $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.", statusCode: 400, title: "File.TooLarge");
+            return TypedResults.Problem(detail: $"File exceeds the {MaxFileSizeBytes / (1024 * 1024)}MB limit.", statusCode: 400, title: "File.TooLarge");
 
         await using var stream = file.OpenReadStream();
         var validation = FileContentValidator.Validate(file.FileName, file.ContentType, stream);
         if (validation.IsFailure)
-            return Results.Problem(detail: validation.Error.Description, statusCode: 400, title: "File.UnsupportedType");
+            return TypedResults.Problem(detail: validation.Error.Description, statusCode: 400, title: "File.UnsupportedType");
 
         var key = await storage.SaveAsync(file.FileName, stream, ct);
         payment.SetProof(file.FileName, file.ContentType, key, file.Length);
         await uow.SaveChangesAsync(ct);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/api/payables/{id}/payments/{paymentId}/proof",
             PaymentResponse.From(payment));
     }

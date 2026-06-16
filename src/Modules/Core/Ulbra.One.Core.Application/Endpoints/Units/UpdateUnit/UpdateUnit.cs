@@ -38,9 +38,9 @@ public sealed class UpdateUnit : IEndpoint
         CancellationToken ct)
     {
         var unit = await uow.Set<Unit>().FirstOrDefaultAsync(u => u.Id == id.Value, ct);
-        if (unit is null) return Results.NotFound();
+        if (unit is null) return TypedResults.NotFound();
         unit.Update(req.Name, req.Acronym);
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(UnitResponse.From(unit));
+        return TypedResults.Ok(UnitResponse.From(unit));
     }
 }

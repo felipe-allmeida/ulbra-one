@@ -21,6 +21,6 @@ public sealed class LookupCep : IEndpoint
     private static async Task<IResult> Handle(string cep, ICepLookup lookup, CancellationToken ct)
     {
         var result = await lookup.FindAsync(cep, ct);
-        return result is null ? Results.NotFound() : Results.Ok(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }

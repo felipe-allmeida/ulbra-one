@@ -21,6 +21,6 @@ public sealed class LookupCnpj : IEndpoint
     private static async Task<IResult> Handle(string cnpj, ICnpjLookup lookup, CancellationToken ct)
     {
         var result = await lookup.FindAsync(cnpj, ct);
-        return result is null ? Results.NotFound() : Results.Ok(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }

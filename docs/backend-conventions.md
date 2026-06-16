@@ -139,12 +139,12 @@ conditions, not client errors).
 - The **frontend maps the code → pt-BR** via i18n (`errors.codes.*`). Do **not** localize on the
   backend — code in English, the code is the contract.
 
-For simple endpoints, raw `Results.Problem(...)` with an explicit `title:` code is fine (no `Result`
+For simple endpoints, raw `TypedResults.Problem(...)` with an explicit `title:` code is fine (no `Result`
 wrapper required):
 
 ```csharp
 if (req.Amount <= 0)
-    return Results.Problem(detail: "Amount must be greater than zero.",
+    return TypedResults.Problem(detail: "Amount must be greater than zero.",
         statusCode: StatusCodes.Status400BadRequest, title: "Transaction.AmountInvalid");
 ```
 
@@ -165,7 +165,7 @@ group.MapPost("/", async (VendorRequest req, RegistryContext db, CancellationTok
 ```
 
 `ValidationEndpointFilter<TRequest>` resolves `IValidator<TRequest>`, validates the request arg, and
-returns `Results.ValidationProblem(errors)` grouped by property when invalid. Validators are
+returns `TypedResults.ValidationProblem(errors)` grouped by property when invalid. Validators are
 auto-registered per module (`AddValidatorsFromAssemblyContaining<…>` in `AddRegistryValidators`).
 
 Validators set a stable **error code** alongside the message; CPF/CNPJ check-digit (módulo 11)
@@ -228,7 +228,7 @@ Browse lists take `[AsParameters] PaginationQueryParameters` (`page` 1-based, `p
 
 ```csharp
 var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
-return Results.Ok(page.Map(VendorResponse.From));   // PaginatedResponse<VendorResponse>
+return TypedResults.Ok(page.Map(VendorResponse.From));   // PaginatedResponse<VendorResponse>
 ```
 
 `PaginatedResponse<T>(Items, Page, PageSize, Total, TotalPages)` has a `Map` that projects items

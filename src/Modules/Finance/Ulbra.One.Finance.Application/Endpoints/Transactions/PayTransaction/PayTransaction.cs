@@ -30,10 +30,10 @@ public sealed class PayTransaction : IEndpoint
         CancellationToken ct)
     {
         var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (t is null) return Results.NotFound();
+        if (t is null) return TypedResults.NotFound();
         try { t.MarkAsPaid(); }
-        catch (InvalidOperationException ex) { return Results.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict); }
+        catch (InvalidOperationException ex) { return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict); }
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(TransactionResponse.From(t));
+        return TypedResults.Ok(TransactionResponse.From(t));
     }
 }

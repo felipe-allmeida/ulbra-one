@@ -30,9 +30,9 @@ public sealed class MatchManually : IEndpoint
     {
         var txn = await uow.Set<BankTransaction>().FirstOrDefaultAsync(t => t.Id == id.Value, ct);
         if (txn is null)
-            return Results.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
+            return TypedResults.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
         if (txn.MatchStatus is MatchStatus.Reconciled or MatchStatus.Ignored)
-            return Results.Problem(detail: "The transaction is already reconciled or ignored.", statusCode: 409, title: "BankTransaction.AlreadyReconciled");
+            return TypedResults.Problem(detail: "The transaction is already reconciled or ignored.", statusCode: 409, title: "BankTransaction.AlreadyReconciled");
 
         return await ConciliationBaixa.ReconcileAsync(txn, req.InstallmentId.Value, user.UserId, uow, clock, ct);
     }

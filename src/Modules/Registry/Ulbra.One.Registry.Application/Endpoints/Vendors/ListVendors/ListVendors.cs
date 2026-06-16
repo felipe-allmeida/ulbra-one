@@ -34,6 +34,6 @@ public sealed class ListVendors : IEndpoint
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(v => v.Name.Contains(search) || v.Document.Contains(search));
         var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
-        return Results.Ok(page.Map(VendorResponse.From));
+        return TypedResults.Ok(page.Map(VendorResponse.From));
     }
 }

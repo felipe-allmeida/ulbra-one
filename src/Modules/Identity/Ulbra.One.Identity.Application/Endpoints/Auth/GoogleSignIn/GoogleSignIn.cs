@@ -42,7 +42,7 @@ public sealed class GoogleSignIn : IEndpoint
     {
         var opt = options.Value;
         if (string.IsNullOrWhiteSpace(opt.ClientId))
-            return Results.Problem(detail: "Google ClientId is not configured.", statusCode: StatusCodes.Status501NotImplemented, title: "Auth.GoogleNotConfigured");
+            return TypedResults.Problem(detail: "Google ClientId is not configured.", statusCode: StatusCodes.Status501NotImplemented, title: "Auth.GoogleNotConfigured");
 
         GoogleTokenPayload payload;
         try
@@ -51,11 +51,11 @@ public sealed class GoogleSignIn : IEndpoint
         }
         catch (Exception)
         {
-            return Results.Problem(detail: "Invalid Google token.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.GoogleTokenInvalid");
+            return TypedResults.Problem(detail: "Invalid Google token.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.GoogleTokenInvalid");
         }
 
         if (!payload.EmailVerified)
-            return Results.Problem(detail: "Email not verified by Google.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.EmailNotVerified");
+            return TypedResults.Problem(detail: "Email not verified by Google.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.EmailNotVerified");
 
         var email = payload.Email.ToLowerInvariant();
 
@@ -63,7 +63,7 @@ public sealed class GoogleSignIn : IEndpoint
         {
             var domain = email.Contains('@') ? email[(email.IndexOf('@') + 1)..] : string.Empty;
             if (!opt.AllowedDomains.Contains(domain, StringComparer.OrdinalIgnoreCase))
-                return Results.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
+                return TypedResults.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
         }
 
         var user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
@@ -83,6 +83,6 @@ public sealed class GoogleSignIn : IEndpoint
         await uow.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
+        return TypedResults.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }
