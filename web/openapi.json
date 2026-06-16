@@ -1908,6 +1908,106 @@
         }
       }
     },
+    "/api/payables/aging": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetAgingReport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/aging/items": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetAgingItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AgingBucket"
+            }
+          },
+          {
+            "name": "vendorId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costCenterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgingItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/receivables": {
       "get": {
         "tags": [
@@ -4388,6 +4488,226 @@
           },
           "state": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgingBucket": {
+        "enum": [
+          "NotYetDue",
+          "Overdue1To30",
+          "Overdue31To60",
+          "Overdue61To90",
+          "Overdue90Plus"
+        ],
+        "type": "string"
+      },
+      "AgingBucketTotals": {
+        "required": [
+          "notYetDue",
+          "overdue1To30",
+          "overdue31To60",
+          "overdue61To90",
+          "overdue90Plus",
+          "grandTotal"
+        ],
+        "type": "object",
+        "properties": {
+          "notYetDue": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue1To30": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue31To60": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue61To90": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue90Plus": {
+            "type": "number",
+            "format": "double"
+          },
+          "grandTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgingByCostCenterRow": {
+        "required": [
+          "costCenterId",
+          "notYetDue",
+          "overdue1To30",
+          "overdue31To60",
+          "overdue61To90",
+          "overdue90Plus",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "notYetDue": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue1To30": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue31To60": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue61To90": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue90Plus": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgingByVendorRow": {
+        "required": [
+          "vendorId",
+          "name",
+          "notYetDue",
+          "overdue1To30",
+          "overdue31To60",
+          "overdue61To90",
+          "overdue90Plus",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notYetDue": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue1To30": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue31To60": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue61To90": {
+            "type": "number",
+            "format": "double"
+          },
+          "overdue90Plus": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgingItemResponse": {
+        "required": [
+          "payableId",
+          "installmentId",
+          "vendorId",
+          "counterpartyName",
+          "documentNumber",
+          "costCenterId",
+          "dueDate",
+          "daysOverdue",
+          "remaining",
+          "bucket"
+        ],
+        "type": "object",
+        "properties": {
+          "payableId": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "installmentId": {
+            "type": "string",
+            "example": "installment_3fa85f64571742199730000000000000"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysOverdue": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remaining": {
+            "type": "number",
+            "format": "double"
+          },
+          "bucket": {
+            "$ref": "#/components/schemas/AgingBucket"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgingReportResponse": {
+        "required": [
+          "totals",
+          "byVendor",
+          "byCostCenter"
+        ],
+        "type": "object",
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/AgingBucketTotals"
+          },
+          "byVendor": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgingByVendorRow"
+            }
+          },
+          "byCostCenter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgingByCostCenterRow"
+            }
           }
         },
         "additionalProperties": false

@@ -21,7 +21,12 @@ const BASE_URL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  // These smoke tests share ONE backend + seeded DB and several of them MUTATE it
+  // (baixa, conciliação confirm, classify). Running them in parallel races on the
+  // same rows and flakes (a different test fails each run). Force a single worker
+  // so the mutating flows run serially against a stable dataset.
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: 'list',

@@ -34,3 +34,5 @@ public enum ChartType { Accounting, Financial }
 public enum AccountKind { Synthetic, Analytical }
 
 public enum AccountNature { Debit, Credit }
+
+public enum AgingBucket { NotYetDue, Overdue1To30, Overdue31To60, Overdue61To90, Overdue90Plus }

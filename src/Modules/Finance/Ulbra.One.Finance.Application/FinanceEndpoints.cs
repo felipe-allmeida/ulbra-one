@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingItems;
+using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingReport;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ConfirmMatch;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.IgnoreTransaction;
@@ -93,6 +95,10 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ClassifyPayable>();
         payables.MapEndpoint<ClassifyPayableBatch>();
         payables.MapEndpoint<ClassificationSuggestion>();
+
+        var aging = builder.MapGroup("/payables/aging");
+        aging.MapEndpoint<GetAgingReport>();
+        aging.MapEndpoint<GetAgingItems>();
 
         var receivables = builder.MapGroup("/receivables");
         receivables.MapEndpoint<ListReceivables>();
