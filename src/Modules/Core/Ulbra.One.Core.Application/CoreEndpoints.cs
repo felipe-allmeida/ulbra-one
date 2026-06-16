@@ -8,7 +8,6 @@ using Ulbra.One.Core.Application.Endpoints.CostCenters.CreateCostCenter;
 using Ulbra.One.Core.Application.Endpoints.CostCenters.GetCostCenter;
 using Ulbra.One.Core.Application.Endpoints.CostCenters.ListCostCenters;
 using Ulbra.One.Core.Application.Endpoints.CostCenters.UpdateCostCenter;
-using Ulbra.One.Core.Application.Endpoints.Ping;
 using Ulbra.One.Core.Application.Endpoints.Units.CreateUnit;
 using Ulbra.One.Core.Application.Endpoints.Units.ListUnits;
 using Ulbra.One.Core.Application.Endpoints.Units.UpdateUnit;
@@ -19,8 +18,6 @@ public static class CoreEndpoints
 {
     public static IEndpointRouteBuilder MapCoreEndpoints(this IEndpointRouteBuilder builder)
     {
-        builder.MapEndpoint<Ping>();
-
         var companies = builder.MapGroup("/companies");
         companies.MapEndpoint<ListCompanies>();
         companies.MapEndpoint<CreateCompany>();
