@@ -17,7 +17,11 @@ public static class IdentityModule
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
         services.AddDbContext<IdentityContext>(options =>
-            options.UseNpgsql(connectionString)
+            options.UseNpgsql(connectionString, npgsql =>
+                   {
+                       npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+                       npgsql.CommandTimeout(30);
+                   })
                    .UseSnakeCaseNamingConvention());
 
         services.AddKeyedScoped<IUnitOfWork>("identity", (sp, _) =>

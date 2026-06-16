@@ -19,7 +19,11 @@ public static class RegistryModule
         services.AddScoped<AuditInterceptor>();
 
         services.AddDbContext<RegistryContext>((sp, options) =>
-            options.UseNpgsql(connectionString)
+            options.UseNpgsql(connectionString, npgsql =>
+                   {
+                       npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+                       npgsql.CommandTimeout(30);
+                   })
                    .UseSnakeCaseNamingConvention()
                    .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
 
