@@ -1,4 +1,4 @@
-namespace Ulbra.One.Registry.Infrastructure.Lookups;
+namespace Ulbra.One.Registry.Application.Lookups;
 
 public sealed record CepResult(string Cep, string Street, string Neighborhood, string City, string State);
 

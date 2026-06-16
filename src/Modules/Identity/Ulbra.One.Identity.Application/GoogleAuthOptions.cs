@@ -1,4 +1,4 @@
-namespace Ulbra.One.Identity.Infrastructure;
+namespace Ulbra.One.Identity.Application;
 
 public sealed class GoogleAuthOptions
 {

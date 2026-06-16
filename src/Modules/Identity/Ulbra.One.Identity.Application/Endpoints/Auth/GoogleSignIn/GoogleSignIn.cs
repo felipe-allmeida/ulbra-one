@@ -11,8 +11,7 @@ using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
-using Ulbra.One.Identity.Infrastructure;
-using Ulbra.One.Identity.Infrastructure.Services;
+using Ulbra.One.Identity.Application.Services;
 
 namespace Ulbra.One.Identity.Application.Endpoints.Auth.GoogleSignIn;
 

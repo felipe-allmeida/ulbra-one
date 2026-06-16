@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
-using Ulbra.One.Registry.Infrastructure.Lookups;
+using Ulbra.One.Registry.Application.Lookups;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Lookup.LookupCnpj;
 

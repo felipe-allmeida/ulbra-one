@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Registry.Application.Lookups;
 using Ulbra.One.Registry.Infrastructure.Lookups;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Auditing;

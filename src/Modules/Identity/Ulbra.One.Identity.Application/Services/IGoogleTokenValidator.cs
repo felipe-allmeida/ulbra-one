@@ -1,4 +1,4 @@
-namespace Ulbra.One.Identity.Infrastructure.Services;
+namespace Ulbra.One.Identity.Application.Services;
 
 public record GoogleTokenPayload(
     string Subject,

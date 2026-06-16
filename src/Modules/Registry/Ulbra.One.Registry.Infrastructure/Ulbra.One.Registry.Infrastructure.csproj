@@ -10,6 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
+    <ProjectReference Include="../Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

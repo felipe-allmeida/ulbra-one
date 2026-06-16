@@ -5,6 +5,8 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Common.Infrastructure.Persistence;
+using Ulbra.One.Identity.Application;
+using Ulbra.One.Identity.Application.Services;
 using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Identity.Infrastructure.Services;
 

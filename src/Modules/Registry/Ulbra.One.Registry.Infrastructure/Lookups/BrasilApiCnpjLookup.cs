@@ -1,3 +1,4 @@
+using Ulbra.One.Registry.Application.Lookups;
 using System.Text.Json;
 
 namespace Ulbra.One.Registry.Infrastructure.Lookups;
