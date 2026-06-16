@@ -33,6 +33,12 @@ public class Payment
     public Payment(Guid installmentId, Guid payableId, DateOnly paymentDate, decimal amount, Guid bankAccountId,
         PaymentMethod method, decimal interest, decimal fine, decimal discount, string? notes, Guid createdById, DateTimeOffset createdAt)
     {
+        if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount), "Payment amount must be positive.");
+        if (interest < 0) throw new ArgumentOutOfRangeException(nameof(interest), "Interest cannot be negative.");
+        if (fine < 0) throw new ArgumentOutOfRangeException(nameof(fine), "Fine cannot be negative.");
+        if (discount < 0) throw new ArgumentOutOfRangeException(nameof(discount), "Discount cannot be negative.");
+        if (amount - interest - fine + discount < 0)
+            throw new ArgumentException("Payment principal cannot be negative (interest and fine exceed amount plus discount).", nameof(amount));
         InstallmentId = installmentId;
         PayableId = payableId;
         PaymentDate = paymentDate;
