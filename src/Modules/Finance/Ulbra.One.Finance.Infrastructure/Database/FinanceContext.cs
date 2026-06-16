@@ -59,6 +59,9 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.VendorId);
             e.HasIndex(x => x.Status);
             e.HasQueryFilter(x => x.DeletedAt == null);
+            // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
+            // Catches approve/cancel/update races on the Payable row.
+            e.Property<uint>("xmin").IsRowVersion().HasColumnName("xmin");
         });
 
         modelBuilder.Entity<Installment>(e =>
@@ -71,6 +74,10 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.Status);
             e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Cascade);
             e.Navigation(x => x.Payments).AutoInclude();
+            // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
+            // Critical: two concurrent RegisterPayment calls mutate the SAME installment row;
+            // the token makes the second SaveChanges fail instead of double-paying real cash.
+            e.Property<uint>("xmin").IsRowVersion().HasColumnName("xmin");
         });
 
         modelBuilder.Entity<PayableAttachment>(e =>
