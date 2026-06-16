@@ -72,7 +72,9 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.PayableId);
             e.HasIndex(x => x.DueDate);
             e.HasIndex(x => x.Status);
-            e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Cascade);
+            // Payments are append-only: never cascade-delete a baixa. Restrict means an installment that
+            // has payments cannot be deleted (the UpdatePayable guard blocks editing a payable with payments).
+            e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Restrict);
             e.Navigation(x => x.Payments).AutoInclude();
             // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
             // Critical: two concurrent RegisterPayment calls mutate the SAME installment row;

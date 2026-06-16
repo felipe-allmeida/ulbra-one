@@ -51,6 +51,36 @@ public class PayableTests
     }
 
     [Fact]
+    public void Update_throws_when_payable_has_registered_payments()
+    {
+        var p = NewPayable(1000m);
+        p.Approve("u1", At);
+        var inst = p.Installments[0];
+        inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 7, 10), 1000m, Guid.NewGuid(),
+            PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));
+
+        Assert.Throws<InvalidOperationException>(() => p.Update(Guid.NewGuid(), "X", null, null, "edit",
+            Guid.NewGuid(), null, Payable.GenerateInstallments(2000m, 1, new DateOnly(2026, 8, 10), 1)));
+    }
+
+    [Fact]
+    public void Update_allowed_when_a_payment_was_reversed()
+    {
+        var p = NewPayable(1000m);
+        p.Approve("u1", At);
+        var inst = p.Installments[0];
+        var pay = inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 7, 10), 1000m, Guid.NewGuid(),
+            PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));
+        inst.ReversePayment(pay.Id, "estorno");
+        p.RecomputeSettlement();
+
+        // only reversed payments exist → editing is allowed again
+        p.Update(Guid.NewGuid(), "X", null, null, "edit", Guid.NewGuid(), null,
+            Payable.GenerateInstallments(2000m, 1, new DateOnly(2026, 8, 10), 1));
+        Assert.Equal(2000m, p.TotalAmount);
+    }
+
+    [Fact]
     public void Reject_sets_reason_and_state()
     {
         var p = NewPayable(100m);

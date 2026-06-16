@@ -916,7 +916,7 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                     b.HasOne("Ulbra.One.Finance.Domain.Entities.Installment", null)
                         .WithMany("Payments")
                         .HasForeignKey("InstallmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_payments_installments_installment_id");
                 });

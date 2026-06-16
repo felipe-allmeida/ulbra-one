@@ -44,6 +44,8 @@ public sealed class UpdatePayable : IEndpoint
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (p.Installments.Any(i => i.Payments.Any(pay => !pay.IsReversed)))
+            return Results.Problem(detail: "Cannot edit a payable that already has registered payments.", statusCode: 400, title: "Payable.HasPayments");
 
         var cc = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == p.CompanyId, ct);
         if (cc is null) return Results.Problem(detail: "Cost center is invalid for this company.", statusCode: 400, title: "Payable.CostCenterInvalid");
