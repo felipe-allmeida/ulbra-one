@@ -500,6 +500,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/receivables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListReceivables"];
+        put?: never;
+        post: operations["CreateReceivable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetReceivable"];
+        put: operations["UpdateReceivable"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CancelReceivable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}/installments/{installmentId}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RegisterReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}/receipts/{receiptId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReverseReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}/receipts/{receiptId}/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DownloadReceiptProof"];
+        put?: never;
+        post: operations["UploadReceiptProof"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-accounts": {
         parameters: {
             query?: never;
@@ -1066,6 +1162,9 @@ export interface components {
         CancelPayableCancelRequest: {
             reason: string | null;
         };
+        CancelReceivableCancelReceivableRequest: {
+            reason: string | null;
+        };
         CepResult: {
             cep: string;
             street: string;
@@ -1208,6 +1307,25 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+        };
+        CreateReceivableCreateReceivableRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** @example customer_3fa85f64571742199730000000000000 */
+            payerId: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: uuid */
+            revenueCategoryId: string | null;
+            /** Format: uuid */
+            ledgerAccountId: string | null;
+            origin: components["schemas"]["ReceivableOrigin"];
+            description: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            installments: components["schemas"]["ReceivableInstallmentInput"][] | null;
+            generate: components["schemas"]["ReceivableGenerateInput"];
         };
         CreateTransactionRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -1514,9 +1632,155 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        ReceiptResponse: {
+            /** @example receipt_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example receivable_installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+            /** Format: date */
+            receiptDate: string;
+            /** Format: double */
+            amount: number;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: double */
+            interest: number;
+            /** Format: double */
+            fine: number;
+            /** Format: double */
+            discount: number;
+            notes: string | null;
+            isReversed: boolean;
+            reversalReason: string | null;
+            /** Format: date-time */
+            reversedAt: string | null;
+            hasProof: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ReceivableGenerateInput: {
+            /** Format: double */
+            totalAmount: number;
+            /** Format: int32 */
+            count: number;
+            /** Format: date */
+            firstDueDate: string;
+            /** Format: int32 */
+            intervalMonths: number;
+        };
+        ReceivableInstallmentInput: {
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+        };
+        ReceivableInstallmentResponse: {
+            /** @example receivable_installment_3fa85f64571742199730000000000000 */
+            id: string;
+            /** Format: int32 */
+            sequence: number;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+            status: components["schemas"]["ReceivableInstallmentStatus"];
+            /** Format: double */
+            receivedAmount: number;
+            isOverdue: boolean;
+            /** Format: int32 */
+            daysOverdue: number;
+            receipts: components["schemas"]["ReceiptResponse"][];
+        };
+        /** @enum {string} */
+        ReceivableInstallmentStatus: "Open" | "PartiallyReceived" | "Received";
+        ReceivableListItemResponse: {
+            /** @example receivable_3fa85f64571742199730000000000000 */
+            receivableId: string;
+            /** @example receivable_installment_3fa85f64571742199730000000000000 */
+            installmentId: string;
+            /** Format: int32 */
+            sequence: number;
+            /** Format: int32 */
+            installmentCount: number;
+            payerName: string;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: uuid */
+            revenueCategoryId: string | null;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+            /** Format: double */
+            receivedAmount: number;
+            installmentStatus: components["schemas"]["ReceivableInstallmentStatus"];
+            receivableStatus: components["schemas"]["ReceivableStatus"];
+            isOverdue: boolean;
+        };
+        ReceivableListItemResponsePaginatedResponse: {
+            items: components["schemas"]["ReceivableListItemResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        /** @enum {string} */
+        ReceivableOrigin: "Manual" | "AcademicImport" | "Rent" | "MiscRevenue";
+        ReceivableResponse: {
+            /** @example receivable_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            origin: components["schemas"]["ReceivableOrigin"];
+            /** @example customer_3fa85f64571742199730000000000000 */
+            payerId: string;
+            payerName: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: uuid */
+            revenueCategoryId: string | null;
+            /** Format: uuid */
+            ledgerAccountId: string | null;
+            /** Format: double */
+            totalAmount: number;
+            status: components["schemas"]["ReceivableStatus"];
+            cancelReason: string | null;
+            writeOffReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            installments: components["schemas"]["ReceivableInstallmentResponse"][];
+        };
+        /** @enum {string} */
+        ReceivableStatus: "AwaitingReceipt" | "Received" | "Cancelled" | "WrittenOff";
         RegisterPaymentRequest: {
             /** Format: date */
             paymentDate: string;
+            /** Format: double */
+            amount: number;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: double */
+            interest: number;
+            /** Format: double */
+            fine: number;
+            /** Format: double */
+            discount: number;
+            notes: string | null;
+        };
+        RegisterReceiptRegisterReceiptRequest: {
+            /** Format: date */
+            receiptDate: string;
             /** Format: double */
             amount: number;
             /** @example bank_account_3fa85f64571742199730000000000000 */
@@ -1541,6 +1805,9 @@ export interface components {
             classifiedCount: number;
         };
         ReversePaymentRequest: {
+            reason: string | null;
+        };
+        ReverseReceiptReverseReceiptRequest: {
             reason: string | null;
         };
         StatementImportResponse: {
@@ -1680,6 +1947,22 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+        };
+        UpdateReceivableUpdateReceivableRequest: {
+            /** @example customer_3fa85f64571742199730000000000000 */
+            payerId: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: uuid */
+            revenueCategoryId: string | null;
+            /** Format: uuid */
+            ledgerAccountId: string | null;
+            description: string;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            installments: components["schemas"]["ReceivableInstallmentInput"][] | null;
+            generate: components["schemas"]["ReceivableGenerateInput"];
         };
         UpdateUnitRequest: {
             name: string;
@@ -2492,14 +2775,15 @@ export interface operations {
     ListPayables: {
         parameters: {
             query?: {
-                companyId?: string;
-                status?: components["schemas"]["PayableStatus"];
-                vendorId?: string;
-                costCenterId?: string;
-                categoryId?: string;
-                dueFrom?: string;
-                dueTo?: string;
-                classified?: boolean;
+                CompanyId?: string;
+                Status?: components["schemas"]["PayableStatus"];
+                VendorId?: string;
+                CostCenterId?: string;
+                CategoryId?: string;
+                DueFrom?: string;
+                DueTo?: string;
+                Paid?: boolean;
+                Classified?: boolean;
                 Page?: number;
                 PageSize?: number;
             };
@@ -3184,6 +3468,365 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgingItemResponse"][];
+                };
+            };
+        };
+    };
+    ListReceivables: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: components["schemas"]["ReceivableStatus"];
+                payerId?: string;
+                costCenterId?: string;
+                dueFrom?: string;
+                dueTo?: string;
+                received?: boolean;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableListItemResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    CreateReceivable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReceivableCreateReceivableRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetReceivable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateReceivable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReceivableUpdateReceivableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CancelReceivable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelReceivableCancelReceivableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RegisterReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                installmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterReceiptRegisterReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReverseReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseReceiptReverseReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DownloadReceiptProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UploadReceiptProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

@@ -157,7 +157,13 @@ export function ContasPagarPage() {
     <>
       <PageHeader title={t('payables.title')} sub={t('payables.subtitle')}>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/contas-a-pagar/novo')}>
+        <Button
+          variant='brand'
+          icon={<Plus />}
+          disabled={!empresa}
+          style={{ alignSelf: 'flex-end' }}
+          onClick={() => nav('/app/contas-a-pagar/novo')}
+        >
           {t('payables.new')}
         </Button>
       </PageHeader>

@@ -45,6 +45,12 @@ import {
   ContaPagarDetailPage,
   EditarContaPagarPage,
 } from './pages/contas-a-pagar';
+import {
+  ContasReceberPage,
+  NovaContaReceberPage,
+  ContaReceberDetailPage,
+  EditarContaReceberPage,
+} from './pages/contas-a-receber';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { PlanoDeContasPage } from './pages/plano-de-contas';
@@ -76,6 +82,10 @@ export default function App() {
         <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
         <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
         <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
+        <Route path='contas-a-receber' element={<ContasReceberPage />} />
+        <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
+        <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />
+        <Route path='contas-a-receber/:id/editar' element={<EditarContaReceberPage />} />
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
         <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
@@ -185,7 +195,7 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
     </>
-  ) : at('contas-receber') ? (
+  ) : at('contas-a-receber') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsReceivable')}</b>
     </>
@@ -234,8 +244,8 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem
             icon={<ArrowDownLeft />}
             label={t('nav.accountsReceivable')}
-            active={at('contas-receber')}
-            onClick={() => go('/app/contas-receber')}
+            active={at('contas-a-receber')}
+            onClick={() => go('/app/contas-a-receber')}
           />
           <NavItem icon={<Activity />} label={t('nav.cashFlow')} />
           <NavItem

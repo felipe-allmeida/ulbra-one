@@ -24,14 +24,16 @@ public sealed class LocalFileStorageServiceTests : IDisposable
         // Assert: key is non-empty
         Assert.False(string.IsNullOrWhiteSpace(key));
 
-        // Act: Get
-        var stream = await sut.GetAsync(key);
+        // Act: Get (scoped so the read handle is released before Delete)
+        {
+            await using var stream = await sut.GetAsync(key);
 
-        // Assert: retrieved content matches
-        Assert.NotNull(stream);
-        using var ms = new MemoryStream();
-        await stream!.CopyToAsync(ms);
-        Assert.Equal(bytes, ms.ToArray());
+            // Assert: retrieved content matches
+            Assert.NotNull(stream);
+            using var ms = new MemoryStream();
+            await stream!.CopyToAsync(ms);
+            Assert.Equal(bytes, ms.ToArray());
+        }
 
         // Act: Delete
         await sut.DeleteAsync(key);

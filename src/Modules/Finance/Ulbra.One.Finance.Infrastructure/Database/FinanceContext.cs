@@ -14,6 +14,9 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Receivable> Receivables => Set<Receivable>();
+    public DbSet<ReceivableInstallment> ReceivableInstallments => Set<ReceivableInstallment>();
+    public DbSet<Receipt> Receipts => Set<Receipt>();
     public DbSet<BankStatementImport> StatementImports => Set<BankStatementImport>();
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
     public DbSet<ChartAccount> ChartAccounts => Set<ChartAccount>();
@@ -125,6 +128,58 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.InstallmentId);
             e.HasIndex(x => x.PayableId);
             e.HasIndex(x => x.BankAccountId);
+        });
+
+        modelBuilder.Entity<Receivable>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PayerName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.DocumentNumber).HasMaxLength(60);
+            e.Property(x => x.Description).HasMaxLength(300).IsRequired();
+            e.Property(x => x.TotalAmount).HasPrecision(18, 2);
+            e.Property(x => x.CancelReason).HasMaxLength(500);
+            e.Property(x => x.WriteOffReason).HasMaxLength(500);
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
+            // No AutoInclude here (unlike Payable): keeps the ~19k-title list cheap. Detail/baixa endpoints Include explicitly.
+            e.HasMany(x => x.Installments).WithOne().HasForeignKey(i => i.ReceivableId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.CompanyId);
+            e.HasIndex(x => x.CostCenterId);
+            e.HasIndex(x => x.PayerId);
+            e.HasIndex(x => x.Status);
+            e.HasQueryFilter(x => x.DeletedAt == null);
+        });
+
+        modelBuilder.Entity<ReceivableInstallment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.ReceivedAmount).HasPrecision(18, 2);
+            e.HasIndex(x => x.ReceivableId);
+            e.HasIndex(x => x.DueDate);
+            e.HasIndex(x => x.Status);
+            e.HasMany(x => x.Receipts).WithOne().HasForeignKey(r => r.InstallmentId).OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(x => x.Receipts).AutoInclude();
+        });
+
+        modelBuilder.Entity<Receipt>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Interest).HasPrecision(18, 2);
+            e.Property(x => x.Fine).HasPrecision(18, 2);
+            e.Property(x => x.Discount).HasPrecision(18, 2);
+            e.Property(x => x.Notes).HasMaxLength(300);
+            e.Property(x => x.ReversalReason).HasMaxLength(300);
+            e.Property(x => x.ProofFileName).HasMaxLength(260);
+            e.Property(x => x.ProofContentType).HasMaxLength(120);
+            e.Property(x => x.ProofStoragePath).HasMaxLength(300);
+            e.HasIndex(x => x.InstallmentId);
+            e.HasIndex(x => x.ReceivableId);
+            e.HasIndex(x => x.BankAccountId);
+            // FK on the denormalized receivable_id shortcut (the aggregate root), in addition to the
+            // installment_id FK — prevents orphan receipts if a receivable is ever hard-deleted.
+            e.HasOne<Receivable>().WithMany().HasForeignKey(x => x.ReceivableId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<BankStatementImport>(e =>
