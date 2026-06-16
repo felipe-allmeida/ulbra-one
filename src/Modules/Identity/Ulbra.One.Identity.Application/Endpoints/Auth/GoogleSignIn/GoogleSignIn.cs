@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
@@ -38,7 +38,7 @@ public sealed class GoogleSignIn : IEndpoint
         IGoogleTokenValidator validator,
         IOptions<GoogleAuthOptions> options,
         [FromKeyedServices("identity")] IUnitOfWork uow,
-        JwtTokenService jwt,
+        ITokenService jwt,
         CancellationToken ct)
     {
         var opt = options.Value;

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;

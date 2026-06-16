@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Identity.Infrastructure.Database;
@@ -30,7 +31,7 @@ public static class IdentityModule
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
 
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
-        services.AddSingleton<JwtTokenService>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<UserContext>();
 
         services.AddJwtAuthentication(configuration);

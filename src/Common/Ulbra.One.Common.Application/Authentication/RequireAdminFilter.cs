@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace Ulbra.One.Common.Infrastructure.Authentication;
+namespace Ulbra.One.Common.Application.Authentication;
 
 internal sealed class RequireAdminFilter : IEndpointFilter
 {

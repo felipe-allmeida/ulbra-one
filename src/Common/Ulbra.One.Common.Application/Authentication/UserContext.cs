@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
-namespace Ulbra.One.Common.Infrastructure.Authentication;
+namespace Ulbra.One.Common.Application.Authentication;
 
 public class UserContext(IHttpContextAccessor httpContextAccessor)
 {

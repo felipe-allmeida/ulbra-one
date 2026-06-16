@@ -3,10 +3,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Ulbra.One.Common.Application.Authentication;
 
 namespace Ulbra.One.Common.Infrastructure.Authentication;
 
-public class JwtTokenService(IConfiguration configuration)
+public class JwtTokenService(IConfiguration configuration) : ITokenService
 {
     public const string Issuer = "ulbra-one";
     public const string Audience = "ulbra-one-api";

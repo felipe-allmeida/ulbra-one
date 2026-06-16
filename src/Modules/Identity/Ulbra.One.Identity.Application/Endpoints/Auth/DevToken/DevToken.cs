@@ -9,7 +9,7 @@ using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Identity.Application.Contracts;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
 
@@ -39,7 +39,7 @@ public sealed class DevToken : IEndpoint
         Request req,
         IHostEnvironment env,
         [FromKeyedServices("identity")] IUnitOfWork uow,
-        JwtTokenService jwt,
+        ITokenService jwt,
         CancellationToken ct)
     {
         if (!env.IsDevelopment())
