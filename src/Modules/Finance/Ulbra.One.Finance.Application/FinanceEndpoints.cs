@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingItems;
 using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingReport;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;

@@ -1,4 +1,4 @@
-namespace Ulbra.One.Common.Infrastructure.Normalization;
+namespace Ulbra.One.Common.Application.Normalization;
 
 /// <summary>
 /// Marks a <see cref="string"/> request property to be trimmed and have its internal

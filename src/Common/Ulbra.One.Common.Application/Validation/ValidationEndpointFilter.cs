@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
 
-namespace Ulbra.One.Common.Infrastructure.Validation;
+namespace Ulbra.One.Common.Application.Validation;
 
 /// <summary>
 /// Validates the first argument of type <typeparamref name="TRequest"/> using a registered

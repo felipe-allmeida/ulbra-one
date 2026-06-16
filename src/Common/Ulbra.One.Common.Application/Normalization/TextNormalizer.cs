@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
 
-namespace Ulbra.One.Common.Infrastructure.Normalization;
+namespace Ulbra.One.Common.Application.Normalization;
 
 /// <summary>
 /// Trims and collapses internal whitespace on the <see cref="NormalizeTextAttribute"/>-annotated

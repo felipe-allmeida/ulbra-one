@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
-using Ulbra.One.Common.Infrastructure.Validation;
+using Ulbra.One.Common.Application.Validation;
 
 namespace Ulbra.One.UnitTests.Validation;
 

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace Ulbra.One.Common.Infrastructure.Normalization;
+namespace Ulbra.One.Common.Application.Normalization;
 
 /// <summary>
 /// Normalizes the first argument of type <typeparamref name="TRequest"/> before the handler runs:

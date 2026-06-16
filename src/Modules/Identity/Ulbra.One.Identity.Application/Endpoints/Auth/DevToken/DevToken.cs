@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Identity.Domain;

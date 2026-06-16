@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Identity.Application.Endpoints.Auth.DevToken;
 using Ulbra.One.Identity.Application.Endpoints.Auth.GoogleSignIn;
 using Ulbra.One.Identity.Application.Endpoints.Auth.Me;

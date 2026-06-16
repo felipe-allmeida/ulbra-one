@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Core.Application.Endpoints.Companies.CreateCompany;
 using Ulbra.One.Core.Application.Endpoints.Companies.ListCompanies;
 using Ulbra.One.Core.Application.Endpoints.Companies.UpdateCompany;

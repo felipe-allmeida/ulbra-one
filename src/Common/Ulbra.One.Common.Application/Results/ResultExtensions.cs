@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Ulbra.One.Common.Domain;
 
-namespace Ulbra.One.Common.Infrastructure.Results;
+namespace Ulbra.One.Common.Application.Results;
 
 public static class ResultExtensions
 {

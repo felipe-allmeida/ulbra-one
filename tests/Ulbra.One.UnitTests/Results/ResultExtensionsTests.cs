@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Ulbra.One.Common.Domain;
-using Ulbra.One.Common.Infrastructure.Results;
+using Ulbra.One.Common.Application.Results;
 
 namespace Ulbra.One.UnitTests.Results;
 

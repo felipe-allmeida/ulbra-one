@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
 
-namespace Ulbra.One.Common.Infrastructure.Extensions;
+namespace Ulbra.One.Common.Application.Extensions;
 
 public static class EndpointExtensions
 {
