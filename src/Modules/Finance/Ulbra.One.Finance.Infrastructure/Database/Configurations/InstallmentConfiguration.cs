@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
-public sealed class InstallmentConfiguration : IEntityTypeConfiguration<Installment>
+public sealed class InstallmentConfiguration : BaseEntityConfiguration<Installment>
 {
-    public void Configure(EntityTypeBuilder<Installment> e)
+    protected override string Schema => "finance";
+
+    protected override void ConfigureEntity(EntityTypeBuilder<Installment> e)
     {
-        e.Metadata.SetSchema("finance");
         e.HasKey(x => x.Id);
         e.Property(x => x.Amount).HasPrecision(18, 2);
         e.Property(x => x.PaidAmount).HasPrecision(18, 2);

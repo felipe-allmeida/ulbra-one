@@ -1,14 +1,18 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
-public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
+public sealed class TransactionConfiguration : BaseEntityConfiguration<Transaction>
 {
-    public void Configure(EntityTypeBuilder<Transaction> e)
+    protected override string Schema => "finance";
+
+    // Transaction is ISoftDeletable but had no filter historically — preserve that behavior.
+    protected override bool ApplySoftDeleteFilter => false;
+
+    protected override void ConfigureEntity(EntityTypeBuilder<Transaction> e)
     {
-        e.Metadata.SetSchema("finance");
         e.HasKey(x => x.Id);
         e.Property(x => x.Description).HasMaxLength(300).IsRequired();
         e.Property(x => x.CounterpartyName).HasMaxLength(200);

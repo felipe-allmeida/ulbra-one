@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
-public sealed class ReceiptConfiguration : IEntityTypeConfiguration<Receipt>
+public sealed class ReceiptConfiguration : BaseEntityConfiguration<Receipt>
 {
-    public void Configure(EntityTypeBuilder<Receipt> e)
+    protected override string Schema => "finance";
+
+    protected override void ConfigureEntity(EntityTypeBuilder<Receipt> e)
     {
-        e.Metadata.SetSchema("finance");
         e.HasKey(x => x.Id);
         e.Property(x => x.Amount).HasPrecision(18, 2);
         e.Property(x => x.Interest).HasPrecision(18, 2);

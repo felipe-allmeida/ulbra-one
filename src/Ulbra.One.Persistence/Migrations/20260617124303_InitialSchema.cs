@@ -88,9 +88,9 @@ namespace Ulbra.One.Persistence.Migrations
                     nature = table.Column<int>(type: "integer", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<string>(type: "text", nullable: false),
+                    created_by = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    updated_by = table.Column<string>(type: "text", nullable: false),
+                    updated_by = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     deleted_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -108,9 +108,9 @@ namespace Ulbra.One.Persistence.Migrations
                     require_to_approve = table.Column<bool>(type: "boolean", nullable: false),
                     require_to_pay = table.Column<bool>(type: "boolean", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<string>(type: "text", nullable: false),
+                    created_by = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    updated_by = table.Column<string>(type: "text", nullable: false)
+                    updated_by = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false)
                 },
                 constraints: table =>
                 {

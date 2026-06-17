@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
-public sealed class VendorConfiguration : IEntityTypeConfiguration<VendorEntity>
+public sealed class VendorConfiguration : BaseEntityConfiguration<VendorEntity>
 {
-    public void Configure(EntityTypeBuilder<VendorEntity> e)
+    protected override string Schema => "registry";
+
+    protected override void ConfigureEntity(EntityTypeBuilder<VendorEntity> e)
     {
-        e.Metadata.SetSchema("registry");
         e.HasKey(x => x.Id);
         e.Property(x => x.Name).HasMaxLength(200).IsRequired();
         e.Property(x => x.TradeName).HasMaxLength(200);
@@ -17,12 +19,9 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<VendorEntity>
         e.Property(x => x.Phone).HasMaxLength(20);
         e.Property(x => x.PaymentTerms).HasMaxLength(100);
         e.Property(x => x.BankInfo).HasMaxLength(200);
-        e.Property(x => x.CreatedBy).HasMaxLength(64);
-        e.Property(x => x.UpdatedBy).HasMaxLength(64);
         e.OwnsOne(x => x.Address, AddressConfiguration.Configure);
         // Partial unique index: uniqueness applies only to live (non-soft-deleted) rows,
         // so the same document can be re-registered after a soft-delete.
         e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique().HasFilter("deleted_at IS NULL");
-        e.HasQueryFilter(x => x.DeletedAt == null);
     }
 }

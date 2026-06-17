@@ -12,7 +12,7 @@ using Ulbra.One.Persistence;
 namespace Ulbra.One.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260617114654_InitialSchema")]
+    [Migration("20260617124303_InitialSchema")]
     partial class InitialSchema
     {
         /// <inheritdoc />
@@ -576,7 +576,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -611,7 +612,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
@@ -642,7 +644,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("created_by");
 
                     b.Property<bool>("RequireToApprove")
@@ -659,7 +662,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")

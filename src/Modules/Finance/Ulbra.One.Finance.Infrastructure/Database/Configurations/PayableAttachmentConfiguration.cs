@@ -1,14 +1,15 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
-public sealed class PayableAttachmentConfiguration : IEntityTypeConfiguration<PayableAttachment>
+public sealed class PayableAttachmentConfiguration : BaseEntityConfiguration<PayableAttachment>
 {
-    public void Configure(EntityTypeBuilder<PayableAttachment> e)
+    protected override string Schema => "finance";
+
+    protected override void ConfigureEntity(EntityTypeBuilder<PayableAttachment> e)
     {
-        e.Metadata.SetSchema("finance");
         e.HasKey(x => x.Id);
         e.Property(x => x.FileName).HasMaxLength(260).IsRequired();
         e.Property(x => x.ContentType).HasMaxLength(120).IsRequired();

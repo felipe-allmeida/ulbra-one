@@ -573,7 +573,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -608,7 +609,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
@@ -639,7 +641,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("created_by");
 
                     b.Property<bool>("RequireToApprove")
@@ -656,7 +659,8 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
