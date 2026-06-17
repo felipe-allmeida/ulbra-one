@@ -38,6 +38,11 @@
     <Project Path="src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <Project Path="src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Application/Ulbra.One.Notifications.Application.csproj" />
+    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Domain/Ulbra.One.Notifications.Domain.csproj" />
+    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Infrastructure/Ulbra.One.Notifications.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
     <Project Path="tests/Ulbra.One.UnitTests/Ulbra.One.UnitTests.csproj" />
