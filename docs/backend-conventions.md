@@ -366,7 +366,58 @@ generator does the rest automatically.
 
 ---
 
-## 12. Anti-patterns (do NOT)
+## 12. Eventing / Transactional Outbox
+
+**Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables atomically alongside the business row. `QueryDelay = 1s` keeps notifications prompt and integration tests deterministic. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
+
+### Pattern
+
+1. **Contracts** live in `Ulbra.One.Messaging.Contracts` — primitive `sealed record` types with only serialisable properties (no domain types, no entity references).
+2. **Publish** from the endpoint handler via `IPublishEndpoint` **before** `SaveChanges`. The bus outbox captures the message inside the same DB transaction — no message is lost even if the broker is down at publish time.
+3. **Consumers** implement `IConsumer<T>` (registered in `AddMessaging`). Consumers **must be idempotent** — RabbitMQ delivers at-least-once. Guard against duplicates at the application level (e.g. existence check on `(ReferenceId, Type)` before inserting).
+
+```csharp
+// Handler (endpoint)
+await publishEndpoint.Publish(new PayablePendingApproval { ... }, ct);
+await uow.SaveChangesAsync(ct);   // message + business row commit atomically
+
+// Consumer (Notifications module)
+public sealed class PayablePendingApprovalConsumer(IUnitOfWork uow, TimeProvider clock)
+    : IConsumer<PayablePendingApproval>
+{
+    public async Task Consume(ConsumeContext<PayablePendingApproval> ctx)
+    {
+        var exists = await uow.ReadSet<Notification>()
+            .AnyAsync(n => n.ReferenceId == ctx.Message.PayableId
+                        && n.Type == "PayablePendingApproval", ctx.CancellationToken);
+        if (exists) return;   // idempotency guard
+        // ... create and save notification
+    }
+}
+```
+
+### Notifications module
+
+`src/Modules/Notifications/` — audience-by-role in-app notifications (schema `notifications`).
+
+- `Notification` entity: `CompanyId`, `AudienceRole` (e.g. `"Admin"`), `Type`, `Title`, `Message`, `ReferenceId` (loose Guid — no FK), `OccurredAt`. **No read/dismiss state in v1.**
+- `GET /api/notifications` (paginated, ordered by `OccurredAt` desc) filters by `AudienceRole == UserContext.Role` so each caller sees only their role's inbox.
+- Consumer inbox is registered via MassTransit in `MessagingSetup`; `NotificationsModule.AddNotificationsModule` has no additional DI needs in v1.
+
+### Transport config
+
+Transport is config-selected. Local dev uses RabbitMQ via `docker-compose` (`MassTransit:Host/Port/User/Password`). Switching to Azure Service Bus or Amazon MQ later requires only config changes — consumers are transport-agnostic.
+
+### Deferred (future slices)
+
+- Hangfire time-based escalation for stale approvals.
+- Real delivery channels (email, push).
+- Per-user notifications + read/dismiss state.
+- MassTransit consumer inbox middleware (v1 relies on the app-level `(ReferenceId, Type)` existence guard).
+
+---
+
+## 13. Anti-patterns (do NOT)
 
 - Add **controllers** — use `IEndpoint`.
 - Manual **`.ToTable()` / `.HasColumnName()`** — the snake_case convention resolves naming. (`.SetSchema()` via `e.Metadata.SetSchema("<schema>")` is the only permitted exception — schema only.)
