@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Core.Domain.Entities;
@@ -47,6 +48,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
+
+        modelBuilder.AddInboxStateEntity(cfg => cfg.ToTable("inbox_state", "masstransit"));
+        modelBuilder.AddOutboxMessageEntity(cfg => cfg.ToTable("outbox_message", "masstransit"));
+        modelBuilder.AddOutboxStateEntity(cfg => cfg.ToTable("outbox_state", "masstransit"));
+
         base.OnModelCreating(modelBuilder);
     }
 }

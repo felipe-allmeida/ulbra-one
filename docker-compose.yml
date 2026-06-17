@@ -34,6 +34,20 @@ services:
       timeout: 3s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: ulbra-one-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: .
@@ -44,6 +58,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "5001:8080"
     environment:
@@ -53,6 +69,9 @@ services:
       ObjectStorage__AccessKey: minioadmin
       ObjectStorage__SecretKey: minioadmin
       ObjectStorage__Bucket: ulbra-one-attachments
+      MassTransit__Host: rabbitmq
+      MassTransit__User: guest
+      MassTransit__Password: guest
 
   web:
     image: node:23-alpine
@@ -75,4 +94,5 @@ services:
 volumes:
   pg_data:
   minio_data:
+  rabbitmq_data:
   web_node_modules:
