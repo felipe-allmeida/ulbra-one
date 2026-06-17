@@ -29,6 +29,7 @@ Cada módulo segue **Domain → Application → Infrastructure**.
 - **Endpoints**: padrão `IEndpoint` (minimal API), mapeados sob `/api`. Sem controllers.
 - **Error handling**: `Result<T>` / `Error` railway pattern.
 - **Central packages**: versões em `Directory.Packages.props`.
+- **Typed IDs**: declare como `[PrefixedId("<prefix>_")] public readonly partial record struct XId(Guid Value);` — o source generator (`Ulbra.One.SourceGenerators`) emite `IPrefixedId`, `IParsable<T>`, `JsonConverter`, `Prefix`, `New()`, `ToString()`, `Parse`/`TryParse`, e `PrefixedIdRegistry.All` (consumido em `Program.cs` para registrar os schemas OpenAPI; não é necessário `MapType` por id).
 
 ## Anti-Patterns (do NOT)
 - Adicionar controllers — use `IEndpoint`.

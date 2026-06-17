@@ -121,4 +121,26 @@ public sealed class PrefixedIdGeneratorTests
         var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
         Assert.Empty(errors);
     }
+
+    [Fact]
+    public void Generator_EmitsIPrefixedIdInterface()
+    {
+        var (_, sources) = RunGenerator();
+
+        var idSource = sources.First(s => s.HintName == "EmptyId.g.cs");
+        Assert.Contains("IPrefixedId", idSource.SourceText.ToString());
+    }
+
+    [Fact]
+    public void Generator_EmitsRegistry_WithCorrectEntry()
+    {
+        var (_, sources) = RunGenerator();
+
+        var registrySource = sources.FirstOrDefault(s => s.HintName == "PrefixedIdRegistry.g.cs");
+        Assert.False(registrySource.Equals(default), "PrefixedIdRegistry.g.cs source was not produced");
+
+        var text = registrySource.SourceText.ToString();
+        Assert.Contains("PrefixedIdRegistry", text);
+        Assert.Contains("et_3fa85f64571742199730000000000000", text);
+    }
 }
