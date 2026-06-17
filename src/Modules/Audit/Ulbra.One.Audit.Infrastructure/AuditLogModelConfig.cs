@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Audit.Domain.Entities;
+using Ulbra.One.Common.Infrastructure.Persistence;
 
 namespace Ulbra.One.Audit.Infrastructure;
 
@@ -9,7 +10,7 @@ public static class AuditLogModelConfig
     {
         modelBuilder.Entity<AuditLog>(e =>
         {
-            e.ToTable("audit_log", "audit", t => { if (!ownsTable) t.ExcludeFromMigrations(); });
+            e.ToTable("audit_log", Schemas.Audit, t => { if (!ownsTable) t.ExcludeFromMigrations(); });
             e.HasKey(x => x.Id);
             e.Property(x => x.EntityType).HasMaxLength(200);
             e.Property(x => x.Schema).HasMaxLength(100);

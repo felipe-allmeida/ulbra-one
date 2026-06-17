@@ -26,7 +26,7 @@ public sealed class ListCustomers : IEndpoint
         CompanyId? companyId,
         string? search,
         [AsParameters] PaginationQueryParameters pagination,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<CustomerEntity>();

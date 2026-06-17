@@ -39,17 +39,16 @@ public sealed class UpdatePayable : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
         if (p.Installments.Any(i => i.Payments.Any(pay => !pay.IsReversed)))
             return TypedResults.Problem(detail: "Cannot edit a payable that already has registered payments.", statusCode: 400, title: "Payable.HasPayments");
 
-        var cc = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == p.CompanyId, ct);
+        var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == p.CompanyId, ct);
         if (cc is null) return TypedResults.Problem(detail: "Cost center is invalid for this company.", statusCode: 400, title: "Payable.CostCenterInvalid");
-        var vendor = await registry.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == req.VendorId.Value && v.CompanyId == p.CompanyId, ct);
+        var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == req.VendorId.Value && v.CompanyId == p.CompanyId, ct);
         if (vendor is null) return TypedResults.Problem(detail: "Vendor is invalid for this company.", statusCode: 400, title: "Payable.VendorInvalid");
 
         if (req.CategoryId is { } catId)

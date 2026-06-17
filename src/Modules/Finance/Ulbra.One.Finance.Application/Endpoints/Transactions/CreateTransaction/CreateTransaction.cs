@@ -43,19 +43,17 @@ public sealed class CreateTransaction : IEndpoint
 
     private static async Task<IResult> Handle(
         Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
-        [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var companyId = req.CompanyId.Value;
         var unitId = req.UnitId.Value;
         var costCenterId = req.CostCenterId.Value;
 
-        var cc = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == costCenterId && c.CompanyId == companyId, ct);
+        var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == costCenterId && c.CompanyId == companyId, ct);
         if (cc is null) return TypedResults.Problem(detail: "Cost center is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.CostCenterInvalid");
 
-        var unitOk = await core.ReadSet<Unit>().AnyAsync(u => u.Id == unitId && u.CompanyId == companyId, ct);
+        var unitOk = await uow.ReadSet<Unit>().AnyAsync(u => u.Id == unitId && u.CompanyId == companyId, ct);
         if (!unitOk) return TypedResults.Problem(detail: "Unit is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.UnitInvalid");
 
         if (req.Amount <= 0) return TypedResults.Problem(detail: "Amount must be greater than zero.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.AmountInvalid");
@@ -68,7 +66,7 @@ public sealed class CreateTransaction : IEndpoint
         {
             if (req.VendorId is not { } vId)
                 return TypedResults.Problem(detail: "A vendor is required for a payable.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.VendorRequired");
-            var vendor = await registry.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == vId.Value && v.CompanyId == companyId, ct);
+            var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == vId.Value && v.CompanyId == companyId, ct);
             if (vendor is null)
                 return TypedResults.Problem(detail: "Vendor is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.VendorInvalid");
             vendorId = vendor.Id;
@@ -78,7 +76,7 @@ public sealed class CreateTransaction : IEndpoint
         {
             if (req.CustomerId is not { } cId)
                 return TypedResults.Problem(detail: "A customer is required for a receivable.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.CustomerRequired");
-            var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == cId.Value && c.CompanyId == companyId, ct);
+            var customer = await uow.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == cId.Value && c.CompanyId == companyId, ct);
             if (customer is null)
                 return TypedResults.Problem(detail: "Customer is invalid for this company.", statusCode: StatusCodes.Status400BadRequest, title: "Transaction.CustomerInvalid");
             customerId = customer.Id;

@@ -34,7 +34,7 @@ public sealed class CreateBankAccount : IEndpoint
             .Produces<BankAccountResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-    private static async Task<IResult> Handle(Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(Request req, IUnitOfWork uow, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Alias))
             return TypedResults.Problem(detail: "Alias is required.", statusCode: 400, title: "BankAccount.NameRequired");

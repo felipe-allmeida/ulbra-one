@@ -25,7 +25,7 @@ public sealed class ImportStatement : IEndpoint
         BankAccountId bankAccountId,
         IFormFile file,
         IBankStatementParser parser,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {

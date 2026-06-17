@@ -34,7 +34,7 @@ public sealed class ListPayables : IEndpoint
             .RequireAuthorization().Produces<PaginatedResponse<PayableListItemResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         [AsParameters] ListPayablesRequest req,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {

@@ -27,7 +27,7 @@ public sealed class GetVendor : IEndpoint
 
     private static async Task<IResult> Handle(
         VendorId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id.Value, ct);

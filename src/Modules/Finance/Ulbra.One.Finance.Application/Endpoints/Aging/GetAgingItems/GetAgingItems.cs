@@ -29,7 +29,7 @@ public sealed class GetAgingItems : IEndpoint
         CostCenterId? costCenterId,
         DateOnly? asOf,
         int? limit,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {

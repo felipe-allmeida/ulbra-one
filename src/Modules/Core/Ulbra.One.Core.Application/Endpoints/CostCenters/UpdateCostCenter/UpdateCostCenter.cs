@@ -38,7 +38,7 @@ public sealed class UpdateCostCenter : IEndpoint
     private static async Task<IResult> Handle(
         CostCenterId id,
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var costCenter = await uow.Set<CostCenter>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);

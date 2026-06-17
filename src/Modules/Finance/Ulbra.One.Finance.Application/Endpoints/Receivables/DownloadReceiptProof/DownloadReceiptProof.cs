@@ -21,7 +21,7 @@ public sealed class DownloadReceiptProof : IEndpoint
         ReceivableId id,
         ReceiptId receiptId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var receivable = await uow.ReadSet<Receivable>()

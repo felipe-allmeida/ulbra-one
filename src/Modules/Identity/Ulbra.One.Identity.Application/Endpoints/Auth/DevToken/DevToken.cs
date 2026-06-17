@@ -38,7 +38,7 @@ public sealed class DevToken : IEndpoint
     private static async Task<IResult> Handle(
         Request req,
         IHostEnvironment env,
-        [FromKeyedServices("identity")] IUnitOfWork uow,
+        IUnitOfWork uow,
         ITokenService jwt,
         TimeProvider clock,
         CancellationToken ct)

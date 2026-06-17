@@ -1,13 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Ulbra.One.Core.Domain.Entities;
-using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
-using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Persistence;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
-using Ulbra.One.Registry.Infrastructure.Database;
 
 namespace Ulbra.One.Api;
 
@@ -22,9 +20,10 @@ public static class DevDataSeeder
     {
         using var scope = services.CreateScope();
         var sp = scope.ServiceProvider;
-        var core = sp.GetRequiredService<CoreContext>();
-        var finance = sp.GetRequiredService<FinanceContext>();
-        var registry = sp.GetRequiredService<RegistryContext>();
+        var db = sp.GetRequiredService<AppDbContext>();
+        var core = db;
+        var finance = db;
+        var registry = db;
         var time = sp.GetRequiredService<TimeProvider>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
@@ -300,7 +299,7 @@ public static class DevDataSeeder
         "Seguros", "Doações e filantropia", "Outros",
     ];
 
-    private static async Task SeedExpenseCategoriesAsync(FinanceContext finance, ILogger logger, CancellationToken ct)
+    private static async Task SeedExpenseCategoriesAsync(AppDbContext finance, ILogger logger, CancellationToken ct)
     {
         if (await finance.ExpenseCategories.AnyAsync(ct))
         {
@@ -313,7 +312,7 @@ public static class DevDataSeeder
         logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
     }
 
-    private static async Task SeedChartOfAccountsAsync(FinanceContext finance, ILogger logger, CancellationToken ct)
+    private static async Task SeedChartOfAccountsAsync(AppDbContext finance, ILogger logger, CancellationToken ct)
     {
         if (await finance.ChartAccounts.AnyAsync(ct))
         {

@@ -40,17 +40,16 @@ public sealed class UpdateReceivable : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(ReceivableId id, UpdateReceivableRequest req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry, TimeProvider timeProvider, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
     {
         var receivable = await uow.Set<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (receivable is null)
             return Result.Failure<ReceivableResponse>(Error.NotFound("Receivable.NotFound", "Receivable not found.")).ToOk();
 
-        var costCenter = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == receivable.CompanyId, ct);
+        var costCenter = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == receivable.CompanyId, ct);
         if (costCenter is null)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CostCenterInvalid", "Cost center is invalid for this company.")).ToOk();
-        var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == receivable.CompanyId, ct);
+        var customer = await uow.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == receivable.CompanyId, ct);
         if (customer is null)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInvalid", "Customer is invalid for this company.")).ToOk();
         if (!customer.Active)

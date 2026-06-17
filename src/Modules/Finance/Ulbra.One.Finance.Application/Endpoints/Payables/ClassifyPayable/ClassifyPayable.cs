@@ -21,7 +21,7 @@ public sealed class ClassifyPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");

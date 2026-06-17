@@ -31,7 +31,7 @@ public sealed class ListReceivables : IEndpoint
             .RequireAuthorization().Produces<PaginatedResponse<ReceivableListItemResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider timeProvider,
+        IUnitOfWork uow, TimeProvider timeProvider,
         [AsParameters] ListReceivablesRequest req,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {

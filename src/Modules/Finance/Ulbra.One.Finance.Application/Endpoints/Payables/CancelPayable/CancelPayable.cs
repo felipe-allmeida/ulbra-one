@@ -21,7 +21,7 @@ public sealed class CancelPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, CancelRequest req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");

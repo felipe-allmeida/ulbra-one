@@ -21,7 +21,7 @@ public sealed class DownloadAttachment : IEndpoint
         PayableId id,
         PayableAttachmentId attachmentId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var a = await uow.ReadSet<PayableAttachment>()

@@ -32,7 +32,7 @@ public sealed class CreateChartAccount : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
-    private static async Task<IResult> Handle(Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(Request req, IUnitOfWork uow, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Code))
             return TypedResults.Problem(detail: "Code is required.", statusCode: 400, title: "ChartAccount.Invalid");

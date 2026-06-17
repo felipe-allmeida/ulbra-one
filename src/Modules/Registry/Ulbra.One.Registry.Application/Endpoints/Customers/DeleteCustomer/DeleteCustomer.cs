@@ -26,7 +26,7 @@ public sealed class DeleteCustomer : IEndpoint
 
     private static async Task<IResult> Handle(
         CustomerId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

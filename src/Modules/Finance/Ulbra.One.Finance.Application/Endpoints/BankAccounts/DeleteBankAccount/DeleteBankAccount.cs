@@ -19,7 +19,7 @@ public sealed class DeleteBankAccount : IEndpoint
 
     private static async Task<IResult> Handle(
         BankAccountId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

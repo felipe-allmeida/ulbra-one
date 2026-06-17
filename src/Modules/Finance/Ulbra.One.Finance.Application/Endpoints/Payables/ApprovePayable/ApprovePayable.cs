@@ -20,7 +20,7 @@ public sealed class ApprovePayable : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, UserContext user,
-        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");

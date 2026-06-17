@@ -25,7 +25,7 @@ public sealed class ReverseReceipt : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(ReceivableId id, ReceiptId receiptId, ReverseReceiptRequest req,
-        UserContext user, [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
+        UserContext user, IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
     {
         var receivable = await uow.Set<Receivable>()
             .Include(p => p.Installments) // Receipts auto-include

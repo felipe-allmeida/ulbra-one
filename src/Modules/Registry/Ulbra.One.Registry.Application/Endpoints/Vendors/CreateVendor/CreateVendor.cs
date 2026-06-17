@@ -30,7 +30,7 @@ public sealed class CreateVendor : IEndpoint
 
     private static async Task<IResult> Handle(
         VendorRequest req,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var vendor = new VendorEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,

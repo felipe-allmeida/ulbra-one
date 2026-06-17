@@ -4,7 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Finance.Domain.Entities;
-using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Persistence;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
@@ -68,7 +68,7 @@ public class ConcurrencyTests(PostgresFixture fixture)
     }
 
     /// <summary>
-    /// Deterministic concurrency proof against real Postgres xmin: two independent FinanceContext
+    /// Deterministic concurrency proof against real Postgres xmin: two independent AppDbContext
     /// instances load the SAME payable, A saves first (bumping xmin), then B saves on its now-stale
     /// snapshot and must be rejected.
     /// </summary>
@@ -83,8 +83,8 @@ public class ConcurrencyTests(PostgresFixture fixture)
 
         using var scopeA = factory.Services.CreateScope();
         using var scopeB = factory.Services.CreateScope();
-        var ctxA = scopeA.ServiceProvider.GetRequiredService<FinanceContext>();
-        var ctxB = scopeB.ServiceProvider.GetRequiredService<FinanceContext>();
+        var ctxA = scopeA.ServiceProvider.GetRequiredService<AppDbContext>();
+        var ctxB = scopeB.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var payableA = await ctxA.Payables.FirstAsync(p => p.Id == id);
         var payableB = await ctxB.Payables.FirstAsync(p => p.Id == id);
@@ -110,8 +110,8 @@ public class ConcurrencyTests(PostgresFixture fixture)
 
         using var scopeA = factory.Services.CreateScope();
         using var scopeB = factory.Services.CreateScope();
-        var ctxA = scopeA.ServiceProvider.GetRequiredService<FinanceContext>();
-        var ctxB = scopeB.ServiceProvider.GetRequiredService<FinanceContext>();
+        var ctxA = scopeA.ServiceProvider.GetRequiredService<AppDbContext>();
+        var ctxB = scopeB.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var instA = await ctxA.Installments.FirstAsync(i => i.PayableId == id);
         var instB = await ctxB.Installments.FirstAsync(i => i.PayableId == id);

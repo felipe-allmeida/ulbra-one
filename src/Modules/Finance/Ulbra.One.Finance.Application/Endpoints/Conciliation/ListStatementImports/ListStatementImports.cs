@@ -18,7 +18,7 @@ public sealed class ListStatementImports : IEndpoint
             .RequireAuthorization().Produces<List<StatementImportResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CompanyId? companyId, BankAccountId? bankAccountId, CancellationToken ct)
     {
         var q = uow.ReadSet<BankStatementImport>();

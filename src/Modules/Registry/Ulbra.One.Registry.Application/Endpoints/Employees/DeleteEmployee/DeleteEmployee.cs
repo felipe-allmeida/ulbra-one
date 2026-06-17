@@ -26,7 +26,7 @@ public sealed class DeleteEmployee : IEndpoint
 
     private static async Task<IResult> Handle(
         EmployeeId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

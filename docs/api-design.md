@@ -76,20 +76,24 @@ var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
 return TypedResults.Ok(page.Map(VendorResponse.From));
 ```
 
-## Persistence access (keyed UoW per module)
+## Persistence access (single UoW, no key)
 
-- Inject the unit of work **by module key**: `[FromKeyedServices("finance")] IUnitOfWork uow`.
-- A handler may read across modules by key (Payable reads `core` + `registry`):
+- Inject `IUnitOfWork` directly — **no `[FromKeyedServices]`**, no module key. There is one
+  non-keyed `IUnitOfWork` backed by the shared `AppDbContext` that covers every module's schema.
+- A handler reads and writes across all schemas through the same `uow`:
 
 ```csharp
 private static async Task<IResult> Handle(Request req,
-    [FromKeyedServices("finance")] IUnitOfWork uow,
-    [FromKeyedServices("core")] IUnitOfWork core,
-    [FromKeyedServices("registry")] IUnitOfWork registry, TimeProvider clock, CancellationToken ct)
+    IUnitOfWork uow,
+    TimeProvider clock, CancellationToken ct)
 ```
 
 - Read via `uow.ReadSet<T>()`; write via `uow.AddAsync(entity, ct)` + `uow.SaveChangesAsync(ct)`.
+- Cross-module reads (e.g. Payable loading a `Company` from core and a `VendorEntity` from registry)
+  go through the same `uow` — one context, one connection, one transaction.
 - Use the injected `TimeProvider` (`clock.GetUtcNow()`), **never `DateTime.UtcNow`**.
+- **Audit** is the deliberate exception: it uses its own `AuditContext` registered under the keyed
+  name `"audit"`. Do not key any other UoW.
 
 ## Response contract
 

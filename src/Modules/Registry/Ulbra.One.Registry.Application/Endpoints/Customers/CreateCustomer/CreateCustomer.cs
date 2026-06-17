@@ -30,7 +30,7 @@ public sealed class CreateCustomer : IEndpoint
 
     private static async Task<IResult> Handle(
         CustomerRequest req,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var customer = new CustomerEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,

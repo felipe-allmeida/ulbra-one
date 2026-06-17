@@ -27,7 +27,7 @@ public sealed class GetCustomer : IEndpoint
 
     private static async Task<IResult> Handle(
         CustomerId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var customer = await uow.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);

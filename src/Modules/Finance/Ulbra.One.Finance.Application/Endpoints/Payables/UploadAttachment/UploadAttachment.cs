@@ -30,7 +30,7 @@ public sealed class UploadAttachment : IEndpoint
         IFormFile file,
         UserContext user,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {

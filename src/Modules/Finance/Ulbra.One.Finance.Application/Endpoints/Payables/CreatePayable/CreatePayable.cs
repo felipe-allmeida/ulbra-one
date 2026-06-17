@@ -44,18 +44,16 @@ public sealed class CreatePayable : IEndpoint
 
     private static async Task<IResult> Handle(
         Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
-        [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {
         var companyId = req.CompanyId.Value;
 
-        var cc = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == companyId, ct);
+        var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == companyId, ct);
         if (cc is null) return TypedResults.Problem(detail: "Cost center is invalid for this company.", statusCode: 400, title: "Payable.CostCenterInvalid");
 
-        var vendor = await registry.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == req.VendorId.Value && v.CompanyId == companyId, ct);
+        var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == req.VendorId.Value && v.CompanyId == companyId, ct);
         if (vendor is null) return TypedResults.Problem(detail: "Vendor is invalid for this company.", statusCode: 400, title: "Payable.VendorInvalid");
 
         if (req.CategoryId is { } catId)

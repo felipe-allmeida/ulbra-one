@@ -23,7 +23,7 @@ public sealed class UpdateExpenseCategory : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(ExpenseCategoryId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(ExpenseCategoryId id, Request req, IUnitOfWork uow, CancellationToken ct)
     {
         var cat = await uow.Set<ExpenseCategory>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);
         if (cat is null) return TypedResults.Problem(detail: "Category not found.", statusCode: 404, title: "ExpenseCategory.NotFound");

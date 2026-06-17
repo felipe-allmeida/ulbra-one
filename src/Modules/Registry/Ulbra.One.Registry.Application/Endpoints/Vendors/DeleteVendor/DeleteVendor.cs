@@ -26,7 +26,7 @@ public sealed class DeleteVendor : IEndpoint
 
     private static async Task<IResult> Handle(
         VendorId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

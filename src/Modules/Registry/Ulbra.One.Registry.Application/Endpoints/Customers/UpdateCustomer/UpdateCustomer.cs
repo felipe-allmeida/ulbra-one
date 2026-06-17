@@ -34,7 +34,7 @@ public sealed class UpdateCustomer : IEndpoint
     private static async Task<IResult> Handle(
         CustomerId id,
         CustomerRequest req,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var customer = await uow.Set<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);

@@ -34,7 +34,7 @@ public sealed class UpdateVendor : IEndpoint
     private static async Task<IResult> Handle(
         VendorId id,
         VendorRequest req,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var vendor = await uow.Set<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id.Value, ct);

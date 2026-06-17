@@ -25,7 +25,7 @@ public sealed class GetCostCenter : IEndpoint
 
     private static async Task<IResult> Handle(
         CostCenterId id,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var costCenter = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);

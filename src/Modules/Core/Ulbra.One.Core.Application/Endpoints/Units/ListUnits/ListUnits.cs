@@ -24,7 +24,7 @@ public sealed class ListUnits : IEndpoint
 
     private static async Task<IResult> Handle(
         CompanyId? companyId,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<Unit>();

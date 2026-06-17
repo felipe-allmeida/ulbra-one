@@ -24,7 +24,7 @@ public sealed class CancelReceivable : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(ReceivableId id, CancelReceivableRequest req,
-        UserContext user, [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
+        UserContext user, IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
     {
         var receivable = await uow.Set<Receivable>().Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (receivable is null)
