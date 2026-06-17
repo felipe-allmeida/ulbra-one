@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Core.Domain.Entities;
-using Ulbra.One.Core.Infrastructure.Database;
+using Ulbra.One.Core.Infrastructure.Database.Configurations;
 using Ulbra.One.Finance.Domain.Entities;
-using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Finance.Infrastructure.Database.Configurations;
 using Ulbra.One.Identity.Domain.Entities;
-using Ulbra.One.Identity.Infrastructure.Database;
+using Ulbra.One.Identity.Infrastructure.Database.Configurations;
 using Ulbra.One.Registry.Domain.Entities;
-using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
 namespace Ulbra.One.Persistence;
 
@@ -42,10 +42,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreContext).Assembly);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FinanceContext).Assembly);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(RegistryContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CompanyConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PayableConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
         base.OnModelCreating(modelBuilder);
     }

@@ -7,16 +7,12 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Core.Application;
 using Ulbra.One.Core.Infrastructure;
-using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Identity.Application;
 using Ulbra.One.Identity.Infrastructure;
-using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Finance.Application;
 using Ulbra.One.Finance.Infrastructure;
-using Ulbra.One.Finance.Infrastructure.Database;
 using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
-using Ulbra.One.Registry.Infrastructure.Database;
 using Ulbra.One.Audit.Application;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
@@ -234,10 +230,7 @@ using (var scope = app.Services.CreateScope())
             }
             try
             {
-                await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
-                await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
-                await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
-                await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
                 await scope.ServiceProvider.GetRequiredService<AuditContext>().Database.MigrateAsync();
             }
             finally
