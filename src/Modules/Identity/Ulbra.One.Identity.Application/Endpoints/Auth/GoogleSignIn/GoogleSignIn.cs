@@ -38,6 +38,7 @@ public sealed class GoogleSignIn : IEndpoint
         IOptions<GoogleAuthOptions> options,
         [FromKeyedServices("identity")] IUnitOfWork uow,
         ITokenService jwt,
+        TimeProvider clock,
         CancellationToken ct)
     {
         var opt = options.Value;
@@ -79,7 +80,7 @@ public sealed class GoogleSignIn : IEndpoint
             user.SetRole(Roles.Admin);
         }
 
-        user.RegisterGoogleLogin(payload.Subject, payload.Name);
+        user.RegisterGoogleLogin(payload.Subject, payload.Name, clock.GetUtcNow());
         await uow.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);

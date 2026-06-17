@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Authentication;
+using Ulbra.One.Common.Infrastructure.Auditing;
 using Ulbra.One.Common.Infrastructure.Authentication;
 using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Identity.Application;
@@ -19,6 +20,8 @@ public static class IdentityModule
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
+        services.AddScoped<AuditInterceptor>();
+
         services.AddDbContext<IdentityContext>((sp, options) =>
             options.UseNpgsql(connectionString, npgsql =>
                    {
@@ -26,7 +29,9 @@ public static class IdentityModule
                        npgsql.CommandTimeout(30);
                    })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("identity", (sp, _) =>
             new EfUnitOfWork<IdentityContext>(sp.GetRequiredService<IdentityContext>()));

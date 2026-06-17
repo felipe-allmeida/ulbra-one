@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Infrastructure.Auditing;
 using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Core.Infrastructure.Database;
 
@@ -14,6 +15,8 @@ public static class CoreModule
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
+        services.AddScoped<AuditInterceptor>();
+
         services.AddDbContext<CoreContext>((sp, options) =>
             options.UseNpgsql(connectionString, npgsql =>
                    {
@@ -21,7 +24,9 @@ public static class CoreModule
                        npgsql.CommandTimeout(30);
                    })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("core",
             (sp, _) => new EfUnitOfWork<CoreContext>(sp.GetRequiredService<CoreContext>()));

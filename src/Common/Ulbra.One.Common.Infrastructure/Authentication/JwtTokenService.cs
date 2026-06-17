@@ -7,7 +7,7 @@ using Ulbra.One.Common.Application.Authentication;
 
 namespace Ulbra.One.Common.Infrastructure.Authentication;
 
-public class JwtTokenService(IConfiguration configuration) : ITokenService
+public class JwtTokenService(IConfiguration configuration, TimeProvider clock) : ITokenService
 {
     public const string Issuer = "ulbra-one";
     public const string Audience = "ulbra-one-api";
@@ -34,7 +34,7 @@ public class JwtTokenService(IConfiguration configuration) : ITokenService
             issuer: Issuer,
             audience: Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(1),
+            expires: clock.GetUtcNow().UtcDateTime.AddDays(1),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

@@ -40,6 +40,7 @@ public sealed class DevToken : IEndpoint
         IHostEnvironment env,
         [FromKeyedServices("identity")] IUnitOfWork uow,
         ITokenService jwt,
+        TimeProvider clock,
         CancellationToken ct)
     {
         if (!env.IsDevelopment())
@@ -53,7 +54,7 @@ public sealed class DevToken : IEndpoint
         {
             user = new User(email, name, Roles.Admin);
             await uow.AddAsync(user, ct);
-            user.RegisterLogin();
+            user.RegisterLogin(clock.GetUtcNow());
             try
             {
                 await uow.SaveChangesAsync(ct);
@@ -69,13 +70,13 @@ public sealed class DevToken : IEndpoint
                 user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
                 if (user is null)
                     throw;
-                user.RegisterLogin();
+                user.RegisterLogin(clock.GetUtcNow());
                 await uow.SaveChangesAsync(ct);
             }
         }
         else
         {
-            user.RegisterLogin();
+            user.RegisterLogin(clock.GetUtcNow());
             await uow.SaveChangesAsync(ct);
         }
 
