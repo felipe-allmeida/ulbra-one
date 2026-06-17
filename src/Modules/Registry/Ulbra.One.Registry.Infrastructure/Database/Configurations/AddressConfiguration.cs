@@ -3,6 +3,7 @@ using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
+/// <summary>Shared helper for configuring the owned Address value object — invoked by VendorConfiguration, CustomerConfiguration, and EmployeeConfiguration.</summary>
 internal static class AddressConfiguration
 {
     internal static void Configure<T>(OwnedNavigationBuilder<T, Address> a)

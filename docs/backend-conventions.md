@@ -119,9 +119,9 @@ Conventions:
   `.Produces<TDto>(StatusCodes.Status201Created)`, `.ProducesProblem(StatusCodes.Status404NotFound)`, etc.
 
 ```csharp
-group.MapGet("/{id:guid}", async (Guid id, RegistryContext db, CancellationToken ct) =>
+group.MapGet("/{id:guid}", async (Guid id, IUnitOfWork uow, CancellationToken ct) =>
 {
-    var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
+    var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id, ct);
     return (vendor is null
         ? Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found."))
         : Result.Success(VendorResponse.From(vendor))).ToOk();
@@ -188,7 +188,7 @@ sets `Instance` to the request path.
 FluentValidation, applied through the generic endpoint filter — never inline in the handler:
 
 ```csharp
-group.MapPost("/", async (VendorRequest req, RegistryContext db, CancellationToken ct) => { /* ... */ })
+group.MapPost("/", async (VendorRequest req, IUnitOfWork uow, CancellationToken ct) => { /* ... */ })
     .WithValidation<VendorRequest>()   // → 400 ValidationProblem with per-field errors
     .WithName("CreateVendor");
 ```
