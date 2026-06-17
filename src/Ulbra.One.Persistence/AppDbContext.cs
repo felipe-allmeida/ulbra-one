@@ -49,9 +49,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
 
-        modelBuilder.AddInboxStateEntity(cfg => cfg.ToTable("inbox_state", "masstransit"));
-        modelBuilder.AddOutboxMessageEntity(cfg => cfg.ToTable("outbox_message", "masstransit"));
-        modelBuilder.AddOutboxStateEntity(cfg => cfg.ToTable("outbox_state", "masstransit"));
+        // Schema only (table names come from the snake_case convention) — the project's .ToTable anti-pattern.
+        modelBuilder.AddInboxStateEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
+        modelBuilder.AddOutboxMessageEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
+        modelBuilder.AddOutboxStateEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
 
         base.OnModelCreating(modelBuilder);
     }
