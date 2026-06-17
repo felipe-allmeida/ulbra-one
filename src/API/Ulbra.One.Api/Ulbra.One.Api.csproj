@@ -14,6 +14,7 @@
     <ProjectReference Include="../../Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
     <ProjectReference Include="../../Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
     <ProjectReference Include="../../Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
+    <ProjectReference Include="../../Modules/Audit/Ulbra.One.Audit.Application/Ulbra.One.Audit.Application.csproj" />
     <ProjectReference Include="../../Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

@@ -17,6 +17,7 @@ using Ulbra.One.Finance.Infrastructure.Database;
 using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Audit.Application;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
@@ -182,6 +183,7 @@ builder.Services.AddSwaggerGen(options =>
     options.MapType<Ulbra.One.Common.Application.Ids.StatementImportId>(() => IdSchema("statement_import_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.BankTransactionId>(() => IdSchema("bank_txn_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.ChartAccountId>(() => IdSchema("chart_account_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.AuditLogId>(() => IdSchema("audit_log_3fa85f64571742199730000000000000"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -286,6 +288,7 @@ apiGroup.MapIdentityEndpoints();
 apiGroup.MapCoreEndpoints();
 apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
+apiGroup.MapAuditEndpoints();
 
 app.Run();
 

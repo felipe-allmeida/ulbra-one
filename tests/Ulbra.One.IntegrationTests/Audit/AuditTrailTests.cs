@@ -89,4 +89,36 @@ public class AuditTrailTests(PostgresFixture fixture)
         Assert.DoesNotContain("UpdatedAt", update.AffectedColumns!);
         Assert.DoesNotContain("CreatedAt", update.AffectedColumns!);
     }
+
+    [Fact]
+    public async Task ListAuditLogs_ReturnsTrail_ForEntity_NewestFirst()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var code = UniqueCode("AUD");
+        var createRes = await client.PostAsJsonAsync("/api/chart-accounts",
+            new { chartType = "Accounting", code, name = "Antes", kind = "Synthetic" });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var id = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        var updateRes = await client.PutAsJsonAsync($"/api/chart-accounts/{id}",
+            new { name = "Depois", parentId = (string?)null, nature = (string?)null, isActive = true });
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+
+        var entityId = PrimaryKeyOf(id);
+        var listRes = await client.GetAsync($"/api/audit-logs?entityType=ChartAccount&entityId={entityId}");
+        Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
+
+        var body = await ReadJson(listRes);
+        var items = body.GetProperty("items");
+        Assert.True(body.GetProperty("total").GetInt32() >= 2);
+        Assert.True(items.GetArrayLength() >= 2);
+
+        // Newest-first: the Update must precede the Create in the response.
+        Assert.Equal("Update", items[0].GetProperty("action").GetString());
+        Assert.Equal(entityId, items[0].GetProperty("primaryKey").GetString());
+        Assert.Contains(items.EnumerateArray(),
+            x => x.GetProperty("action").GetString() == "Create");
+    }
 }
