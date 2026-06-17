@@ -18,6 +18,9 @@ internal static class MessagingSetup
             {
                 o.UsePostgres();
                 o.UseBusOutbox();
+                // Short query delay keeps notifications prompt in production and makes
+                // integration tests deterministic (default is ~10 s which is too slow).
+                o.QueryDelay = TimeSpan.FromSeconds(1);
             });
 
             x.UsingRabbitMq((context, cfg) =>

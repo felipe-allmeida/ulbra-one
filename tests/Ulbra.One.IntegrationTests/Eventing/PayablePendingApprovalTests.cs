@@ -7,8 +7,11 @@ namespace Ulbra.One.IntegrationTests.Eventing;
 [Collection("PostgresRabbitMq")]
 public class PayablePendingApprovalTests(PostgresFixture pgFixture, RabbitMqFixture rabbitFixture)
 {
-    private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
-        JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+    private static async Task<JsonElement> ReadJson(HttpResponseMessage res)
+    {
+        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
+        return doc.RootElement.Clone();
+    }
 
     private sealed record Seed(string CompanyId, string CostCenterId, string VendorId);
 
@@ -138,8 +141,10 @@ public class PayablePendingApprovalTests(PostgresFixture pgFixture, RabbitMqFixt
         var payableIdStr = payableBody.GetProperty("id").GetString()!;
         var payableGuid = Guid.Parse(payableIdStr.Split('_')[^1]);
 
-        // Wait long enough that any spurious message would have arrived (5 s).
-        await Task.Delay(5_000);
+        // Wait long enough that any spurious message would have been delivered and persisted.
+        // Must comfortably exceed QueryDelay (1 s) + broker round-trip + consumer processing.
+        // 8 s gives ample margin so a false "no notification" result cannot occur vacuously.
+        await Task.Delay(8_000);
 
         var notifRes = await client.GetAsync("/api/notifications?pageSize=100");
         Assert.Equal(HttpStatusCode.OK, notifRes.StatusCode);
@@ -156,8 +161,10 @@ public class PayablePendingApprovalTests(PostgresFixture pgFixture, RabbitMqFixt
     }
 
     /// <summary>
-    /// Idempotency: consumer's existence guard ensures at most one notification per payable,
-    /// even if the message is redelivered.
+    /// Verifies that a single publish of a PendingApproval payable results in exactly one
+    /// Notification being persisted. This integration test covers the happy-path delivery count;
+    /// the consumer's AnyAsync guard (preventing duplicates on redelivery) is covered separately
+    /// by the consumer unit tests.
     /// </summary>
     [Fact]
     public async Task Consumer_Is_Idempotent_Only_One_Notification_Per_Payable()
