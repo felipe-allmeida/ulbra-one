@@ -337,7 +337,36 @@ while preserving page metadata.
 
 ---
 
-## 11. Anti-patterns (do NOT)
+## 11. Typed IDs (`PrefixedId` source generator)
+
+Typed IDs are declared in `Common.Application/Ids/` using the `[PrefixedId]` attribute and a `partial record struct`:
+
+```csharp
+/// <summary>Strongly-typed, prefixed id for Payable entities (wire form <c>payable_{guid:N}</c>).</summary>
+[PrefixedId("payable_")]
+public readonly partial record struct PayableId(Guid Value);
+```
+
+The `PrefixedIdGenerator` (project `Ulbra.One.SourceGenerators`) emits the full boilerplate:
+
+- `IPrefixedId` + `IParsable<T>` interface implementations
+- `[JsonConverter(typeof(PrefixedIdJsonConverter<T>))]` attribute
+- `public static string Prefix` (the explicit prefix — never derived from the type name)
+- `public static T New()` (creates a new id with a fresh `Guid`)
+- `public override string ToString()` → wire form `prefix_{guid:N}` (e.g. `payable_3fa85f64...`)
+- Lenient `Parse` / `TryParse` (accepts both prefixed and bare Guid strings)
+
+The generator also emits **`PrefixedIdRegistry.g.cs`** (class `PrefixedIdRegistry` in
+`Ulbra.One.Common.Application.Ids`) containing a static `All` list of `(Type, Example)` pairs.
+`Program.cs` iterates `PrefixedIdRegistry.All` to register each id type's OpenAPI string schema in
+a single loop — **no manual `MapType` call per id is needed**.
+
+To add a new typed id: create the one-liner declaration above in `Common.Application/Ids/`. The
+generator does the rest automatically.
+
+---
+
+## 12. Anti-patterns (do NOT)
 
 - Add **controllers** — use `IEndpoint`.
 - Manual **`.ToTable()` / `.HasColumnName()`** — the snake_case convention resolves naming. (`.SetSchema()` via `e.Metadata.SetSchema("<schema>")` is the only permitted exception — schema only.)

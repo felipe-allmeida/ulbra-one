@@ -9,5 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
+    <ProjectReference Include="../../Ulbra.One.SourceGenerators/Ulbra.One.SourceGenerators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

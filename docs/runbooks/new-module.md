@@ -116,9 +116,19 @@ module schemas in the single migration run at startup.
 
 ## 8. Typed IDs
 
-- Add `InvoiceId` (etc.) in `Common.Application/Ids/` (`record struct … : IPrefixedId, IParsable<…>`,
-  `Prefix => "invoice_"`, `[JsonConverter(typeof(PrefixedIdJsonConverter<InvoiceId>))]`).
-- **Register each in `Program.cs`**: `options.MapType<…InvoiceId>(() => IdSchema("invoice_3fa8…"))`.
+Add one file per id in `Common.Application/Ids/` using the `[PrefixedId]` attribute:
+
+```csharp
+/// <summary>Strongly-typed, prefixed id for Invoice entities (wire form <c>invoice_{guid:N}</c>).</summary>
+[PrefixedId("invoice_")]
+public readonly partial record struct InvoiceId(Guid Value);
+```
+
+The `PrefixedIdGenerator` (project `Ulbra.One.SourceGenerators`) automatically emits
+`IPrefixedId` + `IParsable<T>`, `JsonConverter`, `Prefix`, `New()`, `ToString()`, and
+`Parse`/`TryParse`. It also regenerates `PrefixedIdRegistry.g.cs` to include the new id —
+`Program.cs` already iterates `PrefixedIdRegistry.All` to register all OpenAPI string schemas, so
+**no manual `MapType` call is needed**.
 
 ## 9. First migration
 
