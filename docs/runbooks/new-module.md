@@ -1,7 +1,7 @@
 # Runbook — Add a new module (bounded context)
 
 A module = three projects `Domain → Application → Infrastructure`, one DB schema, wired in `Program.cs`.
-Model it on **Core** (`CoreContext`) or **Registry** (`RegistryEndpoints.cs`, keyed UoW, validators).
+Model it on **Core** or **Registry** — they follow the single-context pattern described here.
 Replace `Billing` / `billing` below with your context name.
 
 ## 1. Create the three projects
@@ -10,7 +10,7 @@ Replace `Billing` / `billing` below with your context name.
 src/Modules/Billing/
   Ulbra.One.Billing.Domain/           # entities, aggregates, value objects — NO infra deps
   Ulbra.One.Billing.Application/       # IEndpoint slices, Contracts (DTOs), Validation, MapBillingEndpoints
-  Ulbra.One.Billing.Infrastructure/    # DbContext, Migrations, BillingModule (DI)
+  Ulbra.One.Billing.Infrastructure/    # IEntityTypeConfiguration classes, BillingModule (DI)
 ```
 
 Add each `.csproj` to the solution (`dotnet sln add …`).
@@ -24,48 +24,67 @@ Add each `.csproj` to the solution (`dotnet sln add …`).
 
 So: `Infrastructure → Application → Domain`. Anti-pattern: Application referencing Infrastructure.
 
-## 3. DbContext + schema
+## 3. Schema constant + entity configurations
 
-In Infrastructure, mirror `CoreContext`:
+Add the module schema to `Schemas` in `Common.Infrastructure`:
 
 ```csharp
-public class BillingContext(DbContextOptions<BillingContext> options) : DbContext(options)
-{
-    public const string Schema = "billing";
-    public DbSet<Invoice> Invoices => Set<Invoice>();
+// src/Common/Ulbra.One.Common.Infrastructure/Persistence/Schemas.cs
+public const string Billing = "billing";
+```
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+In Infrastructure, create an `IEntityTypeConfiguration<T>` for each entity by extending
+`BaseEntityConfiguration<T>` (from `Common.Infrastructure`). Override `Schema` and put entity-specific
+mapping in `ConfigureEntity`:
+
+```csharp
+public sealed class InvoiceConfiguration : BaseEntityConfiguration<Invoice>
+{
+    protected override string Schema => Schemas.Billing;
+
+    protected override void ConfigureEntity(EntityTypeBuilder<Invoice> e)
     {
-        modelBuilder.HasDefaultSchema(Schema);
-        // configure lengths/precision/indexes/owned types — NO .ToTable()/.HasColumnName()
-        base.OnModelCreating(modelBuilder);
+        e.HasKey(x => x.Id);
+        e.Property(x => x.Description).HasMaxLength(300).IsRequired();
+        // lengths, precision, indexes, owned types — no .ToTable()/.HasColumnName()
     }
 }
 ```
 
-snake_case naming is handled by the global `UseSnakeCaseNamingConvention()` (set in the module DI).
+There is **no per-module `DbContext`**. All entities land in the single `AppDbContext`
+(`Ulbra.One.Persistence`). See Core's `CompanyConfiguration` and Registry's `VendorConfiguration`
+as living examples.
 
-## 4. Module DI (`BillingModule.cs`)
+## 4. Wire the new assembly into `AppDbContext`
 
-Copy `FinanceModule.cs`: register the `AuditInterceptor`, the `DbContext` (Npgsql + retry +
-`UseSnakeCaseNamingConvention()` + audit interceptor), and the **keyed** unit of work:
+`AppDbContext.OnModelCreating` discovers configurations via `ApplyConfigurationsFromAssembly`. Add a
+line for the new module's Infrastructure assembly:
+
+```csharp
+// src/Ulbra.One.Persistence/AppDbContext.cs
+modelBuilder.ApplyConfigurationsFromAssembly(typeof(InvoiceConfiguration).Assembly);
+```
+
+Also add `DbSet` properties for each new aggregate root, and add a `ProjectReference` from
+`Ulbra.One.Persistence` to `Ulbra.One.Billing.Infrastructure`.
+
+## 5. Module DI (`BillingModule.cs`)
+
+Register the module's validators and any module-specific services. There is **no per-module
+`DbContext`** to register and **no keyed `IUnitOfWork`** — all handlers inject `IUnitOfWork` directly
+(single non-keyed registration backed by `AppDbContext`, wired in `AddPersistence`):
 
 ```csharp
 public static IServiceCollection AddBillingModule(this IServiceCollection services, IConfiguration config)
 {
-    var cs = config.GetConnectionString("Database") ?? throw new InvalidOperationException("…");
-    services.AddScoped<AuditInterceptor>();
-    services.AddDbContext<BillingContext>((sp, o) => o.UseNpgsql(cs, n => { n.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null); n.CommandTimeout(30); })
-        .UseSnakeCaseNamingConvention().AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
-    services.AddKeyedScoped<IUnitOfWork>("billing",
-        (sp, _) => new EfUnitOfWork<BillingContext>(sp.GetRequiredService<BillingContext>()));
+    // register validators, domain services, etc.
     return services;
 }
 ```
 
-Handlers then inject `[FromKeyedServices("billing")] IUnitOfWork uow`.
+Handlers inject `IUnitOfWork uow` (no `[FromKeyedServices]`).
 
-## 5. Endpoints (`MapBillingEndpoints` in Application)
+## 6. Endpoints (`MapBillingEndpoints` in Application)
 
 Each operation is a `sealed class : IEndpoint` in its own folder
 (`Endpoints/Invoices/CreateInvoice/`). Aggregate them in `BillingEndpoints.cs`:
@@ -83,28 +102,29 @@ public static IEndpointRouteBuilder MapBillingEndpoints(this IEndpointRouteBuild
 If the module has validators, also expose `AddBillingValidators()`
 (`AddValidatorsFromAssemblyContaining<…>`).
 
-## 6. Wire into `Program.cs`
+## 7. Wire into `Program.cs`
 
 ```csharp
 builder.Services.AddBillingModule(builder.Configuration);
 builder.Services.AddBillingValidators();          // if any
 // …
 apiGroup.MapBillingEndpoints();                    // under the /api group
-// in the migrate-on-startup block (inside the advisory lock):
-await scope.ServiceProvider.GetRequiredService<BillingContext>().Database.MigrateAsync();
 ```
 
-## 7. Typed IDs
+No `MigrateAsync` call needed for the new module — `AppDbContext.MigrateAsync()` already covers all
+module schemas in the single migration run at startup.
+
+## 8. Typed IDs
 
 - Add `InvoiceId` (etc.) in `Common.Application/Ids/` (`record struct … : IPrefixedId, IParsable<…>`,
   `Prefix => "invoice_"`, `[JsonConverter(typeof(PrefixedIdJsonConverter<InvoiceId>))]`).
 - **Register each in `Program.cs`**: `options.MapType<…InvoiceId>(() => IdSchema("invoice_3fa8…"))`.
 
-## 8. First migration
+## 9. First migration
 
-See [`migrations.md`](migrations.md) — generate the initial migration into
-`Billing.Infrastructure/Database/Migrations/`. It auto-applies at startup (step 6).
+See [`migrations.md`](migrations.md) — generate the initial migration against `AppDbContext` in
+`Ulbra.One.Persistence/Migrations/`. It auto-applies at startup via the existing `AppDbContext.MigrateAsync()` call.
 
-## 9. Tests
+## 10. Tests
 
 Add unit tests (domain) + integration tests (`ApiFactory`) — see [`testing.md`](testing.md).
