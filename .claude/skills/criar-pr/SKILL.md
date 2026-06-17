@@ -14,39 +14,32 @@ Gera a descrição de PR seguindo o template oficial (`.github/pull_request_temp
    - `git diff main...HEAD --stat` para o escopo dos arquivos.
    - Identifique o número da issue do Linear a partir do nome da branch (`AEL-<n>/...`). Se não houver, registre "Sem issue" com justificativa.
 
-2. **Monte o corpo do PR** preenchendo EXATAMENTE estas seções, nesta ordem, em português:
+2. **Escreva o corpo seguindo o template real** — `.github/pull_request_template.md` é a fonte da estrutura (leia-o; não re-invente seções). Em cada seção escreva conteúdo **derivado do diff**, nunca placeholder. Como preencher bem:
+
+   - **O que é esse PR?** — 2 a 4 linhas: o *problema/porquê* e o que o PR *entrega*. O revisor entende o objetivo sem abrir o diff. Não repita o título nem liste arquivos.
+   - **O que foi alterado?** — tabela, **uma linha por arquivo**; em PR grande (dezenas de arquivos) **agrupe por módulo/bloco** (uma linha por grupo coeso, com o caminho representativo) em vez de despejar tudo. Na coluna *Alteração* diga **o que mudou e por quê** ("FK de pagamento → `Restrict` pra travar edição com baixa"), nunca "atualizado". *Imagem* só pra mudança visual de UI (print/link); senão `-`.
+   - **O que deve ser levado em consideração?** — a seção mais valiosa: o que o revisor **precisa saber pra não deixar passar nada**. Cubra mudanças de comportamento/contrato, **decisões de design e trade-offs (com o porquê)**, riscos/efeitos colaterais e o que ficou **fora de escopo / não coberto**. Não repita a lista de arquivos; só escreva "nada a considerar" se for genuinamente trivial.
+   - **Issue** — link(s) do Linear (`AEL-<n>`); vários tickets → liste todos. Sem issue → `Sem issue: <motivo>`.
+   - **Checklist** — copie o do template e **marque só o que você validou de fato**.
+
+   Nível esperado (exemplo recortado):
 
    ```markdown
    ## O que é esse PR?
-
-   <objetivo do PR em poucas linhas>
+   Endurece a baixa de pagamento contra concorrência e edição indevida — dois riscos de dado
+   financeiro: dois pagamentos simultâneos na mesma parcela, e editar um título já pago.
 
    ## O que foi alterado?
-
    | Nome do arquivo | Alteração | Imagem |
-   |-----------------|-----------|--------|
-   | <caminho>       | <o que mudou nesse arquivo> | <link/print quando houver, senão "-"> |
+   |---|---|---|
+   | `Payable.cs`, `Installment.cs`, `FinanceContext.cs` | xmin como token de concorrência (→409) + FK de pagamento `Restrict` | - |
+   | `Endpoints/Payables/UpdatePayable/*.cs` | bloqueia edição quando há baixa (`Payable.HasPayments`) | - |
 
    ## O que deve ser levado em consideração?
-
-   <pontos de atenção para o revisor: alteração na lógica de alguma feature,
-   ponto mais importante do PR, impactos/riscos/efeitos colaterais>
-
-   ## Issue
-
-   <link do Linear AEL-<n> ou "Sem issue: <motivo>">
-
-   ## Checklist
-
-   - [ ] Título no padrão `tipo(AEL-<n>): descrição` (validado no CI `pr-title`).
-   - [ ] No máximo 1 migration neste PR; snapshot commitado e `has-pending-model-changes` limpo.
-   - [ ] Testes verdes: `dotnet test` (+ `pnpm --dir web checks`/`build` se mexeu no front).
-   - [ ] Sem `DateTime.UtcNow` novo; endpoints usam `TypedResults.*`; Application não referencia Infrastructure.
-   - [ ] PR aberto como **draft**.
+   - **Comportamento:** writer concorrente recebe **409**; título com baixa não edita mais (teste de integração cobre os dois).
+   - **Decisão:** xmin é coluna de sistema do Postgres → token de concorrência sem DDL.
+   - **Fora de escopo:** retenção/expurgo, UI.
    ```
-
-   - Preencha a tabela com **um arquivo por linha** (use `git diff main...HEAD --stat` como base). Na coluna *Imagem*, coloque print/link só quando houver mudança visual; senão `-`. Em PRs grandes (dezenas de arquivos), agrupe por bloco/módulo em vez de listar cada arquivo.
-   - **Marque no Checklist só o que você validou de fato.** Se a branch tiver **mais de 1 migration**, NÃO marque o item — sinalize ao usuário que o ideal é 1 migration por PR (regra do time) e siga só com aviso explícito.
 
 3. **Defina o título** no formato `tipo(AEL-<n>): descrição` (`feat`, `fix`, `chore`, `ci`, `refactor`, `docs`, `test`). **Sem issue, use o marcador explícito** `no-issue`: `tipo(no-issue): descrição`. O título é validado no CI pelo workflow `.github/workflows/pr-title.yml` — fora do padrão, o PR não passa.
 
@@ -62,7 +55,6 @@ Gera a descrição de PR seguindo o template oficial (`.github/pull_request_temp
 
 ## Regras
 
-- NÃO adicione linha `Co-Authored-By` nos commits nem no corpo do PR (preferência do time).
 - Português em todo o conteúdo do PR.
 - **Draft por padrão** — todo PR abre como rascunho.
 - **No máximo 1 migration por PR** (snapshot junto). Mais que isso, sinalize.
