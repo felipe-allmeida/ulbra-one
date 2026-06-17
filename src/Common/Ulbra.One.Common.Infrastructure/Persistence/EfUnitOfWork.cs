@@ -5,7 +5,9 @@ namespace Ulbra.One.Common.Infrastructure.Persistence;
 
 /// <summary>
 /// EF Core implementation of <see cref="IUnitOfWork"/> over a single <typeparamref name="TContext"/>.
-/// Registered keyed by module so each module binds its own DbContext.
+/// Registered as a single non-keyed service backed by <c>AppDbContext</c>. The <c>Audit</c> module
+/// is the deliberate exception — it registers a keyed <c>"audit"</c> instance over
+/// <c>AuditContext</c> for its separate append-only writes.
 /// </summary>
 public sealed class EfUnitOfWork<TContext>(TContext db) : IUnitOfWork
     where TContext : DbContext

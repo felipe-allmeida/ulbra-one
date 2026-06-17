@@ -68,7 +68,7 @@ public class ConcurrencyTests(PostgresFixture fixture)
     }
 
     /// <summary>
-    /// Deterministic concurrency proof against real Postgres xmin: two independent FinanceContext
+    /// Deterministic concurrency proof against real Postgres xmin: two independent AppDbContext
     /// instances load the SAME payable, A saves first (bumping xmin), then B saves on its now-stale
     /// snapshot and must be rejected.
     /// </summary>
