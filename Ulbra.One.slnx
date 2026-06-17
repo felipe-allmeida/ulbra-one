@@ -29,6 +29,9 @@
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Audit/">
+    <Project Path="src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
     <Project Path="tests/Ulbra.One.UnitTests/Ulbra.One.UnitTests.csproj" />
