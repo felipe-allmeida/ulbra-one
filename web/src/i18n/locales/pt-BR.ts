@@ -41,6 +41,7 @@ const ptBR = {
     hr: 'RH',
     accounting: 'Contábil',
     supplies: 'Suprimentos',
+    notifications: 'Notificações',
     search: 'Buscar…',
     logout: 'Sair',
   },
@@ -939,6 +940,13 @@ const ptBR = {
     prev: 'Anterior',
     next: 'Próxima',
     pageOf: 'Página {{page}} de {{totalPages}}',
+  },
+
+  notifications: {
+    title: 'Notificações',
+    empty: 'Nenhuma notificação',
+    emptyDescription: 'Você não possui notificações no momento.',
+    occurredAt: 'Recebida em',
   },
 } as const;
 
