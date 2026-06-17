@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Ulbra.One.Persistence/Ulbra.One.Persistence.csproj" />
+    <Project Path="src/Ulbra.One.SourceGenerators/Ulbra.One.SourceGenerators.csproj" />
   </Folder>
   <Folder Name="/src/API/">
     <Project Path="src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
@@ -39,5 +40,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
     <Project Path="tests/Ulbra.One.UnitTests/Ulbra.One.UnitTests.csproj" />
+    <Project Path="tests/Ulbra.One.SourceGenerators.Tests/Ulbra.One.SourceGenerators.Tests.csproj" />
   </Folder>
 </Solution>
