@@ -12,8 +12,8 @@ using Ulbra.One.Finance.Infrastructure.Database;
 namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(FinanceContext))]
-    [Migration("20260616135744_MakePaymentsAppendOnly")]
-    partial class MakePaymentsAppendOnly
+    [Migration("20260617010112_PaymentConcurrencyAndAppendOnly")]
+    partial class PaymentConcurrencyAndAppendOnly
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,83 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Ulbra.One.Audit.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer")
+                        .HasColumnName("action");
+
+                    b.Property<string>("ActorUserId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<string>("AffectedColumns")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("affected_columns");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("new_values");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("old_values");
+
+                    b.Property<string>("PrimaryKey")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("primary_key");
+
+                    b.Property<string>("Schema")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("schema");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("table_name");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("trace_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_audit_log");
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_audit_log_occurred_at");
+
+                    b.HasIndex("EntityType", "PrimaryKey")
+                        .HasDatabaseName("ix_audit_log_entity_type_primary_key");
+
+                    b.ToTable("audit_log", "audit", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
 
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.BankAccount", b =>
                 {
