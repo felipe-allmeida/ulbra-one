@@ -7,7 +7,7 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
 public sealed class VendorConfiguration : BaseEntityConfiguration<VendorEntity>
 {
-    protected override string Schema => "registry";
+    protected override string Schema => Schemas.Registry;
 
     protected override void ConfigureEntity(EntityTypeBuilder<VendorEntity> e)
     {

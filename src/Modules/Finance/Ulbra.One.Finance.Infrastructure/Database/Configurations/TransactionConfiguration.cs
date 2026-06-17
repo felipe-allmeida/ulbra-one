@@ -6,7 +6,7 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
 public sealed class TransactionConfiguration : BaseEntityConfiguration<Transaction>
 {
-    protected override string Schema => "finance";
+    protected override string Schema => Schemas.Finance;
 
     // Transaction is ISoftDeletable but had no filter historically — preserve that behavior.
     protected override bool ApplySoftDeleteFilter => false;

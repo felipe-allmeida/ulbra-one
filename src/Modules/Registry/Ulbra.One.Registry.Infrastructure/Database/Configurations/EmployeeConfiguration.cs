@@ -7,7 +7,7 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
 public sealed class EmployeeConfiguration : BaseEntityConfiguration<EmployeeEntity>
 {
-    protected override string Schema => "registry";
+    protected override string Schema => Schemas.Registry;
 
     protected override void ConfigureEntity(EntityTypeBuilder<EmployeeEntity> e)
     {

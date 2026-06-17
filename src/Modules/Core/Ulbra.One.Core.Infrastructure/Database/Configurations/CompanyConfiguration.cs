@@ -6,7 +6,7 @@ namespace Ulbra.One.Core.Infrastructure.Database.Configurations;
 
 public sealed class CompanyConfiguration : BaseEntityConfiguration<Company>
 {
-    protected override string Schema => "core";
+    protected override string Schema => Schemas.Core;
 
     protected override void ConfigureEntity(EntityTypeBuilder<Company> e)
     {

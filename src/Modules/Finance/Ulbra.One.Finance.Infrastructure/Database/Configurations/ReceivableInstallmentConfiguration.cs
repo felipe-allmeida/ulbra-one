@@ -7,7 +7,7 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
 public sealed class ReceivableInstallmentConfiguration : BaseEntityConfiguration<ReceivableInstallment>
 {
-    protected override string Schema => "finance";
+    protected override string Schema => Schemas.Finance;
 
     protected override void ConfigureEntity(EntityTypeBuilder<ReceivableInstallment> e)
     {

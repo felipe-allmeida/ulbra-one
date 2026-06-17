@@ -7,7 +7,7 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
 public sealed class CustomerConfiguration : BaseEntityConfiguration<CustomerEntity>
 {
-    protected override string Schema => "registry";
+    protected override string Schema => Schemas.Registry;
 
     protected override void ConfigureEntity(EntityTypeBuilder<CustomerEntity> e)
     {

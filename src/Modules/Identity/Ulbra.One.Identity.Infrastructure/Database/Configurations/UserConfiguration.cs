@@ -6,7 +6,7 @@ namespace Ulbra.One.Identity.Infrastructure.Database.Configurations;
 
 public sealed class UserConfiguration : BaseEntityConfiguration<User>
 {
-    protected override string Schema => "identity";
+    protected override string Schema => Schemas.Identity;
 
     protected override void ConfigureEntity(EntityTypeBuilder<User> e)
     {

@@ -7,7 +7,7 @@ namespace Ulbra.One.Finance.Infrastructure.Database.Configurations;
 
 public sealed class InstallmentConfiguration : BaseEntityConfiguration<Installment>
 {
-    protected override string Schema => "finance";
+    protected override string Schema => Schemas.Finance;
 
     protected override void ConfigureEntity(EntityTypeBuilder<Installment> e)
     {
