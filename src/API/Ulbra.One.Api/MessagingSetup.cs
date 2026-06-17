@@ -23,7 +23,10 @@ internal static class MessagingSetup
             x.UsingRabbitMq((context, cfg) =>
             {
                 var mt = configuration.GetSection("MassTransit");
-                cfg.Host(mt["Host"] ?? "localhost", h =>
+                var host = mt["Host"] ?? "localhost";
+                var portStr = mt["Port"];
+                var port = ushort.TryParse(portStr, out var p) ? p : (ushort)5672;
+                cfg.Host(host, port, "/", h =>
                 {
                     h.Username(mt["User"] ?? "guest");
                     h.Password(mt["Password"] ?? "guest");

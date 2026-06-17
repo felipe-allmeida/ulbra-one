@@ -7,18 +7,50 @@ using Microsoft.Extensions.Hosting;
 
 namespace Ulbra.One.IntegrationTests;
 
-public sealed class ApiFactory(string connectionString) : WebApplicationFactory<Program>
+public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    private readonly string _connectionString;
+    private readonly string? _rabbitHost;
+    private readonly int? _rabbitPort;
+    private readonly string? _rabbitUser;
+    private readonly string? _rabbitPassword;
+
+    /// <summary>Postgres-only constructor; bus connects lazily (no broker needed for most tests).</summary>
+    public ApiFactory(string connectionString)
+        : this(connectionString, null, null, null, null) { }
+
+    /// <summary>Full constructor with RabbitMQ config for end-to-end eventing tests.</summary>
+    public ApiFactory(string connectionString, string? rabbitHost, int? rabbitPort, string? rabbitUser, string? rabbitPassword)
+    {
+        _connectionString = connectionString;
+        _rabbitHost = rabbitHost;
+        _rabbitPort = rabbitPort;
+        _rabbitUser = rabbitUser;
+        _rabbitPassword = rabbitPassword;
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Host configuration has the highest precedence, so this overrides the value in
         // appsettings.Development.json (which Program reads eagerly at startup). Pointing at the
         // ephemeral test container keeps the suite isolated from the dev/compose database.
         builder.ConfigureHostConfiguration(config =>
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            var dict = new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Database"] = connectionString,
-            }));
+                ["ConnectionStrings:Database"] = _connectionString,
+            };
+
+            if (_rabbitHost is not null)
+            {
+                dict["MassTransit:Host"] = _rabbitHost;
+                dict["MassTransit:Port"] = _rabbitPort?.ToString();
+                dict["MassTransit:User"] = _rabbitUser;
+                dict["MassTransit:Password"] = _rabbitPassword;
+            }
+
+            config.AddInMemoryCollection(dict);
+        });
         return base.CreateHost(builder);
     }
 

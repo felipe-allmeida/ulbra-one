@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -11,6 +12,7 @@ using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
+using Ulbra.One.Messaging.Contracts;
 using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
@@ -45,6 +47,7 @@ public sealed class CreatePayable : IEndpoint
     private static async Task<IResult> Handle(
         Request req,
         IUnitOfWork uow,
+        IPublishEndpoint publisher,
         TimeProvider clock,
         CancellationToken ct)
     {
@@ -93,6 +96,17 @@ public sealed class CreatePayable : IEndpoint
         payable.ApplyAutoApproval(cc.AutoApprovalLimit, clock.GetUtcNow());
 
         await uow.AddAsync(payable, ct);
+
+        if (payable.Status == PayableStatus.PendingApproval)
+            await publisher.Publish(new PayablePendingApproval
+            {
+                PayableId = payable.Id,
+                CompanyId = payable.CompanyId,
+                CostCenterId = payable.CostCenterId,
+                VendorName = payable.CounterpartyName,
+                TotalAmount = payable.TotalAmount,
+            }, ct);
+
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/payables/{new PayableId(payable.Id)}", PayableResponse.From(payable));
     }
