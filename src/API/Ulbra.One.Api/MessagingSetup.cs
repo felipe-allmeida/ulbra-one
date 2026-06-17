@@ -2,10 +2,11 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Notifications.Application.Consumers;
+using Ulbra.One.Persistence;
 
-namespace Ulbra.One.Persistence;
+namespace Ulbra.One.Api;
 
-public static class MessagingModule
+internal static class MessagingSetup
 {
     public static IServiceCollection AddMessaging(this IServiceCollection services, IConfiguration configuration)
     {

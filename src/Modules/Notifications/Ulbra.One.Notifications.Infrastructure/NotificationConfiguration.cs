@@ -17,5 +17,6 @@ public sealed class NotificationConfiguration : BaseEntityConfiguration<Notifica
         builder.Property(x => x.Message).HasMaxLength(1000);
         builder.HasIndex(x => new { x.AudienceRole, x.OccurredAt });
         builder.HasIndex(x => x.CompanyId);
+        builder.HasIndex(x => new { x.ReferenceId, x.Type });
     }
 }

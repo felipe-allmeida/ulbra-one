@@ -130,6 +130,12 @@ namespace Ulbra.One.Persistence.Migrations
                 column: "company_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_notifications_reference_id_type",
+                schema: "notifications",
+                table: "notifications",
+                columns: new[] { "reference_id", "type" });
+
+            migrationBuilder.CreateIndex(
                 name: "ix_outbox_message_enqueue_time",
                 schema: "masstransit",
                 table: "outbox_message",

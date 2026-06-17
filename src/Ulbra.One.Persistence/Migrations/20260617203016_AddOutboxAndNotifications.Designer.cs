@@ -12,7 +12,7 @@ using Ulbra.One.Persistence;
 namespace Ulbra.One.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260617201712_AddOutboxAndNotifications")]
+    [Migration("20260617203016_AddOutboxAndNotifications")]
     partial class AddOutboxAndNotifications
     {
         /// <inheritdoc />
@@ -1787,6 +1787,9 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.HasIndex("AudienceRole", "OccurredAt")
                         .HasDatabaseName("ix_notifications_audience_role_occurred_at");
+
+                    b.HasIndex("ReferenceId", "Type")
+                        .HasDatabaseName("ix_notifications_reference_id_type");
 
                     b.ToTable("notifications", "notifications");
                 });

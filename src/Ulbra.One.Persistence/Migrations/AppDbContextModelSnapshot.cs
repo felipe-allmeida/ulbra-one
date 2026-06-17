@@ -1785,6 +1785,9 @@ namespace Ulbra.One.Persistence.Migrations
                     b.HasIndex("AudienceRole", "OccurredAt")
                         .HasDatabaseName("ix_notifications_audience_role_occurred_at");
 
+                    b.HasIndex("ReferenceId", "Type")
+                        .HasDatabaseName("ix_notifications_reference_id_type");
+
                     b.ToTable("notifications", "notifications");
                 });
 

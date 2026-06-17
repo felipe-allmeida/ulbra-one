@@ -20,6 +20,7 @@ using Ulbra.One.Notifications.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
+using Ulbra.One.Api;
 using Ulbra.One.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
