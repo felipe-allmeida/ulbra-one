@@ -13,5 +13,7 @@
     <ProjectReference Include="../Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
     <ProjectReference Include="../Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../../Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <ProjectReference Include="../../Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
@@ -38,18 +38,18 @@ public sealed class UpdateBankAccount : IEndpoint
     private static async Task<IResult> Handle(BankAccountId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         var acc = await uow.Set<BankAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
-        if (acc is null) return Results.Problem(detail: "Bank account not found.", statusCode: 404, title: "BankAccount.NotFound");
+        if (acc is null) return TypedResults.Problem(detail: "Bank account not found.", statusCode: 404, title: "BankAccount.NotFound");
         if (string.IsNullOrWhiteSpace(req.Alias))
-            return Results.Problem(detail: "Alias is required.", statusCode: 400, title: "BankAccount.NameRequired");
+            return TypedResults.Problem(detail: "Alias is required.", statusCode: 400, title: "BankAccount.NameRequired");
         if (string.IsNullOrWhiteSpace(req.BankCode) || string.IsNullOrWhiteSpace(req.Agency) || string.IsNullOrWhiteSpace(req.AccountNumber))
-            return Results.Problem(detail: "Bank code, agency and account number are required.", statusCode: 400, title: "BankAccount.Invalid");
+            return TypedResults.Problem(detail: "Bank code, agency and account number are required.", statusCode: 400, title: "BankAccount.Invalid");
 
         var companyId = acc.CompanyId;
         var duplicate = await uow.ReadSet<BankAccount>().AnyAsync(a =>
             a.Id != id.Value && a.CompanyId == companyId && a.BankCode == req.BankCode && a.Agency == req.Agency &&
             a.AccountNumber == req.AccountNumber && a.AccountDigit == req.AccountDigit, ct);
         if (duplicate)
-            return Results.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
+            return TypedResults.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
 
         acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance);
         if (req.Active) acc.Activate(); else acc.Deactivate();

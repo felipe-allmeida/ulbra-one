@@ -7,12 +7,11 @@ using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
-using Ulbra.One.Identity.Infrastructure;
-using Ulbra.One.Identity.Infrastructure.Services;
+using Ulbra.One.Identity.Application.Services;
 
 namespace Ulbra.One.Identity.Application.Endpoints.Auth.GoogleSignIn;
 
@@ -38,12 +37,13 @@ public sealed class GoogleSignIn : IEndpoint
         IGoogleTokenValidator validator,
         IOptions<GoogleAuthOptions> options,
         [FromKeyedServices("identity")] IUnitOfWork uow,
-        JwtTokenService jwt,
+        ITokenService jwt,
+        TimeProvider clock,
         CancellationToken ct)
     {
         var opt = options.Value;
         if (string.IsNullOrWhiteSpace(opt.ClientId))
-            return Results.Problem(detail: "Google ClientId is not configured.", statusCode: StatusCodes.Status501NotImplemented, title: "Auth.GoogleNotConfigured");
+            return TypedResults.Problem(detail: "Google ClientId is not configured.", statusCode: StatusCodes.Status501NotImplemented, title: "Auth.GoogleNotConfigured");
 
         GoogleTokenPayload payload;
         try
@@ -52,11 +52,11 @@ public sealed class GoogleSignIn : IEndpoint
         }
         catch (Exception)
         {
-            return Results.Problem(detail: "Invalid Google token.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.GoogleTokenInvalid");
+            return TypedResults.Problem(detail: "Invalid Google token.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.GoogleTokenInvalid");
         }
 
         if (!payload.EmailVerified)
-            return Results.Problem(detail: "Email not verified by Google.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.EmailNotVerified");
+            return TypedResults.Problem(detail: "Email not verified by Google.", statusCode: StatusCodes.Status401Unauthorized, title: "Auth.EmailNotVerified");
 
         var email = payload.Email.ToLowerInvariant();
 
@@ -64,7 +64,7 @@ public sealed class GoogleSignIn : IEndpoint
         {
             var domain = email.Contains('@') ? email[(email.IndexOf('@') + 1)..] : string.Empty;
             if (!opt.AllowedDomains.Contains(domain, StringComparer.OrdinalIgnoreCase))
-                return Results.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
+                return TypedResults.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
         }
 
         var user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
@@ -80,10 +80,10 @@ public sealed class GoogleSignIn : IEndpoint
             user.SetRole(Roles.Admin);
         }
 
-        user.RegisterGoogleLogin(payload.Subject, payload.Name);
+        user.RegisterGoogleLogin(payload.Subject, payload.Name, clock.GetUtcNow());
         await uow.SaveChangesAsync(ct);
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
+        return TypedResults.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }

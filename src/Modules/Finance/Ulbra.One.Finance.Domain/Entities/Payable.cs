@@ -79,6 +79,8 @@ public class Payable : IAuditable, ISoftDeletable
         string description, Guid costCenterId, Guid? categoryId, IEnumerable<Installment> installments)
     {
         EnsureMutable();
+        if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
+            throw new InvalidOperationException("Cannot edit a payable that already has registered payments.");
         VendorId = vendorId;
         CounterpartyName = counterpartyName;
         DocumentNumber = documentNumber;

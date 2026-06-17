@@ -191,48 +191,48 @@ export function ContasPagarPage() {
             />
           ) : (
             <Panel title={t('payables.count', { count: list.data?.total ?? itens.length })}>
-          <table>
-            <thead>
-              <tr>
-                <th>{t('payables.columns.dueDate')}</th>
-                <th>{t('payables.columns.description')}</th>
-                <th>{t('payables.columns.vendor')}</th>
-                <th>{t('payables.columns.installment')}</th>
-                <th>{t('payables.columns.costCenter')}</th>
-                <th>{t('payables.columns.category')}</th>
-                <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
-                <th>{t('payables.columns.status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {itens.map((l) => (
-                <tr
-                  key={l.installmentId}
-                  className='row-click'
-                  onClick={() => nav(`/app/contas-a-pagar/${l.payableId}`)}
-                >
-                  <td className='t-mono'>{fmtData(l.dueDate)}</td>
-                  <td>{l.description}</td>
-                  <td>{l.counterpartyName || '—'}</td>
-                  <td className='t-mono'>
-                    {l.sequence}/{l.installmentCount}
-                  </td>
-                  <td>{centroNome[l.costCenterId] ?? '—'}</td>
-                  <td>{(l.categoryId ? categoriaNome[l.categoryId] : null) ?? '—'}</td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brl(l.amount)}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <PayableStatusBadge s={l.payableStatus} />
-                      {l.payableStatus === 'Approved' && <InstallmentStatusBadge s={l.installmentStatus} />}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pager page={page} totalPages={totalPages} onPage={setPage} />
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('payables.columns.dueDate')}</th>
+                    <th>{t('payables.columns.description')}</th>
+                    <th>{t('payables.columns.vendor')}</th>
+                    <th>{t('payables.columns.installment')}</th>
+                    <th>{t('payables.columns.costCenter')}</th>
+                    <th>{t('payables.columns.category')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+                    <th>{t('payables.columns.status')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itens.map((l) => (
+                    <tr
+                      key={l.installmentId}
+                      className='row-click'
+                      onClick={() => nav(`/app/contas-a-pagar/${l.payableId}`)}
+                    >
+                      <td className='t-mono'>{fmtData(l.dueDate)}</td>
+                      <td>{l.description}</td>
+                      <td>{l.counterpartyName || '—'}</td>
+                      <td className='t-mono'>
+                        {l.sequence}/{l.installmentCount}
+                      </td>
+                      <td>{centroNome[l.costCenterId] ?? '—'}</td>
+                      <td>{(l.categoryId ? categoriaNome[l.categoryId] : null) ?? '—'}</td>
+                      <td className='amount-cell' style={{ textAlign: 'right' }}>
+                        {brl(l.amount)}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <PayableStatusBadge s={l.payableStatus} />
+                          {l.payableStatus === 'Approved' && <InstallmentStatusBadge s={l.installmentStatus} />}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pager page={page} totalPages={totalPages} onPage={setPage} />
             </Panel>
           )}
         </>

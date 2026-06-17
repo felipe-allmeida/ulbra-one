@@ -28,6 +28,6 @@ public sealed class GetTransaction : IEndpoint
         [FromKeyedServices("finance")] IUnitOfWork uow,
         CancellationToken ct)
         => await uow.ReadSet<Transaction>().FirstOrDefaultAsync(l => l.Id == id.Value, ct) is { } l
-            ? Results.Ok(TransactionResponse.From(l))
-            : Results.NotFound();
+            ? TypedResults.Ok(TransactionResponse.From(l))
+            : TypedResults.NotFound();
 }

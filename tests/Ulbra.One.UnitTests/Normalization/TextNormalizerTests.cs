@@ -1,4 +1,4 @@
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 
 namespace Ulbra.One.UnitTests.Normalization;
 

@@ -26,9 +26,9 @@ public sealed class IgnoreTransaction : IEndpoint
     {
         var txn = await uow.Set<BankTransaction>().FirstOrDefaultAsync(t => t.Id == id.Value, ct);
         if (txn is null)
-            return Results.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
+            return TypedResults.Problem(detail: "Bank transaction not found.", statusCode: 404, title: "BankTransaction.NotFound");
         if (txn.MatchStatus == MatchStatus.Reconciled)
-            return Results.Problem(detail: "Unmatch the transaction before ignoring it.", statusCode: 409, title: "BankTransaction.AlreadyReconciled");
+            return TypedResults.Problem(detail: "Unmatch the transaction before ignoring it.", statusCode: 409, title: "BankTransaction.AlreadyReconciled");
 
         txn.Ignore();
         await uow.SaveChangesAsync(ct);

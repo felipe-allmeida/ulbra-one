@@ -18,5 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

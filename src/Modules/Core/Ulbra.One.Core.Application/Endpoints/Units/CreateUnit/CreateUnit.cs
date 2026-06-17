@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 
@@ -38,11 +38,11 @@ public sealed class CreateUnit : IEndpoint
         CancellationToken ct)
     {
         if (!await uow.ReadSet<Company>().AnyAsync(e => e.Id == req.CompanyId.Value, ct))
-            return Results.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
+            return TypedResults.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
 
         var unit = new Unit(req.CompanyId.Value, req.Name, req.Acronym);
         await uow.AddAsync(unit, ct);
         await uow.SaveChangesAsync(ct);
-        return Results.Created($"/api/units/{new UnitId(unit.Id)}", UnitResponse.From(unit));
+        return TypedResults.Created($"/api/units/{new UnitId(unit.Id)}", UnitResponse.From(unit));
     }
 }

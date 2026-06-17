@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -25,12 +25,12 @@ public sealed class CreateExpenseCategory : IEndpoint
     private static async Task<IResult> Handle(Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Name))
-            return Results.Problem(detail: "Name is required.", statusCode: 400, title: "ExpenseCategory.NameRequired");
+            return TypedResults.Problem(detail: "Name is required.", statusCode: 400, title: "ExpenseCategory.NameRequired");
         var exists = await uow.ReadSet<ExpenseCategory>().AnyAsync(c => c.Name == req.Name, ct);
-        if (exists) return Results.Problem(detail: "A category with this name already exists.", statusCode: 400, title: "ExpenseCategory.Duplicate");
+        if (exists) return TypedResults.Problem(detail: "A category with this name already exists.", statusCode: 400, title: "ExpenseCategory.Duplicate");
         var cat = new ExpenseCategory(req.Name);
         await uow.AddAsync(cat, ct);
         await uow.SaveChangesAsync(ct);
-        return Results.Created($"/api/expense-categories/{new ExpenseCategoryId(cat.Id)}", ExpenseCategoryResponse.From(cat));
+        return TypedResults.Created($"/api/expense-categories/{new ExpenseCategoryId(cat.Id)}", ExpenseCategoryResponse.From(cat));
     }
 }

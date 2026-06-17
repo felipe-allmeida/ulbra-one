@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Registry.Application.Lookups;
 using Ulbra.One.Registry.Infrastructure.Lookups;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Auditing;
@@ -19,9 +20,15 @@ public static class RegistryModule
         services.AddScoped<AuditInterceptor>();
 
         services.AddDbContext<RegistryContext>((sp, options) =>
-            options.UseNpgsql(connectionString)
+            options.UseNpgsql(connectionString, npgsql =>
+                   {
+                       npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+                       npgsql.CommandTimeout(30);
+                   })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("registry",
             (sp, _) => new EfUnitOfWork<RegistryContext>(sp.GetRequiredService<RegistryContext>()));

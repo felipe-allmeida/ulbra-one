@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
@@ -35,9 +35,9 @@ public sealed class CreateChartAccount : IEndpoint
     private static async Task<IResult> Handle(Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Code))
-            return Results.Problem(detail: "Code is required.", statusCode: 400, title: "ChartAccount.Invalid");
+            return TypedResults.Problem(detail: "Code is required.", statusCode: 400, title: "ChartAccount.Invalid");
         if (string.IsNullOrWhiteSpace(req.Name))
-            return Results.Problem(detail: "Name is required.", statusCode: 400, title: "ChartAccount.Invalid");
+            return TypedResults.Problem(detail: "Name is required.", statusCode: 400, title: "ChartAccount.Invalid");
 
         var account = new ChartAccount(req.ChartType, req.Code, req.Name, req.Kind, parentId: null, req.Nature);
 
@@ -45,23 +45,23 @@ public sealed class CreateChartAccount : IEndpoint
         {
             var parent = await uow.Set<ChartAccount>().FirstOrDefaultAsync(a => a.Id == parentId.Value, ct);
             if (parent is null)
-                return Results.Problem(detail: "Parent account not found.", statusCode: 400, title: "ChartAccount.InvalidParent");
+                return TypedResults.Problem(detail: "Parent account not found.", statusCode: 400, title: "ChartAccount.InvalidParent");
             try { account.Reparent(parent); }
-            catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 400, title: "ChartAccount.InvalidParent"); }
+            catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "ChartAccount.InvalidParent"); }
         }
 
         var duplicate = await uow.ReadSet<ChartAccount>()
             .AnyAsync(a => a.ChartType == req.ChartType && a.Code == account.Code, ct);
         if (duplicate)
-            return Results.Problem(detail: "A chart account with this code already exists.", statusCode: 409, title: "ChartAccount.DuplicateCode");
+            return TypedResults.Problem(detail: "A chart account with this code already exists.", statusCode: 409, title: "ChartAccount.DuplicateCode");
 
         await uow.AddAsync(account, ct);
         try { await uow.SaveChangesAsync(ct); }
         catch (DbUpdateException)
         {
-            return Results.Problem(detail: "A chart account with this code already exists.", statusCode: 409, title: "ChartAccount.DuplicateCode");
+            return TypedResults.Problem(detail: "A chart account with this code already exists.", statusCode: 409, title: "ChartAccount.DuplicateCode");
         }
 
-        return Results.Created($"/api/chart-accounts/{new ChartAccountId(account.Id)}", ChartAccountResponse.From(account));
+        return TypedResults.Created($"/api/chart-accounts/{new ChartAccountId(account.Id)}", ChartAccountResponse.From(account));
     }
 }

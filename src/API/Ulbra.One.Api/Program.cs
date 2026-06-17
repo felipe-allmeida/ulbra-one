@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Core.Application;
@@ -16,6 +17,8 @@ using Ulbra.One.Finance.Infrastructure.Database;
 using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Audit.Application;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
@@ -183,6 +186,7 @@ builder.Services.AddSwaggerGen(options =>
     options.MapType<Ulbra.One.Common.Application.Ids.StatementImportId>(() => IdSchema("statement_import_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.BankTransactionId>(() => IdSchema("bank_txn_3fa85f64571742199730000000000000"));
     options.MapType<Ulbra.One.Common.Application.Ids.ChartAccountId>(() => IdSchema("chart_account_3fa85f64571742199730000000000000"));
+    options.MapType<Ulbra.One.Common.Application.Ids.AuditLogId>(() => IdSchema("audit_log_3fa85f64571742199730000000000000"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -194,10 +198,13 @@ builder.Services.AddCoreModule(builder.Configuration);
 builder.Services.AddFinanceModule(builder.Configuration);
 builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
+builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
 
 // Health checks
-builder.Services.AddHealthChecks().AddNpgSql(connectionString);
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddNpgSql(connectionString, name: "database", tags: ["ready"]);
 
 var app = builder.Build();
 
@@ -208,14 +215,36 @@ using (var scope = app.Services.CreateScope())
     var attempts = 0;
     const int maxAttempts = 30;
     var delay = TimeSpan.FromSeconds(2);
+    const long migrationLockKey = 427529; // arbitrary fixed key; serializes migrations across replicas
     while (true)
     {
         try
         {
-            await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
+            // Hold a Postgres session-level advisory lock on a dedicated connection so concurrent
+            // app instances apply migrations one at a time instead of racing the same DDL.
+            await using var lockConn = new Npgsql.NpgsqlConnection(connectionString);
+            await lockConn.OpenAsync();
+            await using (var lockCmd = lockConn.CreateCommand())
+            {
+                lockCmd.CommandText = "SELECT pg_advisory_lock(@key)";
+                lockCmd.Parameters.AddWithValue("key", migrationLockKey);
+                await lockCmd.ExecuteNonQueryAsync();
+            }
+            try
+            {
+                await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<AuditContext>().Database.MigrateAsync();
+            }
+            finally
+            {
+                await using var unlockCmd = lockConn.CreateCommand();
+                unlockCmd.CommandText = "SELECT pg_advisory_unlock(@key)";
+                unlockCmd.Parameters.AddWithValue("key", migrationLockKey);
+                await unlockCmd.ExecuteNonQueryAsync();
+            }
             break;
         }
         catch (Exception ex) when (attempts++ < maxAttempts)
@@ -239,8 +268,21 @@ app.UseAppExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Liveness: process is up (no external deps). Readiness: dependencies (DB) are reachable.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = r => r.Tags.Contains("live"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = r => r.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+// Backward-compatible default = readiness.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
+    Predicate = r => r.Tags.Contains("ready"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
@@ -249,6 +291,7 @@ apiGroup.MapIdentityEndpoints();
 apiGroup.MapCoreEndpoints();
 apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
+apiGroup.MapAuditEndpoints();
 
 app.Run();
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Core.Domain.Entities;
 
 namespace Ulbra.One.Core.Infrastructure.Database;
@@ -22,6 +23,8 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.Property(x => x.LegalName).HasMaxLength(200).IsRequired();
             e.Property(x => x.Cnpj).HasMaxLength(14).IsRequired();
             e.HasIndex(x => x.Cnpj).IsUnique();
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
         });
 
         modelBuilder.Entity<Unit>(e =>
@@ -31,6 +34,8 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.Property(x => x.Acronym).HasMaxLength(20).IsRequired();
             e.HasOne<Company>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.CompanyId, x.Acronym }).IsUnique();
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
         });
 
         modelBuilder.Entity<CostCenter>(e =>
@@ -42,6 +47,8 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.Property(x => x.AutoApprovalLimit).HasPrecision(18, 2);
             e.HasOne<Company>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.CompanyId, x.Code }).IsUnique();
+            e.Property(x => x.CreatedBy).HasMaxLength(64);
+            e.Property(x => x.UpdatedBy).HasMaxLength(64);
         });
 
         modelBuilder.Entity<CostCenterUnit>(e =>
@@ -50,6 +57,8 @@ public class CoreContext(DbContextOptions<CoreContext> options) : DbContext(opti
             e.HasOne<CostCenter>().WithMany().HasForeignKey(x => x.CostCenterId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Unit>().WithMany().HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.MapAuditLog(ownsTable: false);
 
         base.OnModelCreating(modelBuilder);
     }

@@ -20,9 +20,15 @@ public static class FinanceModule
         services.AddScoped<AuditInterceptor>();
 
         services.AddDbContext<FinanceContext>((sp, options) =>
-            options.UseNpgsql(connectionString)
+            options.UseNpgsql(connectionString, npgsql =>
+                   {
+                       npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+                       npgsql.CommandTimeout(30);
+                   })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("finance",
             (sp, _) => new EfUnitOfWork<FinanceContext>(sp.GetRequiredService<FinanceContext>()));

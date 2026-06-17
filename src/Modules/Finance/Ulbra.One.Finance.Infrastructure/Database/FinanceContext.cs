@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database;
@@ -62,6 +63,9 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.VendorId);
             e.HasIndex(x => x.Status);
             e.HasQueryFilter(x => x.DeletedAt == null);
+            // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
+            // Catches approve/cancel/update races on the Payable row.
+            e.Property<uint>("xmin").IsRowVersion().HasColumnName("xmin");
         });
 
         modelBuilder.Entity<Installment>(e =>
@@ -72,8 +76,14 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasIndex(x => x.PayableId);
             e.HasIndex(x => x.DueDate);
             e.HasIndex(x => x.Status);
-            e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Cascade);
+            // Payments are append-only: never cascade-delete a baixa. Restrict means an installment that
+            // has payments cannot be deleted (the UpdatePayable guard blocks editing a payable with payments).
+            e.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.InstallmentId).OnDelete(DeleteBehavior.Restrict);
             e.Navigation(x => x.Payments).AutoInclude();
+            // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
+            // Critical: two concurrent RegisterPayment calls mutate the SAME installment row;
+            // the token makes the second SaveChanges fail instead of double-paying real cash.
+            e.Property<uint>("xmin").IsRowVersion().HasColumnName("xmin");
         });
 
         modelBuilder.Entity<PayableAttachment>(e =>
@@ -217,6 +227,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.CompanyId).IsUnique();
         });
+
+        modelBuilder.MapAuditLog(ownsTable: false);
 
         base.OnModelCreating(modelBuilder);
     }
