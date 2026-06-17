@@ -29,7 +29,7 @@ public sealed class RegisterReceipt : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(ReceivableId id, ReceivableInstallmentId installmentId, RegisterReceiptRequest req,
-        UserContext user, [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
+        UserContext user, IUnitOfWork uow, TimeProvider timeProvider, CancellationToken ct)
     {
         var today = ReceivableClock.Today(timeProvider);
 

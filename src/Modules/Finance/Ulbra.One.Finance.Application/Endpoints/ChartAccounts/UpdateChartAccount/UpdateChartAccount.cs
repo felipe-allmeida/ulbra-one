@@ -30,7 +30,7 @@ public sealed class UpdateChartAccount : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(ChartAccountId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(ChartAccountId id, Request req, IUnitOfWork uow, CancellationToken ct)
     {
         var account = await uow.Set<ChartAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
         if (account is null) return TypedResults.Problem(detail: "Chart account not found.", statusCode: 404, title: "ChartAccount.NotFound");

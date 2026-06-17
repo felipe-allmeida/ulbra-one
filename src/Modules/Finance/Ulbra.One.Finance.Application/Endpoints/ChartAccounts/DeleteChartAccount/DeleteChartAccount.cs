@@ -19,7 +19,7 @@ public sealed class DeleteChartAccount : IEndpoint
 
     private static async Task<IResult> Handle(
         ChartAccountId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {

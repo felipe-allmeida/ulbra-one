@@ -21,7 +21,7 @@ public sealed class DownloadPaymentProof : IEndpoint
         PayableId id,
         PaymentId paymentId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var payable = await uow.ReadSet<Payable>()

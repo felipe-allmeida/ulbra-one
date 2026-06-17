@@ -24,7 +24,7 @@ public sealed class DeleteAttachment : IEndpoint
         PayableId id,
         PayableAttachmentId attachmentId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         ILogger<DeleteAttachment> logger,
         CancellationToken ct)
     {

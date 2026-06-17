@@ -30,7 +30,7 @@ public sealed class CreateEmployee : IEndpoint
 
     private static async Task<IResult> Handle(
         EmployeeRequest req,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var employee = new EmployeeEntity(req.CompanyId.Value, req.Name, req.Document, req.Email, req.Phone,

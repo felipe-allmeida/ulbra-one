@@ -25,7 +25,7 @@ public sealed class ApproveTransaction : IEndpoint
 
     private static async Task<IResult> Handle(
         TransactionId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);

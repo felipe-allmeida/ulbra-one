@@ -45,19 +45,17 @@ public sealed class CreateReceivable : IEndpoint
 
     private static async Task<IResult> Handle(
         CreateReceivableRequest req,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
-        [FromKeyedServices("core")] IUnitOfWork core,
-        [FromKeyedServices("registry")] IUnitOfWork registry,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {
         var companyId = req.CompanyId.Value;
 
-        var costCenter = await core.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == companyId, ct);
+        var costCenter = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == companyId, ct);
         if (costCenter is null)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CostCenterInvalid", "Cost center is invalid for this company.")).ToOk();
 
-        var customer = await registry.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == companyId, ct);
+        var customer = await uow.ReadSet<CustomerEntity>().FirstOrDefaultAsync(c => c.Id == req.PayerId.Value && c.CompanyId == companyId, ct);
         if (customer is null)
             return Result.Failure<ReceivableResponse>(Error.Validation("Receivable.CustomerInvalid", "Customer is invalid for this company.")).ToOk();
         if (!customer.Active)

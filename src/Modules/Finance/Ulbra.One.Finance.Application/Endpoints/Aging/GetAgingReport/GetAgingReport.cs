@@ -21,7 +21,7 @@ public sealed class GetAgingReport : IEndpoint
     private static async Task<IResult> Handle(
         CompanyId companyId,
         DateOnly? asOf,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {

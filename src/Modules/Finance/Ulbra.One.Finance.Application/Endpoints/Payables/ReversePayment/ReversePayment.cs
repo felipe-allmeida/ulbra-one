@@ -22,7 +22,7 @@ public sealed class ReversePayment : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, PaymentId paymentId, Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>()
             .Include(p => p.Installments).ThenInclude(i => i.Payments)

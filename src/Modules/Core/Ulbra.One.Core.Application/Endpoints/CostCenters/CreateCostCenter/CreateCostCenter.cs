@@ -38,7 +38,7 @@ public sealed class CreateCostCenter : IEndpoint
 
     private static async Task<IResult> Handle(
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         if (!await uow.ReadSet<Company>().AnyAsync(e => e.Id == req.CompanyId.Value, ct))

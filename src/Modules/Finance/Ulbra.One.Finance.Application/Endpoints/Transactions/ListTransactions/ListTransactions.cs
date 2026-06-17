@@ -25,7 +25,7 @@ public sealed class ListTransactions : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CompanyId? companyId,
         TransactionType? type,
         TransactionStatus? status,

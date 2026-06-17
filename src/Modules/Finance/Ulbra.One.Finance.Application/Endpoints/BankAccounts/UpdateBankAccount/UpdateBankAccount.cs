@@ -35,7 +35,7 @@ public sealed class UpdateBankAccount : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(BankAccountId id, Request req, [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(BankAccountId id, Request req, IUnitOfWork uow, CancellationToken ct)
     {
         var acc = await uow.Set<BankAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
         if (acc is null) return TypedResults.Problem(detail: "Bank account not found.", statusCode: 404, title: "BankAccount.NotFound");

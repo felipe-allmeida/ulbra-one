@@ -18,7 +18,7 @@ public sealed class ListChartAccounts : IEndpoint
             .RequireAuthorization().Produces<List<ChartAccountResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         ChartType? chartType, AccountKind? kind, bool? activeOnly, CancellationToken ct)
     {
         var q = uow.ReadSet<ChartAccount>();

@@ -17,7 +17,7 @@ public sealed class ListExpenseCategories : IEndpoint
             .RequireAuthorization().Produces<List<ExpenseCategoryResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow, bool? includeInactive, CancellationToken ct)
+        IUnitOfWork uow, bool? includeInactive, CancellationToken ct)
     {
         var q = uow.ReadSet<ExpenseCategory>();
         if (includeInactive != true) q = q.Where(c => c.Active);

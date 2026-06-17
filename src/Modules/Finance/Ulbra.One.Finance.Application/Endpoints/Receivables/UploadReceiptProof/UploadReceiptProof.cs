@@ -31,7 +31,7 @@ public sealed class UploadReceiptProof : IEndpoint
         ReceiptId receiptId,
         IFormFile file,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var receivable = await uow.Set<Receivable>()

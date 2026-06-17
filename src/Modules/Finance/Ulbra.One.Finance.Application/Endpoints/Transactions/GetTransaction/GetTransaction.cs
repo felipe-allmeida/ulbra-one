@@ -25,7 +25,7 @@ public sealed class GetTransaction : IEndpoint
 
     private static async Task<IResult> Handle(
         TransactionId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
         => await uow.ReadSet<Transaction>().FirstOrDefaultAsync(l => l.Id == id.Value, ct) is { } l
             ? TypedResults.Ok(TransactionResponse.From(l))

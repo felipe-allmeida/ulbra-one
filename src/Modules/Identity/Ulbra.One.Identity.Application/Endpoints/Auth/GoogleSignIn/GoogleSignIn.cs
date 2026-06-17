@@ -36,7 +36,7 @@ public sealed class GoogleSignIn : IEndpoint
         Request req,
         IGoogleTokenValidator validator,
         IOptions<GoogleAuthOptions> options,
-        [FromKeyedServices("identity")] IUnitOfWork uow,
+        IUnitOfWork uow,
         ITokenService jwt,
         TimeProvider clock,
         CancellationToken ct)

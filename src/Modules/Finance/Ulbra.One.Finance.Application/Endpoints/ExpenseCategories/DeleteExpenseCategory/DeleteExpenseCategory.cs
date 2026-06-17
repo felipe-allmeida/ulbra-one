@@ -19,7 +19,7 @@ public sealed class DeleteExpenseCategory : IEndpoint
 
     private static async Task<IResult> Handle(
         ExpenseCategoryId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

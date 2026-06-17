@@ -24,7 +24,7 @@ public sealed class ConfirmMatch : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(BankTransactionId id, UserContext user,
-        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         var txn = await uow.Set<BankTransaction>().FirstOrDefaultAsync(t => t.Id == id.Value, ct);
         if (txn is null)

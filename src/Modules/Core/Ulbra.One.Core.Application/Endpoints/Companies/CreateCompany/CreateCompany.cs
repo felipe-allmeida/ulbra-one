@@ -31,7 +31,7 @@ public sealed class CreateCompany : IEndpoint
 
     private static async Task<IResult> Handle(
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var company = new Company(req.LegalName, req.Cnpj);

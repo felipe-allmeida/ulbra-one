@@ -20,7 +20,7 @@ public sealed class GetReceivable : IEndpoint
             .RequireAuthorization().Produces<ReceivableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(ReceivableId id, [FromKeyedServices("finance")] IUnitOfWork uow,
+    private static async Task<IResult> Handle(ReceivableId id, IUnitOfWork uow,
         TimeProvider timeProvider, CancellationToken ct)
     {
         // Installments are not auto-included on Receivable (scale); include them explicitly here.

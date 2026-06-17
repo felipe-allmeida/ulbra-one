@@ -34,7 +34,7 @@ public sealed class UpdateCompany : IEndpoint
     private static async Task<IResult> Handle(
         CompanyId id,
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var company = await uow.Set<Company>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);

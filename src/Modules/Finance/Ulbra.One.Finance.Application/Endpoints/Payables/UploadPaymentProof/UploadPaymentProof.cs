@@ -30,7 +30,7 @@ public sealed class UploadPaymentProof : IEndpoint
         PaymentId paymentId,
         IFormFile file,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var payable = await uow.Set<Payable>()

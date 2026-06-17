@@ -22,7 +22,7 @@ public sealed class ListCompanies : IEndpoint
     }
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var companies = await uow.ReadSet<Company>().OrderBy(e => e.LegalName).ToListAsync(ct);

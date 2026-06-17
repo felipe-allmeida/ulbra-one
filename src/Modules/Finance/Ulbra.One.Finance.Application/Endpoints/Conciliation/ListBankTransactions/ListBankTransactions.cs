@@ -19,7 +19,7 @@ public sealed class ListBankTransactions : IEndpoint
             .RequireAuthorization().Produces<PaginatedResponse<BankTransactionResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CompanyId? companyId, BankAccountId? bankAccountId, StatementImportId? importId, MatchStatus? matchStatus,
         DateOnly? dueFrom, DateOnly? dueTo, [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {

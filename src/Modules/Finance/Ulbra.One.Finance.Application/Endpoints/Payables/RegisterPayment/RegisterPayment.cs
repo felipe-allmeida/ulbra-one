@@ -27,7 +27,7 @@ public sealed class RegisterPayment : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, InstallmentId installmentId, Request req,
-        UserContext user, [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        UserContext user, IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         if (req.Amount <= 0)
             return TypedResults.Problem(detail: "Amount must be greater than zero.", statusCode: 400, title: "Payment.AmountInvalid");
