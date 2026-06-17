@@ -4,9 +4,12 @@
 
 ## O que foi alterado?
 
-| Nome do arquivo | Alteração | Imagem |
-|-----------------|-----------|--------|
-|                 |           |        |
+<!--
+Resumo coeso do que foi feito e por quê, agrupado por mudança lógica (não por arquivo —
+o diff já lista os arquivos). Escreva pra um humano entender sem abrir o diff.
+-->
+
+-
 
 ## O que deve ser levado em consideração?
 
