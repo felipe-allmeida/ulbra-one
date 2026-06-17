@@ -157,33 +157,14 @@ builder.Services.AddSwaggerGen(options =>
     options.SchemaFilter<Ulbra.One.Api.RequiredPropertiesSchemaFilter>();
 
     // Prefixed typed ids serialize as opaque strings (prefix_<guid:N>); describe them as string in the spec
-    // so generated TS keeps them as `string`.
+    // so generated TS keeps them as `string`. The registry is source-generated from all [PrefixedId] structs.
     static Microsoft.OpenApi.OpenApiSchema IdSchema(string example) => new()
     {
         Type = Microsoft.OpenApi.JsonSchemaType.String,
         Example = System.Text.Json.Nodes.JsonValue.Create(example),
     };
-    options.MapType<Ulbra.One.Common.Application.Ids.CompanyId>(() => IdSchema("company_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.UnitId>(() => IdSchema("unit_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.CostCenterId>(() => IdSchema("cost_center_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.TransactionId>(() => IdSchema("transaction_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.VendorId>(() => IdSchema("vendor_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.CustomerId>(() => IdSchema("customer_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.EmployeeId>(() => IdSchema("employee_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.UserId>(() => IdSchema("user_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PayableId>(() => IdSchema("payable_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.InstallmentId>(() => IdSchema("installment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ExpenseCategoryId>(() => IdSchema("expense_category_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PayableAttachmentId>(() => IdSchema("attachment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.BankAccountId>(() => IdSchema("bank_account_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PaymentId>(() => IdSchema("payment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ReceivableId>(() => IdSchema("receivable_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ReceivableInstallmentId>(() => IdSchema("receivable_installment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ReceiptId>(() => IdSchema("receipt_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.StatementImportId>(() => IdSchema("statement_import_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.BankTransactionId>(() => IdSchema("bank_txn_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ChartAccountId>(() => IdSchema("chart_account_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.AuditLogId>(() => IdSchema("audit_log_3fa85f64571742199730000000000000"));
+    foreach (var (type, example) in Ulbra.One.Common.Application.Ids.PrefixedIdRegistry.All)
+        options.MapType(type, () => IdSchema(example));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
