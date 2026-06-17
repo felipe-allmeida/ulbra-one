@@ -26,7 +26,9 @@ public static class FinanceModule
                        npgsql.CommandTimeout(30);
                    })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("finance",
             (sp, _) => new EfUnitOfWork<FinanceContext>(sp.GetRequiredService<FinanceContext>()));

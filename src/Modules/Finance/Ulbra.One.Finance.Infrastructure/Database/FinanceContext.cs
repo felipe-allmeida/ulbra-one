@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Database;
@@ -171,6 +172,8 @@ public class FinanceContext(DbContextOptions<FinanceContext> options) : DbContex
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.CompanyId).IsUnique();
         });
+
+        modelBuilder.MapAuditLog(ownsTable: false);
 
         base.OnModelCreating(modelBuilder);
     }

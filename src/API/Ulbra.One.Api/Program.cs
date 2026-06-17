@@ -17,6 +17,7 @@ using Ulbra.One.Finance.Infrastructure.Database;
 using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
@@ -192,6 +193,7 @@ builder.Services.AddCoreModule(builder.Configuration);
 builder.Services.AddFinanceModule(builder.Configuration);
 builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
+builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
 
 // Health checks
@@ -229,6 +231,7 @@ using (var scope = app.Services.CreateScope())
                 await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
                 await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
                 await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<AuditContext>().Database.MigrateAsync();
             }
             finally
             {

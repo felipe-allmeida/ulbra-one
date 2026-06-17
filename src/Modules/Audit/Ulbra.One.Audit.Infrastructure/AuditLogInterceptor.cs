@@ -8,10 +8,16 @@ using Ulbra.One.Common.Application.Authentication;
 
 namespace Ulbra.One.Audit.Infrastructure;
 
-public sealed class AuditLogInterceptor(UserContext userContext, TimeProvider clock) : SaveChangesInterceptor
+public sealed class AuditLogInterceptor(UserContext userContext, TimeProvider clock, AuditContext auditContext)
+    : SaveChangesInterceptor
 {
     private static readonly IReadOnlySet<string> IgnoredColumns =
         new HashSet<string> { "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy", "DeletedAt" };
+
+    // Logs are captured from the business ChangeTracker in SavingChanges, then persisted via the dedicated
+    // AuditContext in SavedChanges (after the business INSERT/UPDATE/DELETE commits). Buffered per business
+    // context instance so concurrent contexts sharing this scoped interceptor don't cross-contaminate.
+    private readonly Dictionary<DbContext, List<AuditLog>> _pending = new();
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -24,6 +30,31 @@ public sealed class AuditLogInterceptor(UserContext userContext, TimeProvider cl
     {
         if (eventData.Context is not null) Capture(eventData.Context);
         return base.SavingChangesAsync(eventData, result, ct);
+    }
+
+    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
+    {
+        if (eventData.Context is not null) FlushAsync(eventData.Context, CancellationToken.None).GetAwaiter().GetResult();
+        return base.SavedChanges(eventData, result);
+    }
+
+    public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result,
+        CancellationToken ct = default)
+    {
+        if (eventData.Context is not null) await FlushAsync(eventData.Context, ct);
+        return await base.SavedChangesAsync(eventData, result, ct);
+    }
+
+    public override void SaveChangesFailed(DbContextErrorEventData eventData)
+    {
+        if (eventData.Context is not null) _pending.Remove(eventData.Context);
+        base.SaveChangesFailed(eventData);
+    }
+
+    public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken ct = default)
+    {
+        if (eventData.Context is not null) _pending.Remove(eventData.Context);
+        return base.SaveChangesFailedAsync(eventData, ct);
     }
 
     private void Capture(DbContext context)
@@ -76,7 +107,17 @@ public sealed class AuditLogInterceptor(UserContext userContext, TimeProvider cl
                 }
             }
         }
-        foreach (var log in logs) context.Add(log);
+
+        if (logs.Count == 0) return;
+        if (_pending.TryGetValue(context, out var existing)) existing.AddRange(logs);
+        else _pending[context] = logs;
+    }
+
+    private async Task FlushAsync(DbContext context, CancellationToken ct)
+    {
+        if (!_pending.Remove(context, out var logs) || logs.Count == 0) return;
+        auditContext.AuditLogs.AddRange(logs);
+        await auditContext.SaveChangesAsync(ct);
     }
 
     private static string SerializePrimaryKey(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)

@@ -11,5 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../../Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <ProjectReference Include="../../Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

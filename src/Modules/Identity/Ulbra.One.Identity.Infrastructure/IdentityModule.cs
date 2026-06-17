@@ -19,13 +19,14 @@ public static class IdentityModule
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
-        services.AddDbContext<IdentityContext>(options =>
+        services.AddDbContext<IdentityContext>((sp, options) =>
             options.UseNpgsql(connectionString, npgsql =>
                    {
                        npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
                        npgsql.CommandTimeout(30);
                    })
-                   .UseSnakeCaseNamingConvention());
+                   .UseSnakeCaseNamingConvention()
+                   .AddInterceptors(sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("identity", (sp, _) =>
             new EfUnitOfWork<IdentityContext>(sp.GetRequiredService<IdentityContext>()));

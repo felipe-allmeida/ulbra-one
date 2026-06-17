@@ -26,7 +26,9 @@ public static class RegistryModule
                        npgsql.CommandTimeout(30);
                    })
                    .UseSnakeCaseNamingConvention()
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+                   .AddInterceptors(
+                       sp.GetRequiredService<AuditInterceptor>(),
+                       sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("registry",
             (sp, _) => new EfUnitOfWork<RegistryContext>(sp.GetRequiredService<RegistryContext>()));

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Identity.Domain.Entities;
 
 namespace Ulbra.One.Identity.Infrastructure.Database;
@@ -22,6 +23,8 @@ public class IdentityContext(DbContextOptions<IdentityContext> options) : DbCont
             e.Property(x => x.GoogleSubject).HasMaxLength(64);
             e.HasIndex(x => x.Email).IsUnique();
         });
+
+        modelBuilder.MapAuditLog(ownsTable: false);
 
         base.OnModelCreating(modelBuilder);
     }

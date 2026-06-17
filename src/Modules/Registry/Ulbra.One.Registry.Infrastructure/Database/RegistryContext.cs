@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Registry.Infrastructure.Database;
@@ -68,6 +69,8 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
             e.HasIndex(x => new { x.CompanyId, x.Document }).IsUnique().HasFilter("deleted_at IS NULL");
             e.HasQueryFilter(x => x.DeletedAt == null);
         });
+
+        modelBuilder.MapAuditLog(ownsTable: false);
 
         base.OnModelCreating(modelBuilder);
     }

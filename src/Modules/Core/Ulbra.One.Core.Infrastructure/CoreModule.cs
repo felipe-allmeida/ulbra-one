@@ -14,13 +14,14 @@ public static class CoreModule
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
-        services.AddDbContext<CoreContext>(options =>
+        services.AddDbContext<CoreContext>((sp, options) =>
             options.UseNpgsql(connectionString, npgsql =>
                    {
                        npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
                        npgsql.CommandTimeout(30);
                    })
-                   .UseSnakeCaseNamingConvention());
+                   .UseSnakeCaseNamingConvention()
+                   .AddInterceptors(sp.GetRequiredService<Ulbra.One.Audit.Infrastructure.AuditLogInterceptor>()));
 
         services.AddKeyedScoped<IUnitOfWork>("core",
             (sp, _) => new EfUnitOfWork<CoreContext>(sp.GetRequiredService<CoreContext>()));
