@@ -13,8 +13,11 @@ public static class AuditModule
         var connectionString = configuration.GetConnectionString("Database")
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
 
-        // Single registration: the SaveChangesInterceptor is shared by every business DbContext so that
-        // audit rows are added to the SAME ChangeTracker and persist in the SAME transaction.
+        // Single registration: the SaveChangesInterceptor is shared by every business DbContext.
+        // It buffers captured changes in SavingChanges, then writes them via the injected AuditContext
+        // in SavedChanges — a separate write that happens right after the business transaction commits
+        // (separate-write model, like kota). Trade-off: if the audit write fails after the business
+        // commit, the business change is durable but the audit row is lost.
         services.AddScoped<AuditLogInterceptor>();
 
         services.AddDbContext<AuditContext>((sp, options) =>

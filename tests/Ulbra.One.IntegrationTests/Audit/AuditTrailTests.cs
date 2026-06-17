@@ -12,7 +12,8 @@ namespace Ulbra.One.IntegrationTests.Audit;
 
 /// <summary>
 /// Proves the AuditLogInterceptor + audit_log table are wired into the business contexts and that the
-/// trail is written in the SAME transaction as the business change (no separate flush required).
+/// audit row is written synchronously within the same request (via a separate AuditContext write in
+/// SavedChanges, right after the business commit — separate-write model, not same-transaction).
 /// </summary>
 [Collection("Postgres")]
 public class AuditTrailTests(PostgresFixture fixture)
@@ -37,7 +38,7 @@ public class AuditTrailTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Create_ChartAccount_WritesAuditRow_Atomically()
+    public async Task Create_ChartAccount_WritesAuditRow()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
@@ -48,7 +49,8 @@ public class AuditTrailTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
         var id = (await ReadJson(res)).GetProperty("id").GetString()!;
 
-        // Atomicity: the audit row must already exist right after the 201 returned — no extra flush.
+        // The audit row is written synchronously in SavedChanges (separate AuditContext write after the
+        // business commit), so it is already present by the time the 201 response is returned.
         var logs = LogsFor(factory, "ChartAccount", PrimaryKeyOf(id));
         var create = Assert.Single(logs);
 
