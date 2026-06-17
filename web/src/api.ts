@@ -103,6 +103,15 @@ export type Payment = Schemas['PaymentResponse'];
 export type BankAccountType = Schemas['BankAccountType'];
 export type PaymentMethod = Schemas['PaymentMethod'];
 
+// ---------- Receivables (Contas a Receber) ----------
+export type Receivable = Schemas['ReceivableResponse'];
+export type ReceivableListItem = Schemas['ReceivableListItemResponse'];
+export type ReceivableInstallment = Schemas['ReceivableInstallmentResponse'];
+export type Receipt = Schemas['ReceiptResponse'];
+export type ReceivableOrigin = Schemas['ReceivableOrigin'];
+export type ReceivableStatus = Schemas['ReceivableStatus'];
+export type ReceivableInstallmentStatus = Schemas['ReceivableInstallmentStatus'];
+
 // ---------- Chart of Accounts (Plano de Contas) ----------
 export type ChartAccount = Schemas['ChartAccountResponse'];
 export type ChartType = Schemas['ChartType'];
@@ -164,6 +173,33 @@ export interface PayableInput {
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
   accountingAccountId?: string | null;
   financialAccountId?: string | null;
+}
+
+/** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
+export interface ReceivableInput {
+  companyId: string;
+  payerId: string;
+  costCenterId: string;
+  revenueCategoryId?: string | null;
+  ledgerAccountId?: string | null;
+  origin?: ReceivableOrigin;
+  description: string;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  installments?: { dueDate: string; amount: number }[];
+  generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
+}
+
+/** Request body for registering a receipt (baixa de entrada) against a receivable installment. */
+export interface RegisterReceiptInput {
+  receiptDate: string;
+  amount: number;
+  bankAccountId: string;
+  method: PaymentMethod;
+  interest?: number;
+  fine?: number;
+  discount?: number;
+  notes?: string | null;
 }
 
 /**
@@ -359,6 +395,67 @@ export const api = {
   /** Direct download URL for a payment proof (auth handled by the browser session / token in caller). */
   downloadPaymentProofUrl: (payableId: string, paymentId: string) =>
     `${BASE_URL}/payables/${payableId}/payments/${paymentId}/proof`,
+
+  // ---------- Receivables (Contas a Receber) ----------
+  listReceivables: (params: {
+    companyId?: string;
+    status?: ReceivableStatus;
+    payerId?: string;
+    costCenterId?: string;
+    dueFrom?: string;
+    dueTo?: string;
+    received?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.status) q.set('status', params.status);
+    if (params.payerId) q.set('payerId', params.payerId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.received !== undefined) q.set('received', String(params.received));
+    if (params.page) q.set('Page', String(params.page));
+    if (params.pageSize) q.set('PageSize', String(params.pageSize));
+    return request<Paginated<ReceivableListItem>>(`/receivables?${q}`);
+  },
+  getReceivable: (id: string) => request<Receivable>(`/receivables/${id}`),
+  createReceivable: (body: ReceivableInput) =>
+    request<Receivable>('/receivables', { method: 'POST', body: JSON.stringify(body) }),
+  updateReceivable: (id: string, body: Omit<ReceivableInput, 'origin'>) =>
+    request<Receivable>(`/receivables/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  cancelReceivable: (id: string, reason: string) =>
+    request<Receivable>(`/receivables/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
+
+  // ---------- Receipts (baixa de entrada) ----------
+  registerReceipt: (receivableId: string, installmentId: string, body: RegisterReceiptInput) =>
+    request<Receivable>(`/receivables/${receivableId}/installments/${installmentId}/receipts`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  reverseReceipt: (receivableId: string, receiptId: string, reason: string) =>
+    request<Receivable>(`/receivables/${receivableId}/receipts/${receiptId}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  /** Uploads a receipt proof via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  uploadReceiptProof: async (receivableId: string, receiptId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/receivables/${receivableId}/receipts/${receiptId}/proof`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<Receipt>;
+  },
+  /** Direct download URL for a receipt proof (auth handled by the browser session / token in caller). */
+  downloadReceiptProofUrl: (receivableId: string, receiptId: string) =>
+    `${BASE_URL}/receivables/${receivableId}/receipts/${receiptId}/proof`,
 
   // ---------- Bank accounts ----------
   listBankAccounts: (companyId: string, includeInactive?: boolean) => {

@@ -41,6 +41,15 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.CancelReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.DownloadReceiptProof;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.GetReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.ListReceivables;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.RegisterReceipt;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.ReverseReceipt;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.UpdateReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.UploadReceiptProof;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
@@ -90,6 +99,17 @@ public static class FinanceEndpoints
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();
         aging.MapEndpoint<GetAgingItems>();
+
+        var receivables = builder.MapGroup("/receivables");
+        receivables.MapEndpoint<ListReceivables>();
+        receivables.MapEndpoint<GetReceivable>();
+        receivables.MapEndpoint<CreateReceivable>();
+        receivables.MapEndpoint<UpdateReceivable>();
+        receivables.MapEndpoint<CancelReceivable>();
+        receivables.MapEndpoint<RegisterReceipt>();
+        receivables.MapEndpoint<ReverseReceipt>();
+        receivables.MapEndpoint<UploadReceiptProof>();
+        receivables.MapEndpoint<DownloadReceiptProof>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");
         bankAccounts.MapEndpoint<ListBankAccounts>();

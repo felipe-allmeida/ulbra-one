@@ -25,7 +25,8 @@ public sealed class DeleteBankAccount : IEndpoint
     {
         var acc = await uow.Set<BankAccount>().FirstOrDefaultAsync(a => a.Id == id.Value, ct);
         if (acc is null) return TypedResults.Problem(detail: "Bank account not found.", statusCode: 404, title: "BankAccount.NotFound");
-        var inUse = await uow.ReadSet<Payment>().AnyAsync(p => p.BankAccountId == id.Value, ct);
+        var inUse = await uow.ReadSet<Payment>().AnyAsync(p => p.BankAccountId == id.Value, ct)
+            || await uow.ReadSet<Receipt>().AnyAsync(r => r.BankAccountId == id.Value, ct);
         if (inUse) return TypedResults.Problem(detail: "Bank account is in use; deactivate it instead.", statusCode: 409, title: "BankAccount.InUse");
         acc.MarkDeleted(timeProvider.GetUtcNow());
         await uow.SaveChangesAsync(ct);

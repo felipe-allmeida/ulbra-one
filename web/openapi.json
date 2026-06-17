@@ -958,42 +958,42 @@
         "operationId": "ListPayables",
         "parameters": [
           {
-            "name": "companyId",
+            "name": "CompanyId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "status",
+            "name": "Status",
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/PayableStatus"
             }
           },
           {
-            "name": "vendorId",
+            "name": "VendorId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "costCenterId",
+            "name": "CostCenterId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "categoryId",
+            "name": "CategoryId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "dueFrom",
+            "name": "DueFrom",
             "in": "query",
             "schema": {
               "type": "string",
@@ -1001,7 +1001,7 @@
             }
           },
           {
-            "name": "dueTo",
+            "name": "DueTo",
             "in": "query",
             "schema": {
               "type": "string",
@@ -1009,7 +1009,14 @@
             }
           },
           {
-            "name": "classified",
+            "name": "Paid",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Classified",
             "in": "query",
             "schema": {
               "type": "boolean"
@@ -1997,6 +2004,557 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/receivables": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ListReceivables",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ReceivableStatus"
+            }
+          },
+          {
+            "name": "payerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costCenterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dueFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dueTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "received",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableListItemResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CreateReceivable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReceivableCreateReceivableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UpdateReceivable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReceivableUpdateReceivableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CancelReceivable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelReceivableCancelReceivableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/installments/{installmentId}/receipts": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RegisterReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "installmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterReceiptRegisterReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/receipts/{receiptId}/reverse": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ReverseReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseReceiptReverseReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/receipts/{receiptId}/proof": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UploadReceiptProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "DownloadReceiptProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -4322,6 +4880,19 @@
         },
         "additionalProperties": false
       },
+      "CancelReceivableCancelReceivableRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CepResult": {
         "required": [
           "cep",
@@ -4837,6 +5408,72 @@
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateReceivableCreateReceivableRequest": {
+        "required": [
+          "companyId",
+          "payerId",
+          "costCenterId",
+          "revenueCategoryId",
+          "ledgerAccountId",
+          "origin",
+          "description",
+          "documentNumber",
+          "issueDate",
+          "installments",
+          "generate"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "payerId": {
+            "type": "string",
+            "example": "customer_3fa85f64571742199730000000000000"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "revenueCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "origin": {
+            "$ref": "#/components/schemas/ReceivableOrigin"
+          },
+          "description": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableInstallmentInput"
+            },
+            "nullable": true
+          },
+          "generate": {
+            "$ref": "#/components/schemas/ReceivableGenerateInput"
           }
         },
         "additionalProperties": false
@@ -5870,6 +6507,415 @@
         },
         "additionalProperties": { }
       },
+      "ReceiptResponse": {
+        "required": [
+          "id",
+          "installmentId",
+          "receiptDate",
+          "amount",
+          "bankAccountId",
+          "method",
+          "interest",
+          "fine",
+          "discount",
+          "notes",
+          "isReversed",
+          "reversalReason",
+          "reversedAt",
+          "hasProof",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "receipt_3fa85f64571742199730000000000000"
+          },
+          "installmentId": {
+            "type": "string",
+            "example": "receivable_installment_3fa85f64571742199730000000000000"
+          },
+          "receiptDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "fine": {
+            "type": "number",
+            "format": "double"
+          },
+          "discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "isReversed": {
+            "type": "boolean"
+          },
+          "reversalReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "reversedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "hasProof": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableGenerateInput": {
+        "required": [
+          "totalAmount",
+          "count",
+          "firstDueDate",
+          "intervalMonths"
+        ],
+        "type": "object",
+        "properties": {
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "intervalMonths": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableInstallmentInput": {
+        "required": [
+          "dueDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableInstallmentResponse": {
+        "required": [
+          "id",
+          "sequence",
+          "dueDate",
+          "amount",
+          "status",
+          "receivedAmount",
+          "isOverdue",
+          "daysOverdue",
+          "receipts"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "receivable_installment_3fa85f64571742199730000000000000"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReceivableInstallmentStatus"
+          },
+          "receivedAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "daysOverdue": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableInstallmentStatus": {
+        "enum": [
+          "Open",
+          "PartiallyReceived",
+          "Received"
+        ],
+        "type": "string"
+      },
+      "ReceivableListItemResponse": {
+        "required": [
+          "receivableId",
+          "installmentId",
+          "sequence",
+          "installmentCount",
+          "payerName",
+          "description",
+          "costCenterId",
+          "revenueCategoryId",
+          "dueDate",
+          "amount",
+          "receivedAmount",
+          "installmentStatus",
+          "receivableStatus",
+          "isOverdue"
+        ],
+        "type": "object",
+        "properties": {
+          "receivableId": {
+            "type": "string",
+            "example": "receivable_3fa85f64571742199730000000000000"
+          },
+          "installmentId": {
+            "type": "string",
+            "example": "receivable_installment_3fa85f64571742199730000000000000"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "payerName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "revenueCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "receivedAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "installmentStatus": {
+            "$ref": "#/components/schemas/ReceivableInstallmentStatus"
+          },
+          "receivableStatus": {
+            "$ref": "#/components/schemas/ReceivableStatus"
+          },
+          "isOverdue": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableListItemResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableOrigin": {
+        "enum": [
+          "Manual",
+          "AcademicImport",
+          "Rent",
+          "MiscRevenue"
+        ],
+        "type": "string"
+      },
+      "ReceivableResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "origin",
+          "payerId",
+          "payerName",
+          "documentNumber",
+          "issueDate",
+          "description",
+          "costCenterId",
+          "revenueCategoryId",
+          "ledgerAccountId",
+          "totalAmount",
+          "status",
+          "cancelReason",
+          "writeOffReason",
+          "createdAt",
+          "installments"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "receivable_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/ReceivableOrigin"
+          },
+          "payerId": {
+            "type": "string",
+            "example": "customer_3fa85f64571742199730000000000000"
+          },
+          "payerName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "revenueCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReceivableStatus"
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "writeOffReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableInstallmentResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableStatus": {
+        "enum": [
+          "AwaitingReceipt",
+          "Received",
+          "Cancelled",
+          "WrittenOff"
+        ],
+        "type": "string"
+      },
       "RegisterPaymentRequest": {
         "required": [
           "paymentDate",
@@ -5884,6 +6930,53 @@
         "type": "object",
         "properties": {
           "paymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "fine": {
+            "type": "number",
+            "format": "double"
+          },
+          "discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterReceiptRegisterReceiptRequest": {
+        "required": [
+          "receiptDate",
+          "amount",
+          "bankAccountId",
+          "method",
+          "interest",
+          "fine",
+          "discount",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "receiptDate": {
             "type": "string",
             "format": "date"
           },
@@ -5957,6 +7050,19 @@
         "additionalProperties": false
       },
       "ReversePaymentRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReverseReceiptReverseReceiptRequest": {
         "required": [
           "reason"
         ],
@@ -6432,6 +7538,63 @@
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateReceivableUpdateReceivableRequest": {
+        "required": [
+          "payerId",
+          "costCenterId",
+          "revenueCategoryId",
+          "ledgerAccountId",
+          "description",
+          "documentNumber",
+          "issueDate",
+          "installments",
+          "generate"
+        ],
+        "type": "object",
+        "properties": {
+          "payerId": {
+            "type": "string",
+            "example": "customer_3fa85f64571742199730000000000000"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "revenueCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableInstallmentInput"
+            },
+            "nullable": true
+          },
+          "generate": {
+            "$ref": "#/components/schemas/ReceivableGenerateInput"
           }
         },
         "additionalProperties": false
