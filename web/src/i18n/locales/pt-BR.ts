@@ -41,7 +41,6 @@ const ptBR = {
     hr: 'RH',
     accounting: 'Contábil',
     supplies: 'Suprimentos',
-    notifications: 'Notificações',
     search: 'Buscar…',
     logout: 'Sair',
   },

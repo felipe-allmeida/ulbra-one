@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Activity,
-  Bell,
   ClipboardCheck,
   Target,
   FileText,
@@ -328,7 +327,6 @@ function Shell({ children }: { children: ReactNode }) {
             onClick={() => go('/app/estrutura')}
           />
           <Section>{t('nav.sections.system')}</Section>
-          <NavItem icon={<Bell />} label={t('nav.notifications')} />
           <NavItem icon={<Plug />} label={t('nav.integrations')} />
           <NavItem icon={<Settings />} label={t('nav.settings')} />
           <Section>{t('nav.sections.modules')}</Section>
