@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/src/API/">
     <Project Path="src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
+    <Project Path="src/Ulbra.One.AppHost/Ulbra.One.AppHost.csproj" />
   </Folder>
   <Folder Name="/src/Common/">
     <Project Path="src/Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
