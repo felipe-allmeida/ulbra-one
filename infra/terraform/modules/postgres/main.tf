@@ -5,7 +5,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   version                = "16"
   administrator_login    = var.administrator_login
   administrator_password = var.administrator_password
-  sku_name               = "B_Standard_B1ms"
+  sku_name               = var.sku_name
   storage_mb             = 32768
   # B-series SKU does not support HA; omitting high_availability block = Disabled.
   # No delegated_subnet_id = public network access enabled; firewall rules control ingress.

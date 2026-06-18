@@ -19,4 +19,8 @@ tags = {
   team        = "ulbra-one"
 }
 
+# Postgres vertical scaling — override to a GP SKU for more CPU/RAM
+# postgres_sku_name = "GP_Standard_D2s_v3"
+postgres_sku_name = "B_Standard_B1ms"
+
 # jwt_secret must be supplied via -var or TF_VAR_jwt_secret (never commit the value)

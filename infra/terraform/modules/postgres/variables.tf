@@ -24,6 +24,12 @@ variable "administrator_password" {
   description = "Postgres admin password (generated random_password in root)."
 }
 
+variable "sku_name" {
+  type        = string
+  default     = "B_Standard_B1ms"
+  description = "PostgreSQL Flexible Server SKU (e.g. B_Standard_B1ms, GP_Standard_D2s_v3)."
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}

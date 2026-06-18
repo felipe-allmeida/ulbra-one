@@ -62,4 +62,18 @@ public sealed class ObjectStorageRegistrationTests
 
         Assert.IsType<AzureBlobStorageService>(service);
     }
+
+    [Fact]
+    public void AzureBlobConfig_MissingBothConnectionStringAndAccountUrl_ThrowsInvalidOperationException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            BuildProvider(new Dictionary<string, string?>
+            {
+                ["ObjectStorage:Provider"] = "AzureBlob",
+                ["ObjectStorage:Bucket"] = "attachments",
+                // neither ConnectionString nor AccountUrl supplied
+            }));
+
+        Assert.Contains("ObjectStorage:AccountUrl or ObjectStorage:ConnectionString", ex.Message);
+    }
 }

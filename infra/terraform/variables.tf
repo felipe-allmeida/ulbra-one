@@ -58,6 +58,12 @@ variable "web_max_replicas" {
   description = "Maximum replica count for the web container app."
 }
 
+variable "postgres_sku_name" {
+  type        = string
+  default     = "B_Standard_B1ms"
+  description = "PostgreSQL Flexible Server SKU. Override to scale vertically (e.g. GP_Standard_D2s_v3)."
+}
+
 variable "jwt_secret" {
   type        = string
   sensitive   = true

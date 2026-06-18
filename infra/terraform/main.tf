@@ -69,6 +69,7 @@ module "postgres" {
 
   administrator_login    = var.postgres_admin_login
   administrator_password = random_password.postgres.result
+  sku_name               = var.postgres_sku_name
   tags                   = local.common_tags
 }
 

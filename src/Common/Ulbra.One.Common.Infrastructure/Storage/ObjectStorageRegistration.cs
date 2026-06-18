@@ -21,6 +21,9 @@ public static class ObjectStorageRegistration
         switch (provider)
         {
             case StorageProvider.AzureBlob:
+                if (string.IsNullOrWhiteSpace(opts?.ConnectionString) && string.IsNullOrWhiteSpace(opts?.AccountUrl))
+                    throw new InvalidOperationException(
+                        "ObjectStorage:AccountUrl or ObjectStorage:ConnectionString is required when ObjectStorage:Provider=AzureBlob.");
                 services.AddSingleton(_ =>
                 {
                     var svc = !string.IsNullOrWhiteSpace(opts!.ConnectionString)
