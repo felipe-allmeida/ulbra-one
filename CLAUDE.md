@@ -10,6 +10,8 @@ dotnet build
 dotnet run --project src/API/Ulbra.One.Api
 docker compose up -d --build
 ```
+- **Aspire local dev** (requires Docker): `dotnet run --project src/Ulbra.One.AppHost` — starts API + all dependencies via .NET Aspire.
+- **Azure target**: Terraform + Container Apps — see [`docs/runbooks/azure-deploy.md`](docs/runbooks/azure-deploy.md) for the full bootstrap + deploy runbook.
 
 ## Architecture
 ```
