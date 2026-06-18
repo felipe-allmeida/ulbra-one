@@ -18,6 +18,10 @@ src/
   Common/              Domain, Application, Infrastructure compartilhados
   Modules/
     Core/              Empresa (raiz do organograma) — primeiro módulo
+    Finance/           Payable (contas a pagar)
+    Registry/          Vendor, Customer, Employee
+    Identity/          Usuários + auth (JWT / Google OAuth)
+    Notifications/     In-app notifications (audience-by-role)
 ```
 Cada módulo segue **Domain → Application → Infrastructure**.
 
@@ -30,6 +34,7 @@ Cada módulo segue **Domain → Application → Infrastructure**.
 - **Error handling**: `Result<T>` / `Error` railway pattern.
 - **Central packages**: versões em `Directory.Packages.props`.
 - **Typed IDs**: declare como `[PrefixedId("<prefix>_")] public readonly partial record struct XId(Guid Value);` — o source generator (`Ulbra.One.SourceGenerators`) emite `IPrefixedId`, `IParsable<T>`, `JsonConverter`, `Prefix`, `New()`, `ToString()`, `Parse`/`TryParse`, e `PrefixedIdRegistry.All` (consumido em `Program.cs` para registrar os schemas OpenAPI; não é necessário `MapType` por id).
+- **Eventing / Outbox**: MassTransit v8 + RabbitMQ com **EF bus outbox** no `AppDbContext` (`masstransit` schema — `inbox_state`, `outbox_message`, `outbox_state`). Publique via `IPublishEndpoint` no handler antes de `SaveChanges` — mensagem e linha de negócio commitam atomicamente. Foundation completa (AEL-588); zero consumers registrados hoje. Primeiro consumer real = classificação automática por IA (AEL-557, PR futuro). Consumers implementam `IConsumer<T>` e devem ser idempotentes (at-least-once). Veja `docs/backend-conventions.md` §12 para o guia completo.
 
 ## Anti-Patterns (do NOT)
 - Adicionar controllers — use `IEndpoint`.

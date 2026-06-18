@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Core.Domain.Entities;
@@ -39,7 +40,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<VendorEntity> Vendors => Set<VendorEntity>();
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
     public DbSet<EmployeeEntity> Employees => Set<EmployeeEntity>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CompanyConfiguration).Assembly);
@@ -47,6 +47,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
+
+        // Schema only (table names come from the snake_case convention) — the project's .ToTable anti-pattern.
+        modelBuilder.AddInboxStateEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
+        modelBuilder.AddOutboxMessageEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
+        modelBuilder.AddOutboxStateEntity(cfg => cfg.Metadata.SetSchema("masstransit"));
+
         base.OnModelCreating(modelBuilder);
     }
 }

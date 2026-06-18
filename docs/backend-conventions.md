@@ -366,7 +366,48 @@ generator does the rest automatically.
 
 ---
 
-## 12. Anti-patterns (do NOT)
+## 12. Eventing / Transactional Outbox
+
+**Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables (`masstransit.inbox_state`, `masstransit.outbox_message`, `masstransit.outbox_state`) atomically alongside business rows. `QueryDelay = 1s`. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
+
+**Status (AEL-588):** Foundation is complete — bus outbox is wired and proven by `OutboxFoundationTests`. Zero consumers are registered today. The first real consumer is AI auto-classification (AEL-557), implemented in a later PR.
+
+### Pattern
+
+1. **Contracts** are defined inline in the publishing handler or in a shared `sealed record` — keep them primitive (no domain types, no entity references).
+2. **Publish** from the endpoint handler via `IPublishEndpoint` **before** `SaveChanges`. The bus outbox captures the message inside the same DB transaction — no message is lost even if the broker is down at publish time.
+3. **Consumers** implement `IConsumer<T>` (registered in `AddMessaging`). Consumers **must be idempotent** — RabbitMQ delivers at-least-once. Guard against duplicates at the application level (e.g. existence check before inserting).
+
+```csharp
+// Handler (endpoint)
+await publishEndpoint.Publish(new MyEvent { ... }, ct);
+await uow.SaveChangesAsync(ct);   // message + business row commit atomically
+
+// Consumer (add when a real consumer is needed)
+public sealed class MyEventConsumer : IConsumer<MyEvent>
+{
+    public async Task Consume(ConsumeContext<MyEvent> ctx)
+    {
+        // idempotency guard first, then business logic
+    }
+}
+// Register in MessagingSetup.cs: x.AddConsumer<MyEventConsumer>();
+```
+
+### Transport config
+
+Transport is config-selected. Local dev uses RabbitMQ via `docker-compose` (`MassTransit:Host/Port/User/Password`). Switching to Azure Service Bus or Amazon MQ later requires only config changes — consumers are transport-agnostic.
+
+### Deferred (future slices)
+
+- First consumer: AI auto-classification of payables (AEL-557).
+- Hangfire time-based escalation for stale approvals.
+- Real delivery channels (email, push) for in-app notifications.
+- MassTransit consumer inbox middleware for stricter idempotency.
+
+---
+
+## 13. Anti-patterns (do NOT)
 
 - Add **controllers** — use `IEndpoint`.
 - Manual **`.ToTable()` / `.HasColumnName()`** — the snake_case convention resolves naming. (`.SetSchema()` via `e.Metadata.SetSchema("<schema>")` is the only permitted exception — schema only.)

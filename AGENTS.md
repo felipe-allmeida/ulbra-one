@@ -11,4 +11,4 @@ Authoritative project instructions live in [`CLAUDE.md`](CLAUDE.md); this file i
 - [`docs/runbooks/new-module.md`](docs/runbooks/new-module.md) — adding a new bounded-context module
 - [`docs/runbooks/migrations.md`](docs/runbooks/migrations.md) — EF Core migrations workflow
 
-Every module has its own `AGENTS.md` (mirrored as `CLAUDE.md`) under `src/Modules/<Module>/` — read it before working in that module: `Core`, `Finance`, `Registry`, `Identity`.
+Every module has its own `AGENTS.md` (mirrored as `CLAUDE.md`) under `src/Modules/<Module>/` — read it before working in that module: `Core`, `Finance`, `Registry`, `Identity`, `Notifications`.

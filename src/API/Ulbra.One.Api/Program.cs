@@ -18,6 +18,7 @@ using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
+using Ulbra.One.Api;
 using Ulbra.One.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -178,6 +179,7 @@ builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
 
 // Health checks

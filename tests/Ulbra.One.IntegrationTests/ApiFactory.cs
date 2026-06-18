@@ -7,18 +7,27 @@ using Microsoft.Extensions.Hosting;
 
 namespace Ulbra.One.IntegrationTests;
 
-public sealed class ApiFactory(string connectionString) : WebApplicationFactory<Program>
+public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    private readonly string _connectionString;
+
+    public ApiFactory(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Host configuration has the highest precedence, so this overrides the value in
         // appsettings.Development.json (which Program reads eagerly at startup). Pointing at the
         // ephemeral test container keeps the suite isolated from the dev/compose database.
         builder.ConfigureHostConfiguration(config =>
+        {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Database"] = connectionString,
-            }));
+                ["ConnectionStrings:Database"] = _connectionString,
+            });
+        });
         return base.CreateHost(builder);
     }
 

@@ -42,6 +42,10 @@
     <!-- Roslyn / Source Generators -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <!-- MassTransit -->
+    <PackageVersion Include="MassTransit" Version="8.2.0" />
+    <PackageVersion Include="MassTransit.RabbitMQ" Version="8.2.0" />
+    <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.2.0" />
     <!-- Test stack -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />
