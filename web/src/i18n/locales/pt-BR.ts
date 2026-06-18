@@ -941,13 +941,6 @@ const ptBR = {
     next: 'Próxima',
     pageOf: 'Página {{page}} de {{totalPages}}',
   },
-
-  notifications: {
-    title: 'Notificações',
-    empty: 'Nenhuma notificação',
-    emptyDescription: 'Você não possui notificações no momento.',
-    occurredAt: 'Recebida em',
-  },
 } as const;
 
 export default ptBR;

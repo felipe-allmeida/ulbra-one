@@ -1,7 +1,6 @@
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ulbra.One.Notifications.Application.Consumers;
 using Ulbra.One.Persistence;
 
 namespace Ulbra.One.Api;
@@ -12,8 +11,6 @@ internal static class MessagingSetup
     {
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<PayablePendingApprovalConsumer>();
-
             x.AddEntityFrameworkOutbox<AppDbContext>(o =>
             {
                 o.UsePostgres();

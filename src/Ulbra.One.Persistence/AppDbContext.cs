@@ -7,8 +7,6 @@ using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Finance.Infrastructure.Database.Configurations;
 using Ulbra.One.Identity.Domain.Entities;
 using Ulbra.One.Identity.Infrastructure.Database.Configurations;
-using Ulbra.One.Notifications.Domain.Entities;
-using Ulbra.One.Notifications.Infrastructure;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Infrastructure.Database.Configurations;
 
@@ -42,16 +40,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<VendorEntity> Vendors => Set<VendorEntity>();
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
     public DbSet<EmployeeEntity> Employees => Set<EmployeeEntity>();
-    // Notifications
-    public DbSet<Notification> Notifications => Set<Notification>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CompanyConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PayableConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(NotificationConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
 
         // Schema only (table names come from the snake_case convention) — the project's .ToTable anti-pattern.

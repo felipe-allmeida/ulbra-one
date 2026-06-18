@@ -19,8 +19,6 @@
     <ProjectReference Include="../../Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
     <ProjectReference Include="../../Modules/Audit/Ulbra.One.Audit.Application/Ulbra.One.Audit.Application.csproj" />
     <ProjectReference Include="../../Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
-    <ProjectReference Include="../../Modules/Notifications/Ulbra.One.Notifications.Application/Ulbra.One.Notifications.Application.csproj" />
-    <ProjectReference Include="../../Modules/Notifications/Ulbra.One.Notifications.Infrastructure/Ulbra.One.Notifications.Infrastructure.csproj" />
     <ProjectReference Include="../../Ulbra.One.Persistence/Ulbra.One.Persistence.csproj" />
   </ItemGroup>
 </Project>

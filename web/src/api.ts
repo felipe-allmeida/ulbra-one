@@ -119,9 +119,6 @@ export type AccountKind = Schemas['AccountKind'];
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
 
-// ---------- Notifications ----------
-export type Notification = Schemas['NotificationResponse'];
-
 // ---------- Aging de Contas a Pagar ----------
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
@@ -572,14 +569,6 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-
-  // ---------- Notifications ----------
-  listNotifications: (page = 1, pageSize = 20) => {
-    const q = new URLSearchParams();
-    q.set('Page', String(page));
-    q.set('PageSize', String(pageSize));
-    return request<Paginated<Notification>>(`/notifications?${q}`);
-  },
 
   // ---------- Aging de Contas a Pagar ----------
   aging: (companyId: string, asOf?: string): Promise<AgingReport> => {

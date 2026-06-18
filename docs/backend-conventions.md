@@ -368,41 +368,31 @@ generator does the rest automatically.
 
 ## 12. Eventing / Transactional Outbox
 
-**Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables atomically alongside the business row. `QueryDelay = 1s` keeps notifications prompt and integration tests deterministic. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
+**Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables (`masstransit.inbox_state`, `masstransit.outbox_message`, `masstransit.outbox_state`) atomically alongside business rows. `QueryDelay = 1s`. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
+
+**Status (AEL-588):** Foundation is complete — bus outbox is wired and proven by `OutboxFoundationTests`. Zero consumers are registered today. The first real consumer is AI auto-classification (AEL-557), implemented in a later PR.
 
 ### Pattern
 
-1. **Contracts** live in `Ulbra.One.Messaging.Contracts` — primitive `sealed record` types with only serialisable properties (no domain types, no entity references).
+1. **Contracts** are defined inline in the publishing handler or in a shared `sealed record` — keep them primitive (no domain types, no entity references).
 2. **Publish** from the endpoint handler via `IPublishEndpoint` **before** `SaveChanges`. The bus outbox captures the message inside the same DB transaction — no message is lost even if the broker is down at publish time.
-3. **Consumers** implement `IConsumer<T>` (registered in `AddMessaging`). Consumers **must be idempotent** — RabbitMQ delivers at-least-once. Guard against duplicates at the application level (e.g. existence check on `(ReferenceId, Type)` before inserting).
+3. **Consumers** implement `IConsumer<T>` (registered in `AddMessaging`). Consumers **must be idempotent** — RabbitMQ delivers at-least-once. Guard against duplicates at the application level (e.g. existence check before inserting).
 
 ```csharp
 // Handler (endpoint)
-await publishEndpoint.Publish(new PayablePendingApproval { ... }, ct);
+await publishEndpoint.Publish(new MyEvent { ... }, ct);
 await uow.SaveChangesAsync(ct);   // message + business row commit atomically
 
-// Consumer (Notifications module)
-public sealed class PayablePendingApprovalConsumer(IUnitOfWork uow, TimeProvider clock)
-    : IConsumer<PayablePendingApproval>
+// Consumer (add when a real consumer is needed)
+public sealed class MyEventConsumer : IConsumer<MyEvent>
 {
-    public async Task Consume(ConsumeContext<PayablePendingApproval> ctx)
+    public async Task Consume(ConsumeContext<MyEvent> ctx)
     {
-        var exists = await uow.ReadSet<Notification>()
-            .AnyAsync(n => n.ReferenceId == ctx.Message.PayableId
-                        && n.Type == "PayablePendingApproval", ctx.CancellationToken);
-        if (exists) return;   // idempotency guard
-        // ... create and save notification
+        // idempotency guard first, then business logic
     }
 }
+// Register in MessagingSetup.cs: x.AddConsumer<MyEventConsumer>();
 ```
-
-### Notifications module
-
-`src/Modules/Notifications/` — audience-by-role in-app notifications (schema `notifications`).
-
-- `Notification` entity: `CompanyId`, `AudienceRole` (e.g. `"Admin"`), `Type`, `Title`, `Message`, `ReferenceId` (loose Guid — no FK), `OccurredAt`. **No read/dismiss state in v1.**
-- `GET /api/notifications` (paginated, ordered by `OccurredAt` desc) filters by `AudienceRole == UserContext.Role` so each caller sees only their role's inbox.
-- Consumer inbox is registered via MassTransit in `MessagingSetup`; `NotificationsModule.AddNotificationsModule` has no additional DI needs in v1.
 
 ### Transport config
 
@@ -410,10 +400,10 @@ Transport is config-selected. Local dev uses RabbitMQ via `docker-compose` (`Mas
 
 ### Deferred (future slices)
 
+- First consumer: AI auto-classification of payables (AEL-557).
 - Hangfire time-based escalation for stale approvals.
-- Real delivery channels (email, push).
-- Per-user notifications + read/dismiss state.
-- MassTransit consumer inbox middleware (v1 relies on the app-level `(ReferenceId, Type)` existence guard).
+- Real delivery channels (email, push) for in-app notifications.
+- MassTransit consumer inbox middleware for stricter idempotency.
 
 ---
 

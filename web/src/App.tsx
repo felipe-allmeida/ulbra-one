@@ -63,7 +63,6 @@ import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
 import { LandingPage } from './pages/landing';
 import { LoginPage } from './pages/login';
-import { NotificacoesPage } from './pages/notificacoes';
 
 export default function App() {
   return (
@@ -106,7 +105,6 @@ export default function App() {
         <Route path='fornecedores' element={<FornecedoresPage />} />
         <Route path='clientes' element={<ClientesPage />} />
         <Route path='colaboradores' element={<ColaboradoresPage />} />
-        <Route path='notificacoes' element={<NotificacoesPage />} />
         <Route path='*' element={<Navigate to='inicio' replace />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
@@ -209,10 +207,6 @@ function Shell({ children }: { children: ReactNode }) {
   ) : at('centros') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.costCenters')}</b>
-    </>
-  ) : at('notificacoes') ? (
-    <>
-      {t('nav.sections.system')} <b>/ {t('nav.notifications')}</b>
     </>
   ) : (
     <>
@@ -334,12 +328,7 @@ function Shell({ children }: { children: ReactNode }) {
             onClick={() => go('/app/estrutura')}
           />
           <Section>{t('nav.sections.system')}</Section>
-          <NavItem
-            icon={<Bell />}
-            label={t('nav.notifications')}
-            active={at('notificacoes')}
-            onClick={() => go('/app/notificacoes')}
-          />
+          <NavItem icon={<Bell />} label={t('nav.notifications')} />
           <NavItem icon={<Plug />} label={t('nav.integrations')} />
           <NavItem icon={<Settings />} label={t('nav.settings')} />
           <Section>{t('nav.sections.modules')}</Section>

@@ -12,8 +12,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="MassTransit" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
@@ -26,8 +24,6 @@
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
-    <ProjectReference Include="../../src/Modules/Notifications/Ulbra.One.Notifications.Application/Ulbra.One.Notifications.Application.csproj" />
-    <ProjectReference Include="../../src/Ulbra.One.Messaging.Contracts/Ulbra.One.Messaging.Contracts.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
   </ItemGroup>

@@ -24,7 +24,6 @@ import {
   type EmployeeInput,
   type ExpenseCategory,
   type MatchStatus,
-  type Notification,
   type Payable,
   type PayableAttachment,
   type PayableInput,
@@ -70,7 +69,6 @@ export const queryKeys = {
   classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
   aging: (companyId: string, asOf?: string) => ['aging', companyId, asOf ?? ''] as const,
   agingItems: (params: AgingItemsParams) => ['agingItems', params] as const,
-  notifications: (page = 1) => ['notifications', page] as const,
 };
 
 export interface BankTransactionsParams {
@@ -758,17 +756,6 @@ export function useAgingItems(params: AgingItemsParams, options?: { enabled?: bo
     enabled: options?.enabled ?? !!params.companyId,
   });
 }
-
-export function useNotifications(page = 1) {
-  return useQuery({
-    queryKey: queryKeys.notifications(page),
-    queryFn: () => api.listNotifications(page),
-    placeholderData: keepPreviousData,
-  });
-}
-
-// Re-export Notification so pages can import it from queries.
-export type { Notification };
 
 export function useCreateChartAccount(
   options?: UseMutationOptions<ChartAccount, unknown, Parameters<typeof api.createChartAccount>[0]>,

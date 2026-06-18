@@ -772,22 +772,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ListNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -1503,28 +1487,6 @@ export interface components {
         LoginResponse: {
             token: string;
             user: components["schemas"]["UserSummary"];
-        };
-        NotificationResponse: {
-            /** @example notif_3fa85f64571742199730000000000000 */
-            id: string;
-            type: string;
-            title: string;
-            message: string;
-            /** Format: uuid */
-            referenceId?: string | null;
-            /** Format: date-time */
-            occurredAt: string;
-        };
-        NotificationResponsePaginatedResponse: {
-            items: components["schemas"]["NotificationResponse"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            totalPages: number;
         };
         MatchManuallyRequest: {
             /** @example installment_3fa85f64571742199730000000000000 */
@@ -4471,29 +4433,6 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    ListNotifications: {
-        parameters: {
-            query?: {
-                Page?: number;
-                PageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NotificationResponsePaginatedResponse"];
                 };
             };
         };

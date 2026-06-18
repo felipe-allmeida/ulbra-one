@@ -7,16 +7,13 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ulbra.One.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddOutboxAndNotifications : Migration
+    public partial class AddMassTransitOutbox : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "masstransit");
-
-            migrationBuilder.EnsureSchema(
-                name: "notifications");
 
             migrationBuilder.CreateTable(
                 name: "inbox_state",
@@ -40,25 +37,6 @@ namespace Ulbra.One.Persistence.Migrations
                 {
                     table.PrimaryKey("pk_inbox_state", x => x.id);
                     table.UniqueConstraint("ak_inbox_state_message_id_consumer_id", x => new { x.message_id, x.consumer_id });
-                });
-
-            migrationBuilder.CreateTable(
-                name: "notifications",
-                schema: "notifications",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    company_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    audience_role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    reference_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    occurred_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_notifications", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -118,24 +96,6 @@ namespace Ulbra.One.Persistence.Migrations
                 column: "delivered");
 
             migrationBuilder.CreateIndex(
-                name: "ix_notifications_audience_role_occurred_at",
-                schema: "notifications",
-                table: "notifications",
-                columns: new[] { "audience_role", "occurred_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "ix_notifications_company_id",
-                schema: "notifications",
-                table: "notifications",
-                column: "company_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_notifications_reference_id_type",
-                schema: "notifications",
-                table: "notifications",
-                columns: new[] { "reference_id", "type" });
-
-            migrationBuilder.CreateIndex(
                 name: "ix_outbox_message_enqueue_time",
                 schema: "masstransit",
                 table: "outbox_message",
@@ -174,10 +134,6 @@ namespace Ulbra.One.Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "inbox_state",
                 schema: "masstransit");
-
-            migrationBuilder.DropTable(
-                name: "notifications",
-                schema: "notifications");
 
             migrationBuilder.DropTable(
                 name: "outbox_message",

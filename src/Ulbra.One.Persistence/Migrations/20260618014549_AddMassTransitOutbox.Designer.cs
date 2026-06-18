@@ -12,8 +12,8 @@ using Ulbra.One.Persistence;
 namespace Ulbra.One.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260617203016_AddOutboxAndNotifications")]
-    partial class AddOutboxAndNotifications
+    [Migration("20260618014549_AddMassTransitOutbox")]
+    partial class AddMassTransitOutbox
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1734,64 +1734,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", "identity");
-                });
-
-            modelBuilder.Entity("Ulbra.One.Notifications.Domain.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AudienceRole")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("audience_role");
-
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("company_id");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("message");
-
-                    b.Property<DateTimeOffset>("OccurredAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_at");
-
-                    b.Property<Guid?>("ReferenceId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("reference_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("title");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("type");
-
-                    b.HasKey("Id")
-                        .HasName("pk_notifications");
-
-                    b.HasIndex("CompanyId")
-                        .HasDatabaseName("ix_notifications_company_id");
-
-                    b.HasIndex("AudienceRole", "OccurredAt")
-                        .HasDatabaseName("ix_notifications_audience_role_occurred_at");
-
-                    b.HasIndex("ReferenceId", "Type")
-                        .HasDatabaseName("ix_notifications_reference_id_type");
-
-                    b.ToTable("notifications", "notifications");
                 });
 
             modelBuilder.Entity("Ulbra.One.Registry.Domain.Entities.CustomerEntity", b =>

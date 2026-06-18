@@ -2,7 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/Ulbra.One.Persistence/Ulbra.One.Persistence.csproj" />
     <Project Path="src/Ulbra.One.SourceGenerators/Ulbra.One.SourceGenerators.csproj" />
-    <Project Path="src/Ulbra.One.Messaging.Contracts/Ulbra.One.Messaging.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/API/">
     <Project Path="src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
@@ -37,11 +36,6 @@
     <Project Path="src/Modules/Audit/Ulbra.One.Audit.Application/Ulbra.One.Audit.Application.csproj" />
     <Project Path="src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <Project Path="src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/src/Modules/Notifications/">
-    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Application/Ulbra.One.Notifications.Application.csproj" />
-    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Domain/Ulbra.One.Notifications.Domain.csproj" />
-    <Project Path="src/Modules/Notifications/Ulbra.One.Notifications.Infrastructure/Ulbra.One.Notifications.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
