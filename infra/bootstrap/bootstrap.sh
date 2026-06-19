@@ -123,15 +123,18 @@ else
   echo "    Service principal already exists: ${SP_ID}"
 fi
 
-# Federated credentials — one per subject
-declare -A FEDERATED_SUBJECTS=(
-  ["github-main"]="repo:${GITHUB_REPO}:ref:refs/heads/main"
-  ["github-env-dev"]="repo:${GITHUB_REPO}:environment:dev"
-  ["github-env-prod"]="repo:${GITHUB_REPO}:environment:prod"
+# Federated credentials — one per subject.
+# Parallel indexed arrays (portable to bash 3.2 — macOS default — which lacks `declare -A`).
+CRED_NAMES=("github-main" "github-env-dev" "github-env-prod")
+CRED_SUBJECTS=(
+  "repo:${GITHUB_REPO}:ref:refs/heads/main"
+  "repo:${GITHUB_REPO}:environment:dev"
+  "repo:${GITHUB_REPO}:environment:prod"
 )
 
-for CRED_NAME in "${!FEDERATED_SUBJECTS[@]}"; do
-  SUBJECT="${FEDERATED_SUBJECTS[${CRED_NAME}]}"
+for i in "${!CRED_NAMES[@]}"; do
+  CRED_NAME="${CRED_NAMES[$i]}"
+  SUBJECT="${CRED_SUBJECTS[$i]}"
   EXISTING=$(az ad app federated-credential list --id "${APP_ID}" \
     --query "[?name=='${CRED_NAME}'].name" -o tsv 2>/dev/null || true)
   if [[ -z "${EXISTING}" ]]; then
