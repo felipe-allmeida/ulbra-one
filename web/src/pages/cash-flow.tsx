@@ -288,8 +288,8 @@ function FlowBars({ periods }: { periods: CashFlowPeriod[] }) {
       </div>
       <div className='cf-bars-grid'>
         {periods.map((p) => {
-          const inflow = p.inflowActual ?? p.inflowForecast;
-          const outflow = p.outflowActual ?? p.outflowForecast;
+          const inflow = p.inflowForecast;
+          const outflow = p.outflowForecast;
           return (
             <div
               key={p.label}
@@ -649,13 +649,21 @@ export function CashFlowPage() {
                     <tr key={p.label} className={p.belowReserve ? 'cf-row-danger' : undefined}>
                       <td>
                         {p.label}{' '}
-                        <span className={`badge-status ${p.isPast ? 'badge-pago' : 'badge-pendente'}`}>
-                          {p.isPast ? t('cashFlow.periods.actualTag') : t('cashFlow.periods.forecastTag')}
+                        <span className='badge-status badge-pendente'>
+                          {p.isPast ? t('cashFlow.periods.inProgressTag') : t('cashFlow.periods.forecastTag')}
                         </span>
                         {p.belowReserve && (
                           <span className='badge-status badge-rejeitado' style={{ marginLeft: 6 }}>
                             {t('cashFlow.periods.belowReserve')}
                           </span>
+                        )}
+                        {p.isPast && (p.inflowActual != null || p.outflowActual != null) && (
+                          <div className='help cf-period-actual'>
+                            {t('cashFlow.periods.realizedSoFar', {
+                              in: brl(p.inflowActual ?? 0),
+                              out: brl(p.outflowActual ?? 0),
+                            })}
+                          </div>
                         )}
                       </td>
                       <td className='amount-cell' style={{ textAlign: 'right' }}>
@@ -667,7 +675,7 @@ export function CashFlowPage() {
                         onClick={() => setDrill({ period: p, direction: 'in' })}
                       >
                         <span className='cf-drill-inner'>
-                          {brl(p.inflowActual ?? p.inflowForecast)}
+                          {brl(p.inflowForecast)}
                           <ChevronRight size={13} className='cf-drill-caret' />
                         </span>
                       </td>
@@ -677,7 +685,7 @@ export function CashFlowPage() {
                         onClick={() => setDrill({ period: p, direction: 'out' })}
                       >
                         <span className='cf-drill-inner'>
-                          {brl(p.outflowActual ?? p.outflowForecast)}
+                          {brl(p.outflowForecast)}
                           <ChevronRight size={13} className='cf-drill-caret' />
                         </span>
                       </td>

@@ -900,6 +900,8 @@ const ptBR = {
       },
       forecastTag: 'Previsto',
       actualTag: 'Realizado',
+      inProgressTag: 'Em curso',
+      realizedSoFar: 'Realizado até hoje: entradas {{in}} · saídas {{out}}',
       belowReserve: 'Abaixo da reserva',
     },
     drill: {
