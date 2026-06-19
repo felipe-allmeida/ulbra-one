@@ -80,13 +80,14 @@ module "key_vault" {
   resource_group_name = module.resource_group.name
   location            = module.resource_group.location
   tenant_id           = data.azurerm_client_config.current.tenant_id
+  deployer_object_id  = data.azurerm_client_config.current.object_id
 
   secrets = {
     # Secret name follows ASP.NET Core config hierarchy separator "--"
     "Authentication--JwtSecret" = var.jwt_secret
 
-    # Full ADO connection string for EF Core / Npgsql
-    "ConnectionStrings--Default" = join(";", [
+    # Full ADO connection string for EF Core / Npgsql (app reads ConnectionStrings:Database)
+    "ConnectionStrings--Database" = join(";", [
       "Host=${module.postgres.fqdn}",
       "Port=5432",
       "Database=ulbra_one",
@@ -141,18 +142,29 @@ module "container_app_api" {
   identity_id      = module.identity.id
   acr_login_server = data.azurerm_container_registry.shared.login_server
 
-  # Plain-text env vars
+  # Plain-text env vars. Keys use the ASP.NET Core "__" hierarchy separator so they
+  # bind to the same config sections the app reads (MassTransit:*, ObjectStorage:*).
   env_vars = {
     ASPNETCORE_ENVIRONMENT                = var.environment == "prod" ? "Production" : "Development"
     APPLICATIONINSIGHTS_CONNECTION_STRING = module.observability.application_insights_connection_string
-    Azure__ServiceBus__Namespace          = "${local.sb_name}.servicebus.windows.net"
-    Azure__Storage__AccountName           = local.storage_name
+
+    # DefaultAzureCredential must target THIS user-assigned identity (Service Bus + Blob).
+    AZURE_CLIENT_ID = module.identity.client_id
+
+    # Messaging → Azure Service Bus, passwordless. MassTransit appends ".servicebus.windows.net".
+    MassTransit__Transport = "AzureServiceBus"
+    MassTransit__Namespace = local.sb_name
+
+    # Object storage → Azure Blob, passwordless via managed identity.
+    ObjectStorage__Provider   = "AzureBlob"
+    ObjectStorage__AccountUrl = "https://${local.storage_name}.blob.core.windows.net"
+    ObjectStorage__Bucket     = "attachments"
   }
 
-  # Key Vault–backed secrets injected as env vars
+  # Key Vault–backed secrets injected as env vars (names match app config keys).
   secret_env_vars = {
-    "Authentication--JwtSecret"  = module.key_vault.secret_versionless_ids["Authentication--JwtSecret"]
-    "ConnectionStrings--Default" = module.key_vault.secret_versionless_ids["ConnectionStrings--Default"]
+    "Authentication__JwtSecret"   = module.key_vault.secret_versionless_ids["Authentication--JwtSecret"]
+    "ConnectionStrings__Database" = module.key_vault.secret_versionless_ids["ConnectionStrings--Database"]
   }
 
   tags = local.common_tags

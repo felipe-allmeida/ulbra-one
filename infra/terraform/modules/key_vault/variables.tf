@@ -18,6 +18,11 @@ variable "tenant_id" {
   description = "Azure AD tenant ID."
 }
 
+variable "deployer_object_id" {
+  type        = string
+  description = "Object ID of the principal running Terraform — granted Key Vault Secrets Officer so it can write the secrets below (RBAC-mode vault)."
+}
+
 variable "secrets" {
   type        = map(string)
   sensitive   = true
