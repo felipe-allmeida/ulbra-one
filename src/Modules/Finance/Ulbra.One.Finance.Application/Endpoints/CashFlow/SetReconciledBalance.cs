@@ -14,13 +14,13 @@ public sealed class SetReconciledBalance : IEndpoint
 {
     public sealed record Request(decimal Balance, DateOnly AsOf);
 
-    public sealed record Response(
+    public sealed record SetReconciledBalanceResponse(
         BankAccountId Id, decimal ReconciledBalance, DateOnly ReconciledAt, decimal CurrentBalance);
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{id}/reconciled-balance", Handle).WithName("SetReconciledBalance").WithTags("Finance")
             .RequireAuthorization()
-            .Produces<Response>(StatusCodes.Status200OK)
+            .Produces<SetReconciledBalanceResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(
@@ -37,6 +37,6 @@ public sealed class SetReconciledBalance : IEndpoint
         var (accounts, _) = await CashFlowQueries.AccountBalancesAsync(uow, account.CompanyId, ct);
         var current = accounts.FirstOrDefault(a => a.BankAccountId.Value == account.Id)?.CurrentBalance ?? req.Balance;
 
-        return TypedResults.Ok(new Response(id, req.Balance, req.AsOf, current));
+        return TypedResults.Ok(new SetReconciledBalanceResponse(id, req.Balance, req.AsOf, current));
     }
 }
