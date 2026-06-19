@@ -159,6 +159,9 @@ module "container_app_api" {
     ObjectStorage__Provider   = "AzureBlob"
     ObjectStorage__AccountUrl = "https://${local.storage_name}.blob.core.windows.net"
     ObjectStorage__Bucket     = "attachments"
+
+    # Google sign-in: backend validates the id_token audience against this client id.
+    Authentication__Google__ClientId = var.google_client_id
   }
 
   # Key Vault–backed secrets injected as env vars (names match app config keys).

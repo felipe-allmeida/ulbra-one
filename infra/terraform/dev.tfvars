@@ -2,7 +2,7 @@
 environment          = "dev"
 location             = "eastus2"
 postgres_admin_login = "ulbraadmin"
-google_client_id     = "" # set in pipeline or local override
+google_client_id     = "867854924898-uvv5b8h238cb2ctg3te66vri829dckla.apps.googleusercontent.com" # public OAuth client id (frontend + backend audience)
 
 # Images are updated by CI on each push to main
 api_image = "crulbraone.azurecr.io/api:latest"
