@@ -456,9 +456,9 @@ const CONSOLIDATED = '__all__';
 
 export function CashFlowPage() {
   const { t } = useTranslation();
-  const { empresas, empresaId } = useApp();
-  // Scope defaults to the globally-selected company; the user can switch to consolidated.
-  const [scope, setScope] = useState<string>(() => empresaId || CONSOLIDATED);
+  const { empresas } = useApp();
+  // Board view: default to the consolidated (whole-group) scope; the user can pick a company.
+  const [scope, setScope] = useState<string>(CONSOLIDATED);
   const [granularity, setGranularity] = useState<CashFlowGranularity>('Month');
   const [horizon, setHorizon] = useState(12);
   const [minReserve, setMinReserve] = useState('');
