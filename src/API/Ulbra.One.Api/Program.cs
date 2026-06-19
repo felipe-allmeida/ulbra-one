@@ -23,6 +23,13 @@ using Ulbra.One.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Azure Key Vault — opt-in config source. Set KeyVault:Uri in env/appsettings to enable.
+// Secrets from the vault (e.g. ConnectionStrings--Database, Authentication--JwtSecret) override
+// appsettings/env values. Inert when unset → local/dev behaviour unchanged.
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new Azure.Identity.DefaultAzureCredential());
+
 // Observability: OpenTelemetry tracing/metrics + structured JSON logging (config-driven, no-op without a collector).
 builder.AddAppObservability();
 
