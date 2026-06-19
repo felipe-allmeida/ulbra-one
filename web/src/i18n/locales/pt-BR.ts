@@ -875,7 +875,8 @@ const ptBR = {
       actual: 'Realizado',
       forecast: 'Previsto',
       minReserve: 'Reserva mínima',
-      rupture: 'Ponto de ruptura',
+      rupture: 'Ruptura',
+      today: 'Hoje',
       empty: 'Sem dados para projetar.',
     },
     bars: {

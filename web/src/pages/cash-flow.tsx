@@ -1,13 +1,22 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
-import { Activity, Landmark } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  ChevronRight,
+  Landmark,
+  ShieldCheck,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 import type { CashFlowGranularity, CashFlowPeriod, CashFlowAccountBalance } from '../api';
 import { useApp } from '../store';
 import { useCashFlow, useCashFlowItems, useSetReconciledBalance } from '../queries';
-import { brl } from '../lib';
+import { brl, brlCompact } from '../lib';
 import { getErrorMessage } from '../apiError';
-import { Button, Drawer, EmptyState, Field, Input, Kpi, Modal, Panel, Select, ToolbarField } from '../ui';
+import { Button, Drawer, EmptyState, Field, Input, Modal, Panel, Select, ToolbarField } from '../ui';
 import { fieldError, reconciledBalanceSchema, resolver, type ReconciledBalanceValues } from './schemas';
 
 const fmtDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
@@ -18,10 +27,12 @@ const HORIZONS = [3, 6, 12];
 
 /* ============ Hero chart (accumulated balance) ============ */
 /**
- * Lightweight SVG line chart for the accumulated projected balance. No chart library
- * is in the app's deps, so a hand-rolled SVG is used rather than pulling in a heavy one.
- * Past = solid line, future = dashed; danger zone (below minimum reserve) is shaded;
- * the rupture period (first below reserve) is marked.
+ * Hand-rolled SVG area chart for the accumulated projected balance. No chart library
+ * is in the app's deps, so this is built directly rather than pulling in a heavy one.
+ * Past = solid line, future = dashed, both over a teal gradient area fill; the danger
+ * zone (below minimum reserve) is shaded; a "today" marker splits past from future and
+ * the rupture period (first below reserve) is called out. A hover layer surfaces the
+ * closing balance (plus in/out) for the period under the cursor.
  */
 function BalanceChart({
   periods,
@@ -33,25 +44,32 @@ function BalanceChart({
   startingBalance: number;
 }) {
   const { t } = useTranslation();
+  const [hover, setHover] = useState<number | null>(null);
   if (periods.length === 0) return <div className='help'>{t('cashFlow.chart.empty')}</div>;
 
-  const W = 760;
-  const H = 240;
-  const padX = 8;
-  const padTop = 16;
-  const padBottom = 28;
+  const W = 880;
+  const H = 300;
+  const padL = 56;
+  const padR = 16;
+  const padTop = 20;
+  const padBottom = 34;
+  const plotBottom = H - padBottom;
 
   // Series: opening of first period (= starting balance), then each closing.
   const points = [startingBalance, ...periods.map((p) => p.closingBalance)];
   const labels = ['', ...periods.map((p) => p.label)];
 
-  const values = [...points, minReserve];
-  const max = Math.max(...values);
-  const min = Math.min(...values);
+  const values = [...points, minReserve, 0];
+  const rawMax = Math.max(...values);
+  const rawMin = Math.min(...values);
+  // Pad the range slightly so the line never kisses the top/bottom edges.
+  const pad = (rawMax - rawMin || Math.abs(rawMax) || 1) * 0.08;
+  const max = rawMax + pad;
+  const min = rawMin - pad;
   const range = max - min || 1;
 
-  const x = (i: number) => padX + (i / Math.max(points.length - 1, 1)) * (W - padX * 2);
-  const y = (v: number) => padTop + (1 - (v - min) / range) * (H - padTop - padBottom);
+  const x = (i: number) => padL + (i / Math.max(points.length - 1, 1)) * (W - padL - padR);
+  const y = (v: number) => padTop + (1 - (v - min) / range) * (plotBottom - padTop);
 
   // Split into past (solid) and future (dashed). Index 0 is the starting balance (now).
   const lastPastIdx = (() => {
@@ -68,60 +86,189 @@ function BalanceChart({
       .map((v, k) => `${k === 0 ? 'M' : 'L'} ${x(from + k).toFixed(1)} ${y(v).toFixed(1)}`)
       .join(' ');
 
+  // Closed area path under the whole curve, for the gradient fill.
+  const areaPath =
+    points.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ') +
+    ` L ${x(points.length - 1).toFixed(1)} ${plotBottom} L ${x(0).toFixed(1)} ${plotBottom} Z`;
+
   const reserveY = y(minReserve);
   const ruptureIdx = periods.findIndex((p) => p.belowReserve);
+  const todayX = x(lastPastIdx);
+
+  // Horizontal grid + y-axis hints (min / reserve / max).
+  const gridLines = [max, minReserve > min ? minReserve : (max + min) / 2, min];
+
+  const hoverPeriod = hover != null && hover >= 1 ? periods[hover - 1] : null;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width='100%' height={H} role='img' aria-label={t('cashFlow.chart.title')}>
-      {/* Danger zone below the minimum reserve */}
-      {minReserve > min && (
-        <rect
-          x={padX}
-          y={reserveY}
-          width={W - padX * 2}
-          height={Math.max(0, H - padBottom - reserveY)}
-          fill='var(--danger)'
-          opacity={0.08}
+    <div className='cf-chart'>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width='100%'
+        height={H}
+        role='img'
+        aria-label={t('cashFlow.chart.title')}
+        preserveAspectRatio='none'
+      >
+        <defs>
+          <linearGradient id='cf-area' x1='0' y1='0' x2='0' y2='1'>
+            <stop offset='0%' stopColor='var(--brand)' stopOpacity={0.22} />
+            <stop offset='100%' stopColor='var(--brand)' stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        {/* Horizontal grid + y-axis value hints */}
+        {gridLines.map((v, i) => (
+          <g key={i}>
+            <line x1={padL} x2={W - padR} y1={y(v)} y2={y(v)} stroke='var(--border-subtle)' strokeWidth={1} />
+            <text x={padL - 8} y={y(v) + 3} fontSize={10} textAnchor='end' fill='var(--muted-foreground)'>
+              {brlCompact(v)}
+            </text>
+          </g>
+        ))}
+
+        {/* Danger zone below the minimum reserve */}
+        {minReserve > min && (
+          <rect
+            x={padL}
+            y={reserveY}
+            width={W - padL - padR}
+            height={Math.max(0, plotBottom - reserveY)}
+            fill='var(--danger)'
+            opacity={0.07}
+          />
+        )}
+        {/* Minimum-reserve line */}
+        {minReserve > min && (
+          <>
+            <line
+              x1={padL}
+              x2={W - padR}
+              y1={reserveY}
+              y2={reserveY}
+              stroke='var(--danger)'
+              strokeDasharray='4 4'
+              strokeWidth={1}
+              opacity={0.7}
+            />
+            <text x={W - padR} y={reserveY - 5} fontSize={10} textAnchor='end' fill='var(--danger)'>
+              {t('cashFlow.chart.minReserve')}
+            </text>
+          </>
+        )}
+        {/* Zero baseline */}
+        {min < 0 && max > 0 && (
+          <line x1={padL} x2={W - padR} y1={y(0)} y2={y(0)} stroke='var(--border)' strokeWidth={1} />
+        )}
+
+        {/* Area fill */}
+        <path d={areaPath} fill='url(#cf-area)' />
+
+        {/* Today marker */}
+        {lastPastIdx > 0 && lastPastIdx < points.length - 1 && (
+          <>
+            <line
+              x1={todayX}
+              x2={todayX}
+              y1={padTop}
+              y2={plotBottom}
+              stroke='var(--muted-foreground)'
+              strokeDasharray='3 3'
+              strokeWidth={1}
+              opacity={0.6}
+            />
+            <text x={todayX + 4} y={padTop + 9} fontSize={10} textAnchor='start' fill='var(--muted-foreground)'>
+              {t('cashFlow.chart.today')}
+            </text>
+          </>
+        )}
+
+        {/* Past (solid) */}
+        {lastPastIdx > 0 && <path d={line(0, lastPastIdx)} fill='none' stroke='var(--brand)' strokeWidth={2.25} />}
+        {/* Future (dashed) */}
+        <path
+          d={line(lastPastIdx, points.length - 1)}
+          fill='none'
+          stroke='var(--brand)'
+          strokeWidth={2.25}
+          strokeDasharray='6 5'
         />
+
+        {/* Rupture callout */}
+        {ruptureIdx >= 0 && (
+          <>
+            <circle
+              cx={x(ruptureIdx + 1)}
+              cy={y(points[ruptureIdx + 1])}
+              r={5.5}
+              fill='var(--danger)'
+              stroke='var(--card)'
+              strokeWidth={2}
+            />
+            <text
+              x={x(ruptureIdx + 1)}
+              y={y(points[ruptureIdx + 1]) - 12}
+              fontSize={10}
+              fontWeight={600}
+              textAnchor='middle'
+              fill='var(--danger)'
+            >
+              {t('cashFlow.chart.rupture')}
+            </text>
+          </>
+        )}
+
+        {/* Hover marker dot */}
+        {hover != null && (
+          <circle cx={x(hover)} cy={y(points[hover])} r={4} fill='var(--brand)' stroke='var(--card)' strokeWidth={2} />
+        )}
+
+        {/* X labels (sparse to avoid clutter) */}
+        {labels.map((lbl, i) => {
+          const step = Math.ceil(labels.length / 8);
+          if (i === 0 || i % step !== 0) return null;
+          return (
+            <text key={i} x={x(i)} y={H - 10} fontSize={10} textAnchor='middle' fill='var(--muted-foreground)'>
+              {lbl}
+            </text>
+          );
+        })}
+
+        {/* Invisible hover targets, one per data point */}
+        {points.map((_, i) => {
+          const w = (W - padL - padR) / Math.max(points.length - 1, 1);
+          return (
+            <rect
+              key={i}
+              x={x(i) - w / 2}
+              y={padTop}
+              width={w}
+              height={plotBottom - padTop}
+              fill='transparent'
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover((h) => (h === i ? null : h))}
+            />
+          );
+        })}
+      </svg>
+
+      {/* Hover tooltip */}
+      {hover != null && (
+        <div
+          className='cf-chart-tip'
+          style={{ left: `${(x(hover) / W) * 100}%`, top: `${(y(points[hover]) / H) * 100}%` }}
+        >
+          <div className='cf-chart-tip-label'>{hover === 0 ? t('cashFlow.chart.today') : labels[hover]}</div>
+          <div className='cf-chart-tip-value'>{brl(points[hover])}</div>
+          {hoverPeriod && (
+            <div className='cf-chart-tip-rows'>
+              <span className='cf-chart-tip-in'>+{brl(hoverPeriod.inflowActual ?? hoverPeriod.inflowForecast)}</span>
+              <span className='cf-chart-tip-out'>−{brl(hoverPeriod.outflowActual ?? hoverPeriod.outflowForecast)}</span>
+            </div>
+          )}
+        </div>
       )}
-      {/* Minimum-reserve line */}
-      <line
-        x1={padX}
-        x2={W - padX}
-        y1={reserveY}
-        y2={reserveY}
-        stroke='var(--danger)'
-        strokeDasharray='4 4'
-        strokeWidth={1}
-        opacity={0.6}
-      />
-      {/* Zero baseline */}
-      {min < 0 && max > 0 && (
-        <line x1={padX} x2={W - padX} y1={y(0)} y2={y(0)} stroke='var(--border)' strokeWidth={1} />
-      )}
-      {/* Past (solid) */}
-      {lastPastIdx > 0 && <path d={line(0, lastPastIdx)} fill='none' stroke='var(--brand)' strokeWidth={2} />}
-      {/* Future (dashed) */}
-      <path
-        d={line(lastPastIdx, points.length - 1)}
-        fill='none'
-        stroke='var(--brand)'
-        strokeWidth={2}
-        strokeDasharray='6 5'
-      />
-      {/* Rupture marker */}
-      {ruptureIdx >= 0 && <circle cx={x(ruptureIdx + 1)} cy={y(points[ruptureIdx + 1])} r={5} fill='var(--danger)' />}
-      {/* X labels (sparse to avoid clutter) */}
-      {labels.map((lbl, i) => {
-        const step = Math.ceil(labels.length / 8);
-        if (i === 0 || i % step !== 0) return null;
-        return (
-          <text key={i} x={x(i)} y={H - 8} fontSize={10} textAnchor='middle' fill='var(--muted)'>
-            {lbl}
-          </text>
-        );
-      })}
-    </svg>
+    </div>
   );
 }
 
@@ -140,23 +287,31 @@ function FlowBars({ periods }: { periods: CashFlowPeriod[] }) {
         </span>
       </div>
       <div className='cf-bars-grid'>
-        {periods.map((p) => (
-          <div key={p.label} className='cf-bar-col' title={p.label}>
-            <div className='cf-bar-pair'>
-              <div
-                className='cf-bar cf-bar-in'
-                style={{ height: `${(p.inflowForecast / max) * 100}%` }}
-                aria-label={`${t('cashFlow.bars.inflow')} ${brl(p.inflowForecast)}`}
-              />
-              <div
-                className='cf-bar cf-bar-out'
-                style={{ height: `${(p.outflowForecast / max) * 100}%` }}
-                aria-label={`${t('cashFlow.bars.outflow')} ${brl(p.outflowForecast)}`}
-              />
+        {periods.map((p) => {
+          const inflow = p.inflowActual ?? p.inflowForecast;
+          const outflow = p.outflowActual ?? p.outflowForecast;
+          return (
+            <div
+              key={p.label}
+              className='cf-bar-col'
+              title={`${p.label}\n${t('cashFlow.bars.inflow')}: ${brl(inflow)}\n${t('cashFlow.bars.outflow')}: ${brl(outflow)}`}
+            >
+              <div className='cf-bar-pair'>
+                <div
+                  className='cf-bar cf-bar-in'
+                  style={{ height: `${(inflow / max) * 100}%` }}
+                  aria-label={`${t('cashFlow.bars.inflow')} ${brl(inflow)}`}
+                />
+                <div
+                  className='cf-bar cf-bar-out'
+                  style={{ height: `${(outflow / max) * 100}%` }}
+                  aria-label={`${t('cashFlow.bars.outflow')} ${brl(outflow)}`}
+                />
+              </div>
+              <div className='cf-bar-label'>{p.label}</div>
             </div>
-            <div className='cf-bar-label'>{p.label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -337,12 +492,12 @@ export function CashFlowPage() {
 
   return (
     <>
-      <div className='page-head'>
-        <div>
+      <div className='cf-head'>
+        <div className='cf-head-title'>
           <h1 className='page-title'>{t('cashFlow.title')}</h1>
           <p className='page-sub'>{t('cashFlow.subtitle')}</p>
         </div>
-        <div className='toolbar'>
+        <div className='cf-toolbar'>
           <ToolbarField label={t('cashFlow.controls.company')}>
             <Select value={scope} onChange={(e) => setScope(e.target.value)}>
               <option value={CONSOLIDATED}>{t('cashFlow.consolidated')}</option>
@@ -392,44 +547,68 @@ export function CashFlowPage() {
         <EmptyState icon={<Activity />} title={t('cashFlow.empty.title')} sub={t('cashFlow.empty.sub')} />
       ) : (
         <>
-          <div className='kpi-grid' style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-            <Kpi label={t('cashFlow.kpis.balanceToday')} value={brl(report.startingBalance)} />
-            <div className='kpi-card' style={{ borderColor: belowReserve ? 'var(--danger)' : undefined }}>
-              <div className='kpi-label'>{t('cashFlow.kpis.lowestBalance')}</div>
-              <div className='kpi-value' style={{ color: belowReserve ? 'var(--danger)' : undefined }}>
-                {brl(report.kpis.lowestProjectedBalance)}
+          <div className='cf-kpis'>
+            {/* Primary: cash on hand today — the anchor of the whole projection. */}
+            <div className='cf-kpi cf-kpi-primary'>
+              <div className='cf-kpi-top'>
+                <span className='cf-kpi-label'>{t('cashFlow.kpis.balanceToday')}</span>
+                <span className='cf-kpi-icon'>
+                  <Wallet size={16} />
+                </span>
               </div>
+              <div className='cf-kpi-value'>{brl(report.startingBalance)}</div>
+            </div>
+
+            {/* Risk: lowest projected balance — danger treatment when below reserve. */}
+            <div className={`cf-kpi ${belowReserve ? 'cf-kpi-danger' : 'cf-kpi-ok'}`}>
+              <div className='cf-kpi-top'>
+                <span className='cf-kpi-label'>{t('cashFlow.kpis.lowestBalance')}</span>
+                <span className='cf-kpi-icon'>
+                  {belowReserve ? <AlertTriangle size={16} /> : <ShieldCheck size={16} />}
+                </span>
+              </div>
+              <div className='cf-kpi-value'>{brl(report.kpis.lowestProjectedBalance)}</div>
               {lowestLabel && (
-                <div className='kpi-foot'>{t('cashFlow.kpis.lowestBalanceAt', { period: lowestLabel })}</div>
+                <div className='cf-kpi-foot'>{t('cashFlow.kpis.lowestBalanceAt', { period: lowestLabel })}</div>
               )}
             </div>
-            <div
-              className='kpi-card'
-              style={{ borderColor: report.kpis.runwayPeriods != null ? 'var(--warning)' : undefined }}
-            >
-              <div className='kpi-label'>{t('cashFlow.kpis.runway')}</div>
-              <div
-                className='kpi-value'
-                style={{ color: report.kpis.runwayPeriods != null ? 'var(--danger)' : undefined }}
-              >
+
+            {/* Risk: runway / rupture — danger when it breaches within the horizon. */}
+            <div className={`cf-kpi ${report.kpis.runwayPeriods != null ? 'cf-kpi-danger' : 'cf-kpi-ok'}`}>
+              <div className='cf-kpi-top'>
+                <span className='cf-kpi-label'>{t('cashFlow.kpis.runway')}</span>
+                <span className='cf-kpi-icon'>
+                  {report.kpis.runwayPeriods != null ? <AlertTriangle size={16} /> : <ShieldCheck size={16} />}
+                </span>
+              </div>
+              <div className='cf-kpi-value'>
                 {report.kpis.runwayPeriods != null
                   ? t('cashFlow.kpis.runwayValue', { count: report.kpis.runwayPeriods })
                   : t('cashFlow.kpis.runwayNever')}
               </div>
             </div>
-            <div className='kpi-card'>
-              <div className='kpi-label'>{t('cashFlow.kpis.periodResult')}</div>
-              <div
-                className='kpi-value'
-                style={{ color: report.kpis.netResult < 0 ? 'var(--danger)' : 'var(--success)' }}
-              >
-                {brl(report.kpis.netResult)}
+
+            {/* Net result for the horizon — green/red by sign. */}
+            <div className={`cf-kpi ${report.kpis.netResult < 0 ? 'cf-kpi-danger' : 'cf-kpi-success'}`}>
+              <div className='cf-kpi-top'>
+                <span className='cf-kpi-label'>{t('cashFlow.kpis.periodResult')}</span>
+                <span className='cf-kpi-icon'>
+                  {report.kpis.netResult < 0 ? <TrendingDown size={16} /> : <TrendingUp size={16} />}
+                </span>
               </div>
+              <div className='cf-kpi-value'>{brl(report.kpis.netResult)}</div>
             </div>
-            <div className='kpi-card'>
-              <div className='kpi-label'>{t('cashFlow.kpis.inflowForecast')}</div>
-              <div className='kpi-value'>{brl(report.kpis.totalInflowForecast)}</div>
-              <div className='kpi-foot'>
+
+            {/* Forecast in vs out for the horizon. */}
+            <div className='cf-kpi'>
+              <div className='cf-kpi-top'>
+                <span className='cf-kpi-label'>{t('cashFlow.kpis.inflowForecast')}</span>
+                <span className='cf-kpi-icon'>
+                  <TrendingUp size={16} />
+                </span>
+              </div>
+              <div className='cf-kpi-value'>{brl(report.kpis.totalInflowForecast)}</div>
+              <div className='cf-kpi-foot'>
                 {t('cashFlow.kpis.outflowForecast')}: {brl(report.kpis.totalOutflowForecast)}
               </div>
             </div>
@@ -437,128 +616,143 @@ export function CashFlowPage() {
 
           {report.overdueReceivable > 0 && (
             <div className='cf-overdue'>
+              <span className='cf-overdue-icon'>
+                <AlertTriangle size={18} />
+              </span>
               <div className='cf-overdue-title'>{t('cashFlow.overdueReceivable.title')}</div>
               <div className='cf-overdue-value'>{brl(report.overdueReceivable)}</div>
               <div className='cf-overdue-desc'>{t('cashFlow.overdueReceivable.description')}</div>
             </div>
           )}
 
-          <Panel title={t('cashFlow.chart.title')}>
-            <BalanceChart periods={report.periods} minReserve={reserveNum} startingBalance={report.startingBalance} />
-          </Panel>
+          <div className='cf-stack'>
+            <Panel title={t('cashFlow.chart.title')}>
+              <BalanceChart periods={report.periods} minReserve={reserveNum} startingBalance={report.startingBalance} />
+              <div className='cf-hero-divider' />
+              <FlowBars periods={report.periods} />
+            </Panel>
 
-          <Panel title={t('cashFlow.bars.title')}>
-            <FlowBars periods={report.periods} />
-          </Panel>
-
-          <Panel title={t('cashFlow.periods.title')}>
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('cashFlow.periods.columns.period')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.opening')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.inflow')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.outflow')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.net')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.closing')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.periods.map((p) => (
-                  <tr key={p.label} className={p.belowReserve ? 'cf-row-danger' : undefined}>
-                    <td>
-                      {p.label}{' '}
-                      <span className={`badge-status ${p.isPast ? 'badge-pago' : 'badge-pendente'}`}>
-                        {p.isPast ? t('cashFlow.periods.actualTag') : t('cashFlow.periods.forecastTag')}
-                      </span>
-                      {p.belowReserve && (
-                        <span className='badge-status badge-rejeitado' style={{ marginLeft: 6 }}>
-                          {t('cashFlow.periods.belowReserve')}
-                        </span>
-                      )}
-                    </td>
-                    <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {brl(p.openingBalance)}
-                    </td>
-                    <td
-                      className='amount-cell'
-                      style={{ textAlign: 'right', cursor: 'pointer', textDecoration: 'underline dotted' }}
-                      onClick={() => setDrill({ period: p, direction: 'in' })}
-                    >
-                      {brl(p.inflowActual ?? p.inflowForecast)}
-                    </td>
-                    <td
-                      className='amount-cell'
-                      style={{ textAlign: 'right', cursor: 'pointer', textDecoration: 'underline dotted' }}
-                      onClick={() => setDrill({ period: p, direction: 'out' })}
-                    >
-                      {brl(p.outflowActual ?? p.outflowForecast)}
-                    </td>
-                    <td
-                      className='amount-cell'
-                      style={{ textAlign: 'right', color: p.netForecast < 0 ? 'var(--danger)' : undefined }}
-                    >
-                      {brl(p.netForecast)}
-                    </td>
-                    <td
-                      className='amount-cell'
-                      style={{
-                        textAlign: 'right',
-                        fontWeight: 600,
-                        color: p.belowReserve ? 'var(--danger)' : undefined,
-                      }}
-                    >
-                      {brl(p.closingBalance)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Panel>
-
-          <Panel title={t('cashFlow.accounts.title')}>
-            {accounts.length === 0 ? (
-              <div className='help' style={{ padding: 16 }}>
-                {t('cashFlow.accounts.noAccounts')}
-              </div>
-            ) : (
+            <Panel title={t('cashFlow.periods.title')}>
               <table>
                 <thead>
                   <tr>
-                    <th>{t('nav.bankAccounts')}</th>
-                    <th style={{ textAlign: 'right' }}>{t('cashFlow.accounts.currentBalance')}</th>
-                    <th />
+                    <th>{t('cashFlow.periods.columns.period')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.opening')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.inflow')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.outflow')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.net')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('cashFlow.periods.columns.closing')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {accounts.map((a) => (
-                    <tr key={a.bankAccountId}>
+                  {report.periods.map((p) => (
+                    <tr key={p.label} className={p.belowReserve ? 'cf-row-danger' : undefined}>
                       <td>
-                        <Landmark size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                        {a.alias}
-                        <div className='help'>
-                          {a.reconciledAt
-                            ? t('cashFlow.accounts.reconciledAt', { date: fmtDate(a.reconciledAt) })
-                            : t('cashFlow.accounts.notReconciled')}
-                        </div>
+                        {p.label}{' '}
+                        <span className={`badge-status ${p.isPast ? 'badge-pago' : 'badge-pendente'}`}>
+                          {p.isPast ? t('cashFlow.periods.actualTag') : t('cashFlow.periods.forecastTag')}
+                        </span>
+                        {p.belowReserve && (
+                          <span className='badge-status badge-rejeitado' style={{ marginLeft: 6 }}>
+                            {t('cashFlow.periods.belowReserve')}
+                          </span>
+                        )}
                       </td>
-                      <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 600 }}>
-                        {brl(a.currentBalance)}
+                      <td className='amount-cell' style={{ textAlign: 'right' }}>
+                        {brl(p.openingBalance)}
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <Button onClick={() => setReconcile(a)}>{t('cashFlow.accounts.setBalance')}</Button>
+                      <td
+                        className='amount-cell cf-drill'
+                        style={{ textAlign: 'right' }}
+                        onClick={() => setDrill({ period: p, direction: 'in' })}
+                      >
+                        <span className='cf-drill-inner'>
+                          {brl(p.inflowActual ?? p.inflowForecast)}
+                          <ChevronRight size={13} className='cf-drill-caret' />
+                        </span>
+                      </td>
+                      <td
+                        className='amount-cell cf-drill'
+                        style={{ textAlign: 'right' }}
+                        onClick={() => setDrill({ period: p, direction: 'out' })}
+                      >
+                        <span className='cf-drill-inner'>
+                          {brl(p.outflowActual ?? p.outflowForecast)}
+                          <ChevronRight size={13} className='cf-drill-caret' />
+                        </span>
+                      </td>
+                      <td
+                        className='amount-cell'
+                        style={{ textAlign: 'right', color: p.netForecast < 0 ? 'var(--danger)' : undefined }}
+                      >
+                        {brl(p.netForecast)}
+                      </td>
+                      <td
+                        className='amount-cell'
+                        style={{
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          color: p.belowReserve ? 'var(--danger)' : undefined,
+                        }}
+                      >
+                        {brl(p.closingBalance)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-            {!companyId && accounts.length > 0 && (
-              <div className='help' style={{ padding: 16 }}>
-                {t('cashFlow.accounts.consolidatedHint')}
-              </div>
-            )}
-          </Panel>
+            </Panel>
+
+            <Panel title={t('cashFlow.accounts.title')}>
+              {accounts.length === 0 ? (
+                <div className='help' style={{ padding: 16 }}>
+                  {t('cashFlow.accounts.noAccounts')}
+                </div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{t('nav.bankAccounts')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('cashFlow.accounts.currentBalance')}</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accounts.map((a) => (
+                      <tr key={a.bankAccountId}>
+                        <td>
+                          <div className='cf-acct'>
+                            <span className='cf-acct-icon'>
+                              <Landmark size={15} />
+                            </span>
+                            <div>
+                              <div className='cf-acct-name'>{a.alias}</div>
+                              <div className='help'>
+                                {a.reconciledAt
+                                  ? t('cashFlow.accounts.reconciledAt', { date: fmtDate(a.reconciledAt) })
+                                  : t('cashFlow.accounts.notReconciled')}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 600 }}>
+                          {brl(a.currentBalance)}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <Button onClick={() => setReconcile(a)}>{t('cashFlow.accounts.setBalance')}</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {!companyId && accounts.length > 0 && (
+                <div className='help' style={{ padding: 16 }}>
+                  {t('cashFlow.accounts.consolidatedHint')}
+                </div>
+              )}
+            </Panel>
+          </div>
         </>
       )}
 
