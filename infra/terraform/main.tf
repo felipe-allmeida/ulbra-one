@@ -178,8 +178,8 @@ module "container_app_web" {
 
   # Frontend only needs VITE_ vars — no secrets required
   env_vars = {
-    VITE_API_BASE_URL      = "https://${module.container_app_api.fqdn}"
-    VITE_GOOGLE_CLIENT_ID  = var.google_client_id
+    VITE_API_BASE_URL     = "https://${module.container_app_api.fqdn}"
+    VITE_GOOGLE_CLIENT_ID = var.google_client_id
   }
 
   secret_env_vars = {}

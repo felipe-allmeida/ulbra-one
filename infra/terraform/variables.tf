@@ -80,17 +80,17 @@ variable "tags" {
 # CAF-computed names (locals in main.tf reference var.environment)
 # ---------------------------------------------------------------------------
 locals {
-  rg_name          = "rg-ulbraone-${var.environment}"
-  cae_name         = "cae-ulbraone-${var.environment}"
-  ca_api_name      = "ca-ulbraone-api-${var.environment}"
-  ca_web_name      = "ca-ulbraone-web-${var.environment}"
-  psql_name        = "psql-ulbraone-${var.environment}"
-  sb_name          = "sb-ulbraone-${var.environment}"
-  storage_name     = "stulbraone${var.environment}" # no dashes, <=24 chars
-  kv_name          = "kv-ulbraone-${var.environment}"
-  identity_name    = "id-ulbraone-api-${var.environment}"
-  log_name         = "log-ulbraone-${var.environment}"
-  appi_name        = "appi-ulbraone-${var.environment}"
+  rg_name       = "rg-ulbraone-${var.environment}"
+  cae_name      = "cae-ulbraone-${var.environment}"
+  ca_api_name   = "ca-ulbraone-api-${var.environment}"
+  ca_web_name   = "ca-ulbraone-web-${var.environment}"
+  psql_name     = "psql-ulbraone-${var.environment}"
+  sb_name       = "sb-ulbraone-${var.environment}"
+  storage_name  = "stulbraone${var.environment}" # no dashes, <=24 chars
+  kv_name       = "kv-ulbraone-${var.environment}"
+  identity_name = "id-ulbraone-api-${var.environment}"
+  log_name      = "log-ulbraone-${var.environment}"
+  appi_name     = "appi-ulbraone-${var.environment}"
 
   # ACR is shared across environments — created by bootstrap (Task C3)
   acr_name    = "crulbraone"
