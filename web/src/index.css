@@ -2369,3 +2369,105 @@ tbody tr:last-child td {
   gap: 8px;
   justify-content: center;
 }
+
+/* ===== Cash flow (Fluxo de caixa) ===== */
+.cf-overdue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  padding: 14px 16px;
+  margin: 16px 0;
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  background: var(--danger-subtle);
+}
+.cf-overdue-title {
+  font-weight: 600;
+  color: var(--danger);
+}
+.cf-overdue-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--danger);
+}
+.cf-overdue-desc {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cf-row-danger td {
+  background: var(--danger-subtle);
+}
+.cf-bars {
+  padding: 12px 4px 4px;
+}
+.cf-bars-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cf-bars-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cf-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.cf-dot-in {
+  background: var(--success);
+}
+.cf-dot-out {
+  background: var(--danger);
+}
+.cf-bars-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 180px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cf-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+  flex: 1;
+  height: 100%;
+}
+.cf-bar-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+.cf-bar {
+  width: 12px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+}
+.cf-bar-in {
+  background: var(--success);
+}
+.cf-bar-out {
+  background: var(--danger);
+}
+.cf-bar-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
