@@ -1,5 +1,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Accounting.Domain.Entities;
+using Ulbra.One.Accounting.Infrastructure.Database.Configurations;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Core.Infrastructure.Database.Configurations;
@@ -34,6 +36,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
     public DbSet<ChartAccount> ChartAccounts => Set<ChartAccount>();
     public DbSet<ClassificationPolicy> ClassificationPolicies => Set<ClassificationPolicy>();
+    // Accounting
+    public DbSet<LedgerAccount> LedgerAccounts => Set<LedgerAccount>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalLine> JournalLines => Set<JournalLine>();
     // Identity
     public DbSet<User> Users => Set<User>();
     // Registry
@@ -46,6 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PayableConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(LedgerAccountConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
 
         // Schema only (table names come from the snake_case convention) — the project's .ToTable anti-pattern.
