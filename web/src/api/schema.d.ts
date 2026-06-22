@@ -4,6 +4,182 @@
  */
 
 export interface paths {
+    "/api/ledger-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListLedgerAccounts"];
+        put?: never;
+        post: operations["CreateLedgerAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ledger-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetLedgerAccount"];
+        put: operations["UpdateLedgerAccount"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ledger-accounts/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SeedLedgerAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListJournalEntries"];
+        put?: never;
+        post: operations["CreateJournalEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal-entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetJournalEntry"];
+        put: operations["UpdateJournalEntry"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal-entries/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostJournalEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal-entries/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReverseJournalEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetTrialBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/income-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetIncomeStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetBalanceSheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListAuditLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/google": {
         parameters: {
             query?: never;
@@ -996,26 +1172,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ping": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["Ping"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        AccountGroup: "Asset" | "Liability" | "Equity" | "Revenue" | "Expense";
         /** @enum {string} */
         AccountKind: "Synthetic" | "Analytical";
         /** @enum {string} */
@@ -1110,6 +1272,62 @@ export interface components {
             totals: components["schemas"]["AgingBucketTotals"];
             byVendor: components["schemas"]["AgingByVendorRow"][];
             byCostCenter: components["schemas"]["AgingByCostCenterRow"][];
+        };
+        /** @enum {string} */
+        AuditAction: "Create" | "Update" | "Delete";
+        AuditLogResponse: {
+            /** @example audit_log_3fa85f64571742199730000000000000 */
+            id: string;
+            /** Format: date-time */
+            occurredAt: string;
+            traceId: string | null;
+            actorUserId: string;
+            action: components["schemas"]["AuditAction"];
+            entityType: string;
+            schema: string;
+            tableName: string;
+            primaryKey: string;
+            oldValues: string | null;
+            newValues: string | null;
+            affectedColumns: string | null;
+        };
+        AuditLogResponsePaginatedResponse: {
+            items: components["schemas"]["AuditLogResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        BalanceSheetLineResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string | null;
+            accountCode: string;
+            accountName: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            /** Format: double */
+            balance: number;
+        };
+        BalanceSheetResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            /** Format: date */
+            asOf: string;
+            assets: components["schemas"]["BalanceSheetLineResponse"][];
+            liabilities: components["schemas"]["BalanceSheetLineResponse"][];
+            equity: components["schemas"]["BalanceSheetLineResponse"][];
+            /** Format: double */
+            periodResult: number;
+            /** Format: double */
+            totalAssets: number;
+            /** Format: double */
+            totalLiabilities: number;
+            /** Format: double */
+            totalEquity: number;
+            isBalanced: boolean;
         };
         BankAccountResponse: {
             /** @example bank_account_3fa85f64571742199730000000000000 */
@@ -1287,6 +1505,26 @@ export interface components {
         CreateExpenseCategoryRequest: {
             name: string;
         };
+        CreateJournalEntryRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** Format: date */
+            competenceDate: string;
+            description: string;
+            sourceReference: string | null;
+            lines: components["schemas"]["JournalLineInput"][];
+        };
+        CreateLedgerAccountRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            code: string;
+            name: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            kind: components["schemas"]["LedgerAccountKind"];
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            normalBalance: components["schemas"]["NormalBalance"];
+        };
         CreatePayableRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -1441,6 +1679,8 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        /** @enum {string} */
+        EntrySide: "Debit" | "Credit";
         ExpenseCategoryResponse: {
             /** @example expense_category_3fa85f64571742199730000000000000 */
             id: string;
@@ -1462,6 +1702,31 @@ export interface components {
         };
         /** @enum {string} */
         ImportStatus: "Completed" | "Failed";
+        IncomeStatementLineResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            accountCode: string;
+            accountName: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            /** Format: double */
+            amount: number;
+        };
+        IncomeStatementResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            revenues: components["schemas"]["IncomeStatementLineResponse"][];
+            expenses: components["schemas"]["IncomeStatementLineResponse"][];
+            /** Format: double */
+            totalRevenue: number;
+            /** Format: double */
+            totalExpense: number;
+            /** Format: double */
+            result: number;
+        };
         InstallmentInput: {
             /** Format: date */
             dueDate: string;
@@ -1484,6 +1749,77 @@ export interface components {
         };
         /** @enum {string} */
         InstallmentStatus: "Open" | "PartiallyPaid" | "Paid";
+        JournalEntryResponse: {
+            /** @example journal_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** Format: int32 */
+            number: number | null;
+            /** Format: date */
+            competenceDate: string;
+            description: string;
+            origin: components["schemas"]["JournalOrigin"];
+            sourceReference: string | null;
+            status: components["schemas"]["JournalStatus"];
+            /** Format: date-time */
+            postedAt: string | null;
+            /** @example journal_3fa85f64571742199730000000000000 */
+            reversalOfEntryId: string | null;
+            /** @example journal_3fa85f64571742199730000000000000 */
+            reversedByEntryId: string | null;
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+            lines: components["schemas"]["JournalLineResponse"][];
+        };
+        JournalLineInput: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            side: components["schemas"]["EntrySide"];
+            /** Format: double */
+            amount: number;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string | null;
+            /** @example unit_3fa85f64571742199730000000000000 */
+            unitId: string | null;
+            description: string | null;
+        };
+        JournalLineResponse: {
+            /** @example jline_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            side: components["schemas"]["EntrySide"];
+            /** Format: double */
+            amount: number;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string | null;
+            /** @example unit_3fa85f64571742199730000000000000 */
+            unitId: string | null;
+            description: string | null;
+        };
+        /** @enum {string} */
+        JournalOrigin: "Manual";
+        /** @enum {string} */
+        JournalStatus: "Draft" | "Posted" | "Reversed";
+        /** @enum {string} */
+        LedgerAccountKind: "Synthetic" | "Analytical";
+        LedgerAccountResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            code: string;
+            name: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            normalBalance: components["schemas"]["NormalBalance"];
+            kind: components["schemas"]["LedgerAccountKind"];
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            isActive: boolean;
+        };
         LoginResponse: {
             token: string;
             user: components["schemas"]["UserSummary"];
@@ -1502,6 +1838,8 @@ export interface components {
             role: string | null;
             isAdmin: boolean;
         };
+        /** @enum {string} */
+        NormalBalance: "Debit" | "Credit";
         PayableAttachmentResponse: {
             /** @example attachment_3fa85f64571742199730000000000000 */
             id: string;
@@ -1616,12 +1954,6 @@ export interface components {
         };
         /** @enum {string} */
         PersonType: "Individual" | "Company";
-        PingResponse: {
-            status: string;
-            service: string;
-            /** Format: date-time */
-            utc: string;
-        };
         ProblemDetails: {
             type: string | null;
             title: string | null;
@@ -1804,11 +2136,20 @@ export interface components {
             /** Format: int32 */
             classifiedCount: number;
         };
+        ReverseJournalEntryRequest: {
+            reason: string;
+            /** Format: date */
+            competenceDate: string | null;
+        };
         ReversePaymentRequest: {
             reason: string | null;
         };
         ReverseReceiptReverseReceiptRequest: {
             reason: string | null;
+        };
+        SeedLedgerAccountsRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
@@ -1881,6 +2222,30 @@ export interface components {
         TransactionStatus: "Pending" | "Approved" | "Paid" | "Rejected";
         /** @enum {string} */
         TransactionType: "Payable" | "Receivable";
+        TrialBalanceResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            rows: components["schemas"]["TrialBalanceRowResponse"][];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+            isBalanced: boolean;
+        };
+        TrialBalanceRowResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            accountCode: string;
+            accountName: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            normalBalance: components["schemas"]["NormalBalance"];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+            /** Format: double */
+            balance: number;
+        };
         UnitResponse: {
             /** @example unit_3fa85f64571742199730000000000000 */
             id: string;
@@ -1929,6 +2294,22 @@ export interface components {
         UpdateExpenseCategoryRequest: {
             name: string;
             active: boolean;
+        };
+        UpdateJournalEntryRequest: {
+            /** Format: date */
+            competenceDate: string;
+            description: string;
+            sourceReference: string | null;
+            lines: components["schemas"]["JournalLineInput"][];
+        };
+        UpdateLedgerAccountRequest: {
+            name: string;
+            accountGroup: components["schemas"]["AccountGroup"];
+            kind: components["schemas"]["LedgerAccountKind"];
+            normalBalance: components["schemas"]["NormalBalance"];
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            parentId: string | null;
+            isActive: boolean;
         };
         UpdatePayableRequest: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -2024,6 +2405,540 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    ListLedgerAccounts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                accountGroup?: components["schemas"]["AccountGroup"];
+                kind?: components["schemas"]["LedgerAccountKind"];
+                activeOnly?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"][];
+                };
+            };
+        };
+    };
+    CreateLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLedgerAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLedgerAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SeedLedgerAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeedLedgerAccountsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"][];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountResponse"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListJournalEntries: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                Status?: components["schemas"]["JournalStatus"];
+                From?: string;
+                To?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"][];
+                };
+            };
+        };
+    };
+    CreateJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJournalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateJournalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PostJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReverseJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseJournalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetTrialBalance: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialBalanceResponse"];
+                };
+            };
+        };
+    };
+    GetIncomeStatement: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomeStatementResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBalanceSheet: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheetResponse"];
+                };
+            };
+        };
+    };
+    ListAuditLogs: {
+        parameters: {
+            query?: {
+                entityType?: string;
+                entityId?: string;
+                actorUserId?: string;
+                from?: string;
+                to?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
     GoogleSignIn: {
         parameters: {
             query?: never;
@@ -3454,6 +4369,7 @@ export interface operations {
                 vendorId?: string;
                 costCenterId?: string;
                 asOf?: string;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -3475,13 +4391,13 @@ export interface operations {
     ListReceivables: {
         parameters: {
             query?: {
-                companyId?: string;
-                status?: components["schemas"]["ReceivableStatus"];
-                payerId?: string;
-                costCenterId?: string;
-                dueFrom?: string;
-                dueTo?: string;
-                received?: boolean;
+                CompanyId?: string;
+                Status?: components["schemas"]["ReceivableStatus"];
+                PayerId?: string;
+                CostCenterId?: string;
+                DueFrom?: string;
+                DueTo?: string;
+                Received?: boolean;
                 Page?: number;
                 PageSize?: number;
             };
@@ -5164,26 +6080,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    Ping: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PingResponse"];
-                };
             };
         };
     };

@@ -29,6 +29,9 @@ import {
   ListTree,
   Tags,
   CalendarClock,
+  BookText,
+  BookOpen,
+  Scale,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -54,6 +57,11 @@ import {
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { PlanoDeContasPage } from './pages/plano-de-contas';
+import { ContabilPlanoPage } from './pages/contabil-plano';
+import { ContabilLancamentosPage } from './pages/contabil-lancamentos';
+import { ContabilBalancetePage } from './pages/contabil-balancete';
+import { ContabilDrePage } from './pages/contabil-dre';
+import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
@@ -89,6 +97,11 @@ export default function App() {
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
         <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
+        <Route path='contabil/plano-de-contas' element={<ContabilPlanoPage />} />
+        <Route path='contabil/lancamentos' element={<ContabilLancamentosPage />} />
+        <Route path='contabil/balancete' element={<ContabilBalancetePage />} />
+        <Route path='contabil/dre' element={<ContabilDrePage />} />
+        <Route path='contabil/balanco' element={<ContabilBalancoPage />} />
         <Route path='classificacao' element={<ClassificacaoPage />} />
         <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
@@ -147,7 +160,27 @@ function Shell({ children }: { children: ReactNode }) {
     nav('/');
   };
 
-  const crumb = at('estrutura') ? (
+  const crumb = at('contabil/plano-de-contas') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.ledgerAccounts')}</b>
+    </>
+  ) : at('contabil/lancamentos') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.journalEntries')}</b>
+    </>
+  ) : at('contabil/balancete') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.trialBalance')}</b>
+    </>
+  ) : at('contabil/dre') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.incomeStatement')}</b>
+    </>
+  ) : at('contabil/balanco') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.balanceSheet')}</b>
+    </>
+  ) : at('estrutura') ? (
     <>
       {t('nav.sections.structure')} <b>/ {t('nav.companiesUnits')}</b>
     </>
@@ -288,6 +321,37 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem icon={<FileBox />} label={t('nav.documents')} />
           <NavItem icon={<LineChart />} label={t('nav.projections')} />
           <NavItem icon={<ShieldCheck />} label={t('nav.audit')} />
+          <Section>{t('nav.sections.accounting')}</Section>
+          <NavItem
+            icon={<ListTree />}
+            label={t('nav.ledgerAccounts')}
+            active={at('contabil/plano-de-contas')}
+            onClick={() => go('/app/contabil/plano-de-contas')}
+          />
+          <NavItem
+            icon={<BookOpen />}
+            label={t('nav.journalEntries')}
+            active={at('contabil/lancamentos')}
+            onClick={() => go('/app/contabil/lancamentos')}
+          />
+          <NavItem
+            icon={<Scale />}
+            label={t('nav.trialBalance')}
+            active={at('contabil/balancete')}
+            onClick={() => go('/app/contabil/balancete')}
+          />
+          <NavItem
+            icon={<LineChart />}
+            label={t('nav.incomeStatement')}
+            active={at('contabil/dre')}
+            onClick={() => go('/app/contabil/dre')}
+          />
+          <NavItem
+            icon={<BookText />}
+            label={t('nav.balanceSheet')}
+            active={at('contabil/balanco')}
+            onClick={() => go('/app/contabil/balanco')}
+          />
           <Section>{t('nav.sections.registry')}</Section>
           <NavItem
             icon={<Truck />}
