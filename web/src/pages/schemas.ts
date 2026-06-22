@@ -231,6 +231,33 @@ export const receiptSchema = z.object({
 });
 export type ReceiptValues = z.infer<typeof receiptSchema>;
 
+/* ---------- Accounting: journal entry (lançamento) ---------- */
+export const journalLineSchema = z.object({
+  ledgerAccountId: z.string().min(1, { message: 'validation.ledgerAccountRequired' }),
+  side: z.enum(['Debit', 'Credit']),
+  amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
+  costCenterId: z.string(),
+  description: z.string(),
+});
+export type JournalLineValues = z.infer<typeof journalLineSchema>;
+
+export const journalEntrySchema = z
+  .object({
+    competenceDate: z.string().min(1, { message: 'validation.competenceDateRequired' }),
+    description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
+    sourceReference: z.string(),
+    lines: z.array(journalLineSchema).min(2, { message: 'validation.atLeastTwoLines' }),
+  })
+  .superRefine((val, ctx) => {
+    // Live double-entry balance check: Σdebit must equal Σcredit (to the cent).
+    const debit = val.lines.filter((l) => l.side === 'Debit').reduce((acc, l) => acc + (Number(l.amount) || 0), 0);
+    const credit = val.lines.filter((l) => l.side === 'Credit').reduce((acc, l) => acc + (Number(l.amount) || 0), 0);
+    if (Math.round((debit - credit) * 100) !== 0) {
+      ctx.addIssue({ code: 'custom', message: 'validation.unbalancedEntry', path: ['lines'] });
+    }
+  });
+export type JournalEntryValues = z.infer<typeof journalEntrySchema>;
+
 export const reconciledBalanceSchema = z.object({
   balance: z.string().refine((v) => v.trim() !== '' && !Number.isNaN(Number(v)), {
     message: 'cashFlow.validation.balanceRequired',

@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Ulbra.One.Accounting.Application.Seeding;
+using Ulbra.One.Accounting.Domain;
+using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
@@ -280,6 +283,9 @@ public static class DevDataSeeder
             logger.LogInformation("Dev seed: 1 statement import + 2 bank transactions seeded (1 suggested debit, 1 unmatched credit).");
         }
 
+        // ---------- Accounting (núcleo contábil): BR chart template + a few posted journal entries ----------
+        await SeedAccountingAsync(db, ulbra.Id, time, logger, ct);
+
         // ---------- Receivables (accounts-receivable aggregate, for cash-flow inflows) ----------
         // Spread due dates so the cash-flow projection has inflows across several future months,
         // plus one overdue installment to populate the "a receber em atraso" line.
@@ -319,6 +325,56 @@ public static class DevDataSeeder
             "Dev seed complete: {Companies} companies, {Units} units, {CostCenters} cost centers, " +
             "{Vendors} vendors, {Customers} customers, {Employees} employees, {Payables} payables, {Receivables} receivables.",
             2, 4, 6, 6, 4, 5, 9, 5);
+    }
+
+    /// <summary>Seeds the Brazilian ledger chart template for the company plus a handful of posted journal
+    /// entries so the trial balance, DRE and balance sheet come up populated. Idempotent per company.</summary>
+    private static async Task SeedAccountingAsync(AppDbContext db, Guid companyId, TimeProvider time, ILogger logger, CancellationToken ct)
+    {
+        if (await db.LedgerAccounts.AnyAsync(a => a.CompanyId == companyId, ct))
+        {
+            logger.LogInformation("Dev seed: ledger accounts already present — skipping accounting seed.");
+            return;
+        }
+
+        var accounts = BrazilianChartTemplate.Build(companyId);
+        db.LedgerAccounts.AddRange(accounts);
+        await db.SaveChangesAsync(ct);
+
+        var byCode = accounts.ToDictionary(a => a.Code);
+        var now = time.GetUtcNow();
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        var competence = new DateOnly(today.Year, today.Month, 1);
+        var nextNumber = 1;
+
+        // Helper: build a balanced two-line entry (debit + credit) and post it immediately.
+        JournalEntry Post(string description, string debitCode, string creditCode, decimal amount, DateOnly when)
+        {
+            var entry = new JournalEntry(companyId, when, description);
+            entry.AddLine(new JournalLine(byCode[debitCode].Id, EntrySide.Debit, amount));
+            entry.AddLine(new JournalLine(byCode[creditCode].Id, EntrySide.Credit, amount));
+            entry.Post(nextNumber++, now);
+            return entry;
+        }
+
+        var entries = new List<JournalEntry>
+        {
+            // Opening capital: cash in against equity.
+            Post("Integralização de capital", "1.01.01", "3.01.01", 500_000m, competence),
+            // Service revenue received into the bank account.
+            Post("Receita de serviços - mensalidades", "1.01.02", "4.01.01", 180_000m, competence),
+            // Payroll expense settled from the bank account.
+            Post("Folha de pagamento", "5.01.01", "1.01.02", 95_000m, competence.AddDays(4)),
+            // Energy expense booked against suppliers payable.
+            Post("Energia elétrica - competência", "5.01.02", "2.01.01", 21_300m, competence.AddDays(9)),
+            // Rent paid from the bank account.
+            Post("Aluguel do imóvel", "5.01.03", "1.01.02", 18_000m, competence.AddDays(9)),
+        };
+
+        db.JournalEntries.AddRange(entries);
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: accounting seeded ({Accounts} ledger accounts + {Entries} posted journal entries).",
+            accounts.Count, entries.Count);
     }
 
     private static readonly string[] ExpenseCategoryNames =

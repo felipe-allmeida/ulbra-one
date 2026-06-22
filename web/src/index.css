@@ -1182,6 +1182,10 @@ tbody tr:last-child td {
   flex-direction: column;
   overflow: hidden;
   animation: fade 0.12s ease;
+  /* The popover is portal'd to <body>. When opened from inside a modal Radix
+     Dialog (Drawer), Radix sets body { pointer-events: none }, which the portal
+     would otherwise inherit — making the options unclickable. Re-enable it. */
+  pointer-events: auto;
 }
 .combobox-search {
   padding: 8px;
@@ -2368,6 +2372,75 @@ tbody tr:last-child td {
   display: flex;
   gap: 8px;
   justify-content: center;
+}
+
+/* ===== Accounting (núcleo contábil) ===== */
+.journal-lines {
+  margin: 14px 0 8px;
+}
+.journal-lines th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+.journal-lines td {
+  vertical-align: top;
+  padding: 4px 6px;
+}
+.journal-lines td:first-child {
+  min-width: 220px;
+}
+.journal-totals {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.journal-totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+.journal-totals span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+
+.dre-table .dre-section td {
+  padding-top: 14px;
+  color: var(--muted-foreground);
+}
+.dre-table .dre-subtotal td {
+  border-top: 1px solid var(--border);
+}
+.dre-table .dre-result td {
+  border-top: 2px solid var(--foreground);
+  font-size: 15px;
+  padding-top: 12px;
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.balance-col .dre-section td {
+  padding-top: 12px;
+  color: var(--muted-foreground);
 }
 
 /* ===== Cash flow (Fluxo de caixa) ===== */

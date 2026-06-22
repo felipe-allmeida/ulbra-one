@@ -119,6 +119,63 @@ export type AccountKind = Schemas['AccountKind'];
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
 
+// ---------- Accounting (Núcleo Contábil — ledger core) ----------
+export type LedgerAccount = Schemas['LedgerAccountResponse'];
+export type AccountGroup = Schemas['AccountGroup'];
+export type LedgerAccountKind = Schemas['LedgerAccountKind'];
+export type NormalBalance = Schemas['NormalBalance'];
+export type EntrySide = Schemas['EntrySide'];
+export type JournalStatus = Schemas['JournalStatus'];
+export type JournalOrigin = Schemas['JournalOrigin'];
+export type JournalEntry = Schemas['JournalEntryResponse'];
+export type JournalLine = Schemas['JournalLineResponse'];
+export type TrialBalance = Schemas['TrialBalanceResponse'];
+export type TrialBalanceRow = Schemas['TrialBalanceRowResponse'];
+export type IncomeStatement = Schemas['IncomeStatementResponse'];
+export type IncomeStatementLine = Schemas['IncomeStatementLineResponse'];
+export type BalanceSheet = Schemas['BalanceSheetResponse'];
+export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
+
+/** Request body for creating a ledger account. */
+export interface LedgerAccountInput {
+  companyId: string;
+  code: string;
+  name: string;
+  accountGroup: AccountGroup;
+  kind: LedgerAccountKind;
+  parentId?: string | null;
+  normalBalance?: NormalBalance | null;
+}
+
+/** Request body for updating a ledger account (no companyId/code — both immutable). */
+export interface LedgerAccountUpdateInput {
+  name: string;
+  accountGroup: AccountGroup;
+  kind: LedgerAccountKind;
+  normalBalance: NormalBalance;
+  parentId?: string | null;
+  isActive: boolean;
+}
+
+/** One debit/credit line when creating or editing a draft journal entry. */
+export interface JournalLineInput {
+  ledgerAccountId: string;
+  side: EntrySide;
+  amount: number;
+  costCenterId?: string | null;
+  unitId?: string | null;
+  description?: string | null;
+}
+
+/** Request body for creating/editing a draft journal entry. */
+export interface JournalEntryInput {
+  companyId: string;
+  competenceDate: string;
+  description: string;
+  sourceReference?: string | null;
+  lines: JournalLineInput[];
+}
+
 // ---------- Aging de Contas a Pagar ----------
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
@@ -681,6 +738,69 @@ export const api = {
   deactivateEmployee: (id: string) => request<Employee>(`/employees/${id}/deactivate`, { method: 'POST' }),
   activateEmployee: (id: string) => request<Employee>(`/employees/${id}/activate`, { method: 'POST' }),
   removeEmployee: (id: string) => request<void>(`/employees/${id}`, { method: 'DELETE' }),
+
+  // ---------- Accounting: Ledger accounts (plano de contas contábil) ----------
+  listLedgerAccounts: (params: {
+    companyId?: string;
+    accountGroup?: AccountGroup;
+    kind?: LedgerAccountKind;
+    activeOnly?: boolean;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.accountGroup) q.set('accountGroup', params.accountGroup);
+    if (params.kind) q.set('kind', params.kind);
+    if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
+    return request<LedgerAccount[]>(`/ledger-accounts?${q}`);
+  },
+  getLedgerAccount: (id: string) => request<LedgerAccount>(`/ledger-accounts/${id}`),
+  createLedgerAccount: (body: LedgerAccountInput) =>
+    request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
+  updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
+    request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  seedLedgerAccounts: (companyId: string) =>
+    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ companyId }) }),
+
+  // ---------- Accounting: Journal entries (lançamentos) ----------
+  listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.status) q.set('status', params.status);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<JournalEntry[]>(`/journal-entries?${q}`);
+  },
+  getJournalEntry: (id: string) => request<JournalEntry>(`/journal-entries/${id}`),
+  createJournalEntry: (body: JournalEntryInput) =>
+    request<JournalEntry>('/journal-entries', { method: 'POST', body: JSON.stringify(body) }),
+  updateJournalEntry: (id: string, body: Omit<JournalEntryInput, 'companyId'>) =>
+    request<JournalEntry>(`/journal-entries/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  postJournalEntry: (id: string) => request<JournalEntry>(`/journal-entries/${id}/post`, { method: 'POST' }),
+  reverseJournalEntry: (id: string, reason: string, competenceDate?: string | null) =>
+    request<JournalEntry>(`/journal-entries/${id}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason, competenceDate: competenceDate ?? null }),
+    }),
+
+  // ---------- Accounting: Reports ----------
+  trialBalance: (companyId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    return request<TrialBalance>(`/accounting/trial-balance?${q}`);
+  },
+  incomeStatement: (params: { companyId?: string; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<IncomeStatement>(`/accounting/income-statement?${q}`);
+  },
+  balanceSheet: (params: { companyId?: string; asOf?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.asOf) q.set('asOf', params.asOf);
+    return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
 
   // ---------- Registry: Lookups ----------
   lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),
