@@ -43,9 +43,7 @@ function brl(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-test('full-flow B: receivable created -> receipt registered -> cash flow reflects the inflow', async ({
-  page,
-}) => {
+test('full-flow B: receivable created -> receipt registered -> cash flow reflects the inflow', async ({ page }) => {
   test.setTimeout(90_000);
 
   // A distinctive, non-round INTEGER amount keeps the cash-flow delta free of cent-rounding
@@ -89,10 +87,7 @@ test('full-flow B: receivable created -> receipt registered -> cash flow reflect
     .filter({ has: page.locator('option', { hasText: /\s·\s/ }) })
     .first();
   await expect(costCenterSelect).toBeVisible();
-  const ccLabel = (await costCenterSelect
-    .locator('option', { hasText: /\s·\s/ })
-    .first()
-    .textContent())!.trim();
+  const ccLabel = (await costCenterSelect.locator('option', { hasText: /\s·\s/ }).first().textContent())!.trim();
   await costCenterSelect.selectOption({ label: ccLabel });
 
   // Description (unique per run). The Field wraps the label as a sibling of the input.
