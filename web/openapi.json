@@ -5,6 +5,81 @@
     "version": "v1"
   },
   "paths": {
+    "/api/audit-logs": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "operationId": "ListAuditLogs",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorUserId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/google": {
       "post": {
         "tags": [
@@ -1989,6 +2064,14 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -2016,35 +2099,35 @@
         "operationId": "ListReceivables",
         "parameters": [
           {
-            "name": "companyId",
+            "name": "CompanyId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "status",
+            "name": "Status",
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/ReceivableStatus"
             }
           },
           {
-            "name": "payerId",
+            "name": "PayerId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "costCenterId",
+            "name": "CostCenterId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "dueFrom",
+            "name": "DueFrom",
             "in": "query",
             "schema": {
               "type": "string",
@@ -2052,7 +2135,7 @@
             }
           },
           {
-            "name": "dueTo",
+            "name": "DueTo",
             "in": "query",
             "schema": {
               "type": "string",
@@ -2060,7 +2143,7 @@
             }
           },
           {
-            "name": "received",
+            "name": "Received",
             "in": "query",
             "schema": {
               "type": "boolean"
@@ -2730,6 +2813,182 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-accounts/{id}/reconciled-balance": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SetReconciledBalance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReconciledBalanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetReconciledBalanceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-flow": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetCashFlow",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "granularity",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/CashFlowGranularity"
+            }
+          },
+          {
+            "name": "horizon",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "minReserve",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-flow/items": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetCashFlowItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashFlowItemResponse"
+                  }
                 }
               }
             }
@@ -4374,26 +4633,6 @@
           }
         }
       }
-    },
-    "/api/ping": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "operationId": "Ping",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PingResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -4712,6 +4951,111 @@
         },
         "additionalProperties": false
       },
+      "AuditAction": {
+        "enum": [
+          "Create",
+          "Update",
+          "Delete"
+        ],
+        "type": "string"
+      },
+      "AuditLogResponse": {
+        "required": [
+          "id",
+          "occurredAt",
+          "traceId",
+          "actorUserId",
+          "action",
+          "entityType",
+          "schema",
+          "tableName",
+          "primaryKey",
+          "oldValues",
+          "newValues",
+          "affectedColumns"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "audit_log_3fa85f64571742199730000000000000"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorUserId": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "tableName": {
+            "type": "string"
+          },
+          "primaryKey": {
+            "type": "string"
+          },
+          "oldValues": {
+            "type": "string",
+            "nullable": true
+          },
+          "newValues": {
+            "type": "string",
+            "nullable": true
+          },
+          "affectedColumns": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditLogResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "BankAccountResponse": {
         "required": [
           "id",
@@ -4889,6 +5233,251 @@
           "reason": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowAccountBalance": {
+        "required": [
+          "bankAccountId",
+          "alias",
+          "currentBalance",
+          "reconciledAt"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowGranularity": {
+        "enum": [
+          "Day",
+          "Week",
+          "Month"
+        ],
+        "type": "string"
+      },
+      "CashFlowItemResponse": {
+        "required": [
+          "kind",
+          "sourceId",
+          "installmentId",
+          "sequence",
+          "counterpartyName",
+          "documentNumber",
+          "dueDate",
+          "amount",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "installmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowKpis": {
+        "required": [
+          "startingBalance",
+          "lowestProjectedBalance",
+          "lowestProjectedPeriodLabel",
+          "runwayPeriods",
+          "netResult",
+          "totalInflowForecast",
+          "totalOutflowForecast"
+        ],
+        "type": "object",
+        "properties": {
+          "startingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "lowestProjectedBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "lowestProjectedPeriodLabel": {
+            "type": "string"
+          },
+          "runwayPeriods": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "netResult": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalOutflowForecast": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowPeriod": {
+        "required": [
+          "start",
+          "end",
+          "label",
+          "isPast",
+          "openingBalance",
+          "closingBalance",
+          "inflowForecast",
+          "outflowForecast",
+          "netForecast",
+          "inflowActual",
+          "outflowActual",
+          "belowReserve"
+        ],
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string"
+          },
+          "isPast": {
+            "type": "boolean"
+          },
+          "openingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "closingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "outflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "netForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflowActual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "outflowActual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "belowReserve": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowResponse": {
+        "required": [
+          "asOf",
+          "granularity",
+          "currency",
+          "startingBalance",
+          "accounts",
+          "kpis",
+          "overdueReceivable",
+          "periods"
+        ],
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/CashFlowGranularity"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "startingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowAccountBalance"
+            }
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/CashFlowKpis"
+          },
+          "overdueReceivable": {
+            "type": "number",
+            "format": "double"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowPeriod"
+            }
           }
         },
         "additionalProperties": false
@@ -6452,27 +7041,6 @@
         ],
         "type": "string"
       },
-      "PingResponse": {
-        "required": [
-          "status",
-          "service",
-          "utc"
-        ],
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string"
-          },
-          "service": {
-            "type": "string"
-          },
-          "utc": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
       "ProblemDetails": {
         "required": [
           "type",
@@ -7071,6 +7639,52 @@
           "reason": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetReconciledBalanceRequest": {
+        "required": [
+          "balance",
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetReconciledBalanceResponse": {
+        "required": [
+          "id",
+          "reconciledBalance",
+          "reconciledAt",
+          "currentBalance"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "reconciledBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -7804,6 +8418,9 @@
   },
   "tags": [
     {
+      "name": "Audit"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -7814,9 +8431,6 @@
     },
     {
       "name": "Registry"
-    },
-    {
-      "name": "System"
     }
   ]
 }

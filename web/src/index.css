@@ -2369,3 +2369,348 @@ tbody tr:last-child td {
   gap: 8px;
   justify-content: center;
 }
+
+/* ===== Cash flow (Fluxo de caixa) ===== */
+
+/* Page header: title row on top, full-width control toolbar below. Local to this
+   page so the global .page-head (used elsewhere) is untouched. */
+.cf-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.cf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+/* Vertical rhythm between the dashboard's stacked panels. */
+.cf-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- KPI band ----- */
+.cf-kpis {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cf-kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.cf-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cf-kpi-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.cf-kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.cf-kpi-foot {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+/* Primary card — the cash-on-hand anchor gets visual primacy. */
+.cf-kpi-primary {
+  background: var(--brand-subtle);
+  border-color: var(--brand);
+}
+.cf-kpi-primary .cf-kpi-icon {
+  background: var(--brand);
+  color: var(--brand-foreground);
+}
+.cf-kpi-primary .cf-kpi-value {
+  color: var(--brand);
+  font-size: 28px;
+}
+
+/* Semantic risk treatments. */
+.cf-kpi-danger {
+  background: var(--danger-subtle);
+  border-color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-value {
+  color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-icon {
+  background: var(--danger);
+  color: var(--brand-foreground);
+}
+.cf-kpi-ok .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-value {
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+@media (max-width: 1100px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 3;
+  }
+}
+@media (max-width: 640px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 2;
+  }
+}
+
+/* ----- Overdue-receivable callout ----- */
+.cf-overdue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--danger);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--danger-subtle);
+}
+.cf-overdue-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--danger);
+}
+.cf-overdue-title {
+  font-weight: 600;
+  color: var(--danger);
+}
+.cf-overdue-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+}
+.cf-overdue-desc {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+/* ----- Periods table ----- */
+.cf-row-danger td {
+  background: var(--danger-subtle);
+}
+.cf-drill {
+  cursor: pointer;
+}
+.cf-drill-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.cf-drill-caret {
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+  transform: translateX(-2px);
+}
+.cf-drill:hover {
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+.cf-drill:hover .cf-drill-caret {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--brand);
+}
+
+/* ----- Hero chart ----- */
+.cf-chart {
+  position: relative;
+  padding: 8px 4px 0;
+}
+.cf-chart svg {
+  display: block;
+}
+.cf-chart-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+  padding: 7px 10px;
+  white-space: nowrap;
+  z-index: 2;
+}
+.cf-chart-tip-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 2px;
+}
+.cf-chart-tip-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-rows {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-in {
+  color: var(--success);
+}
+.cf-chart-tip-out {
+  color: var(--danger);
+}
+.cf-hero-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 16px 0 4px;
+}
+
+/* ----- Inflow vs outflow bars ----- */
+.cf-bars {
+  padding: 4px 4px 0;
+}
+.cf-bars-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.cf-bars-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cf-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.cf-dot-in {
+  background: var(--success);
+}
+.cf-dot-out {
+  background: var(--danger);
+}
+.cf-bars-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cf-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+  flex: 1;
+  height: 100%;
+  cursor: default;
+}
+.cf-bar-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+.cf-bar {
+  width: 12px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.12s;
+}
+.cf-bar-col:hover .cf-bar {
+  opacity: 0.55;
+}
+.cf-bar-col:hover .cf-bar:hover {
+  opacity: 1;
+}
+.cf-bar-in {
+  background: var(--success);
+}
+.cf-bar-out {
+  background: var(--danger);
+}
+.cf-bar-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+
+/* ----- Accounts panel ----- */
+.cf-acct {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.cf-acct-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-acct-name {
+  font-weight: 500;
+}

@@ -587,6 +587,15 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("opening_balance");
 
+                    b.Property<DateOnly?>("ReconciledAt")
+                        .HasColumnType("date")
+                        .HasColumnName("reconciled_at");
+
+                    b.Property<decimal?>("ReconciledBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("reconciled_balance");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
