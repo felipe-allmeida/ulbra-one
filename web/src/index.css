@@ -1182,6 +1182,10 @@ tbody tr:last-child td {
   flex-direction: column;
   overflow: hidden;
   animation: fade 0.12s ease;
+  /* The popover is portal'd to <body>. When opened from inside a modal Radix
+     Dialog (Drawer), Radix sets body { pointer-events: none }, which the portal
+     would otherwise inherit — making the options unclickable. Re-enable it. */
+  pointer-events: auto;
 }
 .combobox-search {
   padding: 8px;

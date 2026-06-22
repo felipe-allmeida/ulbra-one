@@ -98,7 +98,12 @@ function JournalEntryForm({
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const lines = watch('lines');
 
-  const totals = useMemo(() => {
+  // NOTE: `watch('lines')` returns a reference that react-hook-form mutates in
+  // place across renders, so memoizing on `[lines]` would never recompute (the
+  // identity is stable while the contents change). The sum is trivial — compute
+  // it on every render so the debit/credit totals and the balanced state stay
+  // live as the user edits amounts.
+  const totals = (() => {
     let debit = 0;
     let credit = 0;
     for (const l of lines ?? []) {
@@ -107,7 +112,7 @@ function JournalEntryForm({
       else credit += amount;
     }
     return { debit, credit, diff: Math.round((debit - credit) * 100) / 100 };
-  }, [lines]);
+  })();
   const balanced = totals.diff === 0 && totals.debit > 0;
 
   const onSubmit = (v: JournalEntryValues) => {
