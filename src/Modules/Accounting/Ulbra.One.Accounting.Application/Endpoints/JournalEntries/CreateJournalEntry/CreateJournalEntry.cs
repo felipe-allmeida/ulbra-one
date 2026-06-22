@@ -35,14 +35,19 @@ public sealed class CreateJournalEntry : IEndpoint
         if (string.IsNullOrWhiteSpace(req.Description))
             return TypedResults.Problem(detail: "Description is required.", statusCode: 400, title: "JournalEntry.Invalid");
 
-        var problem = await JournalLineValidation.ValidateAsync(req.CompanyId.Value, req.Lines, uow, ct);
-        if (problem is not null) return problem;
+        // Structural invariants are owned by the domain (single source of truth); account I/O checks
+        // are validated separately.
+        var lineProblem = JournalLineValidation.TryBuildLines(req.Lines, out var lines);
+        if (lineProblem is not null) return lineProblem;
 
         var entry = new JournalEntry(req.CompanyId.Value, req.CompetenceDate, req.Description,
             sourceReference: req.SourceReference);
-        foreach (var line in req.Lines)
-            entry.AddLine(new JournalLine(line.LedgerAccountId.Value, line.Side, line.Amount,
-                line.CostCenterId?.Value, line.UnitId?.Value, line.Description));
+        foreach (var line in lines) entry.AddLine(line);
+
+        var structuralProblem = JournalLineValidation.ValidateDraftComposition(entry);
+        if (structuralProblem is not null) return structuralProblem;
+        var problem = await JournalLineValidation.ValidateAsync(req.CompanyId.Value, req.Lines, uow, ct);
+        if (problem is not null) return problem;
 
         await uow.AddAsync(entry, ct);
         await uow.SaveChangesAsync(ct);

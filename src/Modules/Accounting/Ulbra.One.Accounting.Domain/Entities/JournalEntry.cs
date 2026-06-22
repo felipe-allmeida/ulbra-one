@@ -88,13 +88,33 @@ public sealed class JournalEntry : IAuditable, ISoftDeletable
     {
         EnsureDraft();
         if (nextNumber < 1) throw new ArgumentException("Entry number must be positive.", nameof(nextNumber));
-        if (_lines.Count < 2) throw new InvalidOperationException("A journal entry needs at least two lines.");
-        if (_lines.Any(l => l.Amount <= 0)) throw new InvalidOperationException("All line amounts must be positive.");
-        if (TotalDebit != TotalCredit) throw new InvalidOperationException("Debits and credits must balance.");
+        ValidateStructure();
 
         Number = nextNumber;
         PostedAt = at;
         Status = JournalStatus.Posted;
+    }
+
+    /// <summary>The single source of truth for the journal-entry structural invariants
+    /// (≥2 lines, all amounts positive, Σdebit==Σcredit). Throws <see cref="JournalEntryException"/>
+    /// carrying a stable <see cref="JournalEntryErrors"/> code on the first violation. Used at Post
+    /// time (and via <see cref="Reverse"/>). The composition rules a draft must satisfy while still
+    /// editable are a subset, exposed by <see cref="ValidateDraftComposition"/>.</summary>
+    public void ValidateStructure()
+    {
+        ValidateDraftComposition();
+        if (TotalDebit != TotalCredit) throw new JournalEntryException(JournalEntryErrors.Unbalanced);
+    }
+
+    /// <summary>The structural rules a draft must already satisfy while still editable: ≥2 lines and
+    /// all amounts positive. Balancing (Σdebit==Σcredit) is intentionally NOT enforced here — a draft
+    /// may be saved unbalanced and balanced before Post (see <see cref="ValidateStructure"/>). Throws
+    /// <see cref="JournalEntryException"/> with a stable code; called by the create/update endpoints so
+    /// the same rule always yields the same code as Post — never a second copy.</summary>
+    public void ValidateDraftComposition()
+    {
+        if (_lines.Count < 2) throw new JournalEntryException(JournalEntryErrors.TooFewLines);
+        if (_lines.Any(l => l.Amount <= 0)) throw new JournalEntryException(JournalEntryErrors.NonPositiveAmount);
     }
 
     /// <summary>Reverses this posted entry, producing a new balanced Posted entry with mirrored lines.

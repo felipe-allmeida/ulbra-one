@@ -51,8 +51,13 @@ public sealed class ReverseJournalEntry : IEndpoint
 
             JournalEntry reversal;
             try { reversal = entry.Reverse(req.Reason, req.CompetenceDate ?? entry.CompetenceDate, maxNumber + 1, clock.GetUtcNow()); }
-            catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "JournalEntry.Unreversible"); }
-            catch (ArgumentException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "JournalEntry.Unreversible"); }
+            catch (JournalEntryException ex)
+            {
+                // A posted entry mirrored into a reversal re-validates structurally; surface the
+                // distinct stable code 1:1 (same codes as Post).
+                return TypedResults.Problem(detail: ex.Error.Description, statusCode: StatusCodes.Status400BadRequest, title: ex.Error.Code);
+            }
+            catch (ArgumentException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status400BadRequest, title: "JournalEntry.Unreversible"); }
 
             await uow.AddAsync(reversal, ct);
             try

@@ -143,7 +143,7 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
 
         var postRes = await client.PostAsync($"/api/journal-entries/{id}/post", null);
         Assert.Equal(HttpStatusCode.BadRequest, postRes.StatusCode);
-        Assert.Equal("JournalEntry.Unpostable", (await ReadJson(postRes)).GetProperty("title").GetString());
+        Assert.Equal("JournalEntry.Unbalanced", (await ReadJson(postRes)).GetProperty("title").GetString());
     }
 
     [Fact]
@@ -163,6 +163,29 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
         });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("JournalEntry.TooFewLines", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Create_With_NonPositive_Amount_Returns_400_With_NonPositiveAmount_Code()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = await SeedCompanyAsync(client);
+        var acc = await SeedChartAsync(client, companyId);
+
+        var res = await client.PostAsJsonAsync("/api/journal-entries", new
+        {
+            companyId,
+            competenceDate = "2026-02-01",
+            description = "valor não positivo",
+            lines = new[]
+            {
+                Line(acc["5.01.02"], "Debit", 0m),
+                Line(acc["1.01.02"], "Credit", 100m),
+            },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("JournalEntry.NonPositiveAmount", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     [Fact]

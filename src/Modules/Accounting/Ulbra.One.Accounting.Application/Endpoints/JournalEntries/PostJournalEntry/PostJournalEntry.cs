@@ -41,8 +41,12 @@ public sealed class PostJournalEntry : IEndpoint
                 .MaxAsync(e => (int?)e.Number, ct) ?? 0;
 
             try { entry.Post(maxNumber + 1, clock.GetUtcNow()); }
-            catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "JournalEntry.Unpostable"); }
-            catch (ArgumentException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "JournalEntry.Unpostable"); }
+            catch (JournalEntryException ex)
+            {
+                // 1:1 mapping: the domain carries a distinct stable code per structural rule
+                // (TooFewLines / NonPositiveAmount / Unbalanced).
+                return TypedResults.Problem(detail: ex.Error.Description, statusCode: StatusCodes.Status400BadRequest, title: ex.Error.Code);
+            }
 
             try
             {

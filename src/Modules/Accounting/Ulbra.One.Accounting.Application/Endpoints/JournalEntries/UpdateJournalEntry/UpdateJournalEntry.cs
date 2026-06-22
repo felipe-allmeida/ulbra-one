@@ -41,8 +41,10 @@ public sealed class UpdateJournalEntry : IEndpoint
         if (string.IsNullOrWhiteSpace(req.Description))
             return TypedResults.Problem(detail: "Description is required.", statusCode: 400, title: "JournalEntry.Invalid");
 
-        var problem = await JournalLineValidation.ValidateAsync(entry.CompanyId, req.Lines, uow, ct);
-        if (problem is not null) return problem;
+        // Structural invariants are owned by the domain (single source of truth); account I/O checks
+        // are validated separately.
+        var lineProblem = JournalLineValidation.TryBuildLines(req.Lines, out var lines);
+        if (lineProblem is not null) return lineProblem;
 
         entry.UpdateHeader(req.CompetenceDate, req.Description, req.SourceReference);
         // Replace the draft's lines. New lines carry a client-generated, non-default key, so EF would
@@ -50,12 +52,16 @@ public sealed class UpdateJournalEntry : IEndpoint
         // explicitly so they are tracked as Added (INSERT).
         foreach (var existing in entry.Lines.ToList())
             entry.RemoveLine(existing.Id);
-        foreach (var line in req.Lines)
+        foreach (var line in lines)
         {
-            var newLine = entry.AddLine(new JournalLine(line.LedgerAccountId.Value, line.Side, line.Amount,
-                line.CostCenterId?.Value, line.UnitId?.Value, line.Description));
-            await uow.AddAsync(newLine, ct);
+            entry.AddLine(line);
+            await uow.AddAsync(line, ct);
         }
+
+        var structuralProblem = JournalLineValidation.ValidateDraftComposition(entry);
+        if (structuralProblem is not null) return structuralProblem;
+        var problem = await JournalLineValidation.ValidateAsync(entry.CompanyId, req.Lines, uow, ct);
+        if (problem is not null) return problem;
 
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(JournalEntryResponse.From(entry));

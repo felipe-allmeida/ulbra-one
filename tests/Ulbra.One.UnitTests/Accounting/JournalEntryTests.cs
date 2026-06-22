@@ -44,7 +44,8 @@ public class JournalEntryTests
         var e = NewEntry();
         e.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
         e.AddLine(new JournalLine(Revenue, EntrySide.Credit, 90m));
-        Assert.Throws<InvalidOperationException>(() => e.Post(1, Now));
+        var ex = Assert.Throws<JournalEntryException>(() => e.Post(1, Now));
+        Assert.Equal("JournalEntry.Unbalanced", ex.Error.Code);
         Assert.Equal(JournalStatus.Draft, e.Status);
     }
 
@@ -53,7 +54,42 @@ public class JournalEntryTests
     {
         var e = NewEntry();
         e.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
-        Assert.Throws<InvalidOperationException>(() => e.Post(1, Now));
+        var ex = Assert.Throws<JournalEntryException>(() => e.Post(1, Now));
+        Assert.Equal("JournalEntry.TooFewLines", ex.Error.Code);
+    }
+
+    [Fact]
+    public void ValidateStructure_reports_distinct_codes_per_rule()
+    {
+        var tooFew = NewEntry();
+        tooFew.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
+        Assert.Equal("JournalEntry.TooFewLines",
+            Assert.Throws<JournalEntryException>(tooFew.ValidateStructure).Error.Code);
+
+        var unbalanced = NewEntry();
+        unbalanced.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
+        unbalanced.AddLine(new JournalLine(Revenue, EntrySide.Credit, 90m));
+        Assert.Equal("JournalEntry.Unbalanced",
+            Assert.Throws<JournalEntryException>(unbalanced.ValidateStructure).Error.Code);
+
+        var balanced = Balanced();
+        balanced.ValidateStructure(); // no throw
+    }
+
+    [Fact]
+    public void ValidateDraftComposition_enforces_count_but_not_balance()
+    {
+        // Too few lines → TooFewLines (same code as Post).
+        var tooFew = NewEntry();
+        tooFew.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
+        Assert.Equal("JournalEntry.TooFewLines",
+            Assert.Throws<JournalEntryException>(tooFew.ValidateDraftComposition).Error.Code);
+
+        // A draft may be saved unbalanced — composition does not enforce balancing.
+        var unbalanced = NewEntry();
+        unbalanced.AddLine(new JournalLine(Cash, EntrySide.Debit, 100m));
+        unbalanced.AddLine(new JournalLine(Revenue, EntrySide.Credit, 90m));
+        unbalanced.ValidateDraftComposition(); // no throw
     }
 
     [Fact]
