@@ -15,6 +15,7 @@ using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
 using Ulbra.One.Audit.Application;
 using Ulbra.One.Audit.Infrastructure;
+using Ulbra.One.Accounting.Application;
 using Ulbra.One.Accounting.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
@@ -279,6 +280,7 @@ apiGroup.MapCoreEndpoints();
 apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
 apiGroup.MapAuditEndpoints();
+apiGroup.MapAccountingEndpoints();
 
 app.Run();
 
