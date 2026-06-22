@@ -289,4 +289,22 @@ public class CashFlowEndpointsTests(PostgresFixture fixture)
         Assert.Equal(5_000m, account.GetProperty("currentBalance").GetDecimal());
         Assert.Equal(asOf.ToString("yyyy-MM-dd"), account.GetProperty("reconciledAt").GetString());
     }
+
+    [Fact]
+    public async Task SetReconciledBalance_Rejects_Future_AsOf_With_400()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var company = await CreateCompanyAsync(client);
+        var bankId = await CreateBankAccountAsync(client, company, "00012345", 1_000m);
+
+        var put = await client.PutAsJsonAsync($"/api/bank-accounts/{bankId}/reconciled-balance",
+            new { balance = 5_000m, asOf = today.AddDays(1).ToString("yyyy-MM-dd") });
+
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        var body = await ReadJson(put);
+        Assert.Equal("BankAccount.ReconciledAtInvalid", body.GetProperty("title").GetString());
+    }
 }
