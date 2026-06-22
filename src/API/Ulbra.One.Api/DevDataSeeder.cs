@@ -286,6 +286,41 @@ public static class DevDataSeeder
         // ---------- Accounting (núcleo contábil): BR chart template + a few posted journal entries ----------
         await SeedAccountingAsync(db, ulbra.Id, time, logger, ct);
 
+        // ---------- Receivables (accounts-receivable aggregate, for cash-flow inflows) ----------
+        // Spread due dates so the cash-flow projection has inflows across several future months,
+        // plus one overdue installment to populate the "a receber em atraso" line.
+        if (!await finance.Receivables.AnyAsync(ct))
+        {
+            Receivable ReceivableParcelado(CostCenter cc, string desc, CustomerEntity customer,
+                decimal total, int count, int firstDueInDays, int intervalMonths = 1)
+            {
+                var installments = Receivable.GenerateInstallments(total, count, today.AddDays(firstDueInDays), intervalMonths);
+                return new Receivable(ulbra.Id, ReceivableOrigin.Manual, customer.Id, customer.Name, null,
+                    today, desc, cc.Id, null, null, installments);
+            }
+
+            await finance.Receivables.AddRangeAsync(new[]
+            {
+                ReceivableParcelado(acad, "Convênio de estágios 2026 (12x)", cPrefCanoas, 240_000m, 12, 12),
+                ReceivableParcelado(acad, "Convênio residência médica (6x)", cHospital, 90_000m, 6, 20),
+                ReceivableParcelado(acad, "Plano de mensalidades - Medicina", cMaria, 68_000m, 10, 8),
+                ReceivableParcelado(acad, "Mensalidades em atraso - Direito", cCarlos, 4_800m, 2, -20), // 1 overdue + 1 upcoming
+            }, ct);
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: 4 receivables seeded (spread due dates + 1 overdue) for cash-flow inflows.");
+        }
+
+        // ---------- Reconciled-balance anchor (cash-flow starting balance) ----------
+        // Inform a real balance on the main account as of a week ago; current balance = anchor +
+        // movements after that date. Idempotent: only set when no account has an anchor yet.
+        if (!await finance.BankAccounts.AnyAsync(b => b.ReconciledBalance != null, ct))
+        {
+            var mainBank = await finance.BankAccounts.FirstAsync(b => b.CompanyId == ulbra.Id, ct);
+            mainBank.SetReconciledBalance(300_000m, today.AddDays(-7));
+            await finance.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: reconciled-balance anchor set on '{Alias}'.", mainBank.Alias);
+        }
+
         logger.LogInformation(
             "Dev seed complete: {Companies} companies, {Units} units, {CostCenters} cost centers, " +
             "{Vendors} vendors, {Customers} customers, {Employees} employees, {Payables} payables, {Receivables} receivables.",

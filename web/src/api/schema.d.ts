@@ -804,6 +804,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bank-accounts/{id}/reconciled-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetReconciledBalance"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCashFlow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cash-flow/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCashFlowItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chart-accounts": {
         parameters: {
             query?: never;
@@ -1382,6 +1430,84 @@ export interface components {
         };
         CancelReceivableCancelReceivableRequest: {
             reason: string | null;
+        };
+        CashFlowAccountBalance: {
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            bankAccountId: string;
+            alias: string;
+            /** Format: double */
+            currentBalance: number;
+            /** Format: date */
+            reconciledAt: string | null;
+        };
+        /** @enum {string} */
+        CashFlowGranularity: "Day" | "Week" | "Month";
+        CashFlowItemResponse: {
+            kind: string;
+            /** Format: uuid */
+            sourceId: string;
+            /** Format: uuid */
+            installmentId: string;
+            /** Format: int32 */
+            sequence: number;
+            counterpartyName: string;
+            documentNumber: string | null;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+            status: string;
+        };
+        CashFlowKpis: {
+            /** Format: double */
+            startingBalance: number;
+            /** Format: double */
+            lowestProjectedBalance: number;
+            lowestProjectedPeriodLabel: string;
+            /** Format: int32 */
+            runwayPeriods: number | null;
+            /** Format: double */
+            netResult: number;
+            /** Format: double */
+            totalInflowForecast: number;
+            /** Format: double */
+            totalOutflowForecast: number;
+        };
+        CashFlowPeriod: {
+            /** Format: date */
+            start: string;
+            /** Format: date */
+            end: string;
+            label: string;
+            isPast: boolean;
+            /** Format: double */
+            openingBalance: number;
+            /** Format: double */
+            closingBalance: number;
+            /** Format: double */
+            inflowForecast: number;
+            /** Format: double */
+            outflowForecast: number;
+            /** Format: double */
+            netForecast: number;
+            /** Format: double */
+            inflowActual: number | null;
+            /** Format: double */
+            outflowActual: number | null;
+            belowReserve: boolean;
+        };
+        CashFlowResponse: {
+            /** Format: date */
+            asOf: string;
+            granularity: components["schemas"]["CashFlowGranularity"];
+            currency: string;
+            /** Format: double */
+            startingBalance: number;
+            accounts: components["schemas"]["CashFlowAccountBalance"][];
+            kpis: components["schemas"]["CashFlowKpis"];
+            /** Format: double */
+            overdueReceivable: number;
+            periods: components["schemas"]["CashFlowPeriod"][];
         };
         CepResult: {
             cep: string;
@@ -2150,6 +2276,22 @@ export interface components {
         SeedLedgerAccountsRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
+        };
+        SetReconciledBalanceRequest: {
+            /** Format: double */
+            balance: number;
+            /** Format: date */
+            asOf: string;
+        };
+        SetReconciledBalanceResponse: {
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            id: string;
+            /** Format: double */
+            reconciledBalance: number;
+            /** Format: date */
+            reconciledAt: string;
+            /** Format: double */
+            currentBalance: number;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
@@ -4881,6 +5023,102 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SetReconciledBalance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetReconciledBalanceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetReconciledBalanceResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCashFlow: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                granularity?: components["schemas"]["CashFlowGranularity"];
+                horizon?: number;
+                asOf?: string;
+                minReserve?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowResponse"];
+                };
+            };
+        };
+    };
+    GetCashFlowItems: {
+        parameters: {
+            query: {
+                companyId?: string;
+                from: string;
+                to: string;
+                direction: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowItemResponse"][];
                 };
             };
         };

@@ -21,6 +21,7 @@ import {
   type BankAccountInput,
   type BankAccountUpdateInput,
   type BankTransaction,
+  type CashFlowGranularity,
   type ChartAccount,
   type ChartType,
   type ClassificationPolicy,
@@ -83,6 +84,8 @@ export const queryKeys = {
   trialBalance: (companyId?: string) => ['trialBalance', companyId ?? ''] as const,
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
+  cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
+  cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
 };
 
 export interface LedgerAccountsParams {
@@ -107,6 +110,22 @@ export interface IncomeStatementParams {
 
 export interface BalanceSheetParams {
   companyId?: string;
+  asOf?: string;
+}
+
+export interface CashFlowParams {
+  companyId?: string;
+  granularity?: CashFlowGranularity;
+  horizon?: number;
+  asOf?: string;
+  minReserve?: number;
+}
+
+export interface CashFlowItemsParams {
+  companyId?: string;
+  from: string;
+  to: string;
+  direction: 'in' | 'out';
   asOf?: string;
 }
 
@@ -794,6 +813,42 @@ export function useAgingItems(params: AgingItemsParams, options?: { enabled?: bo
     queryFn: () => api.agingItems(params),
     enabled: options?.enabled ?? !!params.companyId,
   });
+}
+
+/* ---------- Cash flow (Fluxo de caixa) ---------- */
+export function useCashFlow(params: CashFlowParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.cashFlow(params),
+    queryFn: () => api.cashFlow(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCashFlowItems(params: CashFlowItemsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.cashFlowItems(params),
+    queryFn: () => api.cashFlowItems(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useSetReconciledBalance(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof api.setReconciledBalance>>,
+    unknown,
+    { bankAccountId: string; balance: number; asOf: string }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ bankAccountId, balance, asOf }) => api.setReconciledBalance(bankAccountId, { balance, asOf }),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+      void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
+      void qc.invalidateQueries({ queryKey: ['bankAccounts'] });
+    },
+    options,
+  );
 }
 
 export function useCreateChartAccount(

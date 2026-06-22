@@ -12,7 +12,7 @@ using Ulbra.One.Persistence;
 namespace Ulbra.One.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260619194618_AddAccountingLedger")]
+    [Migration("20260622185314_AddAccountingLedger")]
     partial class AddAccountingLedger
     {
         /// <inheritdoc />
@@ -816,6 +816,15 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("opening_balance");
+
+                    b.Property<DateOnly?>("ReconciledAt")
+                        .HasColumnType("date")
+                        .HasColumnName("reconciled_at");
+
+                    b.Property<decimal?>("ReconciledBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("reconciled_balance");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

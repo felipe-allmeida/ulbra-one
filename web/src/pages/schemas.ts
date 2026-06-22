@@ -258,6 +258,14 @@ export const journalEntrySchema = z
   });
 export type JournalEntryValues = z.infer<typeof journalEntrySchema>;
 
+export const reconciledBalanceSchema = z.object({
+  balance: z.string().refine((v) => v.trim() !== '' && !Number.isNaN(Number(v)), {
+    message: 'cashFlow.validation.balanceRequired',
+  }),
+  asOf: z.string().min(1, { message: 'cashFlow.validation.asOfRequired' }),
+});
+export type ReconciledBalanceValues = z.infer<typeof reconciledBalanceSchema>;
+
 export const companySchema = z.object({
   legalName: z.string().trim().min(1, { message: 'validation.nameRequired' }),
   cnpj: z.string().trim().min(1, { message: 'validation.cnpjRequired' }),

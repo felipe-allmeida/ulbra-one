@@ -65,6 +65,7 @@ import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
+import { CashFlowPage } from './pages/cash-flow';
 import { FornecedoresPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
@@ -105,6 +106,7 @@ export default function App() {
         <Route path='classificacao' element={<ClassificacaoPage />} />
         <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
+        <Route path='cash-flow' element={<CashFlowPage />} />
         <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
         <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
         <Route path='aprovacoes' element={<AprovacoesPage />} />
@@ -224,6 +226,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.aging')}</b>
     </>
+  ) : at('cash-flow') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.cashFlow')}</b>
+    </>
   ) : at('contas-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
@@ -280,7 +286,12 @@ function Shell({ children }: { children: ReactNode }) {
             active={at('contas-a-receber')}
             onClick={() => go('/app/contas-a-receber')}
           />
-          <NavItem icon={<Activity />} label={t('nav.cashFlow')} />
+          <NavItem
+            icon={<Activity />}
+            label={t('nav.cashFlow')}
+            active={at('cash-flow')}
+            onClick={() => go('/app/cash-flow')}
+          />
           <NavItem
             icon={<ClipboardCheck />}
             label={t('nav.approvals')}

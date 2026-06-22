@@ -181,6 +181,16 @@ export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
 export type AgingBucket = Schemas['AgingBucket'];
 
+// ---------- Cash flow (Fluxo de caixa) ----------
+export type CashFlowResponse = Schemas['CashFlowResponse'];
+export type CashFlowKpis = Schemas['CashFlowKpis'];
+export type CashFlowPeriod = Schemas['CashFlowPeriod'];
+export type CashFlowAccountBalance = Schemas['CashFlowAccountBalance'];
+export type CashFlowItem = Schemas['CashFlowItemResponse'];
+// Enum union: serialized as a string at runtime via the global JsonStringEnumConverter.
+export type CashFlowGranularity = Schemas['CashFlowGranularity'];
+export type ReconciledBalanceResult = Schemas['SetReconciledBalanceResponse'];
+
 // ---------- Conciliação OFX (statement imports + bank transactions) ----------
 export type StatementImport = Schemas['StatementImportResponse'];
 export type BankTransaction = Schemas['BankTransactionResponse'];
@@ -647,6 +657,43 @@ export const api = {
     if (params.asOf) q.set('asOf', params.asOf);
     return request<AgingItem[]>(`/payables/aging/items?${q}`);
   },
+
+  // ---------- Cash flow (Fluxo de caixa) ----------
+  cashFlow: (params: {
+    companyId?: string;
+    granularity?: CashFlowGranularity;
+    horizon?: number;
+    asOf?: string;
+    minReserve?: number;
+  }): Promise<CashFlowResponse> => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.granularity) q.set('granularity', params.granularity);
+    if (params.horizon != null) q.set('horizon', String(params.horizon));
+    if (params.asOf) q.set('asOf', params.asOf);
+    if (params.minReserve != null) q.set('minReserve', String(params.minReserve));
+    return request<CashFlowResponse>(`/cash-flow?${q}`);
+  },
+  cashFlowItems: (params: {
+    companyId?: string;
+    from: string;
+    to: string;
+    direction: 'in' | 'out';
+    asOf?: string;
+  }): Promise<CashFlowItem[]> => {
+    const q = new URLSearchParams({ from: params.from, to: params.to, direction: params.direction });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.asOf) q.set('asOf', params.asOf);
+    return request<CashFlowItem[]>(`/cash-flow/items?${q}`);
+  },
+  setReconciledBalance: (
+    bankAccountId: string,
+    body: { balance: number; asOf: string },
+  ): Promise<ReconciledBalanceResult> =>
+    request<ReconciledBalanceResult>(`/bank-accounts/${bankAccountId}/reconciled-balance`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>
