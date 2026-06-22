@@ -72,18 +72,19 @@ public static class CashFlowCalculator
             .Where(x => x.Date < asOf)
             .Sum(x => x.Amount);
 
-        // Bucket forecast amounts. Overdue payables (outflows before AsOf) fold into the first period.
+        // Bucket forecast amounts using the shared window rule (see CashFlowWindow): outflows fold
+        // overdue into the current period; inflows exclude overdue. This is the same rule the drill
+        // endpoint applies, so Σ drill items == period bucket value by construction.
         var inflowForecast = new decimal[horizon];
         var outflowForecast = new decimal[horizon];
         foreach (var item in input.ForecastInflows)
         {
-            if (item.Date < asOf) continue; // overdue receivable → excluded (counted above)
-            var idx = IndexOf(item.Date, periods);
+            var idx = BucketOf(item.Date, CashFlowDirection.In, periods, asOf);
             if (idx >= 0) inflowForecast[idx] += item.Amount;
         }
         foreach (var item in input.ForecastOutflows)
         {
-            var idx = item.Date < asOf ? 0 : IndexOf(item.Date, periods); // overdue payable → current period
+            var idx = BucketOf(item.Date, CashFlowDirection.Out, periods, asOf);
             if (idx >= 0) outflowForecast[idx] += item.Amount;
         }
 
@@ -174,6 +175,18 @@ public static class CashFlowCalculator
             cursor = end.AddDays(1);
         }
         return windows;
+    }
+
+    /// <summary>
+    /// Index of the bucket a dated forecast amount belongs to under the shared <see cref="CashFlowWindow"/>
+    /// rule (overdue fold for outflows, overdue exclusion for inflows), or -1 if outside the horizon.
+    /// </summary>
+    private static int BucketOf(DateOnly date, CashFlowDirection direction, List<Window> periods, DateOnly today)
+    {
+        for (var i = 0; i < periods.Count; i++)
+            if (CashFlowWindow.For(direction, periods[i].Start, periods[i].End, today).Contains(date, today))
+                return i;
+        return -1;
     }
 
     /// <summary>Index of the period containing <paramref name="date"/>, or -1 if outside the horizon.</summary>
