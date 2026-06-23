@@ -26,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Payable> Payables => Set<Payable>();
     public DbSet<Installment> Installments => Set<Installment>();
     public DbSet<PayableAttachment> PayableAttachments => Set<PayableAttachment>();
+    public DbSet<FiscalDocument> FiscalDocuments => Set<FiscalDocument>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<Payment> Payments => Set<Payment>();

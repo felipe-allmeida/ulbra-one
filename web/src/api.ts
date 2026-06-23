@@ -53,6 +53,25 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** POSTs multipart/form-data (browser sets the boundary). Maps problem+json into ApiError like request(). */
+async function postFile<T>(path: string, form: FormData): Promise<T> {
+  const headers = new Headers();
+  if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'POST', headers, body: form });
+  if (!res.ok) {
+    const contentType = res.headers.get('content-type') ?? '';
+    if (contentType.includes('application/problem+json')) {
+      try {
+        throw apiErrorFromProblem(res.status, await res.json());
+      } catch (e) {
+        if (e instanceof Error && e.name === 'ApiError') throw e;
+      }
+    }
+    throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // ---------- Wire types (aliases to generated OpenAPI schemas) ----------
 // Exported names are kept stable so pages/queries don't need to change.
 export type User = Schemas['UserSummary'];
@@ -95,6 +114,60 @@ export type ExpenseCategory = Schemas['ExpenseCategoryResponse'];
 export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
+
+// ---------- Fiscal documents (leitor de NF) ----------
+// Hand-written wire types (like PayableInput); a future `pnpm gen:api` will supersede them.
+export type FiscalDocumentFormat = 'NfeXml' | 'NfseXml' | 'PdfMock';
+
+/** Stateless parse/preview result — fields identified from the uploaded NF, plus a vendor suggestion. */
+export interface ParsedFiscalDocument {
+  format: FiscalDocumentFormat;
+  accessKey?: string | null;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  totalAmount?: number | null;
+  issuerDocument?: string | null;
+  issuerName?: string | null;
+  recipientDocument?: string | null;
+  rawExtractionJson: string;
+  /** Installments (duplicatas) read from the NF — empty for à-vista / NFS-e / PDF mock. */
+  installments: { dueDate: string; amount: number }[];
+  matchedVendorId?: string | null;
+  matchedVendorName?: string | null;
+  // NFS-e (serviço) — informativos; null para NF-e/PDF.
+  rpsNumber?: string | null;
+  rpsSeries?: string | null;
+  serviceDescription?: string | null;
+  cnaeCode?: string | null;
+  // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
+  issuerPhone?: string | null;
+  issuerAddress?: {
+    cep?: string | null;
+    street?: string | null;
+    number?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    state?: string | null;
+  } | null;
+}
+
+/** The fiscal document of record persisted against a payable. */
+export interface FiscalDocument {
+  id: string;
+  payableId: string;
+  format: FiscalDocumentFormat;
+  accessKey?: string | null;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  totalAmount?: number | null;
+  issuerDocument?: string | null;
+  issuerName?: string | null;
+  recipientDocument?: string | null;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
 
 // ---------- Bank accounts + payments (baixa) ----------
 export type BankAccount = Schemas['BankAccountResponse'];
@@ -433,6 +506,20 @@ export const api = {
     `${BASE_URL}/payables/${id}/attachments/${attachmentId}`,
   deletePayableAttachment: (id: string, attachmentId: string) =>
     request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
+
+  // ---------- Fiscal documents (leitor de NF) ----------
+  /** Stateless parse/preview of an NF (XML or PDF). Persists nothing; feeds the create/edit form. */
+  parseFiscalDocument: async (companyId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return postFile<ParsedFiscalDocument>(`/payables/fiscal-document/parse?companyId=${companyId}`, form);
+  },
+  /** Persists the fiscal document of record against a payable (raw file + parsed fields). */
+  uploadPayableFiscalDocument: async (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return postFile<FiscalDocument>(`/payables/${id}/fiscal-document`, form);
+  },
 
   // ---------- Payments (baixa) ----------
   registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>

@@ -32,7 +32,9 @@ import {
   type Employee,
   type EmployeeInput,
   type ExpenseCategory,
+  type FiscalDocument,
   type MatchStatus,
+  type ParsedFiscalDocument,
   type Payable,
   type PayableAttachment,
   type PayableInput,
@@ -596,6 +598,29 @@ export function useDeletePayableAttachment(
 ) {
   return useInvalidatingMutation(
     ({ id, attachmentId }) => api.deletePayableAttachment(id, attachmentId),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+/** Stateless parse/preview of an uploaded NF — no cache to invalidate. */
+export function useParseFiscalDocument(
+  options?: UseMutationOptions<ParsedFiscalDocument, unknown, { companyId: string; file: File }>,
+) {
+  return useMutation<ParsedFiscalDocument, unknown, { companyId: string; file: File }>({
+    mutationFn: ({ companyId, file }) => api.parseFiscalDocument(companyId, file),
+    ...options,
+  });
+}
+
+export function useUploadPayableFiscalDocument(
+  options?: UseMutationOptions<FiscalDocument, unknown, { id: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, file }) => api.uploadPayableFiscalDocument(id, file),
     (qc, _data, vars) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });

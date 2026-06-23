@@ -137,7 +137,11 @@ export const payableSchema = z
     categoryId: z.string().nullable(),
     accountingAccountId: z.string().nullable(),
     financialAccountId: z.string().nullable(),
-    description: z.string().trim().min(1, { message: 'validation.descriptionRequired' }),
+    description: z
+      .string()
+      .trim()
+      .min(1, { message: 'validation.descriptionRequired' })
+      .max(300, { message: 'validation.descriptionMax' }),
     documentNumber: z.string(),
     issueDate: z.string(),
     mode: z.enum(['single', 'installments']),

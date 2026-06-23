@@ -290,6 +290,108 @@ body {
   border-color: var(--brand);
 }
 
+/* Custom file picker (icon + filename/placeholder), styled like an input */
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+.file-picker:hover {
+  border-color: var(--brand);
+}
+.file-picker svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.file-picker .file-name {
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fiscal XML reader — hero (create flow): emphasize the upload before any field shows */
+.fiscal-hero {
+  max-width: 560px;
+  margin: 0 auto;
+}
+.fiscal-hero-emphasis {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0 0 14px;
+}
+.file-picker.file-picker-lg {
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 20px;
+  border-style: dashed;
+  text-align: center;
+  font-size: 14px;
+}
+.file-picker.file-picker-lg svg {
+  width: 28px;
+  height: 28px;
+  color: var(--brand);
+}
+
+/* Fiscal XML reader — band (após ler): faixa "somente leitura" com acento, separando dado-da-NF do payable */
+.fiscal-band {
+  border-left: 3px solid var(--brand);
+  background: var(--brand-subtle);
+}
+.tag-readonly {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--background);
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+/* Banner informativo no topo de um formulário (ex.: "Confirme os dados coletados da NF") */
+.form-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--brand);
+  background: var(--brand-subtle);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+}
+
+/* Inline text button styled as a link (e.g. "ou preencher manualmente") */
+.linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.linklike:hover {
+  color: var(--brand-hover);
+}
+
 /* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;

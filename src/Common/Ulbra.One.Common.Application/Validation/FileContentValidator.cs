@@ -20,6 +20,7 @@ public static class FileContentValidator
         [".xlsx"] = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
         [".csv"] = ["text/csv", "application/csv", "application/vnd.ms-excel"],
         [".txt"] = ["text/plain"],
+        [".xml"] = ["application/xml", "text/xml", "application/octet-stream"],
     };
 
     private static readonly Dictionary<string, Signature[]> SignaturesByExt = new(StringComparer.OrdinalIgnoreCase)
@@ -40,6 +41,7 @@ public static class FileContentValidator
         // Text-like: no magic signature check
         [".csv"] = [],
         [".txt"] = [],
+        [".xml"] = [],
     };
 
     /// <summary>
