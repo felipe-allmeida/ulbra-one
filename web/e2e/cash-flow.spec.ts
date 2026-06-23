@@ -99,11 +99,16 @@ test('login -> fluxo de caixa -> KPIs, granularity, drill drawer + set real bala
   const balanceInput = modal.locator('input[inputmode="decimal"]').first();
   await balanceInput.fill('123456');
 
-  // Anchor the balance as of a far-future date so NO payments/receipts fall after
-  // it: the recalculated current balance then equals the new anchor exactly. This
-  // keeps the assertion deterministic regardless of the seed's movement dates.
+  // Anchor the balance as of TODAY. The API rejects a future reconciliation date
+  // (400, AEL-596), so we can't anchor in the far future. Today works just as well
+  // for determinism: the per-account balance is anchor + movements STRICTLY after
+  // the anchor date, and the seed's realized payments are dated before today while
+  // any same-day baixa (today == anchor) is excluded by the strict comparison — so
+  // the recalculated current balance equals the new anchor exactly.
   const dateInput = modal.locator('input[type="date"]').first();
-  await dateInput.fill('2099-12-31');
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  await dateInput.fill(todayIso);
 
   // Submit. On success the modal closes and the cash-flow query is invalidated, so
   // the accounts panel recalculates. The modal closing confirms the write went

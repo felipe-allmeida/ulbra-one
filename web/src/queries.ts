@@ -652,6 +652,9 @@ export function useDeleteBankAccount(options?: UseMutationOptions<void, unknown,
 function invalidatePayablePayment(qc: ReturnType<typeof useQueryClient>, payableId: string) {
   void qc.invalidateQueries({ queryKey: ['payables'] });
   void qc.invalidateQueries({ queryKey: queryKeys.payable(payableId) });
+  // A payment moves cash (actual outflow + account balance) — keep cash flow fresh.
+  void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+  void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
 }
 
 export function useRegisterPayment(
@@ -740,6 +743,9 @@ export function useCancelReceivable(options?: UseMutationOptions<Receivable, unk
 function invalidateReceivableReceipt(qc: ReturnType<typeof useQueryClient>, receivableId: string) {
   void qc.invalidateQueries({ queryKey: ['receivables'] });
   void qc.invalidateQueries({ queryKey: queryKeys.receivable(receivableId) });
+  // A receipt moves cash (actual inflow + account balance) — keep cash flow fresh.
+  void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+  void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
 }
 
 export function useRegisterReceipt(
