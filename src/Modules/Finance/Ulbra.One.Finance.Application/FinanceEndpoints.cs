@@ -4,6 +4,7 @@ using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingItems;
 using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingReport;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
+using Ulbra.One.Finance.Application.Endpoints.CashFlow;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ConfirmMatch;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.IgnoreTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ImportStatement;
@@ -35,11 +36,13 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ParseFiscalDocument;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RegisterPayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CancelReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable;
@@ -88,6 +91,8 @@ public static class FinanceEndpoints
         payables.MapEndpoint<UploadAttachment>();
         payables.MapEndpoint<DownloadAttachment>();
         payables.MapEndpoint<DeleteAttachment>();
+        payables.MapEndpoint<ParseFiscalDocument>();
+        payables.MapEndpoint<UploadFiscalDocument>();
         payables.MapEndpoint<RegisterPayment>();
         payables.MapEndpoint<ReversePayment>();
         payables.MapEndpoint<UploadPaymentProof>();
@@ -116,6 +121,11 @@ public static class FinanceEndpoints
         bankAccounts.MapEndpoint<CreateBankAccount>();
         bankAccounts.MapEndpoint<UpdateBankAccount>();
         bankAccounts.MapEndpoint<DeleteBankAccount>();
+        bankAccounts.MapEndpoint<SetReconciledBalance>();
+
+        var cashFlow = builder.MapGroup("/cash-flow");
+        cashFlow.MapEndpoint<GetCashFlow>();
+        cashFlow.MapEndpoint<GetCashFlowItems>();
 
         var chartAccounts = builder.MapGroup("/chart-accounts");
         chartAccounts.MapEndpoint<ListChartAccounts>();

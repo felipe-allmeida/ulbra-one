@@ -13,6 +13,11 @@
     <Project Path="src/Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Accounting/">
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Application/Ulbra.One.Accounting.Application.csproj" />
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Infrastructure/Ulbra.One.Accounting.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Core/">
     <Project Path="src/Modules/Core/Ulbra.One.Core.Application/Ulbra.One.Core.Application.csproj" />
     <Project Path="src/Modules/Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />

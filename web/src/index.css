@@ -290,6 +290,108 @@ body {
   border-color: var(--brand);
 }
 
+/* Custom file picker (icon + filename/placeholder), styled like an input */
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+.file-picker:hover {
+  border-color: var(--brand);
+}
+.file-picker svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.file-picker .file-name {
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fiscal XML reader — hero (create flow): emphasize the upload before any field shows */
+.fiscal-hero {
+  max-width: 560px;
+  margin: 0 auto;
+}
+.fiscal-hero-emphasis {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0 0 14px;
+}
+.file-picker.file-picker-lg {
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 20px;
+  border-style: dashed;
+  text-align: center;
+  font-size: 14px;
+}
+.file-picker.file-picker-lg svg {
+  width: 28px;
+  height: 28px;
+  color: var(--brand);
+}
+
+/* Fiscal XML reader — band (após ler): faixa "somente leitura" com acento, separando dado-da-NF do payable */
+.fiscal-band {
+  border-left: 3px solid var(--brand);
+  background: var(--brand-subtle);
+}
+.tag-readonly {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--background);
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+/* Banner informativo no topo de um formulário (ex.: "Confirme os dados coletados da NF") */
+.form-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--brand);
+  background: var(--brand-subtle);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+}
+
+/* Inline text button styled as a link (e.g. "ou preencher manualmente") */
+.linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.linklike:hover {
+  color: var(--brand-hover);
+}
+
 /* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;
@@ -1182,6 +1284,10 @@ tbody tr:last-child td {
   flex-direction: column;
   overflow: hidden;
   animation: fade 0.12s ease;
+  /* The popover is portal'd to <body>. When opened from inside a modal Radix
+     Dialog (Drawer), Radix sets body { pointer-events: none }, which the portal
+     would otherwise inherit — making the options unclickable. Re-enable it. */
+  pointer-events: auto;
 }
 .combobox-search {
   padding: 8px;
@@ -2368,4 +2474,418 @@ tbody tr:last-child td {
   display: flex;
   gap: 8px;
   justify-content: center;
+}
+
+/* ===== Accounting (núcleo contábil) ===== */
+.journal-lines {
+  margin: 14px 0 8px;
+}
+.journal-lines th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+.journal-lines td {
+  vertical-align: top;
+  padding: 4px 6px;
+}
+.journal-lines td:first-child {
+  min-width: 220px;
+}
+.journal-totals {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.journal-totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+.journal-totals span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+
+.dre-table .dre-section td {
+  padding-top: 14px;
+  color: var(--muted-foreground);
+}
+.dre-table .dre-subtotal td {
+  border-top: 1px solid var(--border);
+}
+.dre-table .dre-result td {
+  border-top: 2px solid var(--foreground);
+  font-size: 15px;
+  padding-top: 12px;
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.balance-col .dre-section td {
+  padding-top: 12px;
+  color: var(--muted-foreground);
+}
+
+/* ===== Cash flow (Fluxo de caixa) ===== */
+
+/* Page header: title row on top, full-width control toolbar below. Local to this
+   page so the global .page-head (used elsewhere) is untouched. */
+.cf-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.cf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+/* Vertical rhythm between the dashboard's stacked panels. */
+.cf-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- KPI band ----- */
+.cf-kpis {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cf-kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.cf-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cf-kpi-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.cf-kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.cf-kpi-foot {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+/* Primary card — the cash-on-hand anchor gets visual primacy. */
+.cf-kpi-primary {
+  background: var(--brand-subtle);
+  border-color: var(--brand);
+}
+.cf-kpi-primary .cf-kpi-icon {
+  background: var(--brand);
+  color: var(--brand-foreground);
+}
+.cf-kpi-primary .cf-kpi-value {
+  color: var(--brand);
+  font-size: 28px;
+}
+
+/* Semantic risk treatments. */
+.cf-kpi-danger {
+  background: var(--danger-subtle);
+  border-color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-value {
+  color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-icon {
+  background: var(--danger);
+  color: var(--brand-foreground);
+}
+.cf-kpi-ok .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-value {
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+@media (max-width: 1100px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 3;
+  }
+}
+@media (max-width: 640px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 2;
+  }
+}
+
+/* ----- Overdue-receivable callout ----- */
+.cf-overdue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--danger);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--danger-subtle);
+}
+.cf-overdue-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--danger);
+}
+.cf-overdue-title {
+  font-weight: 600;
+  color: var(--danger);
+}
+.cf-overdue-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+}
+.cf-overdue-desc {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+/* ----- Periods table ----- */
+.cf-row-danger td {
+  background: var(--danger-subtle);
+}
+.cf-drill {
+  cursor: pointer;
+}
+.cf-drill-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.cf-drill-caret {
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+  transform: translateX(-2px);
+}
+.cf-drill:hover {
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+.cf-drill:hover .cf-drill-caret {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--brand);
+}
+
+/* ----- Hero chart ----- */
+.cf-chart {
+  position: relative;
+  padding: 8px 4px 0;
+}
+.cf-chart svg {
+  display: block;
+}
+.cf-chart-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+  padding: 7px 10px;
+  white-space: nowrap;
+  z-index: 2;
+}
+.cf-chart-tip-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 2px;
+}
+.cf-chart-tip-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-rows {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-in {
+  color: var(--success);
+}
+.cf-chart-tip-out {
+  color: var(--danger);
+}
+.cf-hero-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 16px 0 4px;
+}
+
+/* ----- Inflow vs outflow bars ----- */
+.cf-bars {
+  padding: 4px 4px 0;
+}
+.cf-bars-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.cf-bars-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cf-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.cf-dot-in {
+  background: var(--success);
+}
+.cf-dot-out {
+  background: var(--danger);
+}
+.cf-bars-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cf-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+  flex: 1;
+  height: 100%;
+  cursor: default;
+}
+.cf-bar-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+.cf-bar {
+  width: 12px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.12s;
+}
+.cf-bar-col:hover .cf-bar {
+  opacity: 0.55;
+}
+.cf-bar-col:hover .cf-bar:hover {
+  opacity: 1;
+}
+.cf-bar-in {
+  background: var(--success);
+}
+.cf-bar-out {
+  background: var(--danger);
+}
+.cf-bar-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+
+/* ----- Accounts panel ----- */
+.cf-acct {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.cf-acct-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-acct-name {
+  font-weight: 500;
 }

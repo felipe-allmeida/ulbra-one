@@ -21,4 +21,8 @@ public interface IUnitOfWork
     void RemoveRange<T>(IEnumerable<T> entities) where T : class;
 
     Task<int> SaveChangesAsync(CancellationToken ct);
+
+    /// <summary>Detaches all tracked entities, discarding pending in-memory changes. Use to recover a
+    /// clean state before re-fetching and retrying after a concurrency conflict.</summary>
+    void ClearChangeTracker();
 }

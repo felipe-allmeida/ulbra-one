@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useForm, Controller, type Control, type UseFormSetValue } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -70,7 +70,7 @@ function mergeAddressEmpty(
   return { address: out, filled };
 }
 
-function AutoHint() {
+export function AutoHint() {
   const { t } = useTranslation();
   return (
     <span className='auto-hint'>
@@ -228,11 +228,17 @@ const VENDOR_FIELDS = [
 export function VendorForm({
   companyId,
   initial,
+  prefill,
+  notice,
   onSaved,
   onCancel,
 }: {
   companyId: string;
   initial?: Vendor;
+  /** Create-mode pre-fill (e.g. issuer data read from a fiscal document). Ignored when editing. */
+  prefill?: Partial<VendorValues>;
+  /** Optional banner shown at the top of the form (e.g. "confirm the data collected from the NF"). */
+  notice?: ReactNode;
   onSaved: (saved: Vendor) => void;
   onCancel: () => void;
 }) {
@@ -244,15 +250,15 @@ export function VendorForm({
     resolver: resolver(vendorSchema),
     mode: 'onChange',
     defaultValues: {
-      personType: initial?.personType ?? PersonType.Company,
-      name: initial?.name ?? '',
-      tradeName: initial?.tradeName ?? '',
-      document: initial?.document ?? '',
-      email: initial?.email ?? '',
-      phone: initial?.phone ?? '',
-      paymentTerms: initial?.paymentTerms ?? '',
-      bankInfo: initial?.bankInfo ?? '',
-      address: fromAddress(initial?.address ?? null),
+      personType: initial?.personType ?? prefill?.personType ?? PersonType.Company,
+      name: initial?.name ?? prefill?.name ?? '',
+      tradeName: initial?.tradeName ?? prefill?.tradeName ?? '',
+      document: initial?.document ?? prefill?.document ?? '',
+      email: initial?.email ?? prefill?.email ?? '',
+      phone: initial?.phone ?? prefill?.phone ?? '',
+      paymentTerms: initial?.paymentTerms ?? prefill?.paymentTerms ?? '',
+      bankInfo: initial?.bankInfo ?? prefill?.bankInfo ?? '',
+      address: initial ? fromAddress(initial.address ?? null) : (prefill?.address ?? { ...emptyAddress }),
     },
   });
   const { control, handleSubmit, setValue, getValues, watch, setError, formState } = form;
@@ -315,6 +321,7 @@ export function VendorForm({
 
   return (
     <form onSubmit={(e) => void handleSubmit(onValid)(e)} noValidate>
+      {notice && <div className='form-notice'>{notice}</div>}
       <Controller
         control={control}
         name='personType'

@@ -5,6 +5,788 @@
     "version": "v1"
   },
   "paths": {
+    "/api/ledger-accounts": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ListLedgerAccounts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountGroup",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AccountGroup"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerAccountKind"
+            }
+          },
+          {
+            "name": "activeOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerAccountResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "CreateLedgerAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLedgerAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger-accounts/{id}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetLedgerAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "UpdateLedgerAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLedgerAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger-accounts/seed": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "SeedLedgerAccounts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedLedgerAccountsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerAccountResponse"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerAccountResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal-entries": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ListJournalEntries",
+        "parameters": [
+          {
+            "name": "CompanyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/JournalStatus"
+            }
+          },
+          {
+            "name": "From",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "CreateJournalEntry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJournalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal-entries/{id}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetJournalEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "UpdateJournalEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateJournalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal-entries/{id}/post": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "PostJournalEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal-entries/{id}/reverse": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ReverseJournalEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseJournalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/trial-balance": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetTrialBalance",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialBalanceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/income-statement": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetIncomeStatement",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeStatementResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/balance-sheet": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetBalanceSheet",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceSheetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audit-logs": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "operationId": "ListAuditLogs",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorUserId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/google": {
       "post": {
         "tags": [
@@ -1989,6 +2771,14 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -2016,35 +2806,35 @@
         "operationId": "ListReceivables",
         "parameters": [
           {
-            "name": "companyId",
+            "name": "CompanyId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "status",
+            "name": "Status",
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/ReceivableStatus"
             }
           },
           {
-            "name": "payerId",
+            "name": "PayerId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "costCenterId",
+            "name": "CostCenterId",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "dueFrom",
+            "name": "DueFrom",
             "in": "query",
             "schema": {
               "type": "string",
@@ -2052,7 +2842,7 @@
             }
           },
           {
-            "name": "dueTo",
+            "name": "DueTo",
             "in": "query",
             "schema": {
               "type": "string",
@@ -2060,7 +2850,7 @@
             }
           },
           {
-            "name": "received",
+            "name": "Received",
             "in": "query",
             "schema": {
               "type": "boolean"
@@ -2730,6 +3520,192 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-accounts/{id}/reconciled-balance": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SetReconciledBalance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReconciledBalanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetReconciledBalanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-flow": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetCashFlow",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "granularity",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/CashFlowGranularity"
+            }
+          },
+          {
+            "name": "horizon",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "minReserve",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-flow/items": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetCashFlowItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashFlowItemResponse"
+                  }
                 }
               }
             }
@@ -4374,30 +5350,20 @@
           }
         }
       }
-    },
-    "/api/ping": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "operationId": "Ping",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PingResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
+      "AccountGroup": {
+        "enum": [
+          "Asset",
+          "Liability",
+          "Equity",
+          "Revenue",
+          "Expense"
+        ],
+        "type": "string"
+      },
       "AccountKind": {
         "enum": [
           "Synthetic",
@@ -4712,6 +5678,206 @@
         },
         "additionalProperties": false
       },
+      "AuditAction": {
+        "enum": [
+          "Create",
+          "Update",
+          "Delete"
+        ],
+        "type": "string"
+      },
+      "AuditLogResponse": {
+        "required": [
+          "id",
+          "occurredAt",
+          "traceId",
+          "actorUserId",
+          "action",
+          "entityType",
+          "schema",
+          "tableName",
+          "primaryKey",
+          "oldValues",
+          "newValues",
+          "affectedColumns"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "audit_log_3fa85f64571742199730000000000000"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorUserId": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "tableName": {
+            "type": "string"
+          },
+          "primaryKey": {
+            "type": "string"
+          },
+          "oldValues": {
+            "type": "string",
+            "nullable": true
+          },
+          "newValues": {
+            "type": "string",
+            "nullable": true
+          },
+          "affectedColumns": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditLogResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BalanceSheetLineResponse": {
+        "required": [
+          "ledgerAccountId",
+          "accountCode",
+          "accountName",
+          "accountGroup",
+          "balance"
+        ],
+        "type": "object",
+        "properties": {
+          "ledgerAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BalanceSheetResponse": {
+        "required": [
+          "companyId",
+          "asOf",
+          "assets",
+          "liabilities",
+          "equity",
+          "periodResult",
+          "totalAssets",
+          "totalLiabilities",
+          "totalEquity",
+          "isBalanced"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BalanceSheetLineResponse"
+            }
+          },
+          "liabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BalanceSheetLineResponse"
+            }
+          },
+          "equity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BalanceSheetLineResponse"
+            }
+          },
+          "periodResult": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalAssets": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalLiabilities": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalEquity": {
+            "type": "number",
+            "format": "double"
+          },
+          "isBalanced": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "BankAccountResponse": {
         "required": [
           "id",
@@ -4889,6 +6055,251 @@
           "reason": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowAccountBalance": {
+        "required": [
+          "bankAccountId",
+          "alias",
+          "currentBalance",
+          "reconciledAt"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowGranularity": {
+        "enum": [
+          "Day",
+          "Week",
+          "Month"
+        ],
+        "type": "string"
+      },
+      "CashFlowItemResponse": {
+        "required": [
+          "kind",
+          "sourceId",
+          "installmentId",
+          "sequence",
+          "counterpartyName",
+          "documentNumber",
+          "dueDate",
+          "amount",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "installmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowKpis": {
+        "required": [
+          "startingBalance",
+          "lowestProjectedBalance",
+          "lowestProjectedPeriodLabel",
+          "runwayPeriods",
+          "netResult",
+          "totalInflowForecast",
+          "totalOutflowForecast"
+        ],
+        "type": "object",
+        "properties": {
+          "startingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "lowestProjectedBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "lowestProjectedPeriodLabel": {
+            "type": "string"
+          },
+          "runwayPeriods": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "netResult": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalOutflowForecast": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowPeriod": {
+        "required": [
+          "start",
+          "end",
+          "label",
+          "isPast",
+          "openingBalance",
+          "closingBalance",
+          "inflowForecast",
+          "outflowForecast",
+          "netForecast",
+          "inflowActual",
+          "outflowActual",
+          "belowReserve"
+        ],
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string"
+          },
+          "isPast": {
+            "type": "boolean"
+          },
+          "openingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "closingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "outflowForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "netForecast": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflowActual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "outflowActual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "belowReserve": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashFlowResponse": {
+        "required": [
+          "asOf",
+          "granularity",
+          "currency",
+          "startingBalance",
+          "accounts",
+          "kpis",
+          "overdueReceivable",
+          "periods"
+        ],
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/CashFlowGranularity"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "startingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowAccountBalance"
+            }
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/CashFlowKpis"
+          },
+          "overdueReceivable": {
+            "type": "number",
+            "format": "double"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowPeriod"
+            }
           }
         },
         "additionalProperties": false
@@ -5336,6 +6747,79 @@
         "properties": {
           "name": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateJournalEntryRequest": {
+        "required": [
+          "companyId",
+          "competenceDate",
+          "description",
+          "sourceReference",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "competenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sourceReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineInput"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateLedgerAccountRequest": {
+        "required": [
+          "companyId",
+          "code",
+          "name",
+          "accountGroup",
+          "kind",
+          "parentId",
+          "normalBalance"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LedgerAccountKind"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "normalBalance": {
+            "$ref": "#/components/schemas/NormalBalance"
           }
         },
         "additionalProperties": false
@@ -5868,6 +7352,13 @@
         },
         "additionalProperties": false
       },
+      "EntrySide": {
+        "enum": [
+          "Debit",
+          "Credit"
+        ],
+        "type": "string"
+      },
       "ExpenseCategoryResponse": {
         "required": [
           "id",
@@ -5935,6 +7426,89 @@
           "Failed"
         ],
         "type": "string"
+      },
+      "IncomeStatementLineResponse": {
+        "required": [
+          "ledgerAccountId",
+          "accountCode",
+          "accountName",
+          "accountGroup",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "ledgerAccountId": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IncomeStatementResponse": {
+        "required": [
+          "companyId",
+          "from",
+          "to",
+          "revenues",
+          "expenses",
+          "totalRevenue",
+          "totalExpense",
+          "result"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "revenues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeStatementLineResponse"
+            }
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeStatementLineResponse"
+            }
+          },
+          "totalRevenue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpense": {
+            "type": "number",
+            "format": "double"
+          },
+          "result": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "InstallmentInput": {
         "required": [
@@ -6006,6 +7580,239 @@
         ],
         "type": "string"
       },
+      "JournalEntryResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "competenceDate",
+          "description",
+          "origin",
+          "sourceReference",
+          "status",
+          "postedAt",
+          "reversalOfEntryId",
+          "reversedByEntryId",
+          "totalDebit",
+          "totalCredit",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "journal_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "competenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/JournalOrigin"
+          },
+          "sourceReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/JournalStatus"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reversalOfEntryId": {
+            "type": "string",
+            "nullable": true,
+            "example": "journal_3fa85f64571742199730000000000000"
+          },
+          "reversedByEntryId": {
+            "type": "string",
+            "nullable": true,
+            "example": "journal_3fa85f64571742199730000000000000"
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalLineInput": {
+        "required": [
+          "ledgerAccountId",
+          "side",
+          "amount",
+          "costCenterId",
+          "unitId",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "ledgerAccountId": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "side": {
+            "$ref": "#/components/schemas/EntrySide"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "costCenterId": {
+            "type": "string",
+            "nullable": true,
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "unitId": {
+            "type": "string",
+            "nullable": true,
+            "example": "unit_3fa85f64571742199730000000000000"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalLineResponse": {
+        "required": [
+          "id",
+          "ledgerAccountId",
+          "side",
+          "amount",
+          "costCenterId",
+          "unitId",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "jline_3fa85f64571742199730000000000000"
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "side": {
+            "$ref": "#/components/schemas/EntrySide"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "costCenterId": {
+            "type": "string",
+            "nullable": true,
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "unitId": {
+            "type": "string",
+            "nullable": true,
+            "example": "unit_3fa85f64571742199730000000000000"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalOrigin": {
+        "enum": [
+          "Manual"
+        ],
+        "type": "string"
+      },
+      "JournalStatus": {
+        "enum": [
+          "Draft",
+          "Posted",
+          "Reversed"
+        ],
+        "type": "string"
+      },
+      "LedgerAccountKind": {
+        "enum": [
+          "Synthetic",
+          "Analytical"
+        ],
+        "type": "string"
+      },
+      "LedgerAccountResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "accountGroup",
+          "normalBalance",
+          "kind",
+          "parentId",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "normalBalance": {
+            "$ref": "#/components/schemas/NormalBalance"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LedgerAccountKind"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginResponse": {
         "required": [
           "token",
@@ -6075,6 +7882,13 @@
           }
         },
         "additionalProperties": false
+      },
+      "NormalBalance": {
+        "enum": [
+          "Debit",
+          "Credit"
+        ],
+        "type": "string"
       },
       "PayableAttachmentResponse": {
         "required": [
@@ -6451,27 +8265,6 @@
           "Company"
         ],
         "type": "string"
-      },
-      "PingResponse": {
-        "required": [
-          "status",
-          "service",
-          "utc"
-        ],
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string"
-          },
-          "service": {
-            "type": "string"
-          },
-          "utc": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": false
       },
       "ProblemDetails": {
         "required": [
@@ -7049,6 +8842,24 @@
         },
         "additionalProperties": false
       },
+      "ReverseJournalEntryRequest": {
+        "required": [
+          "reason",
+          "competenceDate"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "competenceDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReversePaymentRequest": {
         "required": [
           "reason"
@@ -7071,6 +8882,65 @@
           "reason": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SeedLedgerAccountsRequest": {
+        "required": [
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetReconciledBalanceRequest": {
+        "required": [
+          "balance",
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetReconciledBalanceResponse": {
+        "required": [
+          "id",
+          "reconciledBalance",
+          "reconciledAt",
+          "currentBalance"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "reconciledBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -7295,6 +9165,85 @@
         ],
         "type": "string"
       },
+      "TrialBalanceResponse": {
+        "required": [
+          "companyId",
+          "rows",
+          "totalDebit",
+          "totalCredit",
+          "isBalanced"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrialBalanceRowResponse"
+            }
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "isBalanced": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TrialBalanceRowResponse": {
+        "required": [
+          "ledgerAccountId",
+          "accountCode",
+          "accountName",
+          "accountGroup",
+          "normalBalance",
+          "totalDebit",
+          "totalCredit",
+          "balance"
+        ],
+        "type": "object",
+        "properties": {
+          "ledgerAccountId": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "normalBalance": {
+            "$ref": "#/components/schemas/NormalBalance"
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "UnitResponse": {
         "required": [
           "id",
@@ -7474,6 +9423,69 @@
             "type": "string"
           },
           "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateJournalEntryRequest": {
+        "required": [
+          "competenceDate",
+          "description",
+          "sourceReference",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "competenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sourceReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineInput"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateLedgerAccountRequest": {
+        "required": [
+          "name",
+          "accountGroup",
+          "kind",
+          "normalBalance",
+          "parentId",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "$ref": "#/components/schemas/AccountGroup"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LedgerAccountKind"
+          },
+          "normalBalance": {
+            "$ref": "#/components/schemas/NormalBalance"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "isActive": {
             "type": "boolean"
           }
         },
@@ -7804,6 +9816,12 @@
   },
   "tags": [
     {
+      "name": "Accounting"
+    },
+    {
+      "name": "Audit"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -7814,9 +9832,6 @@
     },
     {
       "name": "Registry"
-    },
-    {
-      "name": "System"
     }
   ]
 }

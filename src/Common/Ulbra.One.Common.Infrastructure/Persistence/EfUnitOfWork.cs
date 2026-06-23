@@ -24,4 +24,6 @@ public sealed class EfUnitOfWork<TContext>(TContext db) : IUnitOfWork
     public void RemoveRange<T>(IEnumerable<T> entities) where T : class => db.Set<T>().RemoveRange(entities);
 
     public Task<int> SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
+
+    public void ClearChangeTracker() => db.ChangeTracker.Clear();
 }

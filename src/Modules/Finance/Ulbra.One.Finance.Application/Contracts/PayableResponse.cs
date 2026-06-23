@@ -7,8 +7,8 @@ namespace Ulbra.One.Finance.Application.Contracts;
 public sealed record PayableResponse(
     PayableId Id, CompanyId CompanyId, PayableOrigin Origin, VendorId VendorId, string CounterpartyName,
     string? DocumentNumber, DateOnly? IssueDate, string Description, CostCenterId CostCenterId,
-    ExpenseCategoryId? CategoryId, decimal TotalAmount, PayableStatus Status, string? RejectionReason,
-    string? CancelReason, string? ApprovedBy, DateTimeOffset? ApprovedAt, string? RejectedBy,
+    ExpenseCategoryId? CategoryId, decimal TotalAmount, PayableStatus Status,
+    string? RejectionReason, string? CancelReason, string? ApprovedBy, DateTimeOffset? ApprovedAt, string? RejectedBy,
     DateTimeOffset? RejectedAt, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
     bool IsClassified, DateTimeOffset CreatedAt, IReadOnlyList<InstallmentResponse> Installments,
     IReadOnlyList<PayableAttachmentResponse> Attachments)
