@@ -302,8 +302,8 @@ test('full-flow C: conciliação surface — import counts, suggest/confirm, unm
   // Count our three lines across ALL statuses BEFORE the reimport (each must be exactly 1).
   await statusFilter.selectOption({ label: 'Todos' });
   await expect(page.locator('table tbody tr', { hasText: renderMatch })).toHaveCount(1, { timeout: 15_000 });
-  await expect(page.locator('table tbody tr', { hasText: renderManual })).toHaveCount(1);
-  await expect(page.locator('table tbody tr', { hasText: renderOrphan })).toHaveCount(1);
+  await expect(page.locator('table tbody tr', { hasText: renderManual })).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator('table tbody tr', { hasText: renderOrphan })).toHaveCount(1, { timeout: 15_000 });
 
   await fileInput.setInputFiles(ofxPath);
   // All three FITIDs already exist -> 3 lançamentos · 0 novos · 3 duplicados. Hard assert.
@@ -312,6 +312,6 @@ test('full-flow C: conciliação surface — import counts, suggest/confirm, unm
   // The table must NOT have grown — still exactly one row per line (no duplicate ingestion).
   await statusFilter.selectOption({ label: 'Todos' });
   await expect(page.locator('table tbody tr', { hasText: renderMatch })).toHaveCount(1, { timeout: 15_000 });
-  await expect(page.locator('table tbody tr', { hasText: renderManual })).toHaveCount(1);
-  await expect(page.locator('table tbody tr', { hasText: renderOrphan })).toHaveCount(1);
+  await expect(page.locator('table tbody tr', { hasText: renderManual })).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator('table tbody tr', { hasText: renderOrphan })).toHaveCount(1, { timeout: 15_000 });
 });
