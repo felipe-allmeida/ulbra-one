@@ -241,6 +241,26 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Parse_BlobOverLimit_Returns_400_TooLarge()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // Seed a blob just over 25 MB using IFileStorageService directly.
+        using var scope = factory.Services.CreateScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+        using var ms = new MemoryStream(new byte[26 * 1024 * 1024]);
+        var key = await storage.SaveAsync("big.xml", ms);
+
+        var res = await client.PostAsJsonAsync(
+            $"/api/payables/fiscal-document/parse?companyId={seed.CompanyId}",
+            new { key, fileName = "big.xml" });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("FiscalDocument.TooLarge", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    [Fact]
     public async Task UploadUrl_Returns_400_PresignNotSupported_On_Local_Storage()
     {
         // In the test environment, LocalFileStorageService is used (no S3 endpoint configured),

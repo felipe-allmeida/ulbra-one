@@ -40,6 +40,10 @@ public sealed class UploadFiscalDocument : IEndpoint
         TimeProvider timeProvider,
         CancellationToken ct)
     {
+        if (req.SizeBytes <= 0 || string.IsNullOrWhiteSpace(req.ContentType) || string.IsNullOrWhiteSpace(req.FileName))
+            return Result.Failure<FiscalDocumentResponse>(
+                Error.Validation("FiscalDocument.InvalidMetadata", "fileName, contentType and sizeBytes are required.")).ToOk();
+
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null)
             return Result.Failure<FiscalDocumentResponse>(Error.NotFound("Payable.NotFound", "Payable not found.")).ToOk();
@@ -49,10 +53,15 @@ public sealed class UploadFiscalDocument : IEndpoint
             return Result.Failure<FiscalDocumentResponse>(
                 Error.Validation("FiscalDocument.NotFound", "Uploaded file not found.")).ToOk();
 
+        using var capped = await FiscalDocumentLimits.ReadCappedAsync(stream, ct);
+        if (capped is null)
+            return Result.Failure<FiscalDocumentResponse>(Error.Validation("FiscalDocument.TooLarge",
+                $"File exceeds the {FiscalDocumentLimits.MaxBytes / (1024 * 1024)}MB limit.")).ToOk();
+
         ParsedFiscalDocument? parsed;
         try
         {
-            parsed = await reader.ReadAsync(req.FileName, stream, ct);
+            parsed = await reader.ReadAsync(req.FileName, capped, ct);
         }
         catch
         {

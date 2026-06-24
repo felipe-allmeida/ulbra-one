@@ -39,10 +39,15 @@ public sealed class ParseFiscalDocument : IEndpoint
             return Result.Failure<ParsedFiscalDocument>(
                 Error.Validation("FiscalDocument.NotFound", "Uploaded file not found.")).ToOk();
 
+        using var capped = await FiscalDocumentLimits.ReadCappedAsync(stream, ct);
+        if (capped is null)
+            return Result.Failure<ParsedFiscalDocument>(Error.Validation("FiscalDocument.TooLarge",
+                $"File exceeds the {FiscalDocumentLimits.MaxBytes / (1024 * 1024)}MB limit.")).ToOk();
+
         ParsedFiscalDocument? parsed;
         try
         {
-            parsed = await reader.ReadAsync(req.FileName, stream, ct);
+            parsed = await reader.ReadAsync(req.FileName, capped, ct);
         }
         catch
         {
