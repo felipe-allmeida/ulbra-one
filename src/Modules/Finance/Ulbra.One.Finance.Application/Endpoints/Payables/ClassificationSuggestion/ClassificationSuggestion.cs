@@ -7,6 +7,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassificationSuggestion;
@@ -24,19 +25,7 @@ public sealed class ClassificationSuggestion : IEndpoint
         var target = await uow.ReadSet<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (target is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
-        var match = await uow.ReadSet<Payable>()
-            .Where(p => p.Id != id.Value && p.VendorId == target.VendorId
-                        && p.AccountingAccountId != null && p.FinancialAccountId != null)
-            .OrderByDescending(p => p.CostCenterId == target.CostCenterId)
-            .ThenByDescending(p => p.CreatedAt)
-            .FirstOrDefaultAsync(ct);
-
-        if (match is null)
-            return TypedResults.Ok(new ClassificationSuggestionResponse(null, null, null));
-
-        return TypedResults.Ok(new ClassificationSuggestionResponse(
-            new ChartAccountId(match.AccountingAccountId!.Value),
-            new ChartAccountId(match.FinancialAccountId!.Value),
-            new PayableId(match.Id)));
+        var (acc, fin, basedOn) = await VendorHistorySuggestion.FindAsync(uow, target, ct);
+        return TypedResults.Ok(new ClassificationSuggestionResponse(acc, fin, basedOn));
     }
 }
