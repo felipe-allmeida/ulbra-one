@@ -10,6 +10,7 @@ import {
   type AccountGroup,
   type AccountKind,
   type AgingBucket,
+  type AiClassificationSuggestion,
   type JournalEntry,
   type JournalEntryInput,
   type JournalStatus,
@@ -963,6 +964,15 @@ export function useClassifyBatch(
     },
     options,
   );
+}
+
+export function useAiClassificationSuggestion(
+  options?: UseMutationOptions<AiClassificationSuggestion, unknown, string>,
+) {
+  return useMutation({
+    mutationFn: (payableId: string) => api.aiClassificationSuggestion(payableId),
+    ...options,
+  });
 }
 
 export function useClassificationSuggestion(payableId: string | undefined, options?: { enabled?: boolean }) {
