@@ -72,4 +72,13 @@ public class MeaiAiCompletionTests
         Assert.False(result.IsSuccess);
         Assert.Equal(AiErrors.ProviderError, result.Error.Code);
     }
+
+    [Fact]
+    public async Task Cancellation_propagates_and_is_not_mapped_to_ProviderError()
+    {
+        var sut = new MeaiAiCompletion(new FakeChatClient(() => throw new OperationCanceledException()));
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => sut.CompleteAsync<Probe>(new AiPrompt("s", "u")));
+    }
 }

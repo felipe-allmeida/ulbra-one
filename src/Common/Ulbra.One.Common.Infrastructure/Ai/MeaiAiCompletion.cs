@@ -26,7 +26,8 @@ public sealed class MeaiAiCompletion(IChatClient chatClient) : IAiCompletion
         ChatResponse<TResult> response;
         try
         {
-            response = await chatClient.GetResponseAsync<TResult>(messages, chatOptions, cancellationToken: ct);
+            response = await chatClient.GetResponseAsync<TResult>(
+                messages, chatOptions, useJsonSchemaResponseFormat: true, cancellationToken: ct);
         }
         catch (OperationCanceledException)
         {
