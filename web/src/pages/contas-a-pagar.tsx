@@ -1142,7 +1142,7 @@ function FiscalXmlReader({
       {hero && !embedded && <p className='fiscal-hero-emphasis'>{t('payables.fiscalReader.heroEmphasis')}</p>}
       <Field label={t('payables.fiscalReader.selectLabel')} help={t('payables.fiscalReader.selectHelp')}>
         <FilePicker
-          accept='.xml,application/xml,text/xml,.pdf,application/pdf'
+          accept='.xml,application/xml,text/xml,.pdf,application/pdf,.png,.jpg,.jpeg,.webp,image/*'
           fileName={file?.name}
           placeholder={hero ? t('payables.fiscalReader.dropHint') : t('common.noFileSelected')}
           onSelect={onSelect}

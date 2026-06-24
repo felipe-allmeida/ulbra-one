@@ -58,6 +58,11 @@ public sealed class UploadFiscalDocument : IEndpoint
             return Result.Failure<FiscalDocumentResponse>(Error.Validation("FiscalDocument.TooLarge",
                 $"File exceeds the {FiscalDocumentLimits.MaxBytes / (1024 * 1024)}MB limit.")).ToOk();
 
+        // v1 simplification: re-parse the blob on save rather than round-tripping the preview result
+        // through the client. For XML this is free + deterministic; for PDF/image it costs a second AI
+        // extraction whose fiscal metadata (CFOP/NCM/tax totals — informational, feeds classification) may
+        // differ slightly from the preview. The payable's own fields are set via CreatePayable from the
+        // user-reviewed form, so this never affects user-confirmed data. Follow-up: extract-once if PDF cost matters.
         ParsedFiscalDocument? parsed;
         try
         {

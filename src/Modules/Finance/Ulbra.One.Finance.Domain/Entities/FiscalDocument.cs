@@ -1,7 +1,7 @@
 namespace Ulbra.One.Finance.Domain.Entities;
 
 /// <summary>
-/// The fiscal document (NF-e XML, NFS-e XML or a mocked service PDF) of record for a payable: the raw
+/// The fiscal document (NF-e XML, NFS-e XML, or a PDF/image extracted by AI) of record for a payable: the raw
 /// file is kept in object storage and the parsed fields + full extraction are stored here. One per payable.
 /// </summary>
 public class FiscalDocument
@@ -10,7 +10,7 @@ public class FiscalDocument
     public Guid PayableId { get; private set; }
     public FiscalDocumentFormat Format { get; private set; }
 
-    /// <summary>NF-e access key (44 digits); null for NFS-e and the PDF mock.</summary>
+    /// <summary>NF-e access key (44 digits); null for NFS-e/PDF/image.</summary>
     public string? AccessKey { get; private set; }
     public string? DocumentNumber { get; private set; }
     public DateOnly? IssueDate { get; private set; }
