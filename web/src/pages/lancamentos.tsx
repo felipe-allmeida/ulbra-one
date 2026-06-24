@@ -23,6 +23,7 @@ import { getErrorMessage } from '../apiError';
 import { Button, Input, Select, Field, PageHeader, Pager, Panel, EmptyState, Combobox, Drawer } from '../ui';
 import { EmpresaPicker } from './shared';
 import { CustomerForm, VendorForm } from './registry-forms';
+import { fmtDate } from '../datetime';
 
 const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
   Pending: { cls: 'badge-pendente', label: 'Pendente' },
@@ -33,7 +34,6 @@ const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
 export const StatusBadge = ({ s }: { s: TransactionStatus }) => (
   <span className={`badge-status ${STATUS[s].cls}`}>{STATUS[s].label}</span>
 );
-const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
 /** Maps id→name of the company's units/cost centers (to show names in the lists). */
 function useNomes(empresaId: string) {
@@ -108,7 +108,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
             <tbody>
               {itens.map((l) => (
                 <tr key={l.id} className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
-                  <td className='t-mono'>{fmtData(l.dueDate)}</td>
+                  <td className='t-mono'>{fmtDate(l.dueDate)}</td>
                   <td>{l.description}</td>
                   <td>{l.counterpartyName || '—'}</td>
                   <td>{centroNome[l.costCenterId] ?? '—'}</td>
@@ -164,7 +164,7 @@ export function AprovacoesPage() {
             <tbody>
               {itens.map((l) => (
                 <tr key={l.id}>
-                  <td className='t-mono'>{fmtData(l.dueDate)}</td>
+                  <td className='t-mono'>{fmtDate(l.dueDate)}</td>
                   <td className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
                     {l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterpartyName}</span>
                   </td>
@@ -546,7 +546,7 @@ export function LancamentoDetailPage() {
         </div>
         <div className='info-card'>
           <div className='info-label'>Vencimento</div>
-          <div className='info-value'>{fmtData(l.dueDate)}</div>
+          <div className='info-value'>{fmtDate(l.dueDate)}</div>
         </div>
         <div className='info-card'>
           <div className='info-label'>Status</div>

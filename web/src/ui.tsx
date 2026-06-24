@@ -9,7 +9,7 @@ import {
   type SelectHTMLAttributes,
   type ButtonHTMLAttributes,
 } from 'react';
-import { X, AlertTriangle, ChevronsUpDown, Check } from 'lucide-react';
+import { X, AlertTriangle, ChevronsUpDown, Check, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
@@ -535,4 +535,37 @@ export function useSave(fn: () => Promise<void>) {
     }
   };
   return { salvando, erro, run };
+}
+
+/* ---------- FilePicker ---------- */
+/** Styled file input: upload icon + the selected file name, or a placeholder when empty. */
+export function FilePicker({
+  accept,
+  fileName,
+  placeholder,
+  onSelect,
+  large,
+}: {
+  accept: string;
+  fileName?: string | null;
+  placeholder: string;
+  onSelect: (f: File | null) => void;
+  large?: boolean;
+}) {
+  return (
+    <label className={large ? 'file-picker file-picker-lg' : 'file-picker'}>
+      <Upload />
+      <span className={fileName ? 'file-name' : undefined}>{fileName ?? placeholder}</span>
+      <input
+        type='file'
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          onSelect(e.target.files?.[0] ?? null);
+          // Reset the input so re-selecting the SAME file fires onChange again (e.g. load → clear → reload same NF).
+          e.target.value = '';
+        }}
+      />
+    </label>
+  );
 }
