@@ -190,7 +190,7 @@ describe('BankAccountForm — default payment toggle', () => {
     };
     expect(callArg.create.isDefaultForPayments).toBe(true);
     // defaultPaymentMethod is what the onValid handler sends (it derives it from form values)
-    expect(['Pix', 'Ted']).toContain(callArg.create.defaultPaymentMethod);
+    expect(callArg.create.defaultPaymentMethod).toBe('Ted');
   });
 });
 

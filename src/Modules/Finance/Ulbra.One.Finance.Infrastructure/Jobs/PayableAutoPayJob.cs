@@ -48,7 +48,7 @@ public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider 
                 foreach (var inst in payable.Installments.Where(i => i.Status != InstallmentStatus.Paid && i.DueDate <= today).ToList())
                 {
                     var face = inst.Amount - inst.PaidAmount;
-                    if (face <= 0) continue;
+                    if (face <= 0) { log.LogWarning("Auto-pay {Payable}/{Inst} face amount is {Face}; skipping", payable.Id, inst.Id, face); continue; }
                     var input = new RegisterPaymentInput(today, face, bankAccountId, method, 0, 0, 0, "Pagamento automático");
                     var result = await payments.RegisterAsync(payable, inst, input, SystemActor.Id, ct);
                     if (result.IsFailure) log.LogWarning("Auto-pay {Payable}/{Inst} failed: {Err}", payable.Id, inst.Id, result.Error.Code);
@@ -56,7 +56,10 @@ public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider 
                 await uow.SaveChangesAsync(ct);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
-            { log.LogError(ex, "Auto-pay failed for payable {Id}", payable.Id); }
+            {
+                log.LogError(ex, "Auto-pay failed for payable {Id}", payable.Id);
+                uow.ClearChangeTracker();
+            }
         }
     }
 

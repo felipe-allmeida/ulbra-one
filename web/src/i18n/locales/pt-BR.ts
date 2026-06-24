@@ -708,7 +708,6 @@ const ptBR = {
       isDefaultForPayments: 'Conta padrão de pagamento',
       defaultPaymentMethod: 'Forma de pagamento padrão',
     },
-    defaultPaymentBadge: 'Padrão',
     placeholders: {
       bankName: 'ex.: Banco do Brasil',
       bankCode: 'ex.: 001',

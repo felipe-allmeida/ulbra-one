@@ -1,9 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
+using Ulbra.One.Finance.Application.Payments;
+using Ulbra.One.Finance.Domain;
+using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Finance.Infrastructure.Jobs;
 
 namespace Ulbra.One.IntegrationTests.Finance;
@@ -203,5 +208,98 @@ public class PayableAutoPayJobTests(PostgresFixture fixture)
         var afterSecond = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
         Assert.Equal("Paid", afterSecond.GetProperty("status").GetString());
         Assert.Equal(1, afterSecond.GetProperty("installments")[0].GetProperty("payments").GetArrayLength());
+    }
+
+    /// <summary>
+    /// Isolation test: when processing payable A throws mid-sweep, payable B (which comes next)
+    /// still gets paid. Proves that ClearChangeTracker() in the catch prevents the stale tracked
+    /// changes from payable A from poisoning the DbContext for payable B.
+    ///
+    /// Failure injection: we register a test-only IPayablePaymentService decorator via
+    /// ConfigureTestServices that throws a DbUpdateConcurrencyException for payable A's id and
+    /// delegates to the real service otherwise.
+    /// </summary>
+    [Fact]
+    public async Task RunOnceAsync_FailureOnFirstPayable_DoesNotPreventSecondPayableFromBeingPaid()
+    {
+        // Use WithWebHostBuilder + ConfigureTestServices so we can register a decorator that
+        // injects a deterministic failure for one specific payable ID while allowing the real
+        // service to handle all others.
+        string? throwForPayableId = null; // set after seeding
+
+        await using var baseFactory = new ApiFactory(fixture.ConnectionString);
+
+        // Seed using the base factory (no decorator — real service handles all calls here).
+        var seedClient = await baseFactory.CreateAdminClientAsync();
+        var seed = await SeedAsync(seedClient);
+
+        // Both payables share the same company default bank account (Pix).
+        await CreateBankAccountAsync(seedClient, seed.CompanyId, isDefault: true, method: "Pix");
+
+        // Payable A → will have the decorator throw; payable B → will be paid normally.
+        var payableIdA = await CreateScheduledPayableAsync(seedClient, seed, dueDate: "2026-06-20", amount: 300m);
+        var payableIdB = await CreateScheduledPayableAsync(seedClient, seed, dueDate: "2026-06-20", amount: 400m);
+
+        // Now that we have the IDs, tell the decorator to blow up for payable A.
+        throwForPayableId = payableIdA;
+
+        // Build a second factory that wires the throwing decorator, pointed at the same DB.
+        await using var decoratedFactory = new ApiFactory(fixture.ConnectionString)
+            .WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+            {
+                var descriptor = services.Single(d => d.ServiceType == typeof(IPayablePaymentService));
+                services.Remove(descriptor);
+                // Re-register the concrete type so we can resolve it inside the decorator factory.
+                services.Add(new ServiceDescriptor(descriptor.ImplementationType!, descriptor.ImplementationType!, descriptor.Lifetime));
+                services.Add(new ServiceDescriptor(
+                    typeof(IPayablePaymentService),
+                    sp =>
+                    {
+                        var inner = (IPayablePaymentService)sp.GetRequiredService(descriptor.ImplementationType!);
+                        return new ThrowingPaymentServiceDecorator(inner, () => throwForPayableId);
+                    },
+                    descriptor.Lifetime));
+            }));
+
+        var job = BuildJob(decoratedFactory.Services);
+        await job.RunOnceAsync(CancellationToken.None); // must not throw at the sweep level
+
+        // Re-use the seed client to read back the payable state (reads committed DB state).
+        // Payable A: still Scheduled — the throw was swallowed and its changes rolled back.
+        var afterA = await ReadJson(await seedClient.GetAsync($"/api/payables/{payableIdA}"));
+        Assert.Equal("Scheduled", afterA.GetProperty("status").GetString());
+        Assert.Equal(0, afterA.GetProperty("installments")[0].GetProperty("payments").GetArrayLength());
+
+        // Payable B: Paid — the sweep continued despite A's failure and committed B cleanly.
+        var afterB = await ReadJson(await seedClient.GetAsync($"/api/payables/{payableIdB}"));
+        Assert.Equal("Paid", afterB.GetProperty("status").GetString());
+        Assert.Equal(1, afterB.GetProperty("installments")[0].GetProperty("payments").GetArrayLength());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test helper: IPayablePaymentService decorator that throws for one payable id
+    // ---------------------------------------------------------------------------
+
+    private sealed class ThrowingPaymentServiceDecorator(
+        IPayablePaymentService inner,
+        Func<string?> getThrowForId) : IPayablePaymentService
+    {
+        public Task<Result<Payable>> RegisterAsync(
+            Payable payable, Installment installment, RegisterPaymentInput input,
+            Guid createdById, CancellationToken ct)
+        {
+            var throwId = getThrowForId();
+            // The API returns prefixed ids (e.g. "payable_<guid>"); Payable.Id is a raw Guid.
+            // Strip the prefix before comparing.
+            if (throwId is not null)
+            {
+                var rawGuid = throwId.Contains('_') ? throwId[(throwId.LastIndexOf('_') + 1)..] : throwId;
+                if (Guid.TryParse(rawGuid, out var targetId) && payable.Id == targetId)
+                    throw new Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException(
+                        "Simulated concurrency conflict for isolation test.", []);
+            }
+
+            return inner.RegisterAsync(payable, installment, input, createdById, ct);
+        }
     }
 }
