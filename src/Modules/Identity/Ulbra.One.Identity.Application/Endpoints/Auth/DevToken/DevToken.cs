@@ -7,9 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Identity.Application.Contracts;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Identity.Domain;
 using Ulbra.One.Identity.Domain.Entities;
 
@@ -38,12 +38,13 @@ public sealed class DevToken : IEndpoint
     private static async Task<IResult> Handle(
         Request req,
         IHostEnvironment env,
-        [FromKeyedServices("identity")] IUnitOfWork uow,
-        JwtTokenService jwt,
+        IUnitOfWork uow,
+        ITokenService jwt,
+        TimeProvider clock,
         CancellationToken ct)
     {
         if (!env.IsDevelopment())
-            return Results.NotFound();
+            return TypedResults.NotFound();
 
         var email = (req.Email ?? "dev@ulbra.br").ToLowerInvariant();
         var name = req.Name ?? "Dev User";
@@ -53,7 +54,7 @@ public sealed class DevToken : IEndpoint
         {
             user = new User(email, name, Roles.Admin);
             await uow.AddAsync(user, ct);
-            user.RegisterLogin();
+            user.RegisterLogin(clock.GetUtcNow());
             try
             {
                 await uow.SaveChangesAsync(ct);
@@ -69,17 +70,17 @@ public sealed class DevToken : IEndpoint
                 user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
                 if (user is null)
                     throw;
-                user.RegisterLogin();
+                user.RegisterLogin(clock.GetUtcNow());
                 await uow.SaveChangesAsync(ct);
             }
         }
         else
         {
-            user.RegisterLogin();
+            user.RegisterLogin(clock.GetUtcNow());
             await uow.SaveChangesAsync(ct);
         }
 
         var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
-        return Results.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
+        return TypedResults.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }

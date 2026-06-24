@@ -24,13 +24,13 @@ public sealed class DeleteAttachment : IEndpoint
         PayableId id,
         PayableAttachmentId attachmentId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         ILogger<DeleteAttachment> logger,
         CancellationToken ct)
     {
         var a = await uow.Set<PayableAttachment>()
             .FirstOrDefaultAsync(x => x.Id == attachmentId.Value && x.PayableId == id.Value, ct);
-        if (a is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (a is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         uow.Remove(a);
         await uow.SaveChangesAsync(ct);
@@ -38,6 +38,6 @@ public sealed class DeleteAttachment : IEndpoint
         try { await storage.DeleteAsync(a.StoragePath, ct); }
         catch (Exception ex) { logger.LogWarning(ex, "Failed to remove blob {Path}", a.StoragePath); }
 
-        return Results.NoContent();
+        return TypedResults.NoContent();
     }
 }

@@ -8,7 +8,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
-    <ProjectReference Include="../Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
   </ItemGroup>
 </Project>

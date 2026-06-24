@@ -26,7 +26,7 @@ public sealed class ListVendors : IEndpoint
         CompanyId? companyId,
         string? search,
         [AsParameters] PaginationQueryParameters pagination,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<VendorEntity>();
@@ -34,6 +34,6 @@ public sealed class ListVendors : IEndpoint
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(v => v.Name.Contains(search) || v.Document.Contains(search));
         var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
-        return Results.Ok(page.Map(VendorResponse.From));
+        return TypedResults.Ok(page.Map(VendorResponse.From));
     }
 }

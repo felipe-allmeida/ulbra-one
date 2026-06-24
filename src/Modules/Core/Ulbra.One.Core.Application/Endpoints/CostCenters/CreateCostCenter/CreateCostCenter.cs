@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 
@@ -38,15 +38,15 @@ public sealed class CreateCostCenter : IEndpoint
 
     private static async Task<IResult> Handle(
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         if (!await uow.ReadSet<Company>().AnyAsync(e => e.Id == req.CompanyId.Value, ct))
-            return Results.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
+            return TypedResults.Problem(detail: $"Company {req.CompanyId} not found.", statusCode: StatusCodes.Status404NotFound, title: "Company.NotFound");
 
         var unitIds = (req.UnitIds ?? []).Select(u => u.Value).Distinct().ToArray();
         if (!await UnitReconciliation.UnitsValid(uow, req.CompanyId.Value, unitIds, ct))
-            return Results.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
+            return TypedResults.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
 
         var costCenter = new CostCenter(req.CompanyId.Value, req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
         await uow.AddAsync(costCenter, ct);
@@ -54,6 +54,6 @@ public sealed class CreateCostCenter : IEndpoint
             await uow.AddAsync(new CostCenterUnit(costCenter.Id, uid), ct);
 
         await uow.SaveChangesAsync(ct);
-        return Results.Created($"/api/cost-centers/{new CostCenterId(costCenter.Id)}", CostCenterResponse.From(costCenter, unitIds));
+        return TypedResults.Created($"/api/cost-centers/{new CostCenterId(costCenter.Id)}", CostCenterResponse.From(costCenter, unitIds));
     }
 }

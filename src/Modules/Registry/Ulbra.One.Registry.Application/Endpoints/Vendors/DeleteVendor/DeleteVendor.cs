@@ -7,7 +7,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
-using Ulbra.One.Common.Infrastructure.Results;
+using Ulbra.One.Common.Application.Results;
 using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Vendors.DeleteVendor;
@@ -26,7 +26,7 @@ public sealed class DeleteVendor : IEndpoint
 
     private static async Task<IResult> Handle(
         VendorId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider timeProvider,
         CancellationToken ct)
     {

@@ -21,18 +21,18 @@ public sealed class DownloadPaymentProof : IEndpoint
         PayableId id,
         PaymentId paymentId,
         IFileStorageService storage,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var payable = await uow.ReadSet<Payable>()
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
             .FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         var payment = payable?.FindPayment(paymentId.Value);
-        if (payment?.ProofStoragePath is null) return Results.NotFound();
+        if (payment?.ProofStoragePath is null) return TypedResults.NotFound();
 
         var stream = await storage.GetAsync(payment.ProofStoragePath, ct);
-        if (stream is null) return Results.NotFound();
+        if (stream is null) return TypedResults.NotFound();
 
-        return Results.File(stream, payment.ProofContentType!, payment.ProofFileName!);
+        return TypedResults.File(stream, payment.ProofContentType!, payment.ProofFileName!);
     }
 }

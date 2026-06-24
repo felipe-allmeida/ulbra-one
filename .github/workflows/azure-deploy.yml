@@ -1,0 +1,159 @@
+name: Azure Deploy
+
+# Builds API + web images to ACR, then applies Terraform for a single environment.
+# - push to main        → auto-deploy DEV (mirrors the SAU deploy.yml)
+# - workflow_dispatch    → manual deploy to the chosen environment (dev | prod)
+# PROD is therefore manual-only: trigger this workflow by hand and pick "prod".
+# OIDC authentication — no stored client secrets. Requires the one-time
+# infra/bootstrap/bootstrap.sh before the first run.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+permissions:
+  id-token: write   # required for OIDC token request
+  contents: read
+
+concurrency:
+  group: azure-deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  ACR_LOGIN_SERVER: crulbraone.azurecr.io
+  TF_WORKING_DIR: infra/terraform
+  TF_BACKEND_RG: rg-ulbraone-tfstate
+  TF_BACKEND_SA: stulbraonetfstate
+  TF_BACKEND_CONTAINER: tfstate
+  # push → dev; manual dispatch → the chosen environment
+  TARGET_ENV: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Verify — mirrors existing deploy.yml structure
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Verify (build + unit tests + vuln audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Ulbra.One.slnx
+
+      - name: Audit shipped dependencies for vulnerabilities
+        run: |
+          dotnet list src/API/Ulbra.One.Api/Ulbra.One.Api.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable" vuln.txt; then
+            echo "::error::Vulnerable package(s) detected in the shipped API project"; exit 1
+          fi
+
+      - name: Build (Release)
+        run: dotnet build Ulbra.One.slnx -c Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test tests/Ulbra.One.UnitTests -c Release --no-build
+
+  # ---------------------------------------------------------------------------
+  # 2. Build & push images to ACR
+  # ---------------------------------------------------------------------------
+  build-images:
+    name: Build & push images to ACR
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image_sha: ${{ steps.sha.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to ACR
+        run: az acr login --name crulbraone
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/API/Ulbra.One.Api/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/api:${{ steps.sha.outputs.tag }}
+
+      - name: Build & push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/web:${{ steps.sha.outputs.tag }}
+
+  # ---------------------------------------------------------------------------
+  # 3. Deploy (single environment — dev on push, dev|prod on manual dispatch)
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy (${{ github.event.inputs.environment || 'dev' }})
+    needs: build-images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init (${{ env.TARGET_ENV }})
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ env.TF_BACKEND_RG }}" \
+            -backend-config="storage_account_name=${{ env.TF_BACKEND_SA }}" \
+            -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
+            -backend-config="key=${{ env.TARGET_ENV }}.tfstate"
+
+      - name: Terraform apply (${{ env.TARGET_ENV }})
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
+        run: |
+          terraform apply -auto-approve \
+            -var-file=${{ env.TARGET_ENV }}.tfvars \
+            -var="api_image=${{ env.ACR_LOGIN_SERVER }}/api:${{ needs.build-images.outputs.image_sha }}" \
+            -var="web_image=${{ env.ACR_LOGIN_SERVER }}/web:${{ needs.build-images.outputs.image_sha }}"

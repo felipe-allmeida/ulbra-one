@@ -22,7 +22,11 @@
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Modules/Accounting/Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Accounting/Ulbra.One.Accounting.Application/Ulbra.One.Accounting.Application.csproj" />
   </ItemGroup>
 </Project>

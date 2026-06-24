@@ -7,7 +7,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
-using Ulbra.One.Common.Infrastructure.Results;
+using Ulbra.One.Common.Application.Results;
 using Ulbra.One.Registry.Application.Contracts;
 using Ulbra.One.Registry.Domain.Entities;
 
@@ -27,7 +27,7 @@ public sealed class GetEmployee : IEndpoint
 
     private static async Task<IResult> Handle(
         EmployeeId id,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var employee = await uow.ReadSet<EmployeeEntity>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);

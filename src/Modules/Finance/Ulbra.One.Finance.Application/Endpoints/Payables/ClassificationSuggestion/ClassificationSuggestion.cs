@@ -19,10 +19,10 @@ public sealed class ClassificationSuggestion : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var target = await uow.ReadSet<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
-        if (target is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (target is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         var match = await uow.ReadSet<Payable>()
             .Where(p => p.Id != id.Value && p.VendorId == target.VendorId

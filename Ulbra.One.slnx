@@ -1,7 +1,11 @@
 <Solution>
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <Project Path="src/Ulbra.One.Persistence/Ulbra.One.Persistence.csproj" />
+    <Project Path="src/Ulbra.One.SourceGenerators/Ulbra.One.SourceGenerators.csproj" />
+  </Folder>
   <Folder Name="/src/API/">
     <Project Path="src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
+    <Project Path="src/Ulbra.One.AppHost/Ulbra.One.AppHost.csproj" />
   </Folder>
   <Folder Name="/src/Common/">
     <Project Path="src/Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
@@ -9,6 +13,11 @@
     <Project Path="src/Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Accounting/">
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Application/Ulbra.One.Accounting.Application.csproj" />
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
+    <Project Path="src/Modules/Accounting/Ulbra.One.Accounting.Infrastructure/Ulbra.One.Accounting.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Core/">
     <Project Path="src/Modules/Core/Ulbra.One.Core.Application/Ulbra.One.Core.Application.csproj" />
     <Project Path="src/Modules/Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
@@ -29,8 +38,14 @@
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Audit/">
+    <Project Path="src/Modules/Audit/Ulbra.One.Audit.Application/Ulbra.One.Audit.Application.csproj" />
+    <Project Path="src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <Project Path="src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ulbra.One.IntegrationTests/Ulbra.One.IntegrationTests.csproj" />
     <Project Path="tests/Ulbra.One.UnitTests/Ulbra.One.UnitTests.csproj" />
+    <Project Path="tests/Ulbra.One.SourceGenerators.Tests/Ulbra.One.SourceGenerators.Tests.csproj" />
   </Folder>
 </Solution>

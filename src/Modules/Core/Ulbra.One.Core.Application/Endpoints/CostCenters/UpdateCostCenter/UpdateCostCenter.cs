@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 
@@ -38,15 +38,15 @@ public sealed class UpdateCostCenter : IEndpoint
     private static async Task<IResult> Handle(
         CostCenterId id,
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var costCenter = await uow.Set<CostCenter>().FirstOrDefaultAsync(c => c.Id == id.Value, ct);
-        if (costCenter is null) return Results.NotFound();
+        if (costCenter is null) return TypedResults.NotFound();
 
         var unitIds = (req.UnitIds ?? []).Select(u => u.Value).Distinct().ToArray();
         if (!await UnitReconciliation.UnitsValid(uow, costCenter.CompanyId, unitIds, ct))
-            return Results.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
+            return TypedResults.Problem(detail: "One or more units do not belong to this company.", statusCode: StatusCodes.Status400BadRequest, title: "CostCenter.UnitsInvalid");
 
         costCenter.Update(req.Code, req.Name, req.AnnualBudget, req.AutoApprovalLimit);
 
@@ -57,6 +57,6 @@ public sealed class UpdateCostCenter : IEndpoint
             await uow.AddAsync(new CostCenterUnit(id.Value, uid), ct);
 
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(CostCenterResponse.From(costCenter, unitIds));
+        return TypedResults.Ok(CostCenterResponse.From(costCenter, unitIds));
     }
 }

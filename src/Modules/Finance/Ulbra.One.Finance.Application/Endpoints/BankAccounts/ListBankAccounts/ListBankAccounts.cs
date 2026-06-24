@@ -18,7 +18,7 @@ public sealed class ListBankAccounts : IEndpoint
             .RequireAuthorization().Produces<List<BankAccountResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        [FromKeyedServices("finance")] IUnitOfWork uow, CompanyId? companyId, bool? includeInactive, CancellationToken ct)
+        IUnitOfWork uow, CompanyId? companyId, bool? includeInactive, CancellationToken ct)
     {
         var q = uow.ReadSet<BankAccount>();
         if (companyId is { } cid) q = q.Where(a => a.CompanyId == cid.Value);

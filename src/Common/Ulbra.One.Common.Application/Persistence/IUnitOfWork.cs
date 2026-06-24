@@ -1,8 +1,10 @@
 namespace Ulbra.One.Common.Application.Persistence;
 
 /// <summary>
-/// Per-module unit of work over the module's DbContext. Endpoints inject it keyed by module
-/// (e.g. <c>[FromKeyedServices("core")]</c>) so the right context is bound.
+/// Single, non-keyed unit of work over the shared <c>AppDbContext</c>. Inject directly as
+/// <c>IUnitOfWork</c> — no <c>[FromKeyedServices]</c> required. The <c>Audit</c> module is the
+/// deliberate exception: it uses its own <c>AuditContext</c> registered under the keyed name
+/// <c>"audit"</c>.
 /// </summary>
 public interface IUnitOfWork
 {
@@ -19,4 +21,8 @@ public interface IUnitOfWork
     void RemoveRange<T>(IEnumerable<T> entities) where T : class;
 
     Task<int> SaveChangesAsync(CancellationToken ct);
+
+    /// <summary>Detaches all tracked entities, discarding pending in-memory changes. Use to recover a
+    /// clean state before re-fetching and retrying after a concurrency conflict.</summary>
+    void ClearChangeTracker();
 }

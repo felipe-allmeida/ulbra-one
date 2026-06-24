@@ -89,3 +89,7 @@ tasks/
 opensrc/
 
 .cursor/
+.tooling/
+.terraform/
+*.tfstate
+*.tfstate.*

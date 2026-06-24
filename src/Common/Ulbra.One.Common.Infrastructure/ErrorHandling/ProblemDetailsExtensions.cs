@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ulbra.One.Common.Infrastructure.ErrorHandling;
@@ -16,6 +18,22 @@ public static class ProblemDetailsExtensions
     {
         app.UseExceptionHandler(builder => builder.Run(async context =>
         {
+            var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+            // Optimistic-concurrency loss (Postgres xmin row-version) → 409 Conflict.
+            // Central mapping so every mutating endpoint is covered without per-endpoint try/catch.
+            // Error-code-in-title mirrors the Result→ProblemDetails convention (see ResultExtensions).
+            if (exception is DbUpdateConcurrencyException)
+            {
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                await TypedResults.Problem(
+                    title: "Concurrency.Conflict",
+                    detail: "The record was modified by another operation; reload and retry.",
+                    statusCode: StatusCodes.Status409Conflict,
+                    instance: context.Request.Path).ExecuteAsync(context);
+                return;
+            }
+
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             await TypedResults.Problem(
                 title: "Erro interno",

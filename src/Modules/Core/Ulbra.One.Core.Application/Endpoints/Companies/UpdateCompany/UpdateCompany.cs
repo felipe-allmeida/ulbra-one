@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 
@@ -34,7 +34,7 @@ public sealed class UpdateCompany : IEndpoint
     private static async Task<IResult> Handle(
         CompanyId id,
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var company = await uow.Set<Company>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);

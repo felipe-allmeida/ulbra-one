@@ -2,25 +2,35 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Core.Application;
 using Ulbra.One.Core.Infrastructure;
-using Ulbra.One.Core.Infrastructure.Database;
 using Ulbra.One.Identity.Application;
 using Ulbra.One.Identity.Infrastructure;
-using Ulbra.One.Identity.Infrastructure.Database;
 using Ulbra.One.Finance.Application;
 using Ulbra.One.Finance.Infrastructure;
-using Ulbra.One.Finance.Infrastructure.Database;
 using Ulbra.One.Registry.Application;
 using Ulbra.One.Registry.Infrastructure;
-using Ulbra.One.Registry.Infrastructure.Database;
+using Ulbra.One.Audit.Application;
+using Ulbra.One.Audit.Infrastructure;
+using Ulbra.One.Accounting.Application;
+using Ulbra.One.Accounting.Infrastructure;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
+using Ulbra.One.Api;
+using Ulbra.One.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Azure Key Vault — opt-in config source. Set KeyVault:Uri in env/appsettings to enable.
+// Secrets from the vault (e.g. ConnectionStrings--Database, Authentication--JwtSecret) override
+// appsettings/env values. Inert when unset → local/dev behaviour unchanged.
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new Azure.Identity.DefaultAzureCredential());
 
 // Observability: OpenTelemetry tracing/metrics + structured JSON logging (config-driven, no-op without a collector).
 builder.AddAppObservability();
@@ -157,29 +167,14 @@ builder.Services.AddSwaggerGen(options =>
     options.SchemaFilter<Ulbra.One.Api.RequiredPropertiesSchemaFilter>();
 
     // Prefixed typed ids serialize as opaque strings (prefix_<guid:N>); describe them as string in the spec
-    // so generated TS keeps them as `string`.
+    // so generated TS keeps them as `string`. The registry is source-generated from all [PrefixedId] structs.
     static Microsoft.OpenApi.OpenApiSchema IdSchema(string example) => new()
     {
         Type = Microsoft.OpenApi.JsonSchemaType.String,
         Example = System.Text.Json.Nodes.JsonValue.Create(example),
     };
-    options.MapType<Ulbra.One.Common.Application.Ids.CompanyId>(() => IdSchema("company_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.UnitId>(() => IdSchema("unit_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.CostCenterId>(() => IdSchema("cost_center_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.TransactionId>(() => IdSchema("transaction_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.VendorId>(() => IdSchema("vendor_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.CustomerId>(() => IdSchema("customer_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.EmployeeId>(() => IdSchema("employee_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.UserId>(() => IdSchema("user_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PayableId>(() => IdSchema("payable_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.InstallmentId>(() => IdSchema("installment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ExpenseCategoryId>(() => IdSchema("expense_category_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PayableAttachmentId>(() => IdSchema("attachment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.BankAccountId>(() => IdSchema("bank_account_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.PaymentId>(() => IdSchema("payment_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.StatementImportId>(() => IdSchema("statement_import_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.BankTransactionId>(() => IdSchema("bank_txn_3fa85f64571742199730000000000000"));
-    options.MapType<Ulbra.One.Common.Application.Ids.ChartAccountId>(() => IdSchema("chart_account_3fa85f64571742199730000000000000"));
+    foreach (var (type, example) in Ulbra.One.Common.Application.Ids.PrefixedIdRegistry.All)
+        options.MapType(type, () => IdSchema(example));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -191,10 +186,16 @@ builder.Services.AddCoreModule(builder.Configuration);
 builder.Services.AddFinanceModule(builder.Configuration);
 builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
+builder.Services.AddAuditModule(builder.Configuration);
+builder.Services.AddAccountingModule(builder.Configuration);
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
 
 // Health checks
-builder.Services.AddHealthChecks().AddNpgSql(connectionString);
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddNpgSql(connectionString, name: "database", tags: ["ready"]);
 
 var app = builder.Build();
 
@@ -205,14 +206,33 @@ using (var scope = app.Services.CreateScope())
     var attempts = 0;
     const int maxAttempts = 30;
     var delay = TimeSpan.FromSeconds(2);
+    const long migrationLockKey = 427529; // arbitrary fixed key; serializes migrations across replicas
     while (true)
     {
         try
         {
-            await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<FinanceContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<RegistryContext>().Database.MigrateAsync();
+            // Hold a Postgres session-level advisory lock on a dedicated connection so concurrent
+            // app instances apply migrations one at a time instead of racing the same DDL.
+            await using var lockConn = new Npgsql.NpgsqlConnection(connectionString);
+            await lockConn.OpenAsync();
+            await using (var lockCmd = lockConn.CreateCommand())
+            {
+                lockCmd.CommandText = "SELECT pg_advisory_lock(@key)";
+                lockCmd.Parameters.AddWithValue("key", migrationLockKey);
+                await lockCmd.ExecuteNonQueryAsync();
+            }
+            try
+            {
+                await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetRequiredService<AuditContext>().Database.MigrateAsync();
+            }
+            finally
+            {
+                await using var unlockCmd = lockConn.CreateCommand();
+                unlockCmd.CommandText = "SELECT pg_advisory_unlock(@key)";
+                unlockCmd.Parameters.AddWithValue("key", migrationLockKey);
+                await unlockCmd.ExecuteNonQueryAsync();
+            }
             break;
         }
         catch (Exception ex) when (attempts++ < maxAttempts)
@@ -236,8 +256,21 @@ app.UseAppExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Liveness: process is up (no external deps). Readiness: dependencies (DB) are reachable.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = r => r.Tags.Contains("live"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = r => r.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+// Backward-compatible default = readiness.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
+    Predicate = r => r.Tags.Contains("ready"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
@@ -246,6 +279,8 @@ apiGroup.MapIdentityEndpoints();
 apiGroup.MapCoreEndpoints();
 apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
+apiGroup.MapAuditEndpoints();
+apiGroup.MapAccountingEndpoints();
 
 app.Run();
 

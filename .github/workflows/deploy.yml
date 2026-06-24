@@ -17,8 +17,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    name: Verify (build + unit tests + vuln audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore Ulbra.One.slnx
+      - name: Audit shipped dependencies for vulnerabilities
+        run: |
+          dotnet list src/API/Ulbra.One.Api/Ulbra.One.Api.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable" vuln.txt; then
+            echo "::error::Vulnerable package(s) detected in the shipped API project"; exit 1
+          fi
+      - name: Build (Release)
+        run: dotnet build Ulbra.One.slnx -c Release --no-restore
+      - name: Run unit tests
+        run: dotnet test tests/Ulbra.One.UnitTests -c Release --no-build
+
   build:
     name: Build & push images
+    needs: verify
     runs-on: [self-hosted, ulbra]
     permissions:
       contents: read

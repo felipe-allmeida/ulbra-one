@@ -1,5 +1,5 @@
 using Ulbra.One.Common.Application.Ids;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Registry.Application.Validation;

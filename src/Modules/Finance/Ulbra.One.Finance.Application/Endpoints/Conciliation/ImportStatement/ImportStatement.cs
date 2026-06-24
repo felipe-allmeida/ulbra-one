@@ -25,16 +25,16 @@ public sealed class ImportStatement : IEndpoint
         BankAccountId bankAccountId,
         IFormFile file,
         IBankStatementParser parser,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         TimeProvider clock,
         CancellationToken ct)
     {
         var account = await uow.ReadSet<BankAccount>().FirstOrDefaultAsync(b => b.Id == bankAccountId.Value, ct);
         if (account is null)
-            return Results.Problem(detail: "Bank account not found.", statusCode: 400, title: "BankAccount.NotFound");
+            return TypedResults.Problem(detail: "Bank account not found.", statusCode: 400, title: "BankAccount.NotFound");
 
         if (file.Length == 0)
-            return Results.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
+            return TypedResults.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
 
         ParsedStatement parsed;
         try
@@ -44,7 +44,7 @@ public sealed class ImportStatement : IEndpoint
         }
         catch
         {
-            return Results.Problem(detail: "Could not parse the bank statement.", statusCode: 400, title: "Statement.ParseFailed");
+            return TypedResults.Problem(detail: "Could not parse the bank statement.", statusCode: 400, title: "Statement.ParseFailed");
         }
 
         var existingIds = await uow.ReadSet<BankTransaction>()
@@ -78,7 +78,7 @@ public sealed class ImportStatement : IEndpoint
             await uow.AddAsync(t, ct);
         await uow.SaveChangesAsync(ct);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/api/statement-imports/{new StatementImportId(import.Id)}",
             StatementImportResponse.From(import));
     }

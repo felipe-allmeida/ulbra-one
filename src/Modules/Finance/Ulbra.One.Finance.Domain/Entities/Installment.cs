@@ -27,6 +27,9 @@ public class Installment
     {
         if (Status == InstallmentStatus.Paid)
             throw new InvalidOperationException("Installment is already settled.");
+        var remaining = Amount - PaidAmount;
+        if (payment.PrincipalApplied > remaining + 0.005m)
+            throw new InvalidOperationException("Payment principal exceeds the installment's outstanding balance.");
         _payments.Add(payment);
         Recompute();
         return payment;

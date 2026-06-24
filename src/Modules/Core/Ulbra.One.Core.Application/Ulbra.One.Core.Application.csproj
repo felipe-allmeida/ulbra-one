@@ -4,7 +4,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
-    <ProjectReference Include="../Ulbra.One.Core.Infrastructure/Ulbra.One.Core.Infrastructure.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
   </ItemGroup>
 </Project>

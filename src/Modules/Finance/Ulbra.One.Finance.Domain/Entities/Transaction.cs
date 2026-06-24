@@ -1,5 +1,9 @@
 namespace Ulbra.One.Finance.Domain.Entities;
 
+// TODO(AEL-579): legacy generic entity, superseded by the Payable aggregate for accounts payable.
+// Kept for now — to be merged with an upcoming Receivable PR; decide then whether to delete it or
+// promote it into a proper Receivable aggregate (with IAuditable/ISoftDeletable/TimeProvider, like Payable).
+// Until then it does NOT honor audit/soft-delete conventions and uses DateTime.UtcNow — do not extend it.
 /// <summary>Financial transaction (payable/receivable), classified by Company × Unit × CostCenter.</summary>
 public class Transaction
 {

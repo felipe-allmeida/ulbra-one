@@ -20,7 +20,7 @@ public sealed class UpdateClassificationPolicy : IEndpoint
             .RequireAuthorization().Produces<ClassificationPolicyResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(CompanyId companyId, Request req,
-        [FromKeyedServices("finance")] IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, CancellationToken ct)
     {
         var policy = await uow.Set<ClassificationPolicy>()
             .FirstOrDefaultAsync(p => p.CompanyId == companyId.Value, ct);

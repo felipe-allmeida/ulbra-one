@@ -29,6 +29,9 @@ import {
   ListTree,
   Tags,
   CalendarClock,
+  BookText,
+  BookOpen,
+  Scale,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -45,12 +48,24 @@ import {
   ContaPagarDetailPage,
   EditarContaPagarPage,
 } from './pages/contas-a-pagar';
+import {
+  ContasReceberPage,
+  NovaContaReceberPage,
+  ContaReceberDetailPage,
+  EditarContaReceberPage,
+} from './pages/contas-a-receber';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { PlanoDeContasPage } from './pages/plano-de-contas';
+import { ContabilPlanoPage } from './pages/contabil-plano';
+import { ContabilLancamentosPage } from './pages/contabil-lancamentos';
+import { ContabilBalancetePage } from './pages/contabil-balancete';
+import { ContabilDrePage } from './pages/contabil-dre';
+import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
+import { CashFlowPage } from './pages/cash-flow';
 import { FornecedoresPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
@@ -76,12 +91,22 @@ export default function App() {
         <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
         <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
         <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
+        <Route path='contas-a-receber' element={<ContasReceberPage />} />
+        <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
+        <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />
+        <Route path='contas-a-receber/:id/editar' element={<EditarContaReceberPage />} />
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
         <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
+        <Route path='contabil/plano-de-contas' element={<ContabilPlanoPage />} />
+        <Route path='contabil/lancamentos' element={<ContabilLancamentosPage />} />
+        <Route path='contabil/balancete' element={<ContabilBalancetePage />} />
+        <Route path='contabil/dre' element={<ContabilDrePage />} />
+        <Route path='contabil/balanco' element={<ContabilBalancoPage />} />
         <Route path='classificacao' element={<ClassificacaoPage />} />
         <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
+        <Route path='cash-flow' element={<CashFlowPage />} />
         <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
         <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
         <Route path='aprovacoes' element={<AprovacoesPage />} />
@@ -137,7 +162,27 @@ function Shell({ children }: { children: ReactNode }) {
     nav('/');
   };
 
-  const crumb = at('estrutura') ? (
+  const crumb = at('contabil/plano-de-contas') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.ledgerAccounts')}</b>
+    </>
+  ) : at('contabil/lancamentos') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.journalEntries')}</b>
+    </>
+  ) : at('contabil/balancete') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.trialBalance')}</b>
+    </>
+  ) : at('contabil/dre') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.incomeStatement')}</b>
+    </>
+  ) : at('contabil/balanco') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.balanceSheet')}</b>
+    </>
+  ) : at('estrutura') ? (
     <>
       {t('nav.sections.structure')} <b>/ {t('nav.companiesUnits')}</b>
     </>
@@ -181,11 +226,15 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.aging')}</b>
     </>
+  ) : at('cash-flow') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.cashFlow')}</b>
+    </>
   ) : at('contas-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
     </>
-  ) : at('contas-receber') ? (
+  ) : at('contas-a-receber') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsReceivable')}</b>
     </>
@@ -234,10 +283,15 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem
             icon={<ArrowDownLeft />}
             label={t('nav.accountsReceivable')}
-            active={at('contas-receber')}
-            onClick={() => go('/app/contas-receber')}
+            active={at('contas-a-receber')}
+            onClick={() => go('/app/contas-a-receber')}
           />
-          <NavItem icon={<Activity />} label={t('nav.cashFlow')} />
+          <NavItem
+            icon={<Activity />}
+            label={t('nav.cashFlow')}
+            active={at('cash-flow')}
+            onClick={() => go('/app/cash-flow')}
+          />
           <NavItem
             icon={<ClipboardCheck />}
             label={t('nav.approvals')}
@@ -278,6 +332,37 @@ function Shell({ children }: { children: ReactNode }) {
           <NavItem icon={<FileBox />} label={t('nav.documents')} />
           <NavItem icon={<LineChart />} label={t('nav.projections')} />
           <NavItem icon={<ShieldCheck />} label={t('nav.audit')} />
+          <Section>{t('nav.sections.accounting')}</Section>
+          <NavItem
+            icon={<ListTree />}
+            label={t('nav.ledgerAccounts')}
+            active={at('contabil/plano-de-contas')}
+            onClick={() => go('/app/contabil/plano-de-contas')}
+          />
+          <NavItem
+            icon={<BookOpen />}
+            label={t('nav.journalEntries')}
+            active={at('contabil/lancamentos')}
+            onClick={() => go('/app/contabil/lancamentos')}
+          />
+          <NavItem
+            icon={<Scale />}
+            label={t('nav.trialBalance')}
+            active={at('contabil/balancete')}
+            onClick={() => go('/app/contabil/balancete')}
+          />
+          <NavItem
+            icon={<LineChart />}
+            label={t('nav.incomeStatement')}
+            active={at('contabil/dre')}
+            onClick={() => go('/app/contabil/dre')}
+          />
+          <NavItem
+            icon={<BookText />}
+            label={t('nav.balanceSheet')}
+            active={at('contabil/balanco')}
+            onClick={() => go('/app/contabil/balanco')}
+          />
           <Section>{t('nav.sections.registry')}</Section>
           <NavItem
             icon={<Truck />}

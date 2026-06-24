@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Authentication;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -22,12 +22,12 @@ public sealed class RejectPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, RejectRequest req, UserContext user,
-        [FromKeyedServices("finance")] IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (p is null) return Results.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
+        if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
         try { p.Reject(req.Reason, user.UserId, clock.GetUtcNow()); }
-        catch (InvalidOperationException ex) { return Results.Problem(detail: ex.Message, statusCode: 409, title: "Payable.InvalidState"); }
+        catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 409, title: "Payable.InvalidState"); }
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));
     }

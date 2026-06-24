@@ -39,6 +39,10 @@ public static class ObservabilityExtensions
             });
         }
 
+        // Stamp the active trace/span id onto every log line so a log can be pivoted to its trace.
+        builder.Logging.Configure(o => o.ActivityTrackingOptions =
+            ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId | ActivityTrackingOptions.ParentId);
+
         // Resolve the OTLP endpoint (env var takes precedence over config). When absent, no exporter
         // is registered — no background connection attempts, no startup dependency on a collector.
         var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]

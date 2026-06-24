@@ -256,11 +256,13 @@ test('login -> plano de contas renders Contábil + Financeiro charts', async ({ 
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/inicio$/);
 
-  // Navigate to Plano de Contas via the sidebar nav item.
+  // Navigate to Plano de Contas via the sidebar nav item. Match exactly: the
+  // Contábil section adds a "Plano de contas contábil" item that would otherwise
+  // also match a substring "Plano de Contas".
   const sidebar = page.locator('aside.sidebar');
-  await sidebar.getByRole('button', { name: 'Plano de Contas' }).click();
+  await sidebar.getByRole('button', { name: 'Plano de Contas', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/plano-de-contas$/);
-  await expect(page.getByRole('heading', { name: 'Plano de Contas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Plano de Contas', exact: true })).toBeVisible();
 
   // Default chart is Contábil (Accounting). The seeder creates the synthetic
   // root "4 · Despesas" plus analytical children (4.1.01, …). Assert a seeded

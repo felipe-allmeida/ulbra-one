@@ -53,6 +53,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Ulbra.One.slnx
 
+      # Fail the build if the SHIPPED API project (incl. transitive deps) has any known-vulnerable
+      # package. Scoped to the deployable artifact — test-only transitive advisories are out of scope.
+      - name: Audit shipped dependencies for vulnerabilities
+        run: |
+          dotnet list src/API/Ulbra.One.Api/Ulbra.One.Api.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable" vuln.txt; then
+            echo "::error::Vulnerable package(s) detected in the shipped API project"; exit 1
+          fi
+
       - name: Build (Release)
         run: dotnet build Ulbra.One.slnx -c Release --no-restore
 

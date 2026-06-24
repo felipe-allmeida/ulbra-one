@@ -25,13 +25,13 @@ public sealed class ApproveTransaction : IEndpoint
 
     private static async Task<IResult> Handle(
         TransactionId id,
-        [FromKeyedServices("finance")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var t = await uow.Set<Transaction>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
-        if (t is null) return Results.NotFound();
+        if (t is null) return TypedResults.NotFound();
         t.Approve();
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(TransactionResponse.From(t));
+        return TypedResults.Ok(TransactionResponse.From(t));
     }
 }

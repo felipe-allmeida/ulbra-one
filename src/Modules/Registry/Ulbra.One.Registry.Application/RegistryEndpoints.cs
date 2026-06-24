@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Ulbra.One.Common.Infrastructure.Extensions;
+using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Registry.Application.Endpoints.Customers.ActivateCustomer;
 using Ulbra.One.Registry.Application.Endpoints.Customers.CreateCustomer;
 using Ulbra.One.Registry.Application.Endpoints.Customers.DeactivateCustomer;

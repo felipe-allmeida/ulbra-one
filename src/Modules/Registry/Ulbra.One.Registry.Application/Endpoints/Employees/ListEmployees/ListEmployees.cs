@@ -26,7 +26,7 @@ public sealed class ListEmployees : IEndpoint
         CompanyId? companyId,
         string? search,
         [AsParameters] PaginationQueryParameters pagination,
-        [FromKeyedServices("registry")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var query = uow.ReadSet<EmployeeEntity>();
@@ -34,6 +34,6 @@ public sealed class ListEmployees : IEndpoint
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(e => e.Name.Contains(search) || e.Document.Contains(search));
         var page = await query.OrderBy(e => e.Name).ToPaginatedAsync(pagination, ct);
-        return Results.Ok(page.Map(EmployeeResponse.From));
+        return TypedResults.Ok(page.Map(EmployeeResponse.From));
     }
 }

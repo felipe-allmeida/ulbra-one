@@ -7,12 +7,21 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
+  type AccountGroup,
   type AccountKind,
   type AgingBucket,
+  type JournalEntry,
+  type JournalEntryInput,
+  type JournalStatus,
+  type LedgerAccount,
+  type LedgerAccountInput,
+  type LedgerAccountKind,
+  type LedgerAccountUpdateInput,
   type BankAccount,
   type BankAccountInput,
   type BankAccountUpdateInput,
   type BankTransaction,
+  type CashFlowGranularity,
   type ChartAccount,
   type ChartType,
   type ClassificationPolicy,
@@ -23,13 +32,20 @@ import {
   type Employee,
   type EmployeeInput,
   type ExpenseCategory,
+  type FiscalDocument,
   type MatchStatus,
+  type ParsedFiscalDocument,
   type Payable,
   type PayableAttachment,
   type PayableInput,
   type PayableStatus,
   type Payment,
+  type Receipt,
+  type Receivable,
+  type ReceivableInput,
+  type ReceivableStatus,
   type RegisterPaymentInput,
+  type RegisterReceiptInput,
   type StatementImport,
   type Transaction,
   type TransactionStatus,
@@ -53,6 +69,8 @@ export const queryKeys = {
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
+  receivables: (params: ReceivablesParams) => ['receivables', params] as const,
+  receivable: (id: string) => ['receivable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
@@ -62,7 +80,56 @@ export const queryKeys = {
   classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
   aging: (companyId: string, asOf?: string) => ['aging', companyId, asOf ?? ''] as const,
   agingItems: (params: AgingItemsParams) => ['agingItems', params] as const,
+  ledgerAccounts: (params: LedgerAccountsParams) => ['ledgerAccounts', params] as const,
+  journalEntries: (params: JournalEntriesParams) => ['journalEntries', params] as const,
+  journalEntry: (id: string) => ['journalEntry', id] as const,
+  trialBalance: (companyId?: string) => ['trialBalance', companyId ?? ''] as const,
+  incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
+  balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
+  cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
+  cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
 };
+
+export interface LedgerAccountsParams {
+  companyId?: string;
+  accountGroup?: AccountGroup;
+  kind?: LedgerAccountKind;
+  activeOnly?: boolean;
+}
+
+export interface JournalEntriesParams {
+  companyId?: string;
+  status?: JournalStatus;
+  from?: string;
+  to?: string;
+}
+
+export interface IncomeStatementParams {
+  companyId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface BalanceSheetParams {
+  companyId?: string;
+  asOf?: string;
+}
+
+export interface CashFlowParams {
+  companyId?: string;
+  granularity?: CashFlowGranularity;
+  horizon?: number;
+  asOf?: string;
+  minReserve?: number;
+}
+
+export interface CashFlowItemsParams {
+  companyId?: string;
+  from: string;
+  to: string;
+  direction: 'in' | 'out';
+  asOf?: string;
+}
 
 export interface BankTransactionsParams {
   companyId?: string;
@@ -85,6 +152,18 @@ export interface PayablesParams {
   dueTo?: string;
   paid?: boolean;
   classified?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ReceivablesParams {
+  companyId?: string;
+  status?: ReceivableStatus;
+  payerId?: string;
+  costCenterId?: string;
+  dueFrom?: string;
+  dueTo?: string;
+  received?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -203,6 +282,23 @@ export function usePayable(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payable(id ?? ''),
     queryFn: () => api.getPayable(id!),
+    enabled: !!id,
+  });
+}
+
+export function useReceivables(params: ReceivablesParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.receivables(params),
+    queryFn: () => api.listReceivables(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useReceivable(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.receivable(id ?? ''),
+    queryFn: () => api.getReceivable(id!),
     enabled: !!id,
   });
 }
@@ -510,6 +606,29 @@ export function useDeletePayableAttachment(
   );
 }
 
+/** Stateless parse/preview of an uploaded NF — no cache to invalidate. */
+export function useParseFiscalDocument(
+  options?: UseMutationOptions<ParsedFiscalDocument, unknown, { companyId: string; file: File }>,
+) {
+  return useMutation<ParsedFiscalDocument, unknown, { companyId: string; file: File }>({
+    mutationFn: ({ companyId, file }) => api.parseFiscalDocument(companyId, file),
+    ...options,
+  });
+}
+
+export function useUploadPayableFiscalDocument(
+  options?: UseMutationOptions<FiscalDocument, unknown, { id: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, file }) => api.uploadPayableFiscalDocument(id, file),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
 /* ---------- Expense categories ---------- */
 export function useSaveExpenseCategory(
   options?: UseMutationOptions<ExpenseCategory, unknown, { id?: string; name: string; active?: boolean }>,
@@ -558,6 +677,9 @@ export function useDeleteBankAccount(options?: UseMutationOptions<void, unknown,
 function invalidatePayablePayment(qc: ReturnType<typeof useQueryClient>, payableId: string) {
   void qc.invalidateQueries({ queryKey: ['payables'] });
   void qc.invalidateQueries({ queryKey: queryKeys.payable(payableId) });
+  // A payment moves cash (actual outflow + account balance) — keep cash flow fresh.
+  void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+  void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
 }
 
 export function useRegisterPayment(
@@ -594,6 +716,21 @@ export function useUploadPaymentProof(
   );
 }
 
+/* ---------- Receivables (Contas a Receber) ---------- */
+/** Invalidates the receivables lists + the single receivable cache after a state change. */
+function invalidateReceivable(qc: ReturnType<typeof useQueryClient>, data: Receivable) {
+  void qc.invalidateQueries({ queryKey: ['receivables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.receivable(data.id) });
+}
+
+export function useCreateReceivable(options?: UseMutationOptions<Receivable, unknown, ReceivableInput>) {
+  return useInvalidatingMutation(
+    (body) => api.createReceivable(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['receivables'] }),
+    options,
+  );
+}
+
 /* ---------- Conciliação OFX (statement imports + bank transactions) ---------- */
 /** Invalidates the bank-transaction lists + the statement-import lists after a match/baixa change.
  * Also invalidates payables, since confirming/matching a transaction registers a baixa. */
@@ -612,6 +749,40 @@ export function useImportStatement(
       void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
       void qc.invalidateQueries({ queryKey: ['statementImports'] });
     },
+    options,
+  );
+}
+
+export function useUpdateReceivable(
+  options?: UseMutationOptions<Receivable, unknown, { id: string; body: Omit<ReceivableInput, 'origin'> }>,
+) {
+  return useInvalidatingMutation(({ id, body }) => api.updateReceivable(id, body), invalidateReceivable, options);
+}
+
+export function useCancelReceivable(options?: UseMutationOptions<Receivable, unknown, { id: string; reason: string }>) {
+  return useInvalidatingMutation(({ id, reason }) => api.cancelReceivable(id, reason), invalidateReceivable, options);
+}
+
+/* ---------- Receipts (baixa de entrada) ---------- */
+/** Invalidates the receivables lists + the single receivable cache after a receipt change. */
+function invalidateReceivableReceipt(qc: ReturnType<typeof useQueryClient>, receivableId: string) {
+  void qc.invalidateQueries({ queryKey: ['receivables'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.receivable(receivableId) });
+  // A receipt moves cash (actual inflow + account balance) — keep cash flow fresh.
+  void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+  void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
+}
+
+export function useRegisterReceipt(
+  options?: UseMutationOptions<
+    Receivable,
+    unknown,
+    { receivableId: string; installmentId: string; body: RegisterReceiptInput }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, installmentId, body }) => api.registerReceipt(receivableId, installmentId, body),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
     options,
   );
 }
@@ -675,6 +846,42 @@ export function useAgingItems(params: AgingItemsParams, options?: { enabled?: bo
   });
 }
 
+/* ---------- Cash flow (Fluxo de caixa) ---------- */
+export function useCashFlow(params: CashFlowParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.cashFlow(params),
+    queryFn: () => api.cashFlow(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCashFlowItems(params: CashFlowItemsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.cashFlowItems(params),
+    queryFn: () => api.cashFlowItems(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useSetReconciledBalance(
+  options?: UseMutationOptions<
+    Awaited<ReturnType<typeof api.setReconciledBalance>>,
+    unknown,
+    { bankAccountId: string; balance: number; asOf: string }
+  >,
+) {
+  return useInvalidatingMutation(
+    ({ bankAccountId, balance, asOf }) => api.setReconciledBalance(bankAccountId, { balance, asOf }),
+    (qc) => {
+      void qc.invalidateQueries({ queryKey: ['cashFlow'] });
+      void qc.invalidateQueries({ queryKey: ['cashFlowItems'] });
+      void qc.invalidateQueries({ queryKey: ['bankAccounts'] });
+    },
+    options,
+  );
+}
+
 export function useCreateChartAccount(
   options?: UseMutationOptions<ChartAccount, unknown, Parameters<typeof api.createChartAccount>[0]>,
 ) {
@@ -699,10 +906,30 @@ export function useUpdateChartAccount(
   );
 }
 
+export function useReverseReceipt(
+  options?: UseMutationOptions<Receivable, unknown, { receivableId: string; receiptId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, receiptId, reason }) => api.reverseReceipt(receivableId, receiptId, reason),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
+    options,
+  );
+}
+
 export function useDeleteChartAccount(options?: UseMutationOptions<void, unknown, { id: string }>) {
   return useInvalidatingMutation(
     ({ id }) => api.deleteChartAccount(id),
     (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
+    options,
+  );
+}
+
+export function useUploadReceiptProof(
+  options?: UseMutationOptions<Receipt, unknown, { receivableId: string; receiptId: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ receivableId, receiptId, file }) => api.uploadReceiptProof(receivableId, receiptId, file),
+    (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
     options,
   );
 }
@@ -767,4 +994,126 @@ export function useUpdateClassificationPolicy(
     (qc, data) => void qc.invalidateQueries({ queryKey: queryKeys.classificationPolicy(data.companyId) }),
     options,
   );
+}
+
+/* ---------- Accounting: Ledger accounts (plano de contas contábil) ---------- */
+export function useLedgerAccounts(params: LedgerAccountsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.ledgerAccounts(params),
+    queryFn: () => api.listLedgerAccounts(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useCreateLedgerAccount(options?: UseMutationOptions<LedgerAccount, unknown, LedgerAccountInput>) {
+  return useInvalidatingMutation(
+    (body) => api.createLedgerAccount(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['ledgerAccounts'] }),
+    options,
+  );
+}
+
+export function useUpdateLedgerAccount(
+  options?: UseMutationOptions<LedgerAccount, unknown, { id: string; body: LedgerAccountUpdateInput }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.updateLedgerAccount(id, body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['ledgerAccounts'] }),
+    options,
+  );
+}
+
+export function useSeedLedgerAccounts(options?: UseMutationOptions<LedgerAccount[], unknown, { companyId: string }>) {
+  return useInvalidatingMutation(
+    ({ companyId }) => api.seedLedgerAccounts(companyId),
+    (qc) => void qc.invalidateQueries({ queryKey: ['ledgerAccounts'] }),
+    options,
+  );
+}
+
+/* ---------- Accounting: Journal entries (lançamentos) ---------- */
+export function useJournalEntries(params: JournalEntriesParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.journalEntries(params),
+    queryFn: () => api.listJournalEntries(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useJournalEntry(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.journalEntry(id ?? ''),
+    queryFn: () => api.getJournalEntry(id!),
+    enabled: !!id,
+  });
+}
+
+/** Invalidates the journal lists + single cache + every accounting report after a change. */
+function invalidateJournal(qc: ReturnType<typeof useQueryClient>, entryId?: string) {
+  void qc.invalidateQueries({ queryKey: ['journalEntries'] });
+  if (entryId) void qc.invalidateQueries({ queryKey: queryKeys.journalEntry(entryId) });
+  void qc.invalidateQueries({ queryKey: ['trialBalance'] });
+  void qc.invalidateQueries({ queryKey: ['incomeStatement'] });
+  void qc.invalidateQueries({ queryKey: ['balanceSheet'] });
+}
+
+export function useCreateJournalEntry(options?: UseMutationOptions<JournalEntry, unknown, JournalEntryInput>) {
+  return useInvalidatingMutation(
+    (body) => api.createJournalEntry(body),
+    (qc, data) => invalidateJournal(qc, data.id),
+    options,
+  );
+}
+
+export function useUpdateJournalEntry(
+  options?: UseMutationOptions<JournalEntry, unknown, { id: string; body: Omit<JournalEntryInput, 'companyId'> }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => api.updateJournalEntry(id, body),
+    (qc, data) => invalidateJournal(qc, data.id),
+    options,
+  );
+}
+
+export function usePostJournalEntry(options?: UseMutationOptions<JournalEntry, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.postJournalEntry(id),
+    (qc, data) => invalidateJournal(qc, data.id),
+    options,
+  );
+}
+
+export function useReverseJournalEntry(
+  options?: UseMutationOptions<JournalEntry, unknown, { id: string; reason: string; competenceDate?: string | null }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, reason, competenceDate }) => api.reverseJournalEntry(id, reason, competenceDate),
+    (qc, _data, vars) => invalidateJournal(qc, vars.id),
+    options,
+  );
+}
+
+/* ---------- Accounting: Reports ---------- */
+export function useTrialBalance(companyId?: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.trialBalance(companyId),
+    queryFn: () => api.trialBalance(companyId),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useIncomeStatement(params: IncomeStatementParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.incomeStatement(params),
+    queryFn: () => api.incomeStatement(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useBalanceSheet(params: BalanceSheetParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.balanceSheet(params),
+    queryFn: () => api.balanceSheet(params),
+    enabled: options?.enabled ?? true,
+  });
 }

@@ -41,20 +41,49 @@ apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
 ```
 
-Each module exposes `AddXModule(IServiceCollection, IConfiguration)` (registers its `DbContext` +
-services) and `MapXEndpoints(IEndpointRouteBuilder)` (instantiates each `IEndpoint`). New module →
+Each module exposes `AddXModule(IServiceCollection, IConfiguration)` (registers its services) and
+`MapXEndpoints(IEndpointRouteBuilder)` (instantiates each `IEndpoint`). New module →
 add both calls to `Program.cs`.
 
 **Persistence stack**: EF Core 10 code-first on Npgsql with `UseSnakeCaseNamingConvention()`
-(tables/columns become snake_case automatically), **schema per module** via
-`modelBuilder.HasDefaultSchema(Schema)`. Migrations live in each module's
-`Infrastructure/Database/Migrations/` and are **auto-applied at startup** in `Program.cs` (with a
-retry loop, since Postgres may not be ready when the API boots):
+(tables/columns become snake_case automatically). There is a **single `AppDbContext`** in
+`Ulbra.One.Persistence`; modules do NOT each own a `DbContext`. Instead each module owns its
+entity classes + `IEntityTypeConfiguration<T>` classes (registered by calling
+`modelBuilder.ApplyConfigurationsFromAssembly(...)` per module assembly). Schema is set per-entity
+via `e.Metadata.SetSchema("<schema>")` inside the configuration — this is the **one allowed
+`.ToTable`-adjacent exception** (schema only; table/column names are still derived by the
+snake_case convention). Example:
 
 ```csharp
-await scope.ServiceProvider.GetRequiredService<IdentityContext>().Database.MigrateAsync();
-await scope.ServiceProvider.GetRequiredService<CoreContext>().Database.MigrateAsync();
-// ... Finance, Registry
+// CoreCompanyConfiguration.cs (inside Ulbra.One.Core.Infrastructure)
+public void Configure(EntityTypeBuilder<Company> e)
+{
+    e.Metadata.SetSchema("core");
+    // indexes, owned types, etc. — no .ToTable(), no .HasColumnName()
+}
+```
+
+**Cross-module references**: even though all modules share one DB and one context, modules must
+**never** create foreign key constraints to another module's tables. Reference other modules only
+by loose `Id` (e.g. `Guid VendorId` on `Payable` — no navigation property, no FK). This preserves
+bounded-context modularity now that the physical context boundary is gone.
+
+**Audit exception**: `AuditContext` (in `Ulbra.One.Audit.Infrastructure`) is the only separate
+context — it has its own dedicated keyed `"audit"` `IUnitOfWork` for append-only audit writes.
+
+Migrations live in `Ulbra.One.Persistence/Migrations/` and are **auto-applied at startup** in
+`Program.cs` (with a retry loop, since Postgres may not be ready when the API boots):
+
+```csharp
+await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+```
+
+Generate new migrations with:
+```bash
+dotnet ef migrations add <Name> \
+  --project src/Ulbra.One.Persistence \
+  --startup-project src/API/Ulbra.One.Api \
+  --context AppDbContext
 ```
 
 ---
@@ -90,9 +119,9 @@ Conventions:
   `.Produces<TDto>(StatusCodes.Status201Created)`, `.ProducesProblem(StatusCodes.Status404NotFound)`, etc.
 
 ```csharp
-group.MapGet("/{id:guid}", async (Guid id, RegistryContext db, CancellationToken ct) =>
+group.MapGet("/{id:guid}", async (Guid id, IUnitOfWork uow, CancellationToken ct) =>
 {
-    var vendor = await db.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct);
+    var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == id, ct);
     return (vendor is null
         ? Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found."))
         : Result.Success(VendorResponse.From(vendor))).ToOk();
@@ -139,12 +168,12 @@ conditions, not client errors).
 - The **frontend maps the code → pt-BR** via i18n (`errors.codes.*`). Do **not** localize on the
   backend — code in English, the code is the contract.
 
-For simple endpoints, raw `Results.Problem(...)` with an explicit `title:` code is fine (no `Result`
+For simple endpoints, raw `TypedResults.Problem(...)` with an explicit `title:` code is fine (no `Result`
 wrapper required):
 
 ```csharp
 if (req.Amount <= 0)
-    return Results.Problem(detail: "Amount must be greater than zero.",
+    return TypedResults.Problem(detail: "Amount must be greater than zero.",
         statusCode: StatusCodes.Status400BadRequest, title: "Transaction.AmountInvalid");
 ```
 
@@ -159,13 +188,13 @@ sets `Instance` to the request path.
 FluentValidation, applied through the generic endpoint filter — never inline in the handler:
 
 ```csharp
-group.MapPost("/", async (VendorRequest req, RegistryContext db, CancellationToken ct) => { /* ... */ })
+group.MapPost("/", async (VendorRequest req, IUnitOfWork uow, CancellationToken ct) => { /* ... */ })
     .WithValidation<VendorRequest>()   // → 400 ValidationProblem with per-field errors
     .WithName("CreateVendor");
 ```
 
 `ValidationEndpointFilter<TRequest>` resolves `IValidator<TRequest>`, validates the request arg, and
-returns `Results.ValidationProblem(errors)` grouped by property when invalid. Validators are
+returns `TypedResults.ValidationProblem(errors)` grouped by property when invalid. Validators are
 auto-registered per module (`AddValidatorsFromAssemblyContaining<…>` in `AddRegistryValidators`).
 
 Validators set a stable **error code** alongside the message; CPF/CNPJ check-digit (módulo 11)
@@ -182,8 +211,17 @@ RuleFor(x => x.Document)
 
 ## 5. Persistence
 
-- **One `DbContext` per module** (`CoreContext`, `FinanceContext`, `IdentityContext`,
-  `RegistryContext`), each with `public const string Schema` + `HasDefaultSchema(Schema)`.
+- **Single `AppDbContext`** (`Ulbra.One.Persistence`) — there are no per-module `DbContext` classes.
+  Each module owns its entity classes + `IEntityTypeConfiguration<T>` (living in the module's
+  `Infrastructure` project). `AppDbContext` discovers them by calling
+  `ApplyConfigurationsFromAssembly(...)` for each module assembly.
+- **Schema per entity** via `e.Metadata.SetSchema("<schema>")` inside the module's configuration
+  class. This is the only `.ToTable`-adjacent exception permitted — it sets the DB schema only; it
+  does **not** override table or column names (those remain snake_case from the convention).
+- **No cross-module FKs** — reference other modules by loose `Id` only (no navigation properties,
+  no FK constraints across schemas). Treat module boundaries as if they were separate databases.
+- **One non-keyed `IUnitOfWork`** — inject `IUnitOfWork` directly (no `[FromKeyedServices]`).
+  `Audit` is the deliberate exception: it has its own `AuditContext` + keyed `"audit"` `IUnitOfWork`.
 - **No `.ToTable()` / `.HasColumnName()`** — the snake_case convention handles naming. Configure
   only what the convention can't infer (lengths, precision, indexes, owned types, query filters).
 - **Auditing** — entities implement `IAuditable` (`CreatedAt/By`, `UpdatedAt/By`). `AuditInterceptor`
@@ -209,8 +247,7 @@ RuleFor(x => x.Document)
 
 - **Decimal precision** is explicit: `e.Property(x => x.CreditLimit).HasPrecision(18, 2)`.
 - **Owned value objects** (e.g. `Address`) via `e.OwnsOne(x => x.Address, ConfigureAddress)`.
-- **Migrations**: always `dotnet ef migrations add <Name>` into the module's
-  `Infrastructure/Database/Migrations/` — never hand-write them. They auto-apply at startup (§1).
+- **Migrations**: always generate via `dotnet ef migrations add <Name> --project src/Ulbra.One.Persistence --startup-project src/API/Ulbra.One.Api --context AppDbContext` — never hand-write them. They live in `Ulbra.One.Persistence/Migrations/` and auto-apply at startup (§1).
 
 ---
 
@@ -228,7 +265,7 @@ Browse lists take `[AsParameters] PaginationQueryParameters` (`page` 1-based, `p
 
 ```csharp
 var page = await query.OrderBy(v => v.Name).ToPaginatedAsync(pagination, ct);
-return Results.Ok(page.Map(VendorResponse.From));   // PaginatedResponse<VendorResponse>
+return TypedResults.Ok(page.Map(VendorResponse.From));   // PaginatedResponse<VendorResponse>
 ```
 
 `PaginatedResponse<T>(Items, Page, PageSize, Total, TotalPages)` has a `Map` that projects items
@@ -300,11 +337,82 @@ while preserving page metadata.
 
 ---
 
-## 11. Anti-patterns (do NOT)
+## 11. Typed IDs (`PrefixedId` source generator)
+
+Typed IDs are declared in `Common.Application/Ids/` using the `[PrefixedId]` attribute and a `partial record struct`:
+
+```csharp
+/// <summary>Strongly-typed, prefixed id for Payable entities (wire form <c>payable_{guid:N}</c>).</summary>
+[PrefixedId("payable_")]
+public readonly partial record struct PayableId(Guid Value);
+```
+
+The `PrefixedIdGenerator` (project `Ulbra.One.SourceGenerators`) emits the full boilerplate:
+
+- `IPrefixedId` + `IParsable<T>` interface implementations
+- `[JsonConverter(typeof(PrefixedIdJsonConverter<T>))]` attribute
+- `public static string Prefix` (the explicit prefix — never derived from the type name)
+- `public static T New()` (creates a new id with a fresh `Guid`)
+- `public override string ToString()` → wire form `prefix_{guid:N}` (e.g. `payable_3fa85f64...`)
+- Lenient `Parse` / `TryParse` (accepts both prefixed and bare Guid strings)
+
+The generator also emits **`PrefixedIdRegistry.g.cs`** (class `PrefixedIdRegistry` in
+`Ulbra.One.Common.Application.Ids`) containing a static `All` list of `(Type, Example)` pairs.
+`Program.cs` iterates `PrefixedIdRegistry.All` to register each id type's OpenAPI string schema in
+a single loop — **no manual `MapType` call per id is needed**.
+
+To add a new typed id: create the one-liner declaration above in `Common.Application/Ids/`. The
+generator does the rest automatically.
+
+---
+
+## 12. Eventing / Transactional Outbox
+
+**Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables (`masstransit.inbox_state`, `masstransit.outbox_message`, `masstransit.outbox_state`) atomically alongside business rows. `QueryDelay = 1s`. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
+
+**Status (AEL-588):** Foundation is complete — bus outbox is wired and proven by `OutboxFoundationTests`. Zero consumers are registered today. The first real consumer is AI auto-classification (AEL-557), implemented in a later PR.
+
+### Pattern
+
+1. **Contracts** are defined inline in the publishing handler or in a shared `sealed record` — keep them primitive (no domain types, no entity references).
+2. **Publish** from the endpoint handler via `IPublishEndpoint` **before** `SaveChanges`. The bus outbox captures the message inside the same DB transaction — no message is lost even if the broker is down at publish time.
+3. **Consumers** implement `IConsumer<T>` (registered in `AddMessaging`). Consumers **must be idempotent** — RabbitMQ delivers at-least-once. Guard against duplicates at the application level (e.g. existence check before inserting).
+
+```csharp
+// Handler (endpoint)
+await publishEndpoint.Publish(new MyEvent { ... }, ct);
+await uow.SaveChangesAsync(ct);   // message + business row commit atomically
+
+// Consumer (add when a real consumer is needed)
+public sealed class MyEventConsumer : IConsumer<MyEvent>
+{
+    public async Task Consume(ConsumeContext<MyEvent> ctx)
+    {
+        // idempotency guard first, then business logic
+    }
+}
+// Register in MessagingSetup.cs: x.AddConsumer<MyEventConsumer>();
+```
+
+### Transport config
+
+Transport is config-selected. Local dev uses RabbitMQ via `docker-compose` (`MassTransit:Host/Port/User/Password`). Switching to Azure Service Bus or Amazon MQ later requires only config changes — consumers are transport-agnostic.
+
+### Deferred (future slices)
+
+- First consumer: AI auto-classification of payables (AEL-557).
+- Hangfire time-based escalation for stale approvals.
+- Real delivery channels (email, push) for in-app notifications.
+- MassTransit consumer inbox middleware for stricter idempotency.
+
+---
+
+## 13. Anti-patterns (do NOT)
 
 - Add **controllers** — use `IEndpoint`.
-- Manual **`.ToTable()` / `.HasColumnName()`** — the snake_case convention resolves naming.
-- **Hand-write migrations** — always `dotnet ef migrations add`.
+- Manual **`.ToTable()` / `.HasColumnName()`** — the snake_case convention resolves naming. (`.SetSchema()` via `e.Metadata.SetSchema("<schema>")` is the only permitted exception — schema only.)
+- **Cross-module foreign keys** — reference other modules by loose `Id`; no FK constraints across module schemas.
+- **Hand-write migrations** — always `dotnet ef migrations add --project src/Ulbra.One.Persistence --startup-project src/API/Ulbra.One.Api --context AppDbContext`.
 - **Business logic in endpoints** — keep it in the domain entity/aggregate.
 - Return **entities or anonymous objects** from endpoints — map to a response DTO.
 - **Hardcode pt-BR** in backend code — English + stable error codes; localization is the frontend's job.

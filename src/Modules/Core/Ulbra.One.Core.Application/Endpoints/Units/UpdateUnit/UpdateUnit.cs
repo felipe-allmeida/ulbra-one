@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Common.Infrastructure.Normalization;
+using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Application.Contracts;
 using Ulbra.One.Core.Domain.Entities;
 
@@ -34,13 +34,13 @@ public sealed class UpdateUnit : IEndpoint
     private static async Task<IResult> Handle(
         UnitId id,
         Request req,
-        [FromKeyedServices("core")] IUnitOfWork uow,
+        IUnitOfWork uow,
         CancellationToken ct)
     {
         var unit = await uow.Set<Unit>().FirstOrDefaultAsync(u => u.Id == id.Value, ct);
-        if (unit is null) return Results.NotFound();
+        if (unit is null) return TypedResults.NotFound();
         unit.Update(req.Name, req.Acronym);
         await uow.SaveChangesAsync(ct);
-        return Results.Ok(UnitResponse.From(unit));
+        return TypedResults.Ok(UnitResponse.From(unit));
     }
 }

@@ -15,6 +15,13 @@ public class BankAccount : IAuditable, ISoftDeletable
     public BankAccountType AccountType { get; private set; }
     public string Alias { get; private set; } = string.Empty;
     public decimal? OpeningBalance { get; private set; }
+
+    /// <summary>Last reconciled (real) balance for this account — the cash-flow anchor. Null until informed.</summary>
+    public decimal? ReconciledBalance { get; private set; }
+
+    /// <summary>Date the <see cref="ReconciledBalance"/> refers to. Movements after this date are added to it.</summary>
+    public DateOnly? ReconciledAt { get; private set; }
+
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -47,6 +54,13 @@ public class BankAccount : IAuditable, ISoftDeletable
         AccountType = accountType;
         Alias = alias.Trim();
         OpeningBalance = openingBalance;
+    }
+
+    /// <summary>Sets the reconciled-balance anchor: the real balance of the account as of a given date.</summary>
+    public void SetReconciledBalance(decimal balance, DateOnly asOf)
+    {
+        ReconciledBalance = balance;
+        ReconciledAt = asOf;
     }
 
     public void Activate() => Active = true;

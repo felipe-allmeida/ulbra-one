@@ -6,7 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
-using Ulbra.One.Finance.Infrastructure.Database;
+using Ulbra.One.Persistence;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
@@ -175,7 +175,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         // The -1000 debit on 2026-07-10 should be Suggested against the 1000 installment due 2026-07-12.
         var bankAccountGuid = Ulbra.One.Common.Application.Ids.BankAccountId.Parse(bankId, null).Value;
         using var scope = factory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<FinanceContext>();
+        var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var txns = ctx.BankTransactions.Where(t => t.BankAccountId == bankAccountGuid).ToList();
 
         Assert.Equal(2, txns.Count);

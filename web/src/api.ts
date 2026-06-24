@@ -53,6 +53,25 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** POSTs multipart/form-data (browser sets the boundary). Maps problem+json into ApiError like request(). */
+async function postFile<T>(path: string, form: FormData): Promise<T> {
+  const headers = new Headers();
+  if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'POST', headers, body: form });
+  if (!res.ok) {
+    const contentType = res.headers.get('content-type') ?? '';
+    if (contentType.includes('application/problem+json')) {
+      try {
+        throw apiErrorFromProblem(res.status, await res.json());
+      } catch (e) {
+        if (e instanceof Error && e.name === 'ApiError') throw e;
+      }
+    }
+    throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // ---------- Wire types (aliases to generated OpenAPI schemas) ----------
 // Exported names are kept stable so pages/queries don't need to change.
 export type User = Schemas['UserSummary'];
@@ -101,12 +120,75 @@ export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
 
+// ---------- Fiscal documents (leitor de NF) ----------
+// Hand-written wire types (like PayableInput); a future `pnpm gen:api` will supersede them.
+export type FiscalDocumentFormat = 'NfeXml' | 'NfseXml' | 'PdfMock';
+
+/** Stateless parse/preview result — fields identified from the uploaded NF, plus a vendor suggestion. */
+export interface ParsedFiscalDocument {
+  format: FiscalDocumentFormat;
+  accessKey?: string | null;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  totalAmount?: number | null;
+  issuerDocument?: string | null;
+  issuerName?: string | null;
+  recipientDocument?: string | null;
+  rawExtractionJson: string;
+  /** Installments (duplicatas) read from the NF — empty for à-vista / NFS-e / PDF mock. */
+  installments: { dueDate: string; amount: number }[];
+  matchedVendorId?: string | null;
+  matchedVendorName?: string | null;
+  // NFS-e (serviço) — informativos; null para NF-e/PDF.
+  rpsNumber?: string | null;
+  rpsSeries?: string | null;
+  serviceDescription?: string | null;
+  cnaeCode?: string | null;
+  // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
+  issuerPhone?: string | null;
+  issuerAddress?: {
+    cep?: string | null;
+    street?: string | null;
+    number?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    state?: string | null;
+  } | null;
+}
+
+/** The fiscal document of record persisted against a payable. */
+export interface FiscalDocument {
+  id: string;
+  payableId: string;
+  format: FiscalDocumentFormat;
+  accessKey?: string | null;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  totalAmount?: number | null;
+  issuerDocument?: string | null;
+  issuerName?: string | null;
+  recipientDocument?: string | null;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
 // ---------- Bank accounts + payments (baixa) ----------
 export type BankAccount = Schemas['BankAccountResponse'];
 export type Payment = Schemas['PaymentResponse'];
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type BankAccountType = Schemas['BankAccountType'];
 export type PaymentMethod = Schemas['PaymentMethod'];
+
+// ---------- Receivables (Contas a Receber) ----------
+export type Receivable = Schemas['ReceivableResponse'];
+export type ReceivableListItem = Schemas['ReceivableListItemResponse'];
+export type ReceivableInstallment = Schemas['ReceivableInstallmentResponse'];
+export type Receipt = Schemas['ReceiptResponse'];
+export type ReceivableOrigin = Schemas['ReceivableOrigin'];
+export type ReceivableStatus = Schemas['ReceivableStatus'];
+export type ReceivableInstallmentStatus = Schemas['ReceivableInstallmentStatus'];
 
 // ---------- Chart of Accounts (Plano de Contas) ----------
 export type ChartAccount = Schemas['ChartAccountResponse'];
@@ -115,10 +197,77 @@ export type AccountKind = Schemas['AccountKind'];
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
 
+// ---------- Accounting (Núcleo Contábil — ledger core) ----------
+export type LedgerAccount = Schemas['LedgerAccountResponse'];
+export type AccountGroup = Schemas['AccountGroup'];
+export type LedgerAccountKind = Schemas['LedgerAccountKind'];
+export type NormalBalance = Schemas['NormalBalance'];
+export type EntrySide = Schemas['EntrySide'];
+export type JournalStatus = Schemas['JournalStatus'];
+export type JournalOrigin = Schemas['JournalOrigin'];
+export type JournalEntry = Schemas['JournalEntryResponse'];
+export type JournalLine = Schemas['JournalLineResponse'];
+export type TrialBalance = Schemas['TrialBalanceResponse'];
+export type TrialBalanceRow = Schemas['TrialBalanceRowResponse'];
+export type IncomeStatement = Schemas['IncomeStatementResponse'];
+export type IncomeStatementLine = Schemas['IncomeStatementLineResponse'];
+export type BalanceSheet = Schemas['BalanceSheetResponse'];
+export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
+
+/** Request body for creating a ledger account. */
+export interface LedgerAccountInput {
+  companyId: string;
+  code: string;
+  name: string;
+  accountGroup: AccountGroup;
+  kind: LedgerAccountKind;
+  parentId?: string | null;
+  normalBalance?: NormalBalance | null;
+}
+
+/** Request body for updating a ledger account (no companyId/code — both immutable). */
+export interface LedgerAccountUpdateInput {
+  name: string;
+  accountGroup: AccountGroup;
+  kind: LedgerAccountKind;
+  normalBalance: NormalBalance;
+  parentId?: string | null;
+  isActive: boolean;
+}
+
+/** One debit/credit line when creating or editing a draft journal entry. */
+export interface JournalLineInput {
+  ledgerAccountId: string;
+  side: EntrySide;
+  amount: number;
+  costCenterId?: string | null;
+  unitId?: string | null;
+  description?: string | null;
+}
+
+/** Request body for creating/editing a draft journal entry. */
+export interface JournalEntryInput {
+  companyId: string;
+  competenceDate: string;
+  description: string;
+  sourceReference?: string | null;
+  lines: JournalLineInput[];
+}
+
 // ---------- Aging de Contas a Pagar ----------
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
 export type AgingBucket = Schemas['AgingBucket'];
+
+// ---------- Cash flow (Fluxo de caixa) ----------
+export type CashFlowResponse = Schemas['CashFlowResponse'];
+export type CashFlowKpis = Schemas['CashFlowKpis'];
+export type CashFlowPeriod = Schemas['CashFlowPeriod'];
+export type CashFlowAccountBalance = Schemas['CashFlowAccountBalance'];
+export type CashFlowItem = Schemas['CashFlowItemResponse'];
+// Enum union: serialized as a string at runtime via the global JsonStringEnumConverter.
+export type CashFlowGranularity = Schemas['CashFlowGranularity'];
+export type ReconciledBalanceResult = Schemas['SetReconciledBalanceResponse'];
 
 // ---------- Conciliação OFX (statement imports + bank transactions) ----------
 export type StatementImport = Schemas['StatementImportResponse'];
@@ -169,6 +318,33 @@ export interface PayableInput {
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
   accountingAccountId?: string | null;
   financialAccountId?: string | null;
+}
+
+/** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
+export interface ReceivableInput {
+  companyId: string;
+  payerId: string;
+  costCenterId: string;
+  revenueCategoryId?: string | null;
+  ledgerAccountId?: string | null;
+  origin?: ReceivableOrigin;
+  description: string;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  installments?: { dueDate: string; amount: number }[];
+  generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
+}
+
+/** Request body for registering a receipt (baixa de entrada) against a receivable installment. */
+export interface RegisterReceiptInput {
+  receiptDate: string;
+  amount: number;
+  bankAccountId: string;
+  method: PaymentMethod;
+  interest?: number;
+  fine?: number;
+  discount?: number;
+  notes?: string | null;
 }
 
 /**
@@ -348,6 +524,20 @@ export const api = {
   deletePayableAttachment: (id: string, attachmentId: string) =>
     request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
 
+  // ---------- Fiscal documents (leitor de NF) ----------
+  /** Stateless parse/preview of an NF (XML or PDF). Persists nothing; feeds the create/edit form. */
+  parseFiscalDocument: async (companyId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return postFile<ParsedFiscalDocument>(`/payables/fiscal-document/parse?companyId=${companyId}`, form);
+  },
+  /** Persists the fiscal document of record against a payable (raw file + parsed fields). */
+  uploadPayableFiscalDocument: async (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return postFile<FiscalDocument>(`/payables/${id}/fiscal-document`, form);
+  },
+
   // ---------- Payments (baixa) ----------
   registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>
     request<Payable>(`/payables/${payableId}/installments/${installmentId}/payments`, {
@@ -376,6 +566,67 @@ export const api = {
   /** Direct download URL for a payment proof (auth handled by the browser session / token in caller). */
   downloadPaymentProofUrl: (payableId: string, paymentId: string) =>
     `${BASE_URL}/payables/${payableId}/payments/${paymentId}/proof`,
+
+  // ---------- Receivables (Contas a Receber) ----------
+  listReceivables: (params: {
+    companyId?: string;
+    status?: ReceivableStatus;
+    payerId?: string;
+    costCenterId?: string;
+    dueFrom?: string;
+    dueTo?: string;
+    received?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.status) q.set('status', params.status);
+    if (params.payerId) q.set('payerId', params.payerId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    if (params.received !== undefined) q.set('received', String(params.received));
+    if (params.page) q.set('Page', String(params.page));
+    if (params.pageSize) q.set('PageSize', String(params.pageSize));
+    return request<Paginated<ReceivableListItem>>(`/receivables?${q}`);
+  },
+  getReceivable: (id: string) => request<Receivable>(`/receivables/${id}`),
+  createReceivable: (body: ReceivableInput) =>
+    request<Receivable>('/receivables', { method: 'POST', body: JSON.stringify(body) }),
+  updateReceivable: (id: string, body: Omit<ReceivableInput, 'origin'>) =>
+    request<Receivable>(`/receivables/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  cancelReceivable: (id: string, reason: string) =>
+    request<Receivable>(`/receivables/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
+
+  // ---------- Receipts (baixa de entrada) ----------
+  registerReceipt: (receivableId: string, installmentId: string, body: RegisterReceiptInput) =>
+    request<Receivable>(`/receivables/${receivableId}/installments/${installmentId}/receipts`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  reverseReceipt: (receivableId: string, receiptId: string, reason: string) =>
+    request<Receivable>(`/receivables/${receivableId}/receipts/${receiptId}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  /** Uploads a receipt proof via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  uploadReceiptProof: async (receivableId: string, receiptId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/receivables/${receivableId}/receipts/${receiptId}/proof`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<Receipt>;
+  },
+  /** Direct download URL for a receipt proof (auth handled by the browser session / token in caller). */
+  downloadReceiptProofUrl: (receivableId: string, receiptId: string) =>
+    `${BASE_URL}/receivables/${receivableId}/receipts/${receiptId}/proof`,
 
   // ---------- Bank accounts ----------
   listBankAccounts: (companyId: string, includeInactive?: boolean) => {
@@ -511,6 +762,43 @@ export const api = {
     return request<AgingItem[]>(`/payables/aging/items?${q}`);
   },
 
+  // ---------- Cash flow (Fluxo de caixa) ----------
+  cashFlow: (params: {
+    companyId?: string;
+    granularity?: CashFlowGranularity;
+    horizon?: number;
+    asOf?: string;
+    minReserve?: number;
+  }): Promise<CashFlowResponse> => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.granularity) q.set('granularity', params.granularity);
+    if (params.horizon != null) q.set('horizon', String(params.horizon));
+    if (params.asOf) q.set('asOf', params.asOf);
+    if (params.minReserve != null) q.set('minReserve', String(params.minReserve));
+    return request<CashFlowResponse>(`/cash-flow?${q}`);
+  },
+  cashFlowItems: (params: {
+    companyId?: string;
+    from: string;
+    to: string;
+    direction: 'in' | 'out';
+    asOf?: string;
+  }): Promise<CashFlowItem[]> => {
+    const q = new URLSearchParams({ from: params.from, to: params.to, direction: params.direction });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.asOf) q.set('asOf', params.asOf);
+    return request<CashFlowItem[]>(`/cash-flow/items?${q}`);
+  },
+  setReconciledBalance: (
+    bankAccountId: string,
+    body: { balance: number; asOf: string },
+  ): Promise<ReconciledBalanceResult> =>
+    request<ReconciledBalanceResult>(`/bank-accounts/${bankAccountId}/reconciled-balance`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
   // ---------- Expense categories ----------
   listExpenseCategories: (includeInactive?: boolean) =>
     request<ExpenseCategory[]>(`/expense-categories${includeInactive ? '?includeInactive=true' : ''}`),
@@ -554,6 +842,69 @@ export const api = {
   deactivateEmployee: (id: string) => request<Employee>(`/employees/${id}/deactivate`, { method: 'POST' }),
   activateEmployee: (id: string) => request<Employee>(`/employees/${id}/activate`, { method: 'POST' }),
   removeEmployee: (id: string) => request<void>(`/employees/${id}`, { method: 'DELETE' }),
+
+  // ---------- Accounting: Ledger accounts (plano de contas contábil) ----------
+  listLedgerAccounts: (params: {
+    companyId?: string;
+    accountGroup?: AccountGroup;
+    kind?: LedgerAccountKind;
+    activeOnly?: boolean;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.accountGroup) q.set('accountGroup', params.accountGroup);
+    if (params.kind) q.set('kind', params.kind);
+    if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
+    return request<LedgerAccount[]>(`/ledger-accounts?${q}`);
+  },
+  getLedgerAccount: (id: string) => request<LedgerAccount>(`/ledger-accounts/${id}`),
+  createLedgerAccount: (body: LedgerAccountInput) =>
+    request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
+  updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
+    request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  seedLedgerAccounts: (companyId: string) =>
+    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ companyId }) }),
+
+  // ---------- Accounting: Journal entries (lançamentos) ----------
+  listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.status) q.set('status', params.status);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<JournalEntry[]>(`/journal-entries?${q}`);
+  },
+  getJournalEntry: (id: string) => request<JournalEntry>(`/journal-entries/${id}`),
+  createJournalEntry: (body: JournalEntryInput) =>
+    request<JournalEntry>('/journal-entries', { method: 'POST', body: JSON.stringify(body) }),
+  updateJournalEntry: (id: string, body: Omit<JournalEntryInput, 'companyId'>) =>
+    request<JournalEntry>(`/journal-entries/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  postJournalEntry: (id: string) => request<JournalEntry>(`/journal-entries/${id}/post`, { method: 'POST' }),
+  reverseJournalEntry: (id: string, reason: string, competenceDate?: string | null) =>
+    request<JournalEntry>(`/journal-entries/${id}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason, competenceDate: competenceDate ?? null }),
+    }),
+
+  // ---------- Accounting: Reports ----------
+  trialBalance: (companyId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    return request<TrialBalance>(`/accounting/trial-balance?${q}`);
+  },
+  incomeStatement: (params: { companyId?: string; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<IncomeStatement>(`/accounting/income-statement?${q}`);
+  },
+  balanceSheet: (params: { companyId?: string; asOf?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.asOf) q.set('asOf', params.asOf);
+    return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
 
   // ---------- Registry: Lookups ----------
   lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),

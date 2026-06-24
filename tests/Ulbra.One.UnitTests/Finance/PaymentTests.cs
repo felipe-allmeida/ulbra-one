@@ -95,4 +95,46 @@ public class PaymentTests
         inst.ReversePayment(pay.Id, "x");
         Assert.Throws<InvalidOperationException>(() => inst.ReversePayment(pay.Id, "y"));
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public void Payment_ctor_rejects_nonpositive_amount(int amount)
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, amount));
+    }
+
+    [Fact]
+    public void Payment_ctor_rejects_negative_components()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, interest: -5m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, fine: -5m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, discount: -5m));
+    }
+
+    [Fact]
+    public void Payment_ctor_rejects_negative_principal()
+    {
+        // interest + fine exceed amount + discount → principal would be negative (un-settles the installment)
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentException>(() => NewPayment(inst, amount: 100m, interest: 150m));
+    }
+
+    [Fact]
+    public void RegisterPayment_rejects_overpayment_beyond_outstanding_balance()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<InvalidOperationException>(() => inst.RegisterPayment(NewPayment(inst, amount: 1500m)));
+        Assert.Equal(0m, inst.PaidAmount); // nothing applied
+    }
+
+    [Fact]
+    public void RegisterPayment_allows_exact_balance_within_rounding_tolerance()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        inst.RegisterPayment(NewPayment(inst, amount: 1000m));
+        Assert.Equal(InstallmentStatus.Paid, inst.Status);
+    }
 }
