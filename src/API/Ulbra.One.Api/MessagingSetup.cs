@@ -12,6 +12,8 @@ internal static class MessagingSetup
     {
         services.AddMassTransit(x =>
         {
+            x.AddConsumer<Ulbra.One.Finance.Infrastructure.Messaging.PayableReceivedConsumer>();
+
             x.AddEntityFrameworkOutbox<AppDbContext>(o =>
             {
                 o.UsePostgres();
