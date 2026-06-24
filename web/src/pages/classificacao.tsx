@@ -8,6 +8,7 @@ import {
   useChartAccounts,
   useClassifyBatch,
   useClassifyPayable,
+  usePayable,
   usePayables,
 } from '../queries';
 import { brl } from '../lib';
@@ -120,22 +121,67 @@ function AiSuggestionPanel({
   );
 }
 
+/* ============ AI pre-fill hint banner ============ */
+function AiPrefillHint({
+  confidence,
+  rationale,
+}: {
+  confidence: number | null | undefined;
+  rationale: string | null | undefined;
+}) {
+  const { t } = useTranslation();
+  if (!rationale && confidence == null) return null;
+  return (
+    <div
+      style={{
+        marginTop: 6,
+        padding: '8px 12px',
+        borderRadius: 8,
+        background: 'var(--surface-alt, #f9fafb)',
+        border: '1px solid var(--border, #e5e7eb)',
+        fontSize: 12,
+        color: 'var(--fg-muted, #6b7280)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      <span style={{ fontWeight: 600, color: 'var(--brand, #2563eb)' }}>{t('classification.aiPrefillHint')}</span>
+      {confidence != null && (
+        <span>
+          {t('classification.confidence')}: {Math.round(confidence * 100)}%
+        </span>
+      )}
+      {rationale && <span style={{ fontStyle: 'italic' }}>{rationale}</span>}
+    </div>
+  );
+}
+
 /* ============ Per-row classify cell ============ */
 function RowClassify({
   payableId,
   accountingItems,
   financialItems,
   accountsLoading,
+  prefillAccountingAccountId,
+  prefillFinancialAccountId,
+  prefillConfidence,
+  prefillRationale,
 }: {
   payableId: string;
   accountingItems: { id: string; label: string }[];
   financialItems: { id: string; label: string }[];
   accountsLoading: boolean;
+  prefillAccountingAccountId?: string | null;
+  prefillFinancialAccountId?: string | null;
+  prefillConfidence?: number | null;
+  prefillRationale?: string | null;
 }) {
   const { t } = useTranslation();
   const toast = useToast();
-  const [accountingAccountId, setAccountingAccountId] = useState<string | null>(null);
-  const [financialAccountId, setFinancialAccountId] = useState<string | null>(null);
+  const [accountingAccountId, setAccountingAccountId] = useState<string | null>(prefillAccountingAccountId ?? null);
+  const [financialAccountId, setFinancialAccountId] = useState<string | null>(prefillFinancialAccountId ?? null);
+  const hasPrefill = !!(prefillAccountingAccountId ?? prefillFinancialAccountId);
   const [suggesting, setSuggesting] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AiClassificationSuggestion | null>(null);
 
@@ -224,6 +270,7 @@ function RowClassify({
           {classify.isPending ? t('classification.classifying') : t('classification.classify')}
         </Button>
       </div>
+      {hasPrefill && !aiSuggestion && <AiPrefillHint confidence={prefillConfidence} rationale={prefillRationale} />}
       {aiSuggestion && (
         <AiSuggestionPanel
           suggestion={aiSuggestion}
@@ -233,6 +280,42 @@ function RowClassify({
         />
       )}
     </div>
+  );
+}
+
+/* ============ Row classify with AI suggestion pre-fill ============ */
+/**
+ * Wraps RowClassify for PendingClassification rows: fetches the full payable
+ * to read suggestion fields (suggestedAccountingAccountId, suggestedFinancialAccountId,
+ * classificationConfidence, classificationRationale) and passes them as prefill props.
+ * For other statuses (no suggestion expected) renders RowClassify directly without fetch.
+ */
+function RowClassifyWithPrefill({
+  payable,
+  accountingItems,
+  financialItems,
+  accountsLoading,
+}: {
+  payable: PayableListItem;
+  accountingItems: { id: string; label: string }[];
+  financialItems: { id: string; label: string }[];
+  accountsLoading: boolean;
+}) {
+  const isPendingClassification = payable.payableStatus === 'PendingClassification';
+  const detail = usePayable(isPendingClassification ? payable.payableId : undefined);
+  const suggestion = detail.data ?? null;
+
+  return (
+    <RowClassify
+      payableId={payable.payableId}
+      accountingItems={accountingItems}
+      financialItems={financialItems}
+      accountsLoading={accountsLoading}
+      prefillAccountingAccountId={suggestion?.suggestedAccountingAccountId}
+      prefillFinancialAccountId={suggestion?.suggestedFinancialAccountId}
+      prefillConfidence={suggestion?.classificationConfidence}
+      prefillRationale={suggestion?.classificationRationale}
+    />
   );
 }
 
@@ -440,8 +523,8 @@ export function ClassificacaoPage() {
                     </td>
                     <td className='t-mono'>{fmtDate(p.dueDate)}</td>
                     <td className='td-action'>
-                      <RowClassify
-                        payableId={p.payableId}
+                      <RowClassifyWithPrefill
+                        payable={p}
                         accountingItems={accountingItems}
                         financialItems={financialItems}
                         accountsLoading={accountsLoading}

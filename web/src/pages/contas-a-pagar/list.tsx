@@ -103,7 +103,7 @@ export function ContasPagarPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <PayableStatusBadge s={l.payableStatus} />
-                          {l.payableStatus === 'Approved' && <InstallmentStatusBadge s={l.installmentStatus} />}
+                          {l.payableStatus === 'Scheduled' && <InstallmentStatusBadge s={l.installmentStatus} />}
                         </div>
                       </td>
                     </tr>

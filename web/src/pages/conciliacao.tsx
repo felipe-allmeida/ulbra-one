@@ -48,7 +48,7 @@ function ManualMatchDrawer({
   const [installmentId, setInstallmentId] = useState<string | null>(null);
 
   // Open installments come from the company's Approved payables, flattened.
-  const payables = usePayables({ companyId, status: 'Approved', pageSize: 100 }, { enabled: !!companyId });
+  const payables = usePayables({ companyId, status: 'Scheduled', pageSize: 100 }, { enabled: !!companyId });
   const items = useMemo(() => {
     const list = payables.data?.items ?? [];
     return list

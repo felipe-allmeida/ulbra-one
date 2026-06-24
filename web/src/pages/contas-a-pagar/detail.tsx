@@ -60,7 +60,7 @@ export function ContaPagarDetailPage() {
     const a = accs.find((x) => x.id === id);
     return a ? `${a.code} — ${a.name}` : t('payables.notClassified');
   };
-  const editable = p.status === 'PendingApproval' || p.status === 'Approved';
+  const editable = p.status === 'PendingApproval' || p.status === 'Received' || p.status === 'PendingClassification';
 
   return (
     <>
@@ -157,7 +157,7 @@ export function ContaPagarDetailPage() {
       )}
       {p.cancelReason && <p className='create-err'>{t('payables.cancelReason', { reason: p.cancelReason })}</p>}
 
-      {(p.status === 'Approved' || p.status === 'Settled') && p.approvedBy && p.approvedAt && (
+      {(p.status === 'Scheduled' || p.status === 'Paid') && p.approvedBy && p.approvedAt && (
         <p className='detail-sub'>
           {t('payables.approvedBy', { user: p.approvedBy, date: fmtDateTime(p.approvedAt) })}
         </p>
