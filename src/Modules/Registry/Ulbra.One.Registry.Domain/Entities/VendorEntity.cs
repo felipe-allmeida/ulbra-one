@@ -17,7 +17,8 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public string? Phone { get; private set; }
     public Address Address { get; private set; } = Address.Empty;
     public string? PaymentTerms { get; private set; }
-    public string? BankInfo { get; private set; }
+    public BankInfo BankInfo { get; private set; } = BankInfo.Empty;
+    public TaxRegime TaxRegime { get; private set; } = TaxRegime.Unknown;
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -29,18 +30,21 @@ public class VendorEntity : IAuditable, ISoftDeletable
     private VendorEntity() { }
 
     public VendorEntity(Guid companyId, PersonType personType, string name, string? tradeName,
-        string document, string? email, string? phone, Address address, string? paymentTerms, string? bankInfo)
+        string document, string? email, string? phone, Address address, string? paymentTerms,
+        BankInfo bankInfo, TaxRegime taxRegime)
     {
         CompanyId = companyId;
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo);
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime);
     }
 
     public void Update(PersonType personType, string name, string? tradeName, string document,
-        string? email, string? phone, Address address, string? paymentTerms, string? bankInfo) =>
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo);
+        string? email, string? phone, Address address, string? paymentTerms,
+        BankInfo bankInfo, TaxRegime taxRegime) =>
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime);
 
     private void Apply(PersonType personType, string name, string? tradeName, string document,
-        string? email, string? phone, Address address, string? paymentTerms, string? bankInfo)
+        string? email, string? phone, Address address, string? paymentTerms,
+        BankInfo bankInfo, TaxRegime taxRegime)
     {
         PersonType = personType;
         Name = name;
@@ -51,6 +55,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
         Address = address;
         PaymentTerms = paymentTerms;
         BankInfo = bankInfo;
+        TaxRegime = taxRegime;
     }
 
     public void Deactivate() => Active = false;
