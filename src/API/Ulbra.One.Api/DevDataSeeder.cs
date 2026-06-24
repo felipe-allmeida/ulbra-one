@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Ulbra.One.Accounting.Application.Seeding;
 using Ulbra.One.Accounting.Domain;
+using Ulbra.One.Finance.Application.Seeding;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Domain;
@@ -210,9 +211,9 @@ public static class DevDataSeeder
         // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
         // Look up seeded analytical accounts by code; classify energy payables (accounting 4.1.01 + financial 76.100)
         // and the cleaning/services payable (4.1.03 + 76.300). Idempotent: only classify when not yet classified.
-        var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.01", ct);
+        var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.05", ct);
         var finEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.100", ct);
-        var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.1.03", ct);
+        var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.02", ct);
         var finServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.300", ct);
 
         if (pEnergiaGravatai.AccountingAccountId == null)
@@ -337,7 +338,7 @@ public static class DevDataSeeder
             return;
         }
 
-        var accounts = BrazilianChartTemplate.Build(companyId);
+        var accounts = ChartTemplates.Build(companyId, ChartTemplate.RfbImunesIsentas);
         db.LedgerAccounts.AddRange(accounts);
         await db.SaveChangesAsync(ct);
 
@@ -411,23 +412,24 @@ public static class DevDataSeeder
             return;
         }
 
-        // ---------- Accounting chart (contábil) ----------
-        var despesasContabil = new ChartAccount(ChartType.Accounting, "4", "Despesas", AccountKind.Synthetic);
-        var energiaContabil = new ChartAccount(ChartType.Accounting, "4.1.01", "Energia elétrica", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
-        var alugueisContabil = new ChartAccount(ChartType.Accounting, "4.1.02", "Aluguéis", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
-        var servicosContabil = new ChartAccount(ChartType.Accounting, "4.1.03", "Serviços de terceiros", AccountKind.Analytical, despesasContabil.Id, AccountNature.Debit);
+        // Accounting chart (contábil) — ramo de despesas (4.02*) do Referencial RFB Imunes e Isentas
+        var imunesRows = ReferentialChartData.Load("referencial-rfb-imunes-isentas.json");
+        var despesaRows = imunesRows
+            .Where(r => r.Code == "4.02" || r.Code.StartsWith("4.02.", StringComparison.Ordinal))
+            .Select(r => new ReferentialPayableRow(r.Code, r.Name, r.Tipo == "S", r.Parent))
+            .ToList();
+        var contabil = ReferentialPayableChartBuilder.BuildAccounting(despesaRows);
 
-        // ---------- Financial chart (financeiro) ----------
+        // Financial chart (financeiro) — esquema gerencial interno, intocado
         var despesasFinanceiro = new ChartAccount(ChartType.Financial, "76", "Despesas operacionais", AccountKind.Synthetic);
         var energiaFinanceiro = new ChartAccount(ChartType.Financial, "76.100", "Energia", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
         var aluguelFinanceiro = new ChartAccount(ChartType.Financial, "76.200", "Aluguel", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
         var servicosFinanceiro = new ChartAccount(ChartType.Financial, "76.300", "Serviços", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
 
-        finance.ChartAccounts.AddRange(
-            despesasContabil, energiaContabil, alugueisContabil, servicosContabil,
-            despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
+        finance.ChartAccounts.AddRange(contabil);
+        finance.ChartAccounts.AddRange(despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
         await finance.SaveChangesAsync(ct);
-        logger.LogInformation("Dev seed: chart of accounts seeded (2 roots + 6 leaves across Accounting and Financial charts).");
+        logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting + 4 financial chart accounts).", contabil.Count);
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)
