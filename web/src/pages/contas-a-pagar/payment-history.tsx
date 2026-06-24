@@ -5,7 +5,7 @@ import { type Payable, type Installment, type Payment } from '../../api';
 import { useReversePayment } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, ConfirmDialog } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { downloadPaymentProof } from './download';
 
 /* ============ Per-installment payment history + actions ============ */

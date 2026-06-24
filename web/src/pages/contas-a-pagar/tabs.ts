@@ -1,5 +1,5 @@
 import { type PayablesParams } from '../../queries';
-import { toDateOnly } from './format';
+import { toDateOnly } from '../../datetime';
 
 export type TabKey = 'all' | 'overdue' | 'thisMonth' | 'future' | 'paid';
 

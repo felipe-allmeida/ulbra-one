@@ -10,7 +10,7 @@ import { useCreateReceivable, useReceivable, useUpdateReceivable } from '../../q
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Select, Field, EmptyState } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { useNames } from './use-names';
 import { CustomerPicker } from './customer-picker';
 

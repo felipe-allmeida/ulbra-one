@@ -23,6 +23,7 @@ import { getErrorMessage } from '../apiError';
 import { Button, Input, Select, Field, PageHeader, Pager, Panel, EmptyState, Combobox, Drawer } from '../ui';
 import { EmpresaPicker } from './shared';
 import { CustomerForm, VendorForm } from './registry-forms';
+import { fmtData } from '../datetime';
 
 const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
   Pending: { cls: 'badge-pendente', label: 'Pendente' },
@@ -33,7 +34,6 @@ const STATUS: Record<TransactionStatus, { cls: string; label: string }> = {
 export const StatusBadge = ({ s }: { s: TransactionStatus }) => (
   <span className={`badge-status ${STATUS[s].cls}`}>{STATUS[s].label}</span>
 );
-const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
 /** Maps id→name of the company's units/cost centers (to show names in the lists). */
 function useNomes(empresaId: string) {

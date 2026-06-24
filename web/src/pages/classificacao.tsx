@@ -9,8 +9,7 @@ import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, EmptyState, Pager, Panel } from '../ui';
 import { EmpresaPicker } from './shared';
-
-const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+import { fmtData } from '../datetime';
 
 /** Builds the `code — name` option list of analytical accounts for a chart type. */
 function useAccountItems(accounts: ChartAccount[]) {

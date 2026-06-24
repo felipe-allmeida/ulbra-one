@@ -6,7 +6,7 @@ import { type ReceivableInstallment } from '../../api';
 import { useCancelReceivable, useCostCenters, useReceivable } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { ReceivableStatusBadge } from './badges';
 import { InstallmentsTable } from './installments-table';
 import { ReceiptHistory } from './receipt-history';

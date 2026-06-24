@@ -3,7 +3,7 @@ import { Receipt } from 'lucide-react';
 import { type Payable, type Installment } from '../../api';
 import { brl } from '../../lib';
 import { Button, Panel } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { InstallmentStatusBadge } from './badges';
 
 /** Installments panel for the payable detail. `onRegister` opens the payment drawer. */

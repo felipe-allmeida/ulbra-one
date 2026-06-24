@@ -5,7 +5,7 @@ import { type Receivable, type ReceivableInstallment, type Receipt } from '../..
 import { useReverseReceipt } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, ConfirmDialog } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { downloadReceiptProof } from './download';
 
 /* ============ Per-installment receipt history + actions ============ */

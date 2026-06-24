@@ -15,7 +15,7 @@ import {
 } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
-import { fmtData, fmtDateTime } from './format';
+import { fmtData, fmtDateTime } from '../../datetime';
 import { PayableStatusBadge } from './badges';
 import { InstallmentsTable } from './installments-table';
 import { AttachmentsPanel } from './attachments-panel';

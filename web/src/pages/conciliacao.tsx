@@ -18,8 +18,7 @@ import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, Drawer, EmptyState, Field, Pager, Panel, Select, ToolbarField } from '../ui';
 import { EmpresaPicker } from './shared';
-
-const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+import { fmtData } from '../datetime';
 
 const STATUS_FILTERS: MatchStatus[] = ['Suggested', 'Unmatched', 'Reconciled', 'Ignored'];
 

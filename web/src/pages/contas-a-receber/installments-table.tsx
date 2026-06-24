@@ -3,7 +3,7 @@ import { Receipt as ReceiptIcon } from 'lucide-react';
 import { type Receivable, type ReceivableInstallment } from '../../api';
 import { brl } from '../../lib';
 import { Button, Panel } from '../../ui';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { ReceivableStatusBadge, ReceivableInstallmentStatusBadge, OverdueBadge } from './badges';
 
 /** Installments panel for the receivable detail. `onRegister` opens the receipt drawer. */

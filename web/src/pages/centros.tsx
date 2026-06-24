@@ -7,6 +7,7 @@ import { brlCompact, brl } from '../lib';
 import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
 import { EmpresaPicker, CentroForm } from './shared';
 import { StatusBadge } from './lancamentos';
+import { fmtData } from '../datetime';
 
 /* ===================== LIST ===================== */
 export function CentrosListPage() {
@@ -173,7 +174,6 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
     .filter((l) => l.type === 'Payable' && (l.status === 'Approved' || l.status === 'Paid'))
     .reduce((s, l) => s + l.amount, 0);
   const pctExec = centro.annualBudget > 0 ? Math.round((executado / centro.annualBudget) * 100) : 0;
-  const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
   return (
     <>

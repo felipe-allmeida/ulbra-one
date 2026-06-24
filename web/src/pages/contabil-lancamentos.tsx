@@ -19,8 +19,8 @@ import { brlCents } from '../lib';
 import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select, ToolbarField } from '../ui';
 import { EmpresaPicker } from './shared';
 import { fieldError, journalEntrySchema, resolver, type JournalEntryValues } from './schemas';
+import { fmtData } from '../datetime';
 
-const fmtDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 const STATUSES: JournalStatus[] = ['Draft', 'Posted', 'Reversed'];
 
 function statusBadge(status: JournalStatus) {
@@ -442,7 +442,7 @@ export function ContabilLancamentosPage() {
                 {entries.map((e) => (
                   <tr key={e.id}>
                     <td className='t-mono'>{e.number ?? '—'}</td>
-                    <td className='t-mono'>{fmtDate(e.competenceDate)}</td>
+                    <td className='t-mono'>{fmtData(e.competenceDate)}</td>
                     <td>{e.description}</td>
                     <td>
                       <span className={`badge-status ${statusBadge(e.status)}`}>

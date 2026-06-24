@@ -26,7 +26,7 @@ import { getErrorMessage } from '../../apiError';
 import { Button, Input, Select, Field, EmptyState, Combobox, FilePicker } from '../../ui';
 import { AutoHint } from '../registry-forms';
 import { useNames } from './use-names';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { VendorPicker } from './vendor-picker';
 import { FiscalXmlReader } from './fiscal-xml-reader';
 

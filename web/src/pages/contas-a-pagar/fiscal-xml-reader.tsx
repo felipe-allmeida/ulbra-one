@@ -6,7 +6,8 @@ import { useParseFiscalDocument } from '../../queries';
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Field, FilePicker } from '../../ui';
-import { fmtData, fmtDoc } from './format';
+import { fmtData } from '../../datetime';
+import { fmtDoc } from '../../format';
 
 /* ============ FISCAL XML/PDF READER (right column) ============ */
 /**

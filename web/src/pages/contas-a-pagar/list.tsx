@@ -7,7 +7,7 @@ import { useApp } from '../../store';
 import { brl } from '../../lib';
 import { Button, PageHeader, Pager, Panel, EmptyState } from '../../ui';
 import { EmpresaPicker } from '../shared';
-import { fmtData } from './format';
+import { fmtData } from '../../datetime';
 import { type TabKey, tabToParams, TABS } from './tabs';
 import { useNames } from './use-names';
 import { PayableStatusBadge, InstallmentStatusBadge } from './badges';
