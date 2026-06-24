@@ -10,7 +10,7 @@ import { useCreateReceivable, useReceivable, useUpdateReceivable } from '../../q
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Select, Field, EmptyState } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { useNames } from './use-names';
 import { CustomerPicker } from './customer-picker';
 
@@ -292,7 +292,7 @@ function ReceivableForm({ initial }: { initial?: Receivable }) {
                       <td className='t-mono'>
                         {p.sequence}/{preview.length}
                       </td>
-                      <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                      <td className='t-mono'>{fmtDate(p.dueDate)}</td>
                       <td className='amount-cell' style={{ textAlign: 'right' }}>
                         {brl(p.amount)}
                       </td>

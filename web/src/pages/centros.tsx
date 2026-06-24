@@ -7,7 +7,7 @@ import { brlCompact, brl } from '../lib';
 import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
 import { EmpresaPicker, CentroForm } from './shared';
 import { StatusBadge } from './lancamentos';
-import { fmtData } from '../datetime';
+import { fmtDate } from '../datetime';
 
 /* ===================== LIST ===================== */
 export function CentrosListPage() {
@@ -241,7 +241,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
                 <tbody>
                   {lancamentos.map((l) => (
                     <tr key={l.id} className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
-                      <td className='t-mono'>{fmtData(l.dueDate)}</td>
+                      <td className='t-mono'>{fmtDate(l.dueDate)}</td>
                       <td>{l.description}</td>
                       <td>{l.type === 'Payable' ? 'A pagar' : 'A receber'}</td>
                       <td className='amount-cell' style={{ textAlign: 'right' }}>

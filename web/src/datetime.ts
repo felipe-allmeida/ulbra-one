@@ -1,4 +1,4 @@
-export const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+export const fmtDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 
 /** Formats an ISO date-time (e.g. approvedAt/rejectedAt) as a pt-BR date. */
 export const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');

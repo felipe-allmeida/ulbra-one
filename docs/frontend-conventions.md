@@ -87,7 +87,7 @@ URL.revokeObjectURL(objectUrl);
 - Money: `brl(v)` / `brlCompact(v)` in `src/lib.ts` (`Intl` `pt-BR`/`BRL`).
 - Document/phone/CEP masks, `isValidCpf`/`isValidCnpj`, and `fmtDoc` (CPF/CNPJ display by
   length): `src/format.ts`.
-- Dates: import from `src/datetime.ts` — `fmtData(iso)` (DateOnly → pt-BR),
+- Dates: import from `src/datetime.ts` — `fmtDate(iso)` (DateOnly → pt-BR),
   `fmtDateTime(iso)` (ISO date-time → pt-BR date), `toDateOnly(d)` (local `Date` →
   `'YYYY-MM-DD'`; never `toISOString()`, UTC-3 shifts the day). Don't redefine these per
   page — import the shared helper.

@@ -6,7 +6,7 @@ import { type ReceivableInstallment } from '../../api';
 import { useCancelReceivable, useCostCenters, useReceivable } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { ReceivableStatusBadge } from './badges';
 import { InstallmentsTable } from './installments-table';
 import { ReceiptHistory } from './receipt-history';
@@ -99,7 +99,7 @@ export function ContaReceberDetailPage() {
         <div className='info-card'>
           <div className='info-label'>{t('receivables.cards.issueDate')}</div>
           <div className='info-value' style={{ fontSize: 15 }}>
-            {r.issueDate ? fmtData(r.issueDate) : '—'}
+            {r.issueDate ? fmtDate(r.issueDate) : '—'}
           </div>
         </div>
       </div>

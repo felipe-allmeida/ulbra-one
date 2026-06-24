@@ -6,7 +6,7 @@ import { useParseFiscalDocument } from '../../queries';
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Field, FilePicker } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { fmtDoc } from '../../format';
 
 /* ============ FISCAL XML/PDF READER (right column) ============ */
@@ -101,7 +101,7 @@ export function FiscalXmlReader({
             <FiscalField label={t('payables.fields.documentNumber')} value={parsed.documentNumber ?? '—'} />
             <FiscalField
               label={t('payables.fields.issueDate')}
-              value={parsed.issueDate ? fmtData(parsed.issueDate.slice(0, 10)) : '—'}
+              value={parsed.issueDate ? fmtDate(parsed.issueDate.slice(0, 10)) : '—'}
             />
             {parsed.rpsNumber && <FiscalField label={t('payables.fiscalReader.rpsNumber')} value={parsed.rpsNumber} />}
             {parsed.rpsSeries && <FiscalField label={t('payables.fiscalReader.rpsSeries')} value={parsed.rpsSeries} />}

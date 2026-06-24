@@ -7,7 +7,7 @@ import { useApp } from '../../store';
 import { brl } from '../../lib';
 import { Button, PageHeader, Pager, Panel, EmptyState } from '../../ui';
 import { EmpresaPicker } from '../shared';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { type TabKey, tabToParams, TABS } from './tabs';
 import { useNames } from './use-names';
 import { PayableStatusBadge, InstallmentStatusBadge } from './badges';
@@ -89,7 +89,7 @@ export function ContasPagarPage() {
                       className='row-click'
                       onClick={() => nav(`/app/contas-a-pagar/${l.payableId}`)}
                     >
-                      <td className='t-mono'>{fmtData(l.dueDate)}</td>
+                      <td className='t-mono'>{fmtDate(l.dueDate)}</td>
                       <td>{l.description}</td>
                       <td>{l.counterpartyName || '—'}</td>
                       <td className='t-mono'>

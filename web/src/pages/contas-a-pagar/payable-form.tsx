@@ -26,7 +26,7 @@ import { getErrorMessage } from '../../apiError';
 import { Button, Input, Select, Field, EmptyState, Combobox, FilePicker } from '../../ui';
 import { AutoHint } from '../registry-forms';
 import { useNames } from './use-names';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { VendorPicker } from './vendor-picker';
 import { FiscalXmlReader } from './fiscal-xml-reader';
 
@@ -574,7 +574,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                           <td className='t-mono'>
                             {p.sequence}/{preview.length}
                           </td>
-                          <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                          <td className='t-mono'>{fmtDate(p.dueDate)}</td>
                           <td className='amount-cell' style={{ textAlign: 'right' }}>
                             {brl(p.amount)}
                           </td>
@@ -604,7 +604,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                           <td className='t-mono'>
                             {i + 1}/{xmlInstallments.length}
                           </td>
-                          <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                          <td className='t-mono'>{fmtDate(p.dueDate)}</td>
                           <td className='amount-cell' style={{ textAlign: 'right' }}>
                             {brl(p.amount)}
                           </td>

@@ -6,7 +6,7 @@ import { useAging, useAgingItems, useCostCenters } from '../queries';
 import { brl } from '../lib';
 import { Drawer, EmptyState, Kpi, Panel, Select, ToolbarField } from '../ui';
 import { EmpresaPicker } from './shared';
-import { fmtData } from '../datetime';
+import { fmtDate } from '../datetime';
 
 type PivotMode = 'vendor' | 'costCenter';
 
@@ -68,7 +68,7 @@ function DrillDrawer({
               <tr key={it.installmentId}>
                 <td>{it.counterpartyName || '—'}</td>
                 <td>{it.documentNumber || '—'}</td>
-                <td className='t-mono'>{fmtData(it.dueDate)}</td>
+                <td className='t-mono'>{fmtDate(it.dueDate)}</td>
                 <td>
                   {it.daysOverdue > 0 ? (
                     <span className='badge-status badge-rejeitado'>

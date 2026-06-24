@@ -18,7 +18,7 @@ import { brl, brlCompact } from '../lib';
 import { getErrorMessage } from '../apiError';
 import { Button, Drawer, EmptyState, Field, Input, Modal, Panel, Select, ToolbarField } from '../ui';
 import { fieldError, reconciledBalanceSchema, resolver, type ReconciledBalanceValues } from './schemas';
-import { fmtData } from '../datetime';
+import { fmtDate } from '../datetime';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -363,7 +363,7 @@ function DrillDrawer({
               <tr key={it.installmentId}>
                 <td>{it.counterpartyName || '—'}</td>
                 <td>{it.documentNumber || '—'}</td>
-                <td className='t-mono'>{fmtData(it.dueDate)}</td>
+                <td className='t-mono'>{fmtDate(it.dueDate)}</td>
                 <td className='amount-cell' style={{ textAlign: 'right' }}>
                   {brl(it.amount)}
                 </td>
@@ -737,7 +737,7 @@ export function CashFlowPage() {
                               <div className='cf-acct-name'>{a.alias}</div>
                               <div className='help'>
                                 {a.reconciledAt
-                                  ? t('cashFlow.accounts.reconciledAt', { date: fmtData(a.reconciledAt) })
+                                  ? t('cashFlow.accounts.reconciledAt', { date: fmtDate(a.reconciledAt) })
                                   : t('cashFlow.accounts.notReconciled')}
                               </div>
                             </div>

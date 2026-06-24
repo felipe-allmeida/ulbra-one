@@ -5,7 +5,7 @@ import { type Receivable, type ReceivableInstallment, type Receipt } from '../..
 import { useReverseReceipt } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, ConfirmDialog } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { downloadReceiptProof } from './download';
 
 /* ============ Per-installment receipt history + actions ============ */
@@ -39,7 +39,7 @@ export function ReceiptHistory({
         <tbody>
           {receipts.map((rcpt) => (
             <tr key={rcpt.id}>
-              <td className='t-mono'>{fmtData(rcpt.receiptDate)}</td>
+              <td className='t-mono'>{fmtDate(rcpt.receiptDate)}</td>
               <td className='amount-cell' style={{ textAlign: 'right' }}>
                 {brl(rcpt.amount)}
               </td>

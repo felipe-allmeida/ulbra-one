@@ -3,7 +3,7 @@ import { Receipt } from 'lucide-react';
 import { type Payable, type Installment } from '../../api';
 import { brl } from '../../lib';
 import { Button, Panel } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { InstallmentStatusBadge } from './badges';
 
 /** Installments panel for the payable detail. `onRegister` opens the payment drawer. */
@@ -35,7 +35,7 @@ export function InstallmentsTable({
                 <td className='t-mono'>
                   {inst.sequence}/{p.installments.length}
                 </td>
-                <td className='t-mono'>{fmtData(inst.dueDate)}</td>
+                <td className='t-mono'>{fmtDate(inst.dueDate)}</td>
                 <td className='amount-cell' style={{ textAlign: 'right' }}>
                   {brl(inst.amount)}
                 </td>

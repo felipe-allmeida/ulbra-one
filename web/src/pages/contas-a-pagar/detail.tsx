@@ -15,7 +15,7 @@ import {
 } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
-import { fmtData, fmtDateTime } from '../../datetime';
+import { fmtDate, fmtDateTime } from '../../datetime';
 import { PayableStatusBadge } from './badges';
 import { InstallmentsTable } from './installments-table';
 import { AttachmentsPanel } from './attachments-panel';
@@ -147,7 +147,7 @@ export function ContaPagarDetailPage() {
         <div className='info-card'>
           <div className='info-label'>{t('payables.cards.issueDate')}</div>
           <div className='info-value' style={{ fontSize: 15 }}>
-            {p.issueDate ? fmtData(p.issueDate) : '—'}
+            {p.issueDate ? fmtDate(p.issueDate) : '—'}
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { type Payable, type Installment, type Payment } from '../../api';
 import { useReversePayment } from '../../queries';
 import { brl } from '../../lib';
 import { Button, Input, ConfirmDialog } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { downloadPaymentProof } from './download';
 
 /* ============ Per-installment payment history + actions ============ */
@@ -33,7 +33,7 @@ export function PaymentHistory({ payable, installment }: { payable: Payable; ins
         <tbody>
           {payments.map((pay) => (
             <tr key={pay.id}>
-              <td className='t-mono'>{fmtData(pay.paymentDate)}</td>
+              <td className='t-mono'>{fmtDate(pay.paymentDate)}</td>
               <td className='amount-cell' style={{ textAlign: 'right' }}>
                 {brl(pay.amount)}
               </td>

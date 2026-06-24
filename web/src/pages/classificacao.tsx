@@ -9,7 +9,7 @@ import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, EmptyState, Pager, Panel } from '../ui';
 import { EmpresaPicker } from './shared';
-import { fmtData } from '../datetime';
+import { fmtDate } from '../datetime';
 
 /** Builds the `code — name` option list of analytical accounts for a chart type. */
 function useAccountItems(accounts: ChartAccount[]) {
@@ -307,7 +307,7 @@ export function ClassificacaoPage() {
                     <td className='amount-cell' style={{ textAlign: 'right' }}>
                       {brl(p.amount)}
                     </td>
-                    <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                    <td className='t-mono'>{fmtDate(p.dueDate)}</td>
                     <td className='td-action'>
                       <RowClassify
                         payableId={p.payableId}

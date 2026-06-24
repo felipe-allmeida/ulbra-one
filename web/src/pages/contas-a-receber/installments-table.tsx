@@ -3,7 +3,7 @@ import { Receipt as ReceiptIcon } from 'lucide-react';
 import { type Receivable, type ReceivableInstallment } from '../../api';
 import { brl } from '../../lib';
 import { Button, Panel } from '../../ui';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { ReceivableStatusBadge, ReceivableInstallmentStatusBadge, OverdueBadge } from './badges';
 
 /** Installments panel for the receivable detail. `onRegister` opens the receipt drawer. */
@@ -36,7 +36,7 @@ export function InstallmentsTable({
                   {inst.sequence}/{r.installments.length}
                 </td>
                 <td className='t-mono' style={inst.isOverdue ? { color: 'var(--danger, #dc2626)' } : undefined}>
-                  {fmtData(inst.dueDate)}
+                  {fmtDate(inst.dueDate)}
                 </td>
                 <td className='amount-cell' style={{ textAlign: 'right' }}>
                   {brl(inst.amount)}

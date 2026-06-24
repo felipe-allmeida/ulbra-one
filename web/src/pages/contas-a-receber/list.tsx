@@ -7,7 +7,7 @@ import { useApp } from '../../store';
 import { brl } from '../../lib';
 import { Button, PageHeader, Pager, Panel, EmptyState } from '../../ui';
 import { EmpresaPicker } from '../shared';
-import { fmtData } from '../../datetime';
+import { fmtDate } from '../../datetime';
 import { type TabKey, tabToParams, TABS } from './tabs';
 import { useNames } from './use-names';
 import { ReceivableStatusBadge, ReceivableInstallmentStatusBadge, OverdueBadge } from './badges';
@@ -89,7 +89,7 @@ export function ContasReceberPage() {
                       onClick={() => nav(`/app/contas-a-receber/${l.receivableId}`)}
                     >
                       <td className='t-mono' style={l.isOverdue ? { color: 'var(--danger, #dc2626)' } : undefined}>
-                        {fmtData(l.dueDate)}
+                        {fmtDate(l.dueDate)}
                       </td>
                       <td>{l.description}</td>
                       <td>{l.payerName || '—'}</td>
