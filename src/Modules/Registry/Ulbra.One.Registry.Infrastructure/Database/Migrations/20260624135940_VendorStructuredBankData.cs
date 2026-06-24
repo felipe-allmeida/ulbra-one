@@ -67,7 +67,9 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
                 type: "character varying(20)",
                 maxLength: 20,
                 nullable: false,
-                defaultValue: "");
+                // Backfill existing rows with the enum's default member name; an empty
+                // string is not a valid TaxRegime value and would throw on read.
+                defaultValue: "Unknown");
         }
 
         /// <inheritdoc />
