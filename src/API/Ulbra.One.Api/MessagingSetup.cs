@@ -13,6 +13,9 @@ internal static class MessagingSetup
         services.AddMassTransit(x =>
         {
             x.AddConsumer<Ulbra.One.Finance.Infrastructure.Messaging.PayableReceivedConsumer>();
+            x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.PayableScheduledConsumer>();
+            x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.PaymentRegisteredConsumer>();
+            x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.AccountingReversalConsumer>();
 
             x.AddEntityFrameworkOutbox<AppDbContext>(o =>
             {

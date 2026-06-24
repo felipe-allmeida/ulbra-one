@@ -82,7 +82,8 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         // Idempotency: bail if reversal entry already exists
         if (await AlreadyPostedAsync(companyId, sourceKey + ":reversal", ct)) return;
 
-        var entry = await uow.ReadSet<JournalEntry>()
+        // Use tracked Set so the Status mutation (→ Reversed) is persisted on SaveChanges.
+        var entry = await uow.Set<JournalEntry>()
             .FirstOrDefaultAsync(
                 e => e.CompanyId == companyId && e.SourceKey == sourceKey
                      && e.Status == JournalStatus.Posted && e.DeletedAt == null,
