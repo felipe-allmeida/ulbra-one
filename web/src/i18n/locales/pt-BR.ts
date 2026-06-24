@@ -762,6 +762,7 @@ const ptBR = {
 
   registry: {
     vendor: {
+      bankSection: 'Dados bancários',
       bankCode: 'Código do banco',
       branch: 'Agência',
       account: 'Conta',

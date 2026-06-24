@@ -223,6 +223,7 @@ const VENDOR_FIELDS = [
   'email',
   'phone',
   'paymentTerms',
+  'bankInfo',
   'taxRegime',
 ] as const;
 
@@ -441,7 +442,7 @@ export function VendorForm({
         </Field>
       </div>
 
-      <div className='form-section'>Dados bancários</div>
+      <div className='form-section'>{t('registry.vendor.bankSection')}</div>
       <div className='form-grid'>
         <Field label={t('registry.vendor.bankCode')}>
           <Controller
