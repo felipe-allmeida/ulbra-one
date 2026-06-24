@@ -38,10 +38,15 @@ public sealed class AiClassificationSuggestion : IEndpoint
         var accounting = accounts.Where(c => c.ChartType == ChartType.Accounting).ToList();
         var financial = accounts.Where(c => c.ChartType == ChartType.Financial).ToList();
 
+        var fiscalDoc = await uow.ReadSet<FiscalDocument>()
+            .FirstOrDefaultAsync(d => d.PayableId == payable.Id, ct);
+
         var prompt = AiClassificationPrompt.Build(
             payable.Description, payable.CounterpartyName, payable.DocumentNumber, payable.TotalAmount,
             accounting.Select(c => (c.Code, c.Name)).ToList(),
-            financial.Select(c => (c.Code, c.Name)).ToList());
+            financial.Select(c => (c.Code, c.Name)).ToList(),
+            cfops: fiscalDoc?.Cfops,
+            ncms: fiscalDoc?.Ncms);
 
         var aiResult = await ai.CompleteAsync<PayableClassificationSuggestion>(prompt, ct: ct);
         if (aiResult.IsSuccess && aiResult.Value.Confidence >= MinConfidence)
