@@ -21,6 +21,7 @@ public class AiClassificationPromptTests
         Assert.Contains("1234.56", prompt.User);
         Assert.Contains("3.1.1", prompt.User);
         Assert.Contains("2.1.1", prompt.User);
+        Assert.DoesNotContain("Fiscal codes", prompt.User);
         Assert.False(string.IsNullOrWhiteSpace(prompt.System));
     }
 
