@@ -295,6 +295,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("reversed_by_entry_id");
 
+                    b.Property<string>("SourceKey")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("source_key");
+
                     b.Property<string>("SourceReference")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -330,6 +335,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_journal_entries_company_id_number")
                         .HasFilter("number IS NOT NULL");
+
+                    b.HasIndex("CompanyId", "SourceKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_journal_entries_company_source_key")
+                        .HasFilter("source_key IS NOT NULL AND deleted_at IS NULL");
 
                     b.ToTable("journal_entries", "accounting");
                 });
@@ -465,6 +475,61 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("ledger_accounts", "accounting");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Accounting.Domain.Entities.PendingAccountingPosting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("IntendedCodes")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("intended_codes");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<string>("SourceKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("source_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_pending_accounting_posting");
+
+                    b.HasIndex("CompanyId", "ResolvedAt")
+                        .HasDatabaseName("ix_pending_accounting_posting_company_id_resolved_at");
+
+                    b.ToTable("pending_accounting_posting", "accounting");
                 });
 
             modelBuilder.Entity("Ulbra.One.Audit.Domain.Entities.AuditLog", b =>

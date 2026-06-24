@@ -15,5 +15,8 @@ public enum EntrySide { Debit, Credit }
 /// <summary>Lifecycle of a journal entry. Posted/Reversed are immutable; corrections are made by reversal.</summary>
 public enum JournalStatus { Draft, Posted, Reversed }
 
-/// <summary>How a journal entry originated. Event-driven origins arrive in a later slice.</summary>
-public enum JournalOrigin { Manual }
+/// <summary>How a journal entry originated.</summary>
+public enum JournalOrigin { Manual, Automatic }
+
+/// <summary>What accounting event a <see cref="PendingAccountingPosting"/> represents.</summary>
+public enum PostingKind { Incurral, Settlement, Reversal }
