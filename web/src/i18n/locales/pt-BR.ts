@@ -759,6 +759,25 @@ const ptBR = {
     next: 'Próxima',
     pageOf: 'Página {{page}} de {{totalPages}}',
   },
+
+  registry: {
+    vendor: {
+      bankCode: 'Código do banco',
+      branch: 'Agência',
+      account: 'Conta',
+      accountDigit: 'Dígito',
+      pixKey: 'Chave PIX',
+      taxRegime: 'Regime tributário',
+    },
+  },
+
+  taxRegime: {
+    Unknown: 'Não informado',
+    Mei: 'MEI',
+    SimplesNacional: 'Simples Nacional',
+    LucroPresumido: 'Lucro Presumido',
+    LucroReal: 'Lucro Real',
+  },
 } as const;
 
 export default ptBR;

@@ -1033,6 +1033,20 @@ export interface components {
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
+        BankInfoRequest: {
+            bankCode: string | null;
+            branch: string | null;
+            account: string | null;
+            accountDigit: string | null;
+            pixKey: string | null;
+        };
+        BankInfoResponse: {
+            bankCode: string;
+            branch: string;
+            account: string;
+            accountDigit: string;
+            pixKey: string;
+        };
         BankTransactionResponse: {
             /** @example bank_txn_3fa85f64571742199730000000000000 */
             id: string;
@@ -1569,6 +1583,8 @@ export interface components {
         /** @enum {string} */
         StatementSource: "OfxUpload" | "CsvUpload";
         /** @enum {string} */
+        TaxRegime: "Unknown" | "Mei" | "SimplesNacional" | "LucroPresumido" | "LucroReal";
+        /** @enum {string} */
         TransactionDirection: "Debit" | "Credit";
         TransactionResponse: {
             /** @example transaction_3fa85f64571742199730000000000000 */
@@ -1703,7 +1719,8 @@ export interface components {
             phone: string | null;
             address: components["schemas"]["AddressRequest"];
             paymentTerms: string | null;
-            bankInfo: string | null;
+            bankInfo: components["schemas"]["BankInfoRequest"];
+            taxRegime: components["schemas"]["TaxRegime"];
         };
         VendorResponse: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -1718,7 +1735,8 @@ export interface components {
             phone: string | null;
             address: components["schemas"]["AddressResponse"];
             paymentTerms: string | null;
-            bankInfo: string | null;
+            bankInfo: components["schemas"]["BankInfoResponse"];
+            taxRegime: components["schemas"]["TaxRegime"];
             active: boolean;
         };
         VendorResponsePaginatedResponse: {
@@ -2492,14 +2510,15 @@ export interface operations {
     ListPayables: {
         parameters: {
             query?: {
-                companyId?: string;
-                status?: components["schemas"]["PayableStatus"];
-                vendorId?: string;
-                costCenterId?: string;
-                categoryId?: string;
-                dueFrom?: string;
-                dueTo?: string;
-                classified?: boolean;
+                CompanyId?: string;
+                Status?: components["schemas"]["PayableStatus"];
+                VendorId?: string;
+                CostCenterId?: string;
+                CategoryId?: string;
+                DueFrom?: string;
+                DueTo?: string;
+                Paid?: boolean;
+                Classified?: boolean;
                 Page?: number;
                 PageSize?: number;
             };

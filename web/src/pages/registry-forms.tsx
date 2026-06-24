@@ -23,6 +23,7 @@ import {
   employeeSchema,
   resolver,
   fieldError,
+  TAX_REGIMES,
   type VendorValues,
   type CustomerValues,
   type EmployeeValues,
@@ -222,7 +223,7 @@ const VENDOR_FIELDS = [
   'email',
   'phone',
   'paymentTerms',
-  'bankInfo',
+  'taxRegime',
 ] as const;
 
 export function VendorForm({
@@ -251,7 +252,14 @@ export function VendorForm({
       email: initial?.email ?? '',
       phone: initial?.phone ?? '',
       paymentTerms: initial?.paymentTerms ?? '',
-      bankInfo: initial?.bankInfo ?? '',
+      bankInfo: {
+        bankCode: initial?.bankInfo?.bankCode ?? '',
+        branch: initial?.bankInfo?.branch ?? '',
+        account: initial?.bankInfo?.account ?? '',
+        accountDigit: initial?.bankInfo?.accountDigit ?? '',
+        pixKey: initial?.bankInfo?.pixKey ?? '',
+      },
+      taxRegime: initial?.taxRegime ?? 'Unknown',
       address: fromAddress(initial?.address ?? null),
     },
   });
@@ -296,6 +304,9 @@ export function VendorForm({
 
   const onValid = (v: VendorValues) => {
     const docDigits = onlyDigits(v.document);
+    const bi = v.bankInfo;
+    const hasBankInfo =
+      bi.bankCode.trim() || bi.branch.trim() || bi.account.trim() || bi.accountDigit.trim() || bi.pixKey.trim();
     mutation.mutate({
       id: initial?.id,
       body: {
@@ -308,7 +319,16 @@ export function VendorForm({
         phone: v.phone.trim() || null,
         address: toAddress(v.address),
         paymentTerms: v.paymentTerms.trim() || null,
-        bankInfo: v.bankInfo.trim() || null,
+        bankInfo: hasBankInfo
+          ? {
+              bankCode: bi.bankCode.trim() || null,
+              branch: bi.branch.trim() || null,
+              account: bi.account.trim() || null,
+              accountDigit: bi.accountDigit.trim() || null,
+              pixKey: bi.pixKey.trim() || null,
+            }
+          : null,
+        taxRegime: v.taxRegime,
       },
     });
   };
@@ -404,13 +424,96 @@ export function VendorForm({
             render={({ field }) => <Input {...field} placeholder='ex.: 30 dias' />}
           />
         </Field>
-        <Field label='Dados bancários'>
+        <Field label={t('registry.vendor.taxRegime')}>
+          <Controller
+            control={control}
+            name='taxRegime'
+            render={({ field }) => (
+              <Select {...field}>
+                {TAX_REGIMES.map((r) => (
+                  <option key={r} value={r}>
+                    {t(`taxRegime.${r}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+        </Field>
+      </div>
+
+      <div className='form-section'>Dados bancários</div>
+      <div className='form-grid'>
+        <Field label={t('registry.vendor.bankCode')}>
           <Controller
             control={control}
             name='bankInfo'
-            render={({ field }) => <Input {...field} placeholder='Banco / ag. / conta' />}
+            render={({ field }) => (
+              <Input
+                value={field.value.bankCode}
+                onChange={(e) => field.onChange({ ...field.value, bankCode: e.target.value })}
+                placeholder='ex.: 001'
+                inputMode='numeric'
+              />
+            )}
           />
         </Field>
+        <Field label={t('registry.vendor.branch')}>
+          <Controller
+            control={control}
+            name='bankInfo'
+            render={({ field }) => (
+              <Input
+                value={field.value.branch}
+                onChange={(e) => field.onChange({ ...field.value, branch: e.target.value })}
+                placeholder='ex.: 0001'
+                inputMode='numeric'
+              />
+            )}
+          />
+        </Field>
+        <Field label={t('registry.vendor.account')}>
+          <Controller
+            control={control}
+            name='bankInfo'
+            render={({ field }) => (
+              <Input
+                value={field.value.account}
+                onChange={(e) => field.onChange({ ...field.value, account: e.target.value })}
+                placeholder='ex.: 12345'
+                inputMode='numeric'
+              />
+            )}
+          />
+        </Field>
+        <Field label={t('registry.vendor.accountDigit')}>
+          <Controller
+            control={control}
+            name='bankInfo'
+            render={({ field }) => (
+              <Input
+                value={field.value.accountDigit}
+                onChange={(e) => field.onChange({ ...field.value, accountDigit: e.target.value })}
+                placeholder='ex.: 0'
+                maxLength={2}
+              />
+            )}
+          />
+        </Field>
+        <div className='span-2'>
+          <Field label={t('registry.vendor.pixKey')}>
+            <Controller
+              control={control}
+              name='bankInfo'
+              render={({ field }) => (
+                <Input
+                  value={field.value.pixKey}
+                  onChange={(e) => field.onChange({ ...field.value, pixKey: e.target.value })}
+                  placeholder='CPF, CNPJ, e-mail, telefone ou chave aleatória'
+                />
+              )}
+            />
+          </Field>
+        </div>
       </div>
 
       <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
