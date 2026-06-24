@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Ulbra.One.Common.Application.Ai;
 
@@ -24,7 +25,7 @@ public static class AiClassificationPrompt
         sb.AppendLine($"Counterparty: {counterpartyName}");
         if (!string.IsNullOrWhiteSpace(documentNumber))
             sb.AppendLine($"Document number: {documentNumber}");
-        sb.AppendLine($"Total amount: {totalAmount:0.00}");
+        sb.AppendLine($"Total amount: {totalAmount.ToString("0.00", CultureInfo.InvariantCulture)}");
         sb.AppendLine();
         sb.AppendLine("Accounting accounts (Code — Name):");
         foreach (var (code, name) in accountingAccounts)

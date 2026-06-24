@@ -17,6 +17,8 @@ public class AiClassificationPromptTests
 
         Assert.Contains("Cloud hosting subscription", prompt.User);
         Assert.Contains("Acme Cloud Ltda", prompt.User);
+        Assert.Contains("NF-123", prompt.User);
+        Assert.Contains("1234.56", prompt.User);
         Assert.Contains("3.1.1", prompt.User);
         Assert.Contains("2.1.1", prompt.User);
         Assert.False(string.IsNullOrWhiteSpace(prompt.System));
