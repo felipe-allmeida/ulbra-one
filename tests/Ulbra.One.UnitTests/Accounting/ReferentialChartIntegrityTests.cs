@@ -22,6 +22,8 @@ public class ReferentialChartIntegrityTests
         // all five groups represented
         foreach (var g in new[] { AccountGroup.Asset, AccountGroup.Liability, AccountGroup.Equity, AccountGroup.Revenue, AccountGroup.Expense })
             Assert.Contains(accounts, a => a.AccountGroup == g);
+        // at least some accounts have a parent (hierarchy is non-trivial)
+        Assert.Contains(accounts, a => a.ParentId is not null);
         // every wired parent is a same-group synthetic account (invariant the importer guarantees)
         foreach (var a in accounts.Where(a => a.ParentId is not null))
         {
@@ -38,5 +40,14 @@ public class ReferentialChartIntegrityTests
         var pl = accounts.Single(a => a.Code == "2.05");
         Assert.Equal(AccountGroup.Equity, pl.AccountGroup);
         Assert.Null(pl.ParentId); // parent "2" is Liability → detached to root
+    }
+
+    [Fact]
+    public void Imunes_isentas_subvencao_is_revenue_with_credit_balance()
+    {
+        var accounts = ChartTemplates.Build(Company, ChartTemplate.RfbImunesIsentas);
+        var subvencao = accounts.Single(a => a.Code == "4.01.01.01.01");
+        Assert.Equal(AccountGroup.Revenue, subvencao.AccountGroup);
+        Assert.Equal(NormalBalance.Credit, subvencao.NormalBalance);
     }
 }

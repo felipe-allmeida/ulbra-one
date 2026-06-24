@@ -328,8 +328,8 @@ public static class DevDataSeeder
             2, 4, 6, 6, 4, 5, 9, 5);
     }
 
-    /// <summary>Seeds the Brazilian ledger chart template for the company plus a handful of posted journal
-    /// entries so the trial balance, DRE and balance sheet come up populated. Idempotent per company.</summary>
+    /// <summary>Seeds the RFB Imunes e Isentas chart of accounts for the company plus a handful of posted
+    /// journal entries so the trial balance, DRE and balance sheet come up populated. Idempotent per company.</summary>
     private static async Task SeedAccountingAsync(AppDbContext db, Guid companyId, TimeProvider time, ILogger logger, CancellationToken ct)
     {
         if (await db.LedgerAccounts.AnyAsync(a => a.CompanyId == companyId, ct))
@@ -360,16 +360,16 @@ public static class DevDataSeeder
 
         var entries = new List<JournalEntry>
         {
-            // Opening capital: cash in against equity.
-            Post("Integralização de capital", "1.01.01", "3.01.01", 500_000m, competence),
-            // Service revenue received into the bank account.
-            Post("Receita de serviços - mensalidades", "1.01.02", "4.01.01", 180_000m, competence),
-            // Payroll expense settled from the bank account.
-            Post("Folha de pagamento", "5.01.01", "1.01.02", 95_000m, competence.AddDays(4)),
-            // Energy expense booked against suppliers payable.
-            Post("Energia elétrica - competência", "5.01.02", "2.01.01", 21_300m, competence.AddDays(9)),
-            // Rent paid from the bank account.
-            Post("Aluguel do imóvel", "5.01.03", "1.01.02", 18_000m, competence.AddDays(9)),
+            // Patrimônio social integralizado: entrada de caixa contra o fundo patrimonial.
+            Post("Integralização do patrimônio social", "1.01.01.01.01", "2.05.01.01.01", 500_000m, competence),
+            // Receita de subvenção recebida em conta bancária.
+            Post("Receita de subvenções governamentais", "1.01.01.02.01", "4.01.01.01.01", 180_000m, competence),
+            // Folha da diretoria liquidada pelo banco.
+            Post("Remuneração da diretoria", "4.02.01.01.01", "1.01.01.02.01", 95_000m, competence.AddDays(4)),
+            // Energia elétrica paga pelo banco.
+            Post("Energia elétrica - competência", "4.02.02.01.05", "1.01.01.02.01", 21_300m, competence.AddDays(9)),
+            // Serviços de terceiros (PJ) pagos pelo banco.
+            Post("Serviços de terceiros (PJ)", "4.02.02.01.02", "1.01.01.02.01", 18_000m, competence.AddDays(9)),
         };
 
         db.JournalEntries.AddRange(entries);
