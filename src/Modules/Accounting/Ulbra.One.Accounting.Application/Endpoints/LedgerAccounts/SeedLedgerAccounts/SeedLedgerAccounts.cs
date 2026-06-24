@@ -12,11 +12,11 @@ using Ulbra.One.Common.Application.Persistence;
 
 namespace Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.SeedLedgerAccounts;
 
-/// <summary>Seeds the standard Brazilian chart-of-accounts template for a company. Idempotent:
-/// a no-op (returns the existing chart) when the company already has ledger accounts.</summary>
+/// <summary>Seeds the selected chart-of-accounts template for a company (defaults to Demo).
+/// Idempotent: a no-op (returns the existing chart) when the company already has ledger accounts.</summary>
 public sealed class SeedLedgerAccounts : IEndpoint
 {
-    public sealed record Request(CompanyId CompanyId);
+    public sealed record Request(CompanyId CompanyId, ChartTemplate Template = ChartTemplate.Demo);
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/seed", Handle).WithName("SeedLedgerAccounts").WithTags("Accounting")
@@ -38,7 +38,7 @@ public sealed class SeedLedgerAccounts : IEndpoint
         if (existing.Count > 0)
             return TypedResults.Ok(existing.Select(LedgerAccountResponse.From).ToList());
 
-        var accounts = BrazilianChartTemplate.Build(companyId);
+        var accounts = ChartTemplates.Build(companyId, req.Template);
         foreach (var account in accounts)
             await uow.AddAsync(account, ct);
         await uow.SaveChangesAsync(ct);
