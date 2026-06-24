@@ -155,7 +155,7 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Parse_Pdf_Returns_Service_Mock()
+    public async Task Parse_Pdf_Returns_Pdf_Format()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
@@ -166,7 +166,7 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
 
         var body = await ReadJson(res);
-        Assert.Equal("PdfMock", body.GetProperty("format").GetString());
+        Assert.Equal("Pdf", body.GetProperty("format").GetString());
     }
 
     [Fact]
