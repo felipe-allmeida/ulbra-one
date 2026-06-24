@@ -79,15 +79,16 @@ namespace Ulbra.One.Persistence.Migrations
                 schema: "finance",
                 table: "payables");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "status",
-                schema: "finance",
-                table: "payables",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(30)",
-                oldMaxLength: 30);
+            // Reverse of Up: map status names back to the old int ordinals before the type change.
+            // New-only states (Received, PendingClassification) have no old ordinal → fold to 0 (PendingApproval).
+            migrationBuilder.Sql(
+                "ALTER TABLE finance.payables ALTER COLUMN status TYPE integer USING (CASE status " +
+                "WHEN 'PendingApproval' THEN 0 " +
+                "WHEN 'Scheduled' THEN 1 " +
+                "WHEN 'Rejected' THEN 2 " +
+                "WHEN 'Cancelled' THEN 3 " +
+                "WHEN 'Paid' THEN 4 " +
+                "ELSE 0 END);");
         }
     }
 }
