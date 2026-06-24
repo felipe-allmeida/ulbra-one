@@ -1,0 +1,4122 @@
+[
+ {
+  "code": "1",
+  "name": "ATIVO",
+  "tipo": "S",
+  "parent": null,
+  "nivel": 1,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01",
+  "name": "ATIVO CIRCULANTE",
+  "tipo": "S",
+  "parent": "1",
+  "nivel": 2,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01",
+  "name": "DISPONIBILIDADES",
+  "tipo": "S",
+  "parent": "1.01",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.01",
+  "name": "CAIXA GERAL",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.01.01",
+  "name": "Caixa Matriz",
+  "tipo": "A",
+  "parent": "1.01.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.01.02",
+  "name": "Caixa Filiais",
+  "tipo": "A",
+  "parent": "1.01.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02",
+  "name": "DEPÓSITOS BANCÁRIOS - NO PAÍS",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02.01",
+  "name": "Bancos Conta Movimento",
+  "tipo": "A",
+  "parent": "1.01.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02.02",
+  "name": "Contas Bancárias - Subvenções",
+  "tipo": "A",
+  "parent": "1.01.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02.03",
+  "name": "Contas Bancárias - Doações",
+  "tipo": "A",
+  "parent": "1.01.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02.04",
+  "name": "Contas Bancárias - Contribuições",
+  "tipo": "A",
+  "parent": "1.01.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.02.09",
+  "name": "Contas Bancárias - Recursos Sujeitos a Restrições",
+  "tipo": "A",
+  "parent": "1.01.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03",
+  "name": "DEPÓSITOS BANCÁRIOS - NO EXTERIOR",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.01",
+  "name": "Bancos Conta Movimento - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.02",
+  "name": "Recursos no Exterior Decorrentes de Exportação",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.03",
+  "name": "Contas Bancárias - Subvenções - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.04",
+  "name": "Contas Bancárias - Doações - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.05",
+  "name": "Contas Bancárias - Contribuições - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.03.09",
+  "name": "Contas Bancárias - Recursos Sujeitos a Restrições - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.04",
+  "name": "NUMERÁRIOS EM TRÂNSITO",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.04.01",
+  "name": "Numerários em Trânsito",
+  "tipo": "A",
+  "parent": "1.01.01.04",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05",
+  "name": "VALORES MOBILIÁRIOS - NO PAÍS",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.01",
+  "name": "Títulos e Valores Mobiliários",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.02",
+  "name": "Valores Mobiliários - Mercado de Capitais Interno",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.03",
+  "name": "Valores Mobiliários - Aplicações de Subvenções",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.04",
+  "name": "Valores Mobiliários - Aplicações de Doações",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.05",
+  "name": "Valores Mobiliários - Aplicações de Contribuições",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.05.09",
+  "name": "Valores Mobiliários - Aplicações de Recursos Sujeitos a Restrições",
+  "tipo": "A",
+  "parent": "1.01.01.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06",
+  "name": "VALORES MOBILIÁRIOS - NO EXTERIOR",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.01",
+  "name": "Títulos e Valores Mobiliários - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.02",
+  "name": "Valores Mobiliários - Mercado de Capitais Externo",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.03",
+  "name": "Valores Mobiliários - Aplicações de Subvenções - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.04",
+  "name": "Valores Mobiliários - Aplicações de Doações - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.05",
+  "name": "Valores Mobiliários - Aplicações de Contribuições - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.06.09",
+  "name": "Valores Mobiliários - Aplicações de Recursos Sujeitos a Restrições - no Exterior",
+  "tipo": "A",
+  "parent": "1.01.01.06",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.09",
+  "name": "OUTRAS DISPONIBILIDADES",
+  "tipo": "S",
+  "parent": "1.01.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.01.09.09",
+  "name": "Outras Disponibilidades",
+  "tipo": "A",
+  "parent": "1.01.01.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02",
+  "name": "CRÉDITOS",
+  "tipo": "S",
+  "parent": "1.01",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.01",
+  "name": "ADIANTAMENTOS",
+  "tipo": "S",
+  "parent": "1.01.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.01.01",
+  "name": "Adiantamentos a Fornecedores - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.01.02",
+  "name": "Adiantamentos a Funcionários - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.01.03",
+  "name": "Adiantamentos a Terceiros - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02",
+  "name": "VALORES A RECEBER",
+  "tipo": "S",
+  "parent": "1.01.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.01",
+  "name": "Mensalidades a Receber - Educação Básica",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.02",
+  "name": "Mensalidades a Receber - Educação Superior - Graduação",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.03",
+  "name": "Mensalidades a Receber - Educação Superior - Pós-graduação",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.04",
+  "name": "Clientes – Outros Serviços Educacionais a Receber",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.05",
+  "name": "Clientes – Serviços de Saúde",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.06",
+  "name": "Clientes – Assistência Social",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.07",
+  "name": "Valores a Receber de Terceiros",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.08",
+  "name": "Valores a Receber de Pessoas Ligadas",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.09",
+  "name": "Recebíveis Sujeitos a Ajuste a Valor Presente",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.21",
+  "name": "(-) Juros a Apropriar Relativos a Ajustes a Valor Presente",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.02.22",
+  "name": "(-) Provisões para Créditos de Liquidação Duvidosa",
+  "tipo": "A",
+  "parent": "1.01.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03",
+  "name": "TRIBUTOS A RECUPERAR/COMPENSAR",
+  "tipo": "S",
+  "parent": "1.01.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.01",
+  "name": "Tributos Federais a Recuperar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.02",
+  "name": "Tributos Estaduais a Recuperar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.03",
+  "name": "Tributos Municipais a Recuperar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.04",
+  "name": "Tributos Federais a Compensar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.05",
+  "name": "Tributos Estaduais a Compensar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.03.06",
+  "name": "Tributos Municipais a Compensar",
+  "tipo": "A",
+  "parent": "1.01.02.03",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.05",
+  "name": "CRÉDITOS EM CONTENCIOSO - CIRCULANTE",
+  "tipo": "S",
+  "parent": "1.01.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.05.01",
+  "name": "Depósitos em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.05.09",
+  "name": "Outros Créditos em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.05",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09",
+  "name": "OUTROS CRÉDITOS - CIRCULANTE",
+  "tipo": "S",
+  "parent": "1.01.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.01",
+  "name": "Mútuos com Pessoas Não Ligadas (Físicas/Jurídicas) - Circulante",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.02",
+  "name": "Títulos a Receber",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.03",
+  "name": "Juros a Receber",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.04",
+  "name": "Demais Créditos a Receber",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.21",
+  "name": "(-) Provisões para Outros Créditos de Liquidação Duvidosa",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.22",
+  "name": "(-) Perdas Estimadas para Redução ao Valor Recuperável - Outros Créditos",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.02.09.23",
+  "name": "(-) Juros a Apropriar Relativos a Ajustes a Valor Presente - Outros Créditos",
+  "tipo": "A",
+  "parent": "1.01.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03",
+  "name": "ESTOQUES",
+  "tipo": "S",
+  "parent": "1.01",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01",
+  "name": "ESTOQUES DE MERCADORIAS/PRODUTOS/SERVIÇOS",
+  "tipo": "S",
+  "parent": "1.01.03",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.01",
+  "name": "Mercadorias",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.02",
+  "name": "Produtos",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.03",
+  "name": "Almoxarifado",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.09",
+  "name": "Outros Estoques",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.21",
+  "name": "(-) Perdas Estimadas para Redução ao Valor Recuperável - Estoque",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.03.01.22",
+  "name": "(-) Ajuste a Valor Presente - Estoques",
+  "tipo": "A",
+  "parent": "1.01.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.05",
+  "name": "DESPESAS DO EXERCÍCIO SEGUINTE",
+  "tipo": "S",
+  "parent": "1.01",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.05.01",
+  "name": "DESPESAS DO EXERCÍCIO SEGUINTE - PAGAS ANTECIPADAMENTE",
+  "tipo": "S",
+  "parent": "1.01.05",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.05.01.01",
+  "name": "Alugueis pagos Antecipadamente",
+  "tipo": "A",
+  "parent": "1.01.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.05.01.02",
+  "name": "Prêmios de Seguros a Apropriar",
+  "tipo": "A",
+  "parent": "1.01.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.05.01.09",
+  "name": "Outros Custos e Despesas Pagos Antecipadamente",
+  "tipo": "A",
+  "parent": "1.01.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.09",
+  "name": "OUTRAS CONTAS RETIFICADORAS",
+  "tipo": "S",
+  "parent": "1.01",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.09.01",
+  "name": "OUTRAS CONTAS RETIFICADORAS DO CIRCULANTE",
+  "tipo": "S",
+  "parent": "1.01.09",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.09.01.21",
+  "name": "(-) Ajuste a Valor Presente - Receita Financeira a Apropriar",
+  "tipo": "A",
+  "parent": "1.01.09.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.01.09.01.22",
+  "name": "(-) Outras Contas Retificadoras do Circulante",
+  "tipo": "A",
+  "parent": "1.01.09.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02",
+  "name": "ATIVO NÃO CIRCULANTE",
+  "tipo": "S",
+  "parent": "1",
+  "nivel": 2,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01",
+  "name": "REALIZÁVEL A LONGO PRAZO",
+  "tipo": "S",
+  "parent": "1.02",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01",
+  "name": "CRÉDITOS E VALORES - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "1.02.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.01",
+  "name": "Mensalidades a Receber - Educação Básica - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.02",
+  "name": "Mensalidades a Receber - Educação Superior - Graduação - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.03",
+  "name": "Mensalidades a Receber - Educação Superior - Pós-graduação - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.04",
+  "name": "Clientes – Outros Serviços Educacionais a Receber - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.05",
+  "name": "Clientes – Serviços de Saúde - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.06",
+  "name": "Clientes – Assistência Social - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.07",
+  "name": "Valores a Receber de Terceiros - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.08",
+  "name": "Valores a Receber - Pessoas Ligadas - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.09",
+  "name": "Recebíveis Sujeitos a Ajuste a Valor Presente - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.10",
+  "name": "Mútuos com Pessoas Não Ligadas (Físicas/Jurídicas) - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.11",
+  "name": "Mútuos com Pessoas Ligadas (Físicas/Jurídicas) - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.12",
+  "name": "Adiantamento para Futuro Aumento de Capital - Ativo - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.13",
+  "name": "Valores Mobiliários - No País - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.14",
+  "name": "Valores Mobiliários - No Exterior - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.15",
+  "name": "Créditos por Contribuições e Doações - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.21",
+  "name": "(-) Provisões para Créditos de Liquidação Duvidosa - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.22",
+  "name": "(-) Perdas Estimadas para Redução ao Valor Recuperável - Realizável a Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.23",
+  "name": "(-) Juros a Apropriar Relativos a Ajustes a Valor Presente - Realizável a Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.01.24",
+  "name": "(-) Outras Contas Retificadoras - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.02",
+  "name": "CRÉDITOS EM CONTENCIOSO - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "1.02.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.02.01",
+  "name": "Depósitos em Contencioso - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.02.09",
+  "name": "Outros Créditos em Contencioso - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.09",
+  "name": "DESPESAS PAGAS ANTECIPADAMENTE - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "1.02.01",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.09.01",
+  "name": "Alugueis pagos Antecipadamente - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.09.02",
+  "name": "Prêmios de Seguros a Apropriar - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.01.09.09",
+  "name": "Outros Custos e Despesas Pagos Antecipadamente - Longo Prazo",
+  "tipo": "A",
+  "parent": "1.02.01.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02",
+  "name": "INVESTIMENTOS",
+  "tipo": "S",
+  "parent": "1.02",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01",
+  "name": "PARTICIPAÇÕES PERMANENTES EM SOCIEDADES - NO PAÍS",
+  "tipo": "S",
+  "parent": "1.02.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.01",
+  "name": "Participações Permanentes em Sociedades - no País - Avaliadas pelo Custo",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.02",
+  "name": "Participações Permanentes em Sociedades - no País - Avaliadas pelo Valor Justo",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.03",
+  "name": "Participações Permanentes em Coligadas - no País - Avaliadas pelo Custo",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.04",
+  "name": "Participações Permanentes em Coligadas - no País - Avaliadas pelo Valor Justo",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.05",
+  "name": "Participações Permanentes em Coligadas/Controladas - no País - Avaliadas pelo MEP",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.06",
+  "name": "Ágios em Investimentos - no País",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.07",
+  "name": "Ágios em Investimentos - no País - Mais Valia",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.08",
+  "name": "Ágios em Investimentos - no País - Rentabilidade Futura",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.01.21",
+  "name": "(-) Deságios e Provisão para Perdas Prováveis em Investimentos - no País",
+  "tipo": "A",
+  "parent": "1.02.02.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02",
+  "name": "PARTICIPAÇÕES PERMANENTES EM SOCIEDADES - NO EXTERIOR",
+  "tipo": "S",
+  "parent": "1.02.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.01",
+  "name": "Participações Permanentes em Sociedades - no Exterior - Avaliadas pelo Custo",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.02",
+  "name": "Participações Permanentes em Sociedades - no Exterior - Avaliadas pelo Valor Justo",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.03",
+  "name": "Participações Permanentes em Coligadas - no Exterior - Avaliadas pelo Custo",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.04",
+  "name": "Participações Permanentes em Coligadas - no Exterior - Avaliadas pelo Valor Justo",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.05",
+  "name": "Participações Permanentes em Coligadas/Controladas - no Exterior - Avaliadas pelo MEP",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.06",
+  "name": "Ágios em Investimentos - no Exterior",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.07",
+  "name": "Ágios em Investimentos - no Exterior - Mais Valia",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.08",
+  "name": "Ágios em Investimentos - no Exterior - Rentabilidade Futura",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.02.21",
+  "name": "(-) Deságios e Provisão para Perdas Prováveis em Investimentos - no Exterior",
+  "tipo": "A",
+  "parent": "1.02.02.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.09",
+  "name": "OUTROS INVESTIMENTOS PERMANENTES",
+  "tipo": "S",
+  "parent": "1.02.02",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.09.09",
+  "name": "Outros Investimentos Permanentes",
+  "tipo": "A",
+  "parent": "1.02.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.09.21",
+  "name": "(-) Deságios e Provisão para Perdas Prováveis em Investimentos",
+  "tipo": "A",
+  "parent": "1.02.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.02.09.22",
+  "name": "(-) Outras Contas Retificadoras",
+  "tipo": "A",
+  "parent": "1.02.02.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03",
+  "name": "IMOBILIZADO",
+  "tipo": "S",
+  "parent": "1.02",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01",
+  "name": "IMOBILIZADO - AQUISIÇÃO",
+  "tipo": "S",
+  "parent": "1.02.03",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.01",
+  "name": "Terrenos",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.02",
+  "name": "Edifícios e Construções",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.03",
+  "name": "Construções em Andamento - Imóvel Próprio",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.04",
+  "name": "Outras Imobilizações em Andamento",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.05",
+  "name": "Benfeitorias em Imóveis de Terceiros",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.06",
+  "name": "Máquinas, Equipamentos e Instalações Industriais",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.07",
+  "name": "Móveis, Utensílios e Instalações Comerciais",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.08",
+  "name": "Veículos",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.09",
+  "name": "Embarcações",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.10",
+  "name": "Aeronaves",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.11",
+  "name": "Recursos Minerais",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.12",
+  "name": "Florestamento e Reflorestamento",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.13",
+  "name": "Softwares - Imobilizado",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.14",
+  "name": "Direitos Contratuais de Exploração de Florestas",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.21",
+  "name": "(-) Depreciação Acumulada",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.22",
+  "name": "(-) Amortização Acumulada",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.23",
+  "name": "(-) Exaustão Acumulada",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.01.24",
+  "name": "(-) Perdas Estimadas por Redução ao Valor Recuperável - Imobilizado - Aquisição",
+  "tipo": "A",
+  "parent": "1.02.03.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02",
+  "name": "IMOBILIZADO - ARRENDAMENTO",
+  "tipo": "S",
+  "parent": "1.02.03",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.01",
+  "name": "Veículos",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.02",
+  "name": "Embarcações",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.03",
+  "name": "Aeronaves",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.04",
+  "name": "Máquinas, Equipamentos e Instalações Industriais",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.05",
+  "name": "Móveis, Utensílios e Instalações Comerciais",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.09",
+  "name": "Outras Imobilizações por Arrendamento",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.21",
+  "name": "(-) Depreciações de Imobilizados Objeto de Arrendamento Mercantil",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.02.22",
+  "name": "(-) Perdas Estimadas por Redução ao Valor Recuperável - Imobilizado Arrendamento",
+  "tipo": "A",
+  "parent": "1.02.03.02",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.09",
+  "name": "OUTROS IMOBILIZADOS",
+  "tipo": "S",
+  "parent": "1.02.03",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.09.09",
+  "name": "Outras Imobilizações",
+  "tipo": "A",
+  "parent": "1.02.03.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.09.21",
+  "name": "(-) Outras Depreciações, Amortizações e Quotas de Exaustão",
+  "tipo": "A",
+  "parent": "1.02.03.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.03.09.22",
+  "name": "(-) Outras Contas Redutoras do Imobilizado",
+  "tipo": "A",
+  "parent": "1.02.03.09",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04",
+  "name": "INTANGÍVEL",
+  "tipo": "S",
+  "parent": "1.02",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01",
+  "name": "ATIVOS INTANGÍVEIS",
+  "tipo": "S",
+  "parent": "1.02.04",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.01",
+  "name": "Marcas e Patentes",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.02",
+  "name": "Concessões",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.03",
+  "name": "Direitos Autorais",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.04",
+  "name": "Fundo de Comércio",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.05",
+  "name": "Software ou Programas de Computador",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.06",
+  "name": "Franquias",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.07",
+  "name": "Pesquisa e Desenvolvimento de Produtos",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.09",
+  "name": "Outros Ativos Intangíveis",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.21",
+  "name": "(-) Amortização do Intangível",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.22",
+  "name": "(-) Perdas Estimadas por Redução ao Valor Recuperável - Intangível",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.04.01.23",
+  "name": "(-) Outras Contas Redutoras do Intangível",
+  "tipo": "A",
+  "parent": "1.02.04.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05",
+  "name": "DIFERIDO (Em Extinção)",
+  "tipo": "S",
+  "parent": "1.02",
+  "nivel": 3,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05.01",
+  "name": "ATIVO DIFERIDO",
+  "tipo": "S",
+  "parent": "1.02.05",
+  "nivel": 4,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05.01.01",
+  "name": "Despesas Pré-Operacionais ou Pré-Industriais",
+  "tipo": "A",
+  "parent": "1.02.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05.01.02",
+  "name": "Despesas com Pesquisas Científicas ou Tecnológicas",
+  "tipo": "A",
+  "parent": "1.02.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05.01.09",
+  "name": "Demais Aplicações em Despesas Amortizáveis",
+  "tipo": "A",
+  "parent": "1.02.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "1.02.05.01.21",
+  "name": "(-) Amortização do Diferido",
+  "tipo": "A",
+  "parent": "1.02.05.01",
+  "nivel": 5,
+  "natureza": "1"
+ },
+ {
+  "code": "2",
+  "name": "PASSIVO",
+  "tipo": "S",
+  "parent": null,
+  "nivel": 1,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01",
+  "name": "PASSIVO CIRCULANTE",
+  "tipo": "S",
+  "parent": "2",
+  "nivel": 2,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01",
+  "name": "OBRIGAÇÕES DO CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01",
+  "nivel": 3,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.01",
+  "name": "SALÁRIOS E ENCARGOS SOCIAIS - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.01.01",
+  "name": "Salários e Remunerações a Pagar",
+  "tipo": "A",
+  "parent": "2.01.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.01.02",
+  "name": "INSS a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.01.03",
+  "name": "FGTS a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.01.09",
+  "name": "Demais Encargos a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.03",
+  "name": "FORNECEDORES - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.03.01",
+  "name": "Fornecedores - No País - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.03.02",
+  "name": "Fornecedores - No Exterior - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.03.21",
+  "name": "(-) Encargos a Apropriar Relativos a Ajustes a Valor Presente - Fornecedores Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.05",
+  "name": "CONTAS A PAGAR - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.05.01",
+  "name": "Adiantamentos de Clientes - no País",
+  "tipo": "A",
+  "parent": "2.01.01.05",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.05.02",
+  "name": "Adiantamentos de Clientes - no Exterior",
+  "tipo": "A",
+  "parent": "2.01.01.05",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.05.09",
+  "name": "Outras Contas a Pagar - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.05",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.05.21",
+  "name": "(-) Encargos a Apropriar Relativos a Ajustes a Valor Presente - Contas a Pagar Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.05",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07",
+  "name": "EMPRÉSTIMOS OU FINANCIAMENTOS - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.01",
+  "name": "Duplicatas Descontadas",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.02",
+  "name": "Empréstimos ou Financiamentos - no País - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.03",
+  "name": "Empréstimos ou Financiamentos - no Exterior - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.04",
+  "name": "Adiantamentos de Contrato de Câmbio",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.05",
+  "name": "Arrendamento Mercantil - no País - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.06",
+  "name": "Arrendamento Mercantil - no Exterior - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.07.21",
+  "name": "(-) Encargos a Apropriar Relativos a Ajustes a Valor Presente - Empr./Financ Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.09",
+  "name": "OBRIGAÇÕES FISCAIS - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.09.01",
+  "name": "Tributos Federais a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.09.02",
+  "name": "Tributos Estaduais a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.09.03",
+  "name": "Tributos Municipais a Recolher",
+  "tipo": "A",
+  "parent": "2.01.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.11",
+  "name": "TÍTULOS DE DÍVIDA - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.11.01",
+  "name": "Títulos de Dívida a Pagar - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.11",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13",
+  "name": "PROVISÕES - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.01",
+  "name": "Provisões de Natureza Trabalhista - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.02",
+  "name": "Provisões de Natureza Trabalhista - Em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.03",
+  "name": "Provisões de Natureza Tributária - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.04",
+  "name": "Provisões de Natureza Tributária - Em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.05",
+  "name": "Provisões de Natureza Cível - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.06",
+  "name": "Provisões de Natureza Cível - Em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.09",
+  "name": "Outras Provisões - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.13.11",
+  "name": "Outras Provisões - Em Contencioso - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.15",
+  "name": "OUTRAS CONTAS A PAGAR - CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.15.01",
+  "name": "Mútuos de Pessoas Ligadas (Físicas/Jurídicas) - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.15",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.15.02",
+  "name": "Mútuos de Pessoas Não Ligadas (Físicas/Jurídicas) - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.15",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.15.03",
+  "name": "Faturamento para Entrega Futura - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.15",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.15.09",
+  "name": "Outras Contas a Pagar - Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.15",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.17",
+  "name": "OUTRAS CONTAS RETIFICADORAS - PASSIVO CIRCULANTE",
+  "tipo": "S",
+  "parent": "2.01.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.01.01.17.01",
+  "name": "(-) Demais Contas Retificadoras - Passivo Circulante",
+  "tipo": "A",
+  "parent": "2.01.01.17",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02",
+  "name": "PASSIVO NÃO-CIRCULANTE",
+  "tipo": "S",
+  "parent": "2",
+  "nivel": 2,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01",
+  "name": "OBRIGAÇÕES A LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02",
+  "nivel": 3,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01",
+  "name": "EMPRÉSTIMOS E FINANCIAMENTOS - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.01",
+  "name": "Fornecedores - No País - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.02",
+  "name": "Fornecedores - No Exterior - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.03",
+  "name": "Credores por Financiamento - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.04",
+  "name": "Títulos a Pagar - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.05",
+  "name": "Duplicatas Descontadas - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.06",
+  "name": "Empréstimos ou Financiamentos - no País - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.07",
+  "name": "Empréstimos ou Financiamentos - no Exterior - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.08",
+  "name": "Adiantamentos de Contrato de Câmbio",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.09",
+  "name": "Arrendamento Mercantil - no País - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.10",
+  "name": "Arrendamento Mercantil - no Exterior - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.01.21",
+  "name": "(-) Encargos a Apropriar Relativos a Ajustes a Valor Presente - Empr/Financ - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.01",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.03",
+  "name": "OBRIGAÇÕES FISCAIS - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.03.01",
+  "name": "Tributos Federais a Recolher - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.03.02",
+  "name": "Tributos Estaduais a Recolher - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.03.03",
+  "name": "Tributos Municipais a Recolher - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.03",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.05",
+  "name": "TÍTULOS DE DÍVIDA - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.05.01",
+  "name": "Títulos de Dívida a Pagar - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.05",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07",
+  "name": "PROVISÕES - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.01",
+  "name": "Provisões de Natureza Trabalhista - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.02",
+  "name": "Provisões de Natureza Trabalhista - em Contencioso - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.03",
+  "name": "Provisões de Natureza Tributária - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.04",
+  "name": "Provisões de Natureza Tributária - em Contencioso - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.05",
+  "name": "Provisões de Natureza Cível - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.07.06",
+  "name": "Provisões de Natureza Cível - em Contencioso - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.07",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.09",
+  "name": "OUTRAS CONTAS A PAGAR - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.09.01",
+  "name": "Mútuos de Pessoas Não Ligadas (Físicas/Jurídicas) - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.09.02",
+  "name": "Mútuos de Pessoas Ligadas (Físicas/Jurídicas) - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.09.03",
+  "name": "Adiantamento para Futuro Aumento de Patrimônio Social - Passivo - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.09.09",
+  "name": "Outras Contas a Pagar - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.09",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.11",
+  "name": "OUTRAS CONTAS RETIFICADORAS - PASSIVO - LONGO PRAZO",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.11.21",
+  "name": "(-) Demais Contas Retificadoras - Passivo - Longo Prazo",
+  "tipo": "A",
+  "parent": "2.02.01.11",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.13",
+  "name": "RECEITAS DIFERIDAS",
+  "tipo": "S",
+  "parent": "2.02.01",
+  "nivel": 4,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.13.01",
+  "name": "Receitas Diferidas",
+  "tipo": "A",
+  "parent": "2.02.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.02.01.13.21",
+  "name": "(-) Custos Correspondentes às Receitas Diferidas",
+  "tipo": "A",
+  "parent": "2.02.01.13",
+  "nivel": 5,
+  "natureza": "2"
+ },
+ {
+  "code": "2.05",
+  "name": "PATRIMÔNIO LÍQUIDO SOCIAL",
+  "tipo": "S",
+  "parent": "2",
+  "nivel": 2,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01",
+  "name": "PATRIMÔNIO SOCIAL",
+  "tipo": "S",
+  "parent": "2.05",
+  "nivel": 3,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.01",
+  "name": "PATRIMÔNIO SOCIAL REALIZADO - DE RESIDENTE NO PAÍS",
+  "tipo": "S",
+  "parent": "2.05.01",
+  "nivel": 4,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.01.01",
+  "name": "Fundo Patrimonial Social Subscrito de Domiciliados e Residentes no País",
+  "tipo": "A",
+  "parent": "2.05.01.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.01.02",
+  "name": "(-) Fundo Patrimonial Social a Integralizar de Domiciliados e Residentes no País",
+  "tipo": "A",
+  "parent": "2.05.01.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.01.05",
+  "name": "Fundos Especiais de Domiciliados e Residentes no País",
+  "tipo": "A",
+  "parent": "2.05.01.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.02",
+  "name": "PATRIMÔNIO SOCIAL REALIZADO - DE RESIDENTE/DOMICILIADO NO EXTERIOR",
+  "tipo": "S",
+  "parent": "2.05.01",
+  "nivel": 4,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.02.01",
+  "name": "Fundo Patrimonial Social Subscrito de Domiciliados e Residentes no Exterior",
+  "tipo": "A",
+  "parent": "2.05.01.02",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.02.02",
+  "name": "(-) Fundo Patrimonial Social a Integralizar de Domiciliados e Residentes no Exterior",
+  "tipo": "A",
+  "parent": "2.05.01.02",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.01.02.05",
+  "name": "Fundos Especiais de Domiciliados e Residentes no Exterior",
+  "tipo": "A",
+  "parent": "2.05.01.02",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02",
+  "name": "RESERVAS",
+  "tipo": "S",
+  "parent": "2.05",
+  "nivel": 3,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02.01",
+  "name": "RESERVAS DO PATRIMÔNIO SOCIAL",
+  "tipo": "S",
+  "parent": "2.05.02",
+  "nivel": 4,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02.01.01",
+  "name": "Reserva Estatutária",
+  "tipo": "A",
+  "parent": "2.05.02.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02.01.02",
+  "name": "Reserva de Reavaliação",
+  "tipo": "A",
+  "parent": "2.05.02.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02.01.03",
+  "name": "Reserva de Doações e Subvenções Patrimoniais",
+  "tipo": "A",
+  "parent": "2.05.02.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.02.01.09",
+  "name": "Outras Reservas",
+  "tipo": "A",
+  "parent": "2.05.02.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.03",
+  "name": "AJUSTES DE AVALIAÇÃO PATRIMONIAL",
+  "tipo": "S",
+  "parent": "2.05",
+  "nivel": 3,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.03.01",
+  "name": "AJUSTES DE AVALIAÇÃO PATRIMONIAL (Lei 11.638/2007)",
+  "tipo": "S",
+  "parent": "2.05.03",
+  "nivel": 4,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.03.01.01",
+  "name": "Ajustes às Normas Internacionais de Contabilidade",
+  "tipo": "A",
+  "parent": "2.05.03.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.03.01.21",
+  "name": "(-) Ajustes às Normas Internacionais de Contabilidade",
+  "tipo": "A",
+  "parent": "2.05.03.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.05",
+  "name": "SUPERÁVITS OU DÉFICITS ACUMULADOS",
+  "tipo": "S",
+  "parent": "2.05",
+  "nivel": 3,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.05.01",
+  "name": "SUPERÁVITS OU DÉFICITS ACUMULADOS",
+  "tipo": "S",
+  "parent": "2.05.05",
+  "nivel": 4,
+  "natureza": "3"
+ },
+ {
+  "code": "2.05.05.01.01",
+  "name": "Superávits (Déficits) Acumulados",
+  "tipo": "A",
+  "parent": "2.05.05.01",
+  "nivel": 5,
+  "natureza": "3"
+ },
+ {
+  "code": "4",
+  "name": "SUPERÁVIT/DÉFICIT LÍQUIDO DO EXERCÍCIO",
+  "tipo": "S",
+  "parent": null,
+  "nivel": 1,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01",
+  "name": "RECEITAS",
+  "tipo": "S",
+  "parent": "4",
+  "nivel": 2,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01",
+  "name": "RECEITA DAS ATIVIDADES",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01",
+  "name": "RECEITA DE SUBVENÇÕES",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01.01",
+  "name": "Subvenções Governamentais - União",
+  "tipo": "A",
+  "parent": "4.01.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01.02",
+  "name": "Subvenções Governamentais - Estados",
+  "tipo": "A",
+  "parent": "4.01.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01.03",
+  "name": "Subvenções Governamentais - Municípios",
+  "tipo": "A",
+  "parent": "4.01.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01.04",
+  "name": "Subvenções Não Governamentais de Pessoas Jurídicas",
+  "tipo": "A",
+  "parent": "4.01.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.01.05",
+  "name": "Subvenções Não Governamentais de Pessoas Físicas",
+  "tipo": "A",
+  "parent": "4.01.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02",
+  "name": "RECEITA DE DOAÇÕES",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02.01",
+  "name": "Doações Governamentais - União",
+  "tipo": "A",
+  "parent": "4.01.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02.02",
+  "name": "Doações Governamentais - Estados",
+  "tipo": "A",
+  "parent": "4.01.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02.03",
+  "name": "Doações Governamentais - Municípios",
+  "tipo": "A",
+  "parent": "4.01.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02.04",
+  "name": "Doações Não Governamentais de Pessoas Jurídicas",
+  "tipo": "A",
+  "parent": "4.01.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.02.05",
+  "name": "Doações Não Governamentais de Pessoas Físicas",
+  "tipo": "A",
+  "parent": "4.01.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03",
+  "name": "RECEITA DE CONTRIBUIÇÕES",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03.01",
+  "name": "Contribuições Governamentais - União",
+  "tipo": "A",
+  "parent": "4.01.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03.02",
+  "name": "Contribuições Governamentais - Estados",
+  "tipo": "A",
+  "parent": "4.01.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03.03",
+  "name": "Contribuições Governamentais - Municípios",
+  "tipo": "A",
+  "parent": "4.01.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03.04",
+  "name": "Contribuições Não Governamentais de Pessoas Jurídicas",
+  "tipo": "A",
+  "parent": "4.01.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.03.05",
+  "name": "Contribuições Não Governamentais de Pessoas Físicas",
+  "tipo": "A",
+  "parent": "4.01.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.05",
+  "name": "RECEITAS DA GRATUIDADE E DO TRABALHO VOLUNTÁRIO",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.05.01",
+  "name": "Receitas da Gratuidade",
+  "tipo": "A",
+  "parent": "4.01.01.05",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.05.09",
+  "name": "(-) Custos e Despesas da Gratuidade",
+  "tipo": "A",
+  "parent": "4.01.01.05",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.05.11",
+  "name": "Receitas do Trabalho Voluntário",
+  "tipo": "A",
+  "parent": "4.01.01.05",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.05.19",
+  "name": "(-) Custos e Despesas do Trabalho Voluntário",
+  "tipo": "A",
+  "parent": "4.01.01.05",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07",
+  "name": "RECEITA DA VENDA DE PRODUTOS/MERCADORIAS/SERVIÇOS",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.01",
+  "name": "VENDA DE PRODUTOS",
+  "tipo": "S",
+  "parent": "4.01.01.07",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.01.01",
+  "name": "Da Atividade de Educação",
+  "tipo": "A",
+  "parent": "4.01.01.07.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.01.02",
+  "name": "Da Atividade de Saúde",
+  "tipo": "A",
+  "parent": "4.01.01.07.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.01.03",
+  "name": "Da Atividade de Assistência Social",
+  "tipo": "A",
+  "parent": "4.01.01.07.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.02",
+  "name": "VENDA DE MERCADORIAS",
+  "tipo": "S",
+  "parent": "4.01.01.07",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.02.01",
+  "name": "Da Atividade de Educação",
+  "tipo": "A",
+  "parent": "4.01.01.07.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.02.02",
+  "name": "Da Atividade de Saúde",
+  "tipo": "A",
+  "parent": "4.01.01.07.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.02.03",
+  "name": "Da Atividade de Assistência Social",
+  "tipo": "A",
+  "parent": "4.01.01.07.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03",
+  "name": "VENDA DE SERVIÇOS",
+  "tipo": "S",
+  "parent": "4.01.01.07",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01",
+  "name": "RECEITA DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS - EDUCAÇÃO BÁSICA",
+  "tipo": "S",
+  "parent": "4.01.01.07.03",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.01",
+  "name": "Receita de mensalidades (alunos pagantes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.02",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo educação básica (bolsistas integrais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.03",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo (bolsistas integrais – critério de seleção Lei 12.101/2009)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.04",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo (bolsistas parciais 50% – critério de seleção Lei 12.101/2009)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.05",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo (bolsistas parciais – beneficiários previstos pelo art. 31 do Decreto nº 7.237/2010)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.06",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo educação básica (bolsistas integrais – beneficiários não carentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.07",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo educação básica (bolsistas parciais 50% – beneficiários não carentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.08",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo educação básica (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.01.19",
+  "name": "Serviços Educacionais – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02",
+  "name": "RECEITA DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS – EDUCAÇÃO SUPERIOR – GRADUAÇÃO",
+  "tipo": "S",
+  "parent": "4.01.01.07.03",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.01",
+  "name": "Receita de mensalidades (alunos pagantes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.02",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas integrais PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.03",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas parciais 50% PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.04",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas parciais 25% PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.05",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas integrais PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.06",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas parciais 50% PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.07",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas parciais 25% PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.08",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas integrais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.09",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (bolsistas parciais 50% – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.10",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo graduação (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.02.19",
+  "name": "Serviços Educacionais – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03",
+  "name": "RECEITA DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS – EDUCAÇÃO SUPERIOR – PÓS-GRADUAÇÃO",
+  "tipo": "S",
+  "parent": "4.01.01.07.03",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.01",
+  "name": "Receita de mensalidades (alunos pagantes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.02",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo pós-graduação (bolsistas integrais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.03",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo pós-graduação (bolsistas parciais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.04",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo pós-graduação (bolsistas integrais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.05",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo pós-graduação (bolsistas parciais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.06",
+  "name": "Receita de mensalidades revertidas como bolsas de estudo pós-graduação (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.07",
+  "name": "Parcerias com outras entidades sem fins lucrativos (Art. 3º §§ 3º e 4º do Dec 7.237/2010)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.03.19",
+  "name": "Serviços Educacionais – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04",
+  "name": "RECEITA DE PRESTAÇÃO DE SERVIÇOS DE SAÚDE",
+  "tipo": "S",
+  "parent": "4.01.01.07.03",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04.01",
+  "name": "Pacientes Particulares",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.04",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04.02",
+  "name": "Convênios – SUS",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.04",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04.03",
+  "name": "Convênios – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.04",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04.04",
+  "name": "Parcerias com outras entidades sem fins lucrativos (Art. 3º §§ 3º e 4º do Dec 7.237/2010)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.04",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.04.09",
+  "name": "Serviços de Saúde – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.04",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05",
+  "name": "RECEITAS DA PRESTAÇÃO DE SERVIÇOS DE ASSISTÊNCIA SOCIAL",
+  "tipo": "S",
+  "parent": "4.01.01.07.03",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05.01",
+  "name": "Pacientes Particulares",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.05",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05.02",
+  "name": "Pessoa Idosa Abrigada (Art. 35 da Lei 10.741/2003)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.05",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05.03",
+  "name": "Convênios – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.05",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05.04",
+  "name": "Parcerias com outras entidades sem fins lucrativos (Art. 3º §§ 3º e 4º do Dec 7.237/2010)",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.05",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.07.03.05.09",
+  "name": "Serviços de Assistência Social – Outros",
+  "tipo": "A",
+  "parent": "4.01.01.07.03.05",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.09",
+  "name": "OUTRAS RECEITAS",
+  "tipo": "S",
+  "parent": "4.01.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.09.01",
+  "name": "Contribuições Sindicais",
+  "tipo": "A",
+  "parent": "4.01.01.09",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.09.02",
+  "name": "Contribuições Confederativas/Associativas",
+  "tipo": "A",
+  "parent": "4.01.01.09",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.09.03",
+  "name": "Mensalidades",
+  "tipo": "A",
+  "parent": "4.01.01.09",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.01.09.09",
+  "name": "Outras Receitas das Atividades",
+  "tipo": "A",
+  "parent": "4.01.01.09",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02",
+  "name": "DEDUÇÕES DAS RECEITAS",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01",
+  "name": "DEDUÇÕES DAS RECEITAS DAS ATIVIDADES",
+  "tipo": "S",
+  "parent": "4.01.02",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.01",
+  "name": "(-) Vendas Canceladas e Devoluções de Vendas",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.02",
+  "name": "(-) Descontos Incondicionais e Abatimentos",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.03",
+  "name": "(-) ICMS",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.04",
+  "name": "(-) Cofins Sobre Receita Bruta",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.05",
+  "name": "(-) PIS/Pasep Sobre Receita Bruta",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.06",
+  "name": "(-) ISS",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.09",
+  "name": "(-) Demais Impostos e Contribuições Incidentes sobre Vendas e Serviços",
+  "tipo": "A",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11",
+  "name": "(-) DEDUÇÕES - ENTIDADE DE EDUCAÇÃO (Art. 10 do ProUni)",
+  "tipo": "S",
+  "parent": "4.01.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01",
+  "name": "(-) BOLSAS DE ESTUDO CONCEDIDAS - EDUCAÇÃO BÁSICA",
+  "tipo": "S",
+  "parent": "4.01.02.01.11",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.01",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas integrais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.02",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas parciais 50% – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.03",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas integrais – critério de seleção Lei 12.101/2009)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.04",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas parciais 50% – critério de seleção Lei 12.101/2009)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.05",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas parciais – beneficiários previstos pelo art. 31 do Decreto nº 7.237/2010)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.06",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas integrais – beneficiários não carentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.07",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (bolsistas parciais 50% – beneficiários não carentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.01.08",
+  "name": "(-) Bolsas de estudo concedidas - educação básica (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.01",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02",
+  "name": "(-) BOLSAS DE ESTUDO CONCEDIDAS - EDUCAÇÃO SUPERIOR – GRADUAÇÃO",
+  "tipo": "S",
+  "parent": "4.01.02.01.11",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.01",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas integrais PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.02",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 50% PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.03",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 25% PROUNI – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.04",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas integrais PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.05",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 50% PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.06",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 25% PROUNI – beneficiários critério de seleção Lei 11.096/2005)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.07",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas integrais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.08",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 50% – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.09",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (bolsistas parciais 25% – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.02.10",
+  "name": "(-) Bolsas de estudo concedidas - educação superior graduação (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.02",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03",
+  "name": "(-) BOLSAS DE ESTUDO CONCEDIDAS - EDUCAÇÃO SUPERIOR - PÓS-GRADUAÇÃO",
+  "tipo": "S",
+  "parent": "4.01.02.01.11",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03.01",
+  "name": "(-) Bolsas de estudo concedidas - educação superior pós-graduação (bolsistas integrais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03.02",
+  "name": "(-) Bolsas de estudo concedidas - educação superior pós-graduação (bolsistas parciais – Funcionários e seus dependentes)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03.03",
+  "name": "(-) Bolsas de estudo concedidas - educação superior pós-graduação (bolsistas integrais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03.04",
+  "name": "(-) Bolsas de estudo concedidas - educação superior pós-graduação (bolsistas parciais – Bolsas da própria instituição)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.02.01.11.03.05",
+  "name": "(-) Bolsas de estudo concedidas - educação superior pós-graduação (outros casos não previstos)",
+  "tipo": "A",
+  "parent": "4.01.02.01.11.03",
+  "nivel": 7,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03",
+  "name": "CUSTO DOS BENS E SERVIÇOS VENDIDOS",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01",
+  "name": "CUSTO DA VENDA DOS PRODUTOS/MERCADORIAS/SERVIÇOS",
+  "tipo": "S",
+  "parent": "4.01.03",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01.01",
+  "name": "(-) Custo dos Produtos de Fabricação Própria Vendidos",
+  "tipo": "A",
+  "parent": "4.01.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01.02",
+  "name": "(-) Custo das Mercadorias Revendidas",
+  "tipo": "A",
+  "parent": "4.01.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01.03",
+  "name": "(-) Custo dos Serviços Prestados",
+  "tipo": "A",
+  "parent": "4.01.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01.04",
+  "name": "(-) Custo das Unidades Imobiliárias Vendidas",
+  "tipo": "A",
+  "parent": "4.01.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.03.01.09",
+  "name": "(-) Outros Custos",
+  "tipo": "A",
+  "parent": "4.01.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.04",
+  "name": "AJUSTES A VALOR PRESENTE",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.04.01",
+  "name": "AJUSTES A VALOR PRESENTE",
+  "tipo": "S",
+  "parent": "4.01.04",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.04.01.01",
+  "name": "Ajuste a Valor Presente de Estoques",
+  "tipo": "A",
+  "parent": "4.01.04.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.04.01.09",
+  "name": "Outros Ajustes a Valor Presente",
+  "tipo": "A",
+  "parent": "4.01.04.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.05",
+  "name": "RECEITAS FINANCEIRAS",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.05.01",
+  "name": "RECEITAS FINANCEIRAS",
+  "tipo": "S",
+  "parent": "4.01.05",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.05.01.01",
+  "name": "Receitas de Aplicações Financeiras",
+  "tipo": "A",
+  "parent": "4.01.05.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.05.01.02",
+  "name": "Descontos Obtidos",
+  "tipo": "A",
+  "parent": "4.01.05.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.05.01.09",
+  "name": "Outras Receitas Financeiras",
+  "tipo": "A",
+  "parent": "4.01.05.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09",
+  "name": "OUTRAS RECEITAS",
+  "tipo": "S",
+  "parent": "4.01",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01",
+  "name": "OUTRAS RECEITAS",
+  "tipo": "S",
+  "parent": "4.01.09",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.01",
+  "name": "Receita de Aluguéis",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.02",
+  "name": "Receita de Arrendamento",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.03",
+  "name": "Lucros e Dividendos Recebidos",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.04",
+  "name": "Participação em Debêntures e Congêneres",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.05",
+  "name": "Receita de Venda de Bens Patrimoniais",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.06",
+  "name": "(-) Custo dos Bens Patrimoniais Vendidos",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.01.09.01.09",
+  "name": "Outras Receitas não Associadas às Atividades",
+  "tipo": "A",
+  "parent": "4.01.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02",
+  "name": "DESPESAS",
+  "tipo": "S",
+  "parent": "4",
+  "nivel": 2,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01",
+  "name": "DESPESAS COM RECURSOS HUMANOS",
+  "tipo": "S",
+  "parent": "4.02",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01",
+  "name": "HONORÁRIOS DA DIRETORIA",
+  "tipo": "S",
+  "parent": "4.02.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.01",
+  "name": "Remuneração a Dirigentes e a Conselho de Administração",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.02",
+  "name": "Ajuda de Custos da Diretoria",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.03",
+  "name": "Encargos Sociais com a Diretoria",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.04",
+  "name": "(-) Reversão de Encargos Sociais com a Diretoria",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.05",
+  "name": "Despesa com Provisão para Remuneração e Encargos da Diretoria",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.01.09",
+  "name": "Outras Despesas com a Diretoria",
+  "tipo": "A",
+  "parent": "4.02.01.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02",
+  "name": "DESPESAS COM EMPREGADOS",
+  "tipo": "S",
+  "parent": "4.02.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.01",
+  "name": "Ordenados, Salários, Gratificações e Outras Remunerações a Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.02",
+  "name": "Planos de Previdência com Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.03",
+  "name": "Encargos Sociais com Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.04",
+  "name": "(-) Reversão de Encargos Sociais com Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.05",
+  "name": "Despesa com Provisão para Remuneração e Encargos dos Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.02.09",
+  "name": "Outros Gastos com Empregados",
+  "tipo": "A",
+  "parent": "4.02.01.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03",
+  "name": "DESPESAS COM PESSOAS SEM VÍNCULO EMPREGATÍCIO",
+  "tipo": "S",
+  "parent": "4.02.01",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03.01",
+  "name": "Prestação de Serviços por Pessoas Físicas sem Vínculo Empregatício",
+  "tipo": "A",
+  "parent": "4.02.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03.02",
+  "name": "Encargos Sociais com Pessoas Físicas sem Vínculo Empregatício",
+  "tipo": "A",
+  "parent": "4.02.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03.03",
+  "name": "(-) Reversão de Encargos Sociais com Pessoas Físicas sem Vínculo Empregatício",
+  "tipo": "A",
+  "parent": "4.02.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03.04",
+  "name": "Despesa com Provisão para Gastos com Pessoas Físicas sem Vínculo Empregatício",
+  "tipo": "A",
+  "parent": "4.02.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.01.03.09",
+  "name": "Outros Gastos com Pessoas Físicas sem Vínculo Empregatício",
+  "tipo": "A",
+  "parent": "4.02.01.03",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02",
+  "name": "DESPESAS ADMINISTRATIVAS",
+  "tipo": "S",
+  "parent": "4.02",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01",
+  "name": "DESPESAS ADMINISTRATIVAS",
+  "tipo": "S",
+  "parent": "4.02.02",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.01",
+  "name": "Despesas com Subvenções, Contribuições e Doações",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.02",
+  "name": "Prestação de Serviços por Pessoas Jurídicas",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.03",
+  "name": "Despesas de Alugueis",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.04",
+  "name": "Despesas com Veículos",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.05",
+  "name": "Despesas de Consumo (Água/Esgoto/Energia Elétrica/Comunicação)",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.06",
+  "name": "Despesas de Consumo (Materiais de Expediente)",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.07",
+  "name": "Despesas de Manutenção e Conservação de Bens e Instalações",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.08",
+  "name": "Despesas com Viagens, Diárias e Ajuda de Custo",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.09",
+  "name": "Propaganda, Publicidade e Patrocínio",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.10",
+  "name": "Multas",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.11",
+  "name": "Encargos de Depreciação/Amortização/Exaustão",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.12",
+  "name": "Despesa com Provisões Administrativas",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.02.01.19",
+  "name": "Outras Despesas Administrativas",
+  "tipo": "A",
+  "parent": "4.02.02.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03",
+  "name": "DESPESAS FINANCEIRAS E TRIBUTÁRIAS",
+  "tipo": "S",
+  "parent": "4.02",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.01",
+  "name": "DESPESAS FINANCEIRAS",
+  "tipo": "S",
+  "parent": "4.02.03",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.01.01",
+  "name": "Despesas de Juros e Multas",
+  "tipo": "A",
+  "parent": "4.02.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.01.02",
+  "name": "Descontos Concedidos",
+  "tipo": "A",
+  "parent": "4.02.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.01.03",
+  "name": "Variações Monetárias",
+  "tipo": "A",
+  "parent": "4.02.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.01.09",
+  "name": "Outras Despesas Financeiras",
+  "tipo": "A",
+  "parent": "4.02.03.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02",
+  "name": "DESPESAS TRIBUTÁRIAS",
+  "tipo": "S",
+  "parent": "4.02.03",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.01",
+  "name": "Despesas com Tributos Federais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.02",
+  "name": "(-) Reversão de Tributos Federais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.03",
+  "name": "Despesas com Tributos Estaduais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.04",
+  "name": "(-) Reversão de Tributos Estaduais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.05",
+  "name": "Despesas com Tributos Municipais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.06",
+  "name": "(-) Reversão de Tributos Municipais",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.09",
+  "name": "Outras Despesas Tributárias",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.03.02.10",
+  "name": "(-) Reversão de Outras Despesas Tributárias",
+  "tipo": "A",
+  "parent": "4.02.03.02",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09",
+  "name": "OUTRAS DESPESAS",
+  "tipo": "S",
+  "parent": "4.02",
+  "nivel": 3,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01",
+  "name": "OUTRAS DESPESAS",
+  "tipo": "S",
+  "parent": "4.02.09",
+  "nivel": 4,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01",
+  "name": "DESPESAS POR PROGRMAS DE APOIO, PROJETOS OU AÇÕES ASSISTENCIAIS DE ENTIDADE DE EDUCAÇÃO",
+  "tipo": "S",
+  "parent": "4.02.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.01",
+  "name": "Ensino gratuito da educação básica em unidades específicas",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.02",
+  "name": "Programas de apoio a alunos bolsistas – transporte",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.03",
+  "name": "Programas de apoio a alunos bolsistas – uniforme",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.04",
+  "name": "Programas de apoio a alunos bolsistas – material didático",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.05",
+  "name": "Programas de apoio a alunos bolsistas – alimentação",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.06",
+  "name": "Programas de apoio a alunos bolsistas – outros",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.01.09",
+  "name": "Outras Despesas relacionadas a Programas de Apoio, Projetos ou Ações Assistenciais de Entidade de Educação",
+  "tipo": "A",
+  "parent": "4.02.09.01.01",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.02",
+  "name": "DESPESAS POR PROGRAMAS, PROJETOS OU AÇÕES DE ASSISTÊNCIA SOCIAL",
+  "tipo": "S",
+  "parent": "4.02.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.02.01",
+  "name": "Atendimento",
+  "tipo": "A",
+  "parent": "4.02.09.01.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.02.02",
+  "name": "Assessoramento",
+  "tipo": "A",
+  "parent": "4.02.09.01.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.02.03",
+  "name": "Defesa e garantia de direitos",
+  "tipo": "A",
+  "parent": "4.02.09.01.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.02.09",
+  "name": "Outras Despesas relacionadas a Programas, Projetos ou Ações de Assistência Social",
+  "tipo": "A",
+  "parent": "4.02.09.01.02",
+  "nivel": 6,
+  "natureza": "4"
+ },
+ {
+  "code": "4.02.09.01.09",
+  "name": "Outras Despesas Gerais",
+  "tipo": "A",
+  "parent": "4.02.09.01",
+  "nivel": 5,
+  "natureza": "4"
+ }
+]
