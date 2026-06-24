@@ -13,10 +13,10 @@ public static class FinanceModule
     {
         services.AddScoped<IBankStatementParser, OfxStatementParser>();
 
-        // Fiscal-document reading: XML parsers (detected by namespace) + service PDF mock.
+        // Fiscal-document reading: XML parsers (detected by namespace) + AI extractor for PDF/image.
         services.AddScoped<IFiscalXmlParser, NfeM55XmlParser>();
         services.AddScoped<IFiscalXmlParser, NfseAbrasfXmlParser>();
-        services.AddScoped<PdfMockReader>();
+        services.AddScoped<AiFiscalExtractor>();
         services.AddScoped<IFiscalDocumentReader, FiscalDocumentReader>();
 
         return services;

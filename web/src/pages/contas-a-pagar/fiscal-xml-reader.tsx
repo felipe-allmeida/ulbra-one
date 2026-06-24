@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Receipt } from 'lucide-react';
 import { type ParsedFiscalDocument } from '../../api';
-import { useParseFiscalDocument } from '../../queries';
+import { useParseFiscalDocument, useRequestFiscalUploadUrl, uploadToPresignedUrl } from '../../queries';
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Field, FilePicker } from '../../ui';
@@ -19,6 +19,7 @@ export function FiscalXmlReader({
   file,
   onFile,
   onApply,
+  onUploadKey,
   onClear,
   variant,
 }: {
@@ -26,35 +27,58 @@ export function FiscalXmlReader({
   file: File | null;
   onFile: (f: File | null) => void;
   onApply: (p: ParsedFiscalDocument) => void;
+  /** Called once the file is uploaded to blob storage and a key is available, so the parent can attach it on save. */
+  onUploadKey: (key: string, meta: { fileName: string; contentType: string; sizeBytes: number }) => void;
   onClear: () => void;
   variant: 'hero' | 'band';
 }) {
   const { t } = useTranslation();
+  const requestUrl = useRequestFiscalUploadUrl();
   const parse = useParseFiscalDocument();
   const [parsed, setParsed] = useState<ParsedFiscalDocument | null>(null);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
   const hero = variant === 'hero';
 
-  // Selecting a file clears whatever the previous NF filled, then parses + applies the new one.
+  // Selecting a file: request a presigned upload URL → PUT the file to blob storage →
+  // parse it by key → apply. The file is uploaded once and the same key is reused on save.
   const onSelect = (f: File | null) => {
     setParsed(null);
     parse.reset();
+    requestUrl.reset();
+    setUploadErr(null);
     onClear();
     onFile(f);
-    if (f)
-      parse.mutate(
-        { companyId, file: f },
-        {
-          onSuccess: (p) => {
-            setParsed(p);
-            onApply(p);
-          },
+    if (!f) return;
+    requestUrl.mutate(
+      { fileName: f.name },
+      {
+        onSuccess: async (target) => {
+          try {
+            await uploadToPresignedUrl(target.uploadUrl, f);
+          } catch (e) {
+            setUploadErr(e instanceof Error ? e.message : String(e));
+            return;
+          }
+          onUploadKey(target.key, { fileName: f.name, contentType: f.type, sizeBytes: f.size });
+          parse.mutate(
+            { companyId, key: target.key, fileName: f.name },
+            {
+              onSuccess: (p) => {
+                setParsed(p);
+                onApply(p);
+              },
+            },
+          );
         },
-      );
+      },
+    );
   };
 
   const clearAll = () => {
     setParsed(null);
     parse.reset();
+    requestUrl.reset();
+    setUploadErr(null);
     onFile(null);
     onClear();
   };
@@ -77,14 +101,14 @@ export function FiscalXmlReader({
         />
       </Field>
 
-      {parse.isPending && (
+      {(requestUrl.isPending || parse.isPending) && (
         <div className='help' style={{ marginTop: 10 }}>
           {t('payables.fiscalReader.parsing')}
         </div>
       )}
-      {parse.error != null && (
+      {(uploadErr != null || requestUrl.error != null || parse.error != null) && (
         <div className='create-err' style={{ marginTop: 10 }}>
-          {getErrorMessage(parse.error)}
+          {uploadErr ?? getErrorMessage(requestUrl.error ?? parse.error)}
         </div>
       )}
 

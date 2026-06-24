@@ -9,10 +9,13 @@ public sealed record FiscalDocumentResponse(
     FiscalDocumentId Id, PayableId PayableId, FiscalDocumentFormat Format, string? AccessKey,
     string? DocumentNumber, DateOnly? IssueDate, decimal? TotalAmount, string? IssuerDocument,
     string? IssuerName, string? RecipientDocument, string FileName, string ContentType, long SizeBytes,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<string> Cfops, IReadOnlyList<string> Ncms,
+    decimal? IcmsAmount, decimal? IpiAmount, decimal? PisAmount, decimal? CofinsAmount, decimal? TotalTaxesAmount)
 {
     public static FiscalDocumentResponse From(FiscalDocument d) => new(
         new FiscalDocumentId(d.Id), new PayableId(d.PayableId), d.Format, d.AccessKey, d.DocumentNumber,
         d.IssueDate, d.TotalAmount, d.IssuerDocument, d.IssuerName, d.RecipientDocument, d.FileName,
-        d.ContentType, d.SizeBytes, d.CreatedAt);
+        d.ContentType, d.SizeBytes, d.CreatedAt,
+        d.Cfops, d.Ncms, d.IcmsAmount, d.IpiAmount, d.PisAmount, d.CofinsAmount, d.TotalTaxesAmount);
 }

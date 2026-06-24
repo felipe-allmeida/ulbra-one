@@ -1,5 +1,8 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Ulbra.One.Common.Infrastructure.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -24,5 +27,24 @@ public sealed class FiscalDocumentConfiguration : BaseEntityConfiguration<Fiscal
         e.Property(x => x.StoragePath).HasMaxLength(300).IsRequired();
         // One fiscal document of record per payable (re-upload replaces it).
         e.HasIndex(x => x.PayableId).IsUnique();
+
+        // Fiscal tax signals (NF-e only).
+        e.Property(x => x.IcmsAmount).HasPrecision(18, 2);
+        e.Property(x => x.IpiAmount).HasPrecision(18, 2);
+        e.Property(x => x.PisAmount).HasPrecision(18, 2);
+        e.Property(x => x.CofinsAmount).HasPrecision(18, 2);
+        e.Property(x => x.TotalTaxesAmount).HasPrecision(18, 2);
+
+        var strListToJson = new ValueConverter<IReadOnlyList<string>, string>(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Deserialize<IReadOnlyList<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>());
+        var strListComparer = new ValueComparer<IReadOnlyList<string>>(
+            (a, b) => a!.SequenceEqual(b!),
+            v => v.Aggregate(0, (h, s) => HashCode.Combine(h, s.GetHashCode())),
+            v => v.ToList());
+        e.Property(x => x.Cfops).HasConversion(strListToJson).Metadata.SetValueComparer(strListComparer);
+        e.Property(x => x.Cfops).HasColumnType("jsonb");
+        e.Property(x => x.Ncms).HasConversion(strListToJson).Metadata.SetValueComparer(strListComparer);
+        e.Property(x => x.Ncms).HasColumnType("jsonb");
     }
 }

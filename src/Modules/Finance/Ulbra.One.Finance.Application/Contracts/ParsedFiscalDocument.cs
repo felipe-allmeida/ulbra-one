@@ -35,4 +35,16 @@ public sealed record ParsedFiscalDocument(
     string? CnaeCode = null,
     // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
     string? IssuerPhone = null,
-    ParsedAddress? IssuerAddress = null);
+    ParsedAddress? IssuerAddress = null,
+    // Fiscal signals (NF-e): distinct CFOPs/NCMs across items + ICMSTot tax totals; null for NFS-e/PDF.
+    FiscalSummary? Fiscal = null);
+
+/// <summary>Document-level fiscal signals (NF-e). Distinct CFOPs/NCMs across items + ICMSTot tax totals.</summary>
+public sealed record FiscalSummary(
+    IReadOnlyList<string> Cfops,
+    IReadOnlyList<string> Ncms,
+    decimal? Icms,
+    decimal? Ipi,
+    decimal? Pis,
+    decimal? Cofins,
+    decimal? TotalTaxes);

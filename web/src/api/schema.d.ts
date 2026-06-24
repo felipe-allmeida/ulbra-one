@@ -564,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/fiscal-document/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RequestFiscalUploadUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/{id}/fiscal-document": {
         parameters: {
             query?: never;
@@ -1886,7 +1902,7 @@ export interface components {
             active: boolean;
         };
         /** @enum {string} */
-        FiscalDocumentFormat: "NfeXml" | "NfseXml" | "PdfMock";
+        FiscalDocumentFormat: "NfeXml" | "NfseXml" | "Pdf" | "Image";
         FiscalDocumentResponse: {
             /** @example fiscaldoc_3fa85f64571742199730000000000000 */
             id: string;
@@ -1908,6 +1924,32 @@ export interface components {
             sizeBytes: number;
             /** Format: date-time */
             createdAt: string;
+            cfops: string[];
+            ncms: string[];
+            /** Format: double */
+            icmsAmount: number | null;
+            /** Format: double */
+            ipiAmount: number | null;
+            /** Format: double */
+            pisAmount: number | null;
+            /** Format: double */
+            cofinsAmount: number | null;
+            /** Format: double */
+            totalTaxesAmount: number | null;
+        };
+        FiscalSummary: {
+            cfops: string[];
+            ncms: string[];
+            /** Format: double */
+            icms: number | null;
+            /** Format: double */
+            ipi: number | null;
+            /** Format: double */
+            pis: number | null;
+            /** Format: double */
+            cofins: number | null;
+            /** Format: double */
+            totalTaxes: number | null;
         };
         GenerateInput: {
             /** Format: double */
@@ -2062,6 +2104,10 @@ export interface components {
         };
         /** @enum {string} */
         NormalBalance: "Debit" | "Credit";
+        ParseFiscalDocumentRequest: {
+            key: string;
+            fileName: string;
+        };
         ParsedAddress: {
             cep: string | null;
             street: string | null;
@@ -2092,6 +2138,7 @@ export interface components {
             cnaeCode: string | null;
             issuerPhone: string | null;
             issuerAddress: components["schemas"]["ParsedAddress"];
+            fiscal: components["schemas"]["FiscalSummary"];
         };
         ParsedInstallment: {
             /** Format: date */
@@ -2391,6 +2438,9 @@ export interface components {
         RejectTransactionRejectRequest: {
             reason: string | null;
         };
+        RequestFiscalUploadUrlRequest: {
+            fileName: string;
+        };
         Response: {
             /** Format: int32 */
             classifiedCount: number;
@@ -2625,6 +2675,17 @@ export interface components {
         UpdateUnitRequest: {
             name: string;
             acronym: string;
+        };
+        UploadFiscalDocumentRequest: {
+            key: string;
+            fileName: string;
+            contentType: string;
+            /** Format: int64 */
+            sizeBytes: number;
+        };
+        UploadTarget: {
+            uploadUrl: string;
+            key: string;
         };
         UserSummary: {
             /** @example user_3fa85f64571742199730000000000000 */
@@ -4350,12 +4411,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                };
+                "application/json": components["schemas"]["ParseFiscalDocumentRequest"];
             };
         };
         responses: {
@@ -4379,6 +4437,39 @@ export interface operations {
             };
         };
     };
+    RequestFiscalUploadUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestFiscalUploadUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadTarget"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     UploadPayableFiscalDocument: {
         parameters: {
             query?: never;
@@ -4388,12 +4479,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                };
+                "application/json": components["schemas"]["UploadFiscalDocumentRequest"];
             };
         };
         responses: {

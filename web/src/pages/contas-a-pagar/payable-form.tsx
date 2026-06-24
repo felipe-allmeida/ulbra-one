@@ -114,6 +114,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const upload = useUploadPayableAttachment();
   const uploadFiscal = useUploadPayableFiscalDocument();
   const [fiscalFile, setFiscalFile] = useState<File | null>(null);
+  // Key + metadata from the presigned upload of the NF (threaded from the reader to the save).
+  const [fiscalUpload, setFiscalUpload] = useState<{
+    key: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+  } | null>(null);
   // Explicit installments (duplicatas) read from the NF; when set, they override the generate spec.
   const [xmlInstallments, setXmlInstallments] = useState<{ dueDate: string; amount: number }[] | null>(null);
   const vendorFromXml = useRef(false);
@@ -157,6 +164,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
     setManualMode(false);
     setNf(null);
     setNfFields(new Set());
+    setFiscalUpload(null);
   };
 
   // Clears anything from a previous NF, then fills the form from the parsed result (auto, no button).
@@ -243,8 +251,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
     try {
       const p =
         editing && initial ? await update.mutateAsync({ id: initial.id, body }) : await create.mutateAsync(body);
-      // Persist the fiscal document of record (NF), then any generic attachment, then navigate.
-      if (fiscalFile) await uploadFiscal.mutateAsync({ id: p.id, file: fiscalFile });
+      // Persist the fiscal document of record (NF) using the key from the presigned upload, then any generic attachment, then navigate.
+      if (fiscalUpload) await uploadFiscal.mutateAsync({ id: p.id, ...fiscalUpload });
       if (!editing && file) await upload.mutateAsync({ id: p.id, file });
       nav(`/app/contas-a-pagar/${p.id}`);
     } catch {
@@ -302,6 +310,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
             file={fiscalFile}
             onFile={setFiscalFile}
             onApply={applyParsed}
+            onUploadKey={(key, meta) => setFiscalUpload({ key, ...meta })}
             onClear={clearXmlFields}
             variant={revealed ? 'band' : 'hero'}
           />

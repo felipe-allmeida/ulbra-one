@@ -18,7 +18,9 @@ public static class AiClassificationPrompt
         string? documentNumber,
         decimal totalAmount,
         IReadOnlyList<(string Code, string Name)> accountingAccounts,
-        IReadOnlyList<(string Code, string Name)> financialAccounts)
+        IReadOnlyList<(string Code, string Name)> financialAccounts,
+        IReadOnlyList<string>? cfops = null,
+        IReadOnlyList<string>? ncms = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Payable description: {description}");
@@ -26,6 +28,8 @@ public static class AiClassificationPrompt
         if (!string.IsNullOrWhiteSpace(documentNumber))
             sb.AppendLine($"Document number: {documentNumber}");
         sb.AppendLine($"Total amount: {totalAmount.ToString("0.00", CultureInfo.InvariantCulture)}");
+        if (cfops is { Count: > 0 } || ncms is { Count: > 0 })
+            sb.AppendLine($"Fiscal codes — CFOP: {string.Join(", ", cfops ?? [])}; NCM: {string.Join(", ", ncms ?? [])}");
         sb.AppendLine();
         sb.AppendLine("Accounting accounts (Code — Name):");
         foreach (var (code, name) in accountingAccounts)

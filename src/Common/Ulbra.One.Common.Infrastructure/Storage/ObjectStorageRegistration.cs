@@ -25,12 +25,11 @@ public static class ObjectStorageRegistration
                     throw new InvalidOperationException(
                         "ObjectStorage:AccountUrl or ObjectStorage:ConnectionString is required when ObjectStorage:Provider=AzureBlob.");
                 services.AddSingleton(_ =>
-                {
-                    var svc = !string.IsNullOrWhiteSpace(opts!.ConnectionString)
+                    !string.IsNullOrWhiteSpace(opts!.ConnectionString)
                         ? new BlobServiceClient(opts.ConnectionString)
-                        : new BlobServiceClient(new Uri(opts.AccountUrl!), new DefaultAzureCredential());
-                    return svc.GetBlobContainerClient(opts.Bucket);
-                });
+                        : new BlobServiceClient(new Uri(opts.AccountUrl!), new DefaultAzureCredential()));
+                services.AddSingleton(sp =>
+                    sp.GetRequiredService<BlobServiceClient>().GetBlobContainerClient(opts!.Bucket));
                 services.AddScoped<IFileStorageService, AzureBlobStorageService>();
                 services.AddHostedService<BlobContainerInitializer>();
                 break;

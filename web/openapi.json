@@ -2312,26 +2312,13 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "required": [
-                  "file"
-                ],
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                }
+                "$ref": "#/components/schemas/ParseFiscalDocumentRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2340,6 +2327,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ParsedFiscalDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/fiscal-document/upload-url": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RequestFiscalUploadUrl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestFiscalUploadUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTarget"
                 }
               }
             }
@@ -2375,26 +2402,13 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "required": [
-                  "file"
-                ],
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                }
+                "$ref": "#/components/schemas/UploadFiscalDocumentRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "201": {
@@ -7654,7 +7668,8 @@
         "enum": [
           "NfeXml",
           "NfseXml",
-          "PdfMock"
+          "Pdf",
+          "Image"
         ],
         "type": "string"
       },
@@ -7673,7 +7688,14 @@
           "fileName",
           "contentType",
           "sizeBytes",
-          "createdAt"
+          "createdAt",
+          "cfops",
+          "ncms",
+          "icmsAmount",
+          "ipiAmount",
+          "pisAmount",
+          "cofinsAmount",
+          "totalTaxesAmount"
         ],
         "type": "object",
         "properties": {
@@ -7731,6 +7753,95 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "cfops": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ncms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "icmsAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ipiAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pisAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cofinsAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalTaxesAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FiscalSummary": {
+        "required": [
+          "cfops",
+          "ncms",
+          "icms",
+          "ipi",
+          "pis",
+          "cofins",
+          "totalTaxes"
+        ],
+        "type": "object",
+        "properties": {
+          "cfops": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ncms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "icms": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ipi": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pis": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cofins": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalTaxes": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8245,6 +8356,22 @@
         ],
         "type": "string"
       },
+      "ParseFiscalDocumentRequest": {
+        "required": [
+          "key",
+          "fileName"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ParsedAddress": {
         "required": [
           "cep",
@@ -8302,7 +8429,8 @@
           "serviceDescription",
           "cnaeCode",
           "issuerPhone",
-          "issuerAddress"
+          "issuerAddress",
+          "fiscal"
         ],
         "type": "object",
         "properties": {
@@ -8379,6 +8507,9 @@
           },
           "issuerAddress": {
             "$ref": "#/components/schemas/ParsedAddress"
+          },
+          "fiscal": {
+            "$ref": "#/components/schemas/FiscalSummary"
           }
         },
         "additionalProperties": false
@@ -9340,6 +9471,18 @@
         },
         "additionalProperties": false
       },
+      "RequestFiscalUploadUrlRequest": {
+        "required": [
+          "fileName"
+        ],
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "Response": {
         "required": [
           "classifiedCount"
@@ -10143,6 +10286,47 @@
             "type": "string"
           },
           "acronym": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadFiscalDocumentRequest": {
+        "required": [
+          "key",
+          "fileName",
+          "contentType",
+          "sizeBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadTarget": {
+        "required": [
+          "uploadUrl",
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string"
+          },
+          "key": {
             "type": "string"
           }
         },

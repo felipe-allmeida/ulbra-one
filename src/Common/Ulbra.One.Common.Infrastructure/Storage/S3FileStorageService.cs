@@ -47,6 +47,19 @@ public sealed class S3FileStorageService(IAmazonS3 s3, IOptions<ObjectStorageOpt
         }, ct);
     }
 
+    public Task<UploadTarget> CreateUploadUrl(string fileName, TimeSpan ttl, CancellationToken ct = default)
+    {
+        var key = $"{Guid.NewGuid():N}_{Path.GetFileName(fileName)}";
+        var url = s3.GetPreSignedURL(new GetPreSignedUrlRequest
+        {
+            BucketName = _bucket,
+            Key = key,
+            Verb = HttpVerb.PUT,
+            Expires = DateTime.UtcNow.Add(ttl),
+        });
+        return Task.FromResult(new UploadTarget(url, key));
+    }
+
     private static string GetContentType(string fileName)
     {
         var ext = Path.GetExtension(fileName).ToLowerInvariant();

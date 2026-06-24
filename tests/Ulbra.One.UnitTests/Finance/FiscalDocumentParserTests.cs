@@ -1,5 +1,7 @@
 using System.Text;
 using System.Xml.Linq;
+using Ulbra.One.Common.Application.Ai;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.FiscalDocuments;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Infrastructure.FiscalDocuments;
@@ -98,6 +100,32 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
+    // NF-e com itens + totais fiscais (ICMSTot com vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — usado no teste de FiscalSummary.
+    private const string NfeWithFiscalXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe{Key44}" versao="4.00">
+      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
+      <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
+      <dest><CNPJ>11444777000161</CNPJ><xNome>Industria</xNome></dest>
+      <det nItem="1"><prod><xProd>Switch 24 portas</xProd><NCM>85176241</NCM><CFOP>5102</CFOP><vProd>900.00</vProd></prod></det>
+      <det nItem="2"><prod><xProd>Cabo CAT6</xProd><NCM>85444900</NCM><CFOP>5102</CFOP><vProd>100.00</vProd></prod></det>
+      <total>
+        <ICMSTot>
+          <vNF>1000.00</vNF>
+          <vICMS>90.00</vICMS>
+          <vIPI>10.00</vIPI>
+          <vPIS>6.50</vPIS>
+          <vCOFINS>30.00</vCOFINS>
+          <vTotTrib>136.50</vTotTrib>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+</nfeProc>
+""";
+
     private const string NfseXml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -134,8 +162,14 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    private sealed class DisabledAi : IAiCompletion
+    {
+        public Task<Result<T>> CompleteAsync<T>(AiPrompt p, AiOptions? o = null, CancellationToken ct = default) where T : class =>
+            Task.FromResult(Result.Failure<T>(Error.Failure(AiErrors.Disabled, "off")));
+    }
+
     private static IFiscalDocumentReader NewReader() =>
-        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new PdfMockReader());
+        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new AiFiscalExtractor(new DisabledAi()));
 
     private static Stream StreamOf(string xml) => new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
@@ -232,11 +266,11 @@ public class FiscalDocumentParserTests
     }
 
     [Fact]
-    public async Task Reader_returns_pdf_mock_for_pdf()
+    public async Task Reader_returns_pdf_format_for_pdf()
     {
         var parsed = await NewReader().ReadAsync("nota.pdf", new MemoryStream([0x25, 0x50, 0x44, 0x46]), default);
         Assert.NotNull(parsed);
-        Assert.Equal(FiscalDocumentFormat.PdfMock, parsed!.Format);
+        Assert.Equal(FiscalDocumentFormat.Pdf, parsed!.Format);
     }
 
     [Fact]
@@ -252,5 +286,14 @@ public class FiscalDocumentParserTests
     {
         var parsed = await NewReader().ReadAsync("nota.txt", StreamOf(NfeXml), default);
         Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void NfeParser_extracts_fiscal_summary()
+    {
+        var parsed = new NfeM55XmlParser().Parse(XDocument.Parse(NfeWithFiscalXml));
+        Assert.NotNull(parsed.Fiscal);
+        Assert.NotEmpty(parsed.Fiscal!.Cfops);   // sample has at least one item with a CFOP
+        Assert.NotNull(parsed.Fiscal.TotalTaxes); // vTotTrib present in ICMSTot
     }
 }
