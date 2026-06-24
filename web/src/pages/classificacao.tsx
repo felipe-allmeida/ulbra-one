@@ -182,6 +182,14 @@ function RowClassify({
   const [accountingAccountId, setAccountingAccountId] = useState<string | null>(prefillAccountingAccountId ?? null);
   const [financialAccountId, setFinancialAccountId] = useState<string | null>(prefillFinancialAccountId ?? null);
   const hasPrefill = !!(prefillAccountingAccountId ?? prefillFinancialAccountId);
+
+  // Sync prefill values when the payable detail resolves async (don't clobber a manual user change back to null).
+  useEffect(() => {
+    if (prefillAccountingAccountId != null) setAccountingAccountId(prefillAccountingAccountId);
+  }, [prefillAccountingAccountId]);
+  useEffect(() => {
+    if (prefillFinancialAccountId != null) setFinancialAccountId(prefillFinancialAccountId);
+  }, [prefillFinancialAccountId]);
   const [suggesting, setSuggesting] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AiClassificationSuggestion | null>(null);
 
