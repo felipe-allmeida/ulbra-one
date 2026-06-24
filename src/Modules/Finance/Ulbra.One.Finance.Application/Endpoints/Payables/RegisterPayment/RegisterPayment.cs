@@ -8,6 +8,7 @@ using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Payments;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -27,44 +28,40 @@ public sealed class RegisterPayment : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, InstallmentId installmentId, Request req,
-        UserContext user, IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        UserContext user, IUnitOfWork uow, IPayablePaymentService paymentService, CancellationToken ct)
     {
-        if (req.Amount <= 0)
-            return TypedResults.Problem(detail: "Amount must be greater than zero.", statusCode: 400, title: "Payment.AmountInvalid");
-
         var payable = await uow.Set<Payable>()
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
             .FirstOrDefaultAsync(p => p.Id == id.Value, ct);
-        if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
-        if (!payable.IsPayable) return TypedResults.Problem(detail: "Only an approved payable can be paid.", statusCode: 400, title: "Payable.NotPayable");
-        if (await ClassificationGate.RequiresButMissingAsync(uow, payable, forPay: true, ct))
-            return TypedResults.Problem(detail: "This payable must be classified before it can be paid.", statusCode: 400, title: "Payable.NotClassified");
+        if (payable is null)
+            return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         var installment = payable.FindInstallment(installmentId.Value);
-        if (installment is null) return TypedResults.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.InstallmentNotFound");
+        if (installment is null)
+            return TypedResults.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.InstallmentNotFound");
         if (installment.Status == InstallmentStatus.Paid)
             return TypedResults.Problem(detail: "Installment is already settled.", statusCode: 409, title: "Payment.InstallmentSettled");
 
-        if (req.Interest < 0 || req.Fine < 0 || req.Discount < 0)
-            return TypedResults.Problem(detail: "Interest, fine and discount cannot be negative.", statusCode: 400, title: "Payment.AmountInvalid");
-        var principal = req.Amount - req.Interest - req.Fine + req.Discount;
-        if (principal < 0)
-            return TypedResults.Problem(detail: "Payment principal cannot be negative (interest and fine exceed amount plus discount).", statusCode: 400, title: "Payment.PrincipalNegative");
-        var remaining = installment.Amount - installment.PaidAmount;
-        if (principal > remaining + 0.005m)
-            return TypedResults.Problem(detail: "Payment principal exceeds the installment's outstanding balance.", statusCode: 400, title: "Payment.Overpay");
+        var input = new RegisterPaymentInput(req.PaymentDate, req.Amount, req.BankAccountId.Value,
+            req.Method, req.Interest, req.Fine, req.Discount, req.Notes);
 
-        var bankOk = await uow.ReadSet<BankAccount>().AnyAsync(b => b.Id == req.BankAccountId.Value && b.CompanyId == payable.CompanyId, ct);
-        if (!bankOk) return TypedResults.Problem(detail: "Bank account is invalid for this company.", statusCode: 400, title: "Payment.BankAccountInvalid");
+        var result = await paymentService.RegisterAsync(payable, installment, input, Guid.Parse(user.UserId), ct);
 
-        var payment = new Payment(installment.Id, payable.Id, req.PaymentDate, req.Amount, req.BankAccountId.Value,
-            req.Method, req.Interest, req.Fine, req.Discount, req.Notes, Guid.Parse(user.UserId), clock.GetUtcNow());
+        if (result.IsFailure)
+        {
+            return result.Error.Code switch
+            {
+                "Payment.AmountInvalid" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payable.NotPayable" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payable.NotClassified" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payment.PrincipalNegative" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payment.Overpay" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payment.BankAccountInvalid" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+                "Payment.InstallmentSettled" => TypedResults.Problem(detail: result.Error.Description, statusCode: 409, title: result.Error.Code),
+                _ => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
+            };
+        }
 
-        try { installment.RegisterPayment(payment); }
-        catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 409, title: "Payment.InstallmentSettled"); }
-        payable.RecomputeSettlement();
-
-        await uow.AddAsync(payment, ct); // explicit: grandchild not auto-inserted on aggregate update
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/payables/{id}", PayableResponse.From(payable));
     }
