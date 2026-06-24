@@ -1,0 +1,39 @@
+using System.Text;
+using Ulbra.One.Common.Application.Ai;
+
+namespace Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
+
+public static class AiClassificationPrompt
+{
+    private const string System =
+        "You are an accounting assistant for a Brazilian ERP. Given a payable and the company's chart of " +
+        "accounts, choose the single best accounting account and the single best financial account, " +
+        "selecting ONLY from the provided lists by their exact Code. If you are unsure for an axis, set its " +
+        "code to null and lower your confidence (0..1). Respond only with the requested structure.";
+
+    public static AiPrompt Build(
+        string description,
+        string counterpartyName,
+        string? documentNumber,
+        decimal totalAmount,
+        IReadOnlyList<(string Code, string Name)> accountingAccounts,
+        IReadOnlyList<(string Code, string Name)> financialAccounts)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Payable description: {description}");
+        sb.AppendLine($"Counterparty: {counterpartyName}");
+        if (!string.IsNullOrWhiteSpace(documentNumber))
+            sb.AppendLine($"Document number: {documentNumber}");
+        sb.AppendLine($"Total amount: {totalAmount:0.00}");
+        sb.AppendLine();
+        sb.AppendLine("Accounting accounts (Code — Name):");
+        foreach (var (code, name) in accountingAccounts)
+            sb.AppendLine($"- {code} — {name}");
+        sb.AppendLine();
+        sb.AppendLine("Financial accounts (Code — Name):");
+        foreach (var (code, name) in financialAccounts)
+            sb.AppendLine($"- {code} — {name}");
+
+        return new AiPrompt(System, sb.ToString());
+    }
+}
