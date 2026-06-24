@@ -56,6 +56,8 @@ public class ReferentialChartImporterTests
         Assert.Null(Get(a, "2.05").ParentId);
         // Expense (4.02) under result root "4" (classified Expense) → wires; Revenue (4.01) → root
         Assert.Null(Get(a, "4.01").ParentId);
+        // Expense (4.02) under result root "4" (also Expense) → wires (same-group positive)
+        Assert.Equal(Get(a, "4").Id, Get(a, "4.02").ParentId);
     }
 
     [Fact]
