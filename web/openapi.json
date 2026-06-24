@@ -6164,6 +6164,67 @@
         ],
         "type": "string"
       },
+      "BankInfoRequest": {
+        "required": [
+          "bankCode",
+          "branch",
+          "account",
+          "accountDigit",
+          "pixKey"
+        ],
+        "type": "object",
+        "properties": {
+          "bankCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "branch": {
+            "type": "string",
+            "nullable": true
+          },
+          "account": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountDigit": {
+            "type": "string",
+            "nullable": true
+          },
+          "pixKey": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BankInfoResponse": {
+        "required": [
+          "bankCode",
+          "branch",
+          "account",
+          "accountDigit",
+          "pixKey"
+        ],
+        "type": "object",
+        "properties": {
+          "bankCode": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "accountDigit": {
+            "type": "string"
+          },
+          "pixKey": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "BankTransactionResponse": {
         "required": [
           "id",
@@ -9612,6 +9673,16 @@
         ],
         "type": "string"
       },
+      "TaxRegime": {
+        "enum": [
+          "Unknown",
+          "Mei",
+          "SimplesNacional",
+          "LucroPresumido",
+          "LucroReal"
+        ],
+        "type": "string"
+      },
       "TransactionDirection": {
         "enum": [
           "Debit",
@@ -10297,7 +10368,8 @@
           "phone",
           "address",
           "paymentTerms",
-          "bankInfo"
+          "bankInfo",
+          "taxRegime"
         ],
         "type": "object",
         "properties": {
@@ -10334,8 +10406,10 @@
             "nullable": true
           },
           "bankInfo": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/BankInfoRequest"
+          },
+          "taxRegime": {
+            "$ref": "#/components/schemas/TaxRegime"
           }
         },
         "additionalProperties": false
@@ -10353,6 +10427,7 @@
           "address",
           "paymentTerms",
           "bankInfo",
+          "taxRegime",
           "active"
         ],
         "type": "object",
@@ -10394,8 +10469,10 @@
             "nullable": true
           },
           "bankInfo": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/BankInfoResponse"
+          },
+          "taxRegime": {
+            "$ref": "#/components/schemas/TaxRegime"
           },
           "active": {
             "type": "boolean"

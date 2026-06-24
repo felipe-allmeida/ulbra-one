@@ -34,7 +34,8 @@ public sealed class CreateVendor : IEndpoint
         CancellationToken ct)
     {
         var vendor = new VendorEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,
-            req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.PaymentTerms, req.BankInfo);
+            req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.PaymentTerms,
+            req.BankInfo.ToBankInfo(), req.TaxRegime);
         await uow.AddAsync(vendor, ct);
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToCreated(v => $"/api/vendors/{v.Id}");

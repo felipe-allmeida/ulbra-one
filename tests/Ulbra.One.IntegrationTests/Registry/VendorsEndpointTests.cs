@@ -7,11 +7,20 @@ namespace Ulbra.One.IntegrationTests.Registry;
 [Collection("Postgres")]
 public class VendorsEndpointTests(PostgresFixture fixture)
 {
+    private sealed record BankInfoBody(string? BankCode, string? Branch, string? Account, string? AccountDigit, string? PixKey);
+
     private sealed record VendorBody(
         string CompanyId, int PersonType, string Name, string? TradeName, string Document,
-        string? Email, string? Phone, object? Address, string? PaymentTerms, string? BankInfo);
+        string? Email, string? Phone, object? Address, string? PaymentTerms,
+        BankInfoBody? BankInfo, string TaxRegime = "Unknown");
+
+    private sealed record BankInfoDto(string BankCode, string Branch, string Account, string AccountDigit, string PixKey);
 
     private sealed record VendorResponse(string Id, string Name, string Document, bool Active);
+
+    private sealed record VendorResponseFull(
+        string Id, string Name, string Document, bool Active,
+        BankInfoDto? BankInfo, string TaxRegime);
 
     private sealed record Paginated(List<VendorResponse> Items, int Page, int PageSize, int Total, int TotalPages);
 
@@ -52,6 +61,58 @@ public class VendorsEndpointTests(PostgresFixture fixture)
         var res = await client.PostAsJsonAsync("/api/vendors", body);
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task BankInfo_Structured_RoundTrip()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = new CompanyId(Guid.NewGuid()).ToString();
+        var bankInfo = new BankInfoBody("033", "1234", "56789", "0", "acme@pix.com");
+        var body = ValidCompany(companyId) with
+        {
+            BankInfo = bankInfo,
+            TaxRegime = "SimplesNacional",
+        };
+
+        var createRes = await client.PostAsJsonAsync("/api/vendors", body);
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var created = await createRes.Content.ReadFromJsonAsync<VendorResponseFull>();
+        Assert.NotNull(created);
+        Assert.Equal("SimplesNacional", created!.TaxRegime);
+        Assert.NotNull(created.BankInfo);
+        Assert.Equal("033", created.BankInfo!.BankCode);
+        Assert.Equal("1234", created.BankInfo.Branch);
+        Assert.Equal("56789", created.BankInfo.Account);
+        Assert.Equal("0", created.BankInfo.AccountDigit);
+        Assert.Equal("acme@pix.com", created.BankInfo.PixKey);
+
+        // GET single and verify round-trip
+        var getRes = await client.GetAsync($"/api/vendors/{created.Id}");
+        Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
+        var fetched = await getRes.Content.ReadFromJsonAsync<VendorResponseFull>();
+        Assert.NotNull(fetched);
+        Assert.Equal("033", fetched!.BankInfo!.BankCode);
+        Assert.Equal("SimplesNacional", fetched.TaxRegime);
+    }
+
+    [Fact]
+    public async Task BankInfo_Null_Persists_As_Empty()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = new CompanyId(Guid.NewGuid()).ToString();
+
+        var createRes = await client.PostAsJsonAsync("/api/vendors", ValidCompany(companyId));
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var created = await createRes.Content.ReadFromJsonAsync<VendorResponseFull>();
+        Assert.NotNull(created);
+        // bankInfo field is present (owned type always serialized) with empty strings
+        Assert.Equal("Unknown", created!.TaxRegime);
+        Assert.NotNull(created.BankInfo);
+        Assert.Equal("", created.BankInfo!.BankCode);
+        Assert.Equal("", created.BankInfo.PixKey);
     }
 
     [Fact]

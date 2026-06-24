@@ -23,6 +23,9 @@ export function maskCnpj(value: string): string {
   return out;
 }
 
+/** Formats a digits-only CPF/CNPJ for display (>11 digits → CNPJ mask, else CPF). */
+export const fmtDoc = (doc: string): string => (doc.length > 11 ? maskCnpj(doc) : maskCpf(doc));
+
 /** 00000-000 */
 export function maskCep(value: string): string {
   const d = onlyDigits(value).slice(0, 8);

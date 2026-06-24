@@ -1,8 +1,8 @@
 /**
- * Tests for the two-card payable intake UI (Task 8):
- * - Both cards render before a choice is made.
- * - Clicking "Preencher manualmente" reveals the blank form.
- * - Uploading an NF triggers upload-url → PUT → parse → applyParsed (mocked hooks).
+ * Tests for the payable intake UI (NF reader + manual reveal-gate):
+ * - The NF reader (hero) and the "fill manually" option render before any choice is made.
+ * - Clicking "ou preencher manualmente" reveals the blank form.
+ * - Uploading an NF triggers the presigned flow: upload-url → PUT → parse → applyParsed (mocked hooks).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
@@ -92,30 +92,28 @@ function renderPage() {
   return renderWithProviders(<NovaContaPagarPage />);
 }
 
-describe('Two-card payable intake', () => {
+describe('Payable intake (NF reader + manual)', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders both intake cards before any choice is made', () => {
+  it('renders the NF reader and the manual option before any choice is made', () => {
     renderPage();
 
-    expect(screen.getByText('Preencher com NF')).toBeInTheDocument();
-    expect(screen.getByText('Preencher manualmente')).toBeInTheDocument();
-    // Form fields not visible yet
-    expect(screen.queryByLabelText(/Fornecedor/)).toBeNull();
+    // The fiscal NF reader (hero) and the "fill manually" link are both offered up front.
+    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
+    expect(screen.getByText('ou preencher manualmente')).toBeInTheDocument();
+    // The payable form fields are not visible until a choice is made.
+    expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('clicking "Preencher manualmente" reveals the blank form', async () => {
+  it('clicking "ou preencher manualmente" reveals the blank form', async () => {
     renderPage();
 
-    const manualCard = screen.getByTestId('manual-card');
-    fireEvent.click(manualCard);
+    fireEvent.click(screen.getByText('ou preencher manualmente'));
 
-    // After clicking, the form should appear (Centro de custo field)
+    // After clicking, the form should appear (Centro de custo field).
     await waitFor(() => {
       expect(screen.getByText('Centro de custo')).toBeInTheDocument();
     });
-    // Cards should no longer be visible
-    expect(screen.queryByTestId('intake-cards')).toBeNull();
   });
 
   it('NF flow: upload-url → PUT → parse → form fields pre-filled', async () => {
@@ -175,19 +173,20 @@ describe('Two-card payable intake', () => {
     // File was PUT to the presigned URL
     expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
 
-    // Parse was called with the storage key
+    // Parse was called with the storage key (not the raw file)
     expect(parseMutate).toHaveBeenCalledWith(
       { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
 
-    // After parse succeeds, form is revealed and document number pre-filled
+    // After parse succeeds, the form is revealed and the document number pre-filled.
+    // NF-001 appears in both the reader's read-only preview and the form input.
     await waitFor(() => {
-      expect(screen.getByDisplayValue('NF-001')).toBeInTheDocument();
+      expect(screen.getAllByDisplayValue('NF-001').length).toBeGreaterThan(0);
     });
 
-    // When the parsed NF has issuerDocument but no matchedVendorId, the
-    // "Cadastrar fornecedor da NF" button must be visible (Fix 1).
-    expect(screen.getByText('Cadastrar fornecedor da NF')).toBeInTheDocument();
+    // The parsed NF has an issuerDocument but no matched vendor, so the
+    // prefilled "register vendor" action must be offered.
+    expect(screen.getByText('Cadastrar fornecedor')).toBeInTheDocument();
   });
 });

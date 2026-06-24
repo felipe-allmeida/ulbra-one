@@ -18,8 +18,7 @@ import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, Drawer, EmptyState, Field, Pager, Panel, Select, ToolbarField } from '../ui';
 import { EmpresaPicker } from './shared';
-
-const fmtData = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+import { fmtDate } from '../datetime';
 
 const STATUS_FILTERS: MatchStatus[] = ['Suggested', 'Unmatched', 'Reconciled', 'Ignored'];
 
@@ -56,7 +55,7 @@ function ManualMatchDrawer({
       .filter((p) => p.installmentStatus === 'Open' || p.installmentStatus === 'PartiallyPaid')
       .map((p) => ({
         id: p.installmentId,
-        label: `${p.counterpartyName || '—'} · ${fmtData(p.dueDate)}`,
+        label: `${p.counterpartyName || '—'} · ${fmtDate(p.dueDate)}`,
         sub: `${p.sequence}/${p.installmentCount} · ${brl(p.amount)}`,
       }));
   }, [payables.data]);
@@ -251,7 +250,7 @@ export function ConciliacaoPage() {
                     <tbody>
                       {items.map((tx) => (
                         <tr key={tx.id}>
-                          <td className='t-mono'>{fmtData(tx.date)}</td>
+                          <td className='t-mono'>{fmtDate(tx.date)}</td>
                           <td>
                             {tx.description}
                             {tx.matchStatus === 'Suggested' && <div className='help'>{t('conciliacao.suggested')}</div>}
