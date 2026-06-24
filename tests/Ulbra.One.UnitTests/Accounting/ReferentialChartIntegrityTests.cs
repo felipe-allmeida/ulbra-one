@@ -50,4 +50,23 @@ public class ReferentialChartIntegrityTests
         Assert.Equal(AccountGroup.Revenue, subvencao.AccountGroup);
         Assert.Equal(NormalBalance.Credit, subvencao.NormalBalance);
     }
+
+    [Fact]
+    public void Imunes_isentas_chart_contains_the_codes_the_dev_seeder_posts_to()
+    {
+        // Guards DevDataSeeder.SeedAccountingAsync against KeyNotFoundException at startup:
+        // every code it posts journal lines to / classifies payables with must exist and be analytical.
+        var accounts = ChartTemplates.Build(Company, ChartTemplate.RfbImunesIsentas)
+            .ToDictionary(a => a.Code);
+        string[] seederCodes =
+        [
+            "1.01.01.01.01", "1.01.01.02.01", "2.05.01.01.01", "4.01.01.01.01",
+            "4.02.01.01.01", "4.02.02.01.05", "4.02.02.01.02",
+        ];
+        foreach (var code in seederCodes)
+        {
+            Assert.True(accounts.ContainsKey(code), $"Dev seeder code missing from chart: {code}");
+            Assert.Equal(LedgerAccountKind.Analytical, accounts[code].Kind);
+        }
+    }
 }
