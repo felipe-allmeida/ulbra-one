@@ -72,6 +72,21 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
             .ToList();
         var description = FiscalXml.NullIfEmpty(string.Join("; ", productDescriptions));
 
+        // Fiscal signals: distinct CFOPs and NCMs across all items + ICMSTot tax totals.
+        var cfops = nfeInfo.Elements(Ns + "det")
+            .Select(i => i.Element(Ns + "prod")?.Element(Ns + "CFOP")?.Value?.Trim())
+            .Where(c => !string.IsNullOrEmpty(c)).Select(c => c!).Distinct().ToList();
+        var ncms = nfeInfo.Elements(Ns + "det")
+            .Select(i => i.Element(Ns + "prod")?.Element(Ns + "NCM")?.Value?.Trim())
+            .Where(c => !string.IsNullOrEmpty(c)).Select(c => c!).Distinct().ToList();
+        var fiscal = new FiscalSummary(
+            cfops, ncms,
+            FiscalXml.ParseDecimal(totals?.Element(Ns + "vICMS")?.Value),
+            FiscalXml.ParseDecimal(totals?.Element(Ns + "vIPI")?.Value),
+            FiscalXml.ParseDecimal(totals?.Element(Ns + "vPIS")?.Value),
+            FiscalXml.ParseDecimal(totals?.Element(Ns + "vCOFINS")?.Value),
+            FiscalXml.ParseDecimal(totals?.Element(Ns + "vTotTrib")?.Value));
+
         var invoice = billing?.Element(Ns + "fat"); // fatura-mãe (sintética)
         var payment = nfeInfo.Element(Ns + "pag"); // <pag>/<detPag>: forma + valor (parcelado ou único somando vNF)
         var rawExtraction = JsonSerializer.Serialize(new
@@ -104,7 +119,8 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
 
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfeXml, accessKey, documentNumber,
             issueDate, totalAmount, issuerDocument, issuerName, recipientDocument, rawExtraction, installments,
-            ServiceDescription: description, IssuerPhone: issuerPhone, IssuerAddress: issuerAddress);
+            ServiceDescription: description, IssuerPhone: issuerPhone, IssuerAddress: issuerAddress,
+            Fiscal: fiscal);
     }
 
     // Maps NF-e enderEmit to ParsedAddress; null when the address block is absent or fully empty.

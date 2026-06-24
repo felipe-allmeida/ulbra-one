@@ -98,6 +98,32 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
+    // NF-e com itens + totais fiscais (ICMSTot com vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — usado no teste de FiscalSummary.
+    private const string NfeWithFiscalXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe{Key44}" versao="4.00">
+      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
+      <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
+      <dest><CNPJ>11444777000161</CNPJ><xNome>Industria</xNome></dest>
+      <det nItem="1"><prod><xProd>Switch 24 portas</xProd><NCM>85176241</NCM><CFOP>5102</CFOP><vProd>900.00</vProd></prod></det>
+      <det nItem="2"><prod><xProd>Cabo CAT6</xProd><NCM>85444900</NCM><CFOP>5102</CFOP><vProd>100.00</vProd></prod></det>
+      <total>
+        <ICMSTot>
+          <vNF>1000.00</vNF>
+          <vICMS>90.00</vICMS>
+          <vIPI>10.00</vIPI>
+          <vPIS>6.50</vPIS>
+          <vCOFINS>30.00</vCOFINS>
+          <vTotTrib>136.50</vTotTrib>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+</nfeProc>
+""";
+
     private const string NfseXml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -252,5 +278,14 @@ public class FiscalDocumentParserTests
     {
         var parsed = await NewReader().ReadAsync("nota.txt", StreamOf(NfeXml), default);
         Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void NfeParser_extracts_fiscal_summary()
+    {
+        var parsed = new NfeM55XmlParser().Parse(XDocument.Parse(NfeWithFiscalXml));
+        Assert.NotNull(parsed.Fiscal);
+        Assert.NotEmpty(parsed.Fiscal!.Cfops);   // sample has at least one item with a CFOP
+        Assert.NotNull(parsed.Fiscal.TotalTaxes); // vTotTrib present in ICMSTot
     }
 }
