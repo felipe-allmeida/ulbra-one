@@ -29,4 +29,7 @@ public sealed class LocalFileStorageService(IOptions<ObjectStorageOptions> optio
         if (File.Exists(full)) File.Delete(full);
         return Task.CompletedTask;
     }
+
+    public Task<UploadTarget> CreateUploadUrl(string fileName, TimeSpan ttl, CancellationToken ct = default) =>
+        throw new NotSupportedException("Presigned upload is not supported by the local file provider.");
 }
