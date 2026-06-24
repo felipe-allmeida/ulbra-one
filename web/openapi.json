@@ -712,6 +712,51 @@
         }
       }
     },
+    "/api/accounting/pending-postings": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetPendingPostings",
+        "parameters": [
+          {
+            "name": "CompanyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingAccountingPostingResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/audit-logs": {
       "get": {
         "tags": [
@@ -8246,7 +8291,8 @@
       },
       "JournalOrigin": {
         "enum": [
-          "Manual"
+          "Manual",
+          "Automatic"
         ],
         "type": "string"
       },
@@ -8975,10 +9021,97 @@
         },
         "additionalProperties": false
       },
+      "PendingAccountingPostingResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "sourceKey",
+          "kind",
+          "amount",
+          "reason",
+          "intendedCodes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "pendpost_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PostingKind"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "intendedCodes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingAccountingPostingResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingAccountingPostingResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "PersonType": {
         "enum": [
           "Individual",
           "Company"
+        ],
+        "type": "string"
+      },
+      "PostingKind": {
+        "enum": [
+          "Incurral",
+          "Settlement",
+          "Reversal"
         ],
         "type": "string"
       },

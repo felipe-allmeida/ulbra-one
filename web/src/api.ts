@@ -202,6 +202,8 @@ export type IncomeStatement = Schemas['IncomeStatementResponse'];
 export type IncomeStatementLine = Schemas['IncomeStatementLineResponse'];
 export type BalanceSheet = Schemas['BalanceSheetResponse'];
 export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
+export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse'];
+export type PostingKind = Schemas['PostingKind'];
 
 /** Request body for creating a ledger account. */
 export interface LedgerAccountInput {
@@ -893,6 +895,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ reason, competenceDate: competenceDate ?? null }),
     }),
+
+  // ---------- Accounting: Pending postings (pendentes de contabilização) ----------
+  listPendingPostings: (params: { companyId?: string; page?: number; pageSize?: number }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<PendingAccountingPosting>>(`/accounting/pending-postings?${q}`);
+  },
 
   // ---------- Accounting: Reports ----------
   trialBalance: (companyId?: string) => {
