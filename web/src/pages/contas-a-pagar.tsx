@@ -57,12 +57,14 @@ import {
   usePayables,
   useRegisterPayment,
   useRejectPayable,
+  useRequestFiscalUploadUrl,
   useReversePayment,
   useUpdatePayable,
   useUploadPayableAttachment,
   useUploadPayableFiscalDocument,
   useUploadPaymentProof,
   useVendors,
+  uploadToPresignedUrl,
   type PayablesParams,
 } from '../queries';
 import { brl } from '../lib';
@@ -430,6 +432,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const upload = useUploadPayableAttachment();
   const uploadFiscal = useUploadPayableFiscalDocument();
   const [fiscalFile, setFiscalFile] = useState<File | null>(null);
+  // Presigned-upload state: key + metadata stored after the blob PUT succeeds.
+  const [fiscalUploadKey, setFiscalUploadKey] = useState<string | null>(null);
+  const [fiscalUploadMeta, setFiscalUploadMeta] = useState<{
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+  } | null>(null);
   // Explicit installments (duplicatas) read from the NF; when set, they override the generate spec.
   const [xmlInstallments, setXmlInstallments] = useState<{ dueDate: string; amount: number }[] | null>(null);
   const vendorFromXml = useRef(false);
@@ -559,8 +568,16 @@ function PayableForm({ initial }: { initial?: Payable }) {
     try {
       const p =
         editing && initial ? await update.mutateAsync({ id: initial.id, body }) : await create.mutateAsync(body);
-      // Persist the fiscal document of record (NF), then any generic attachment, then navigate.
-      if (fiscalFile) await uploadFiscal.mutateAsync({ id: p.id, file: fiscalFile });
+      // Persist the fiscal document of record (NF) using the key from the presigned upload, then any generic attachment.
+      if (fiscalUploadKey && fiscalUploadMeta) {
+        await uploadFiscal.mutateAsync({
+          id: p.id,
+          key: fiscalUploadKey,
+          fileName: fiscalUploadMeta.fileName,
+          contentType: fiscalUploadMeta.contentType,
+          sizeBytes: fiscalUploadMeta.sizeBytes,
+        });
+      }
       if (!editing && file) await upload.mutateAsync({ id: p.id, file });
       nav(`/app/contas-a-pagar/${p.id}`);
     } catch {
@@ -613,20 +630,72 @@ function PayableForm({ initial }: { initial?: Payable }) {
         />
       ) : (
         <div>
-          <FiscalXmlReader
-            companyId={empresaId}
-            file={fiscalFile}
-            onFile={setFiscalFile}
-            onApply={applyParsed}
-            onClear={clearXmlFields}
-            variant={revealed ? 'band' : 'hero'}
-          />
-          {!revealed && (
-            <div style={{ maxWidth: 560, margin: '12px auto 0', textAlign: 'center' }}>
-              <button type='button' className='linklike' onClick={() => setManualMode(true)}>
-                {t('payables.fiscalReader.fillManually')}
+          {!revealed ? (
+            <div
+              data-testid='intake-cards'
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 720, margin: '0 auto' }}
+            >
+              {/* Card: Preencher com NF */}
+              <div className='card-form' style={{ maxWidth: 'none', textAlign: 'center' }}>
+                <div className='section-title' style={{ marginTop: 0 }}>
+                  <Receipt
+                    style={{ width: 18, height: 18, color: 'var(--brand)', display: 'inline', marginRight: 6 }}
+                  />
+                  {t('payables.intake.withNf')}
+                </div>
+                <p className='help' style={{ marginBottom: 12 }}>
+                  {t('payables.intake.withNfHint')}
+                </p>
+                <FiscalXmlReader
+                  companyId={empresaId}
+                  file={fiscalFile}
+                  onFile={setFiscalFile}
+                  onApply={applyParsed}
+                  onClear={clearXmlFields}
+                  onUploadKey={(key, meta) => {
+                    setFiscalUploadKey(key);
+                    setFiscalUploadMeta(meta);
+                  }}
+                  variant='hero'
+                  embedded
+                />
+              </div>
+              {/* Card: Preencher manualmente */}
+              <button
+                data-testid='manual-card'
+                type='button'
+                className='card-form'
+                style={{ maxWidth: 'none', textAlign: 'center', cursor: 'pointer', border: '2px dashed var(--border)' }}
+                onClick={() => setManualMode(true)}
+              >
+                <div className='section-title' style={{ marginTop: 0 }}>
+                  <Pencil
+                    style={{
+                      width: 18,
+                      height: 18,
+                      color: 'var(--muted-foreground)',
+                      display: 'inline',
+                      marginRight: 6,
+                    }}
+                  />
+                  {t('payables.intake.manual')}
+                </div>
+                <p className='help'>{t('payables.intake.manualHint')}</p>
               </button>
             </div>
+          ) : (
+            <FiscalXmlReader
+              companyId={empresaId}
+              file={fiscalFile}
+              onFile={setFiscalFile}
+              onApply={applyParsed}
+              onClear={clearXmlFields}
+              onUploadKey={(key, meta) => {
+                setFiscalUploadKey(key);
+                setFiscalUploadMeta(meta);
+              }}
+              variant='band'
+            />
           )}
           {revealed && (
             <form
@@ -635,308 +704,332 @@ function PayableForm({ initial }: { initial?: Payable }) {
               onSubmit={(e) => void handleSubmit(onValid)(e)}
               noValidate
             >
-            {!editing && (
-              <div style={{ marginBottom: 14 }}>
-                <div className='section-title' style={{ marginTop: 0, marginBottom: 2 }}>
-                  {t('payables.confirmSection.title')}
+              {!editing && (
+                <div style={{ marginBottom: 14 }}>
+                  <div className='section-title' style={{ marginTop: 0, marginBottom: 2 }}>
+                    {t('payables.confirmSection.title')}
+                  </div>
+                  <div className='help'>{t('payables.confirmSection.hint')}</div>
                 </div>
-                <div className='help'>{t('payables.confirmSection.hint')}</div>
-              </div>
-            )}
-            <div className='edit-grid'>
-              <Field label={<>{t('payables.fields.vendor')} {nfFields.has('vendorId') && <AutoHint />}</>}>
-                <Controller
-                  control={control}
-                  name='vendorId'
-                  render={({ field }) => (
-                    <VendorPicker
-                      companyId={empresaId}
-                      value={field.value || null}
-                      onChange={(id) => field.onChange(id ?? '')}
-                      invalid={!!formState.errors.vendorId}
-                      prefill={vendorPrefill}
-                      notice={vendorNotice}
-                    />
-                  )}
-                />
-                {fieldError(formState.errors.vendorId?.message) && (
-                  <div className='field-err'>{fieldError(formState.errors.vendorId?.message)}</div>
-                )}
-              </Field>
-              <Field label={t('payables.fields.costCenter')}>
-                <Controller
-                  control={control}
-                  name='costCenterId'
-                  render={({ field }) => (
-                    <Select {...field}>
-                      <option value=''>{t('payables.fields.costCenterSelect')}</option>
-                      {centros.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.code} · {c.name}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                />
-                {fieldError(formState.errors.costCenterId?.message) && (
-                  <div className='field-err'>{fieldError(formState.errors.costCenterId?.message)}</div>
-                )}
-              </Field>
-              <Field label={t('payables.accountingAccount')}>
-                <Controller
-                  control={control}
-                  name='accountingAccountId'
-                  render={({ field }) => (
-                    <Combobox
-                      value={field.value ?? null}
-                      onChange={(id) => field.onChange(id)}
-                      items={accountItems(accountingAccounts)}
-                      placeholder={t('payables.fields.accountNone')}
-                    />
-                  )}
-                />
-              </Field>
-              <Field label={t('payables.financialAccount')}>
-                <Controller
-                  control={control}
-                  name='financialAccountId'
-                  render={({ field }) => (
-                    <Combobox
-                      value={field.value ?? null}
-                      onChange={(id) => field.onChange(id)}
-                      items={accountItems(financialAccounts)}
-                      placeholder={t('payables.fields.accountNone')}
-                    />
-                  )}
-                />
-              </Field>
-              <Field label={<>{t('payables.fields.documentNumber')} {nfFields.has('documentNumber') && <AutoHint />}</>}>
-                <Controller
-                  control={control}
-                  name='documentNumber'
-                  render={({ field }) => (
-                    <Input
-                      className={nfFields.has('documentNumber') ? 'input-auto' : undefined}
-                      {...field}
-                      placeholder={t('payables.placeholders.documentNumber')}
-                    />
-                  )}
-                />
-              </Field>
-              <Field label={<>{t('payables.fields.issueDate')} {nfFields.has('issueDate') && <AutoHint />}</>}>
-                <Controller
-                  control={control}
-                  name='issueDate'
-                  render={({ field }) => (
-                    <Input type='date' className={nfFields.has('issueDate') ? 'input-auto' : undefined} {...field} />
-                  )}
-                />
-              </Field>
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <Field label={<>{t('payables.fields.description')} {nfFields.has('description') && <AutoHint />}</>}>
-                <Controller
-                  control={control}
-                  name='description'
-                  render={({ field }) => (
-                    <Input
-                      className={nfFields.has('description') ? 'input-auto' : undefined}
-                      maxLength={300}
-                      {...field}
-                      placeholder={t('payables.placeholders.description')}
-                    />
-                  )}
-                />
-                {fieldError(formState.errors.description?.message) && (
-                  <div className='field-err'>{fieldError(formState.errors.description?.message)}</div>
-                )}
-              </Field>
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <Field label={t('payables.fields.mode')}>
-                <Controller
-                  control={control}
-                  name='mode'
-                  render={({ field }) => (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <Button
-                        type='button'
-                        variant={field.value === 'single' ? 'brand' : 'default'}
-                        onClick={() => {
-                          field.onChange('single');
-                          setXmlInstallments(null);
-                        }}
-                      >
-                        {t('payables.mode.single')}
-                      </Button>
-                      <Button
-                        type='button'
-                        variant={field.value === 'installments' ? 'brand' : 'default'}
-                        onClick={() => {
-                          field.onChange('installments');
-                          setXmlInstallments(null);
-                        }}
-                      >
-                        {t('payables.mode.installments')}
-                      </Button>
-                    </div>
-                  )}
-                />
-              </Field>
-            </div>
-
-            <div className='edit-grid' style={{ marginTop: 14 }}>
-              <Field
-                label={
-                  <>
-                    {mode === 'single' ? t('payables.fields.amount') : t('payables.fields.totalAmount')}{' '}
-                    {nfFields.has('totalAmount') && <AutoHint />}
-                  </>
-                }
-              >
-                <Controller
-                  control={control}
-                  name='totalAmount'
-                  render={({ field }) => (
-                    <Input
-                      className={nfFields.has('totalAmount') ? 'input-auto' : undefined}
-                      {...field}
-                      inputMode='numeric'
-                      placeholder={t('payables.placeholders.amount')}
-                    />
-                  )}
-                />
-                {fieldError(formState.errors.totalAmount?.message) && (
-                  <div className='field-err'>{fieldError(formState.errors.totalAmount?.message)}</div>
-                )}
-              </Field>
-              {!xmlInstallments && (
-                <Field label={mode === 'single' ? t('payables.fields.dueDate') : t('payables.fields.firstDueDate')}>
+              )}
+              <div className='edit-grid'>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.vendor')} {nfFields.has('vendorId') && <AutoHint />}
+                    </>
+                  }
+                >
                   <Controller
                     control={control}
-                    name='firstDueDate'
-                    render={({ field }) => <Input type='date' {...field} />}
+                    name='vendorId'
+                    render={({ field }) => (
+                      <VendorPicker
+                        companyId={empresaId}
+                        value={field.value || null}
+                        onChange={(id) => field.onChange(id ?? '')}
+                        invalid={!!formState.errors.vendorId}
+                        prefill={vendorPrefill}
+                        notice={vendorNotice}
+                      />
+                    )}
                   />
-                  {fieldError(formState.errors.firstDueDate?.message) && (
-                    <div className='field-err'>{fieldError(formState.errors.firstDueDate?.message)}</div>
+                  {fieldError(formState.errors.vendorId?.message) && (
+                    <div className='field-err'>{fieldError(formState.errors.vendorId?.message)}</div>
                   )}
                 </Field>
-              )}
-              {mode === 'installments' && !xmlInstallments && (
-                <>
-                  <Field label={t('payables.fields.installmentCount')}>
-                    <Controller
-                      control={control}
-                      name='installmentCount'
-                      render={({ field }) => <Input {...field} inputMode='numeric' />}
-                    />
-                    {fieldError(formState.errors.installmentCount?.message) && (
-                      <div className='field-err'>{fieldError(formState.errors.installmentCount?.message)}</div>
+                <Field label={t('payables.fields.costCenter')}>
+                  <Controller
+                    control={control}
+                    name='costCenterId'
+                    render={({ field }) => (
+                      <Select {...field}>
+                        <option value=''>{t('payables.fields.costCenterSelect')}</option>
+                        {centros.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.code} · {c.name}
+                          </option>
+                        ))}
+                      </Select>
                     )}
-                  </Field>
-                  <Field label={t('payables.fields.intervalMonths')}>
-                    <Controller
-                      control={control}
-                      name='intervalMonths'
-                      render={({ field }) => <Input {...field} inputMode='numeric' />}
-                    />
-                  </Field>
-                </>
-              )}
-            </div>
-
-            {mode === 'installments' && !xmlInstallments && preview.length > 0 && (
-              <div className='panel' style={{ marginTop: 14 }}>
-                <div className='panel-head'>
-                  <span className='panel-title'>{t('payables.preview.title')}</span>
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>{t('payables.preview.installment')}</th>
-                      <th>{t('payables.preview.dueDate')}</th>
-                      <th style={{ textAlign: 'right' }}>{t('payables.preview.amount')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.map((p) => (
-                      <tr key={p.sequence}>
-                        <td className='t-mono'>
-                          {p.sequence}/{preview.length}
-                        </td>
-                        <td className='t-mono'>{fmtData(p.dueDate)}</td>
-                        <td className='amount-cell' style={{ textAlign: 'right' }}>
-                          {brl(p.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {xmlInstallments && xmlInstallments.length > 0 && (
-              <div className='panel' style={{ marginTop: 14 }}>
-                <div className='panel-head'>
-                  <span className='panel-title'>{t('payables.fiscalReader.installmentsFromNf')}</span>
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>{t('payables.preview.installment')}</th>
-                      <th>{t('payables.preview.dueDate')}</th>
-                      <th style={{ textAlign: 'right' }}>{t('payables.preview.amount')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {xmlInstallments.map((p, i) => (
-                      <tr key={`${p.dueDate}-${i}`}>
-                        <td className='t-mono'>
-                          {i + 1}/{xmlInstallments.length}
-                        </td>
-                        <td className='t-mono'>{fmtData(p.dueDate)}</td>
-                        <td className='amount-cell' style={{ textAlign: 'right' }}>
-                          {brl(p.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {!editing && (
-              <div style={{ marginTop: 14 }}>
-                <Field label={t('payables.upload.label')} help={t('payables.upload.help')}>
-                  <FilePicker
-                    accept='application/pdf,image/png,image/jpeg'
-                    fileName={file?.name}
-                    placeholder={t('common.noFileSelected')}
-                    onSelect={setFile}
+                  />
+                  {fieldError(formState.errors.costCenterId?.message) && (
+                    <div className='field-err'>{fieldError(formState.errors.costCenterId?.message)}</div>
+                  )}
+                </Field>
+                <Field label={t('payables.accountingAccount')}>
+                  <Controller
+                    control={control}
+                    name='accountingAccountId'
+                    render={({ field }) => (
+                      <Combobox
+                        value={field.value ?? null}
+                        onChange={(id) => field.onChange(id)}
+                        items={accountItems(accountingAccounts)}
+                        placeholder={t('payables.fields.accountNone')}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field label={t('payables.financialAccount')}>
+                  <Controller
+                    control={control}
+                    name='financialAccountId'
+                    render={({ field }) => (
+                      <Combobox
+                        value={field.value ?? null}
+                        onChange={(id) => field.onChange(id)}
+                        items={accountItems(financialAccounts)}
+                        placeholder={t('payables.fields.accountNone')}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.documentNumber')} {nfFields.has('documentNumber') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='documentNumber'
+                    render={({ field }) => (
+                      <Input
+                        className={nfFields.has('documentNumber') ? 'input-auto' : undefined}
+                        {...field}
+                        placeholder={t('payables.placeholders.documentNumber')}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.issueDate')} {nfFields.has('issueDate') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='issueDate'
+                    render={({ field }) => (
+                      <Input type='date' className={nfFields.has('issueDate') ? 'input-auto' : undefined} {...field} />
+                    )}
                   />
                 </Field>
               </div>
-            )}
 
-            {erro && (
-              <div className='create-err' style={{ marginTop: 10 }}>
-                {erro}
+              <div style={{ marginTop: 14 }}>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.description')} {nfFields.has('description') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='description'
+                    render={({ field }) => (
+                      <Input
+                        className={nfFields.has('description') ? 'input-auto' : undefined}
+                        maxLength={300}
+                        {...field}
+                        placeholder={t('payables.placeholders.description')}
+                      />
+                    )}
+                  />
+                  {fieldError(formState.errors.description?.message) && (
+                    <div className='field-err'>{fieldError(formState.errors.description?.message)}</div>
+                  )}
+                </Field>
               </div>
-            )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-              <Button type='submit' variant='brand' disabled={!formState.isValid || saving}>
-                {saving
-                  ? t('payables.actions.saving')
-                  : editing
-                    ? t('payables.actions.save')
-                    : t('payables.actions.create')}
-              </Button>
-              <Button type='button' onClick={() => nav(backTo)}>
-                {t('payables.actions.cancel')}
-              </Button>
-            </div>
+
+              <div style={{ marginTop: 14 }}>
+                <Field label={t('payables.fields.mode')}>
+                  <Controller
+                    control={control}
+                    name='mode'
+                    render={({ field }) => (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Button
+                          type='button'
+                          variant={field.value === 'single' ? 'brand' : 'default'}
+                          onClick={() => {
+                            field.onChange('single');
+                            setXmlInstallments(null);
+                          }}
+                        >
+                          {t('payables.mode.single')}
+                        </Button>
+                        <Button
+                          type='button'
+                          variant={field.value === 'installments' ? 'brand' : 'default'}
+                          onClick={() => {
+                            field.onChange('installments');
+                            setXmlInstallments(null);
+                          }}
+                        >
+                          {t('payables.mode.installments')}
+                        </Button>
+                      </div>
+                    )}
+                  />
+                </Field>
+              </div>
+
+              <div className='edit-grid' style={{ marginTop: 14 }}>
+                <Field
+                  label={
+                    <>
+                      {mode === 'single' ? t('payables.fields.amount') : t('payables.fields.totalAmount')}{' '}
+                      {nfFields.has('totalAmount') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='totalAmount'
+                    render={({ field }) => (
+                      <Input
+                        className={nfFields.has('totalAmount') ? 'input-auto' : undefined}
+                        {...field}
+                        inputMode='numeric'
+                        placeholder={t('payables.placeholders.amount')}
+                      />
+                    )}
+                  />
+                  {fieldError(formState.errors.totalAmount?.message) && (
+                    <div className='field-err'>{fieldError(formState.errors.totalAmount?.message)}</div>
+                  )}
+                </Field>
+                {!xmlInstallments && (
+                  <Field label={mode === 'single' ? t('payables.fields.dueDate') : t('payables.fields.firstDueDate')}>
+                    <Controller
+                      control={control}
+                      name='firstDueDate'
+                      render={({ field }) => <Input type='date' {...field} />}
+                    />
+                    {fieldError(formState.errors.firstDueDate?.message) && (
+                      <div className='field-err'>{fieldError(formState.errors.firstDueDate?.message)}</div>
+                    )}
+                  </Field>
+                )}
+                {mode === 'installments' && !xmlInstallments && (
+                  <>
+                    <Field label={t('payables.fields.installmentCount')}>
+                      <Controller
+                        control={control}
+                        name='installmentCount'
+                        render={({ field }) => <Input {...field} inputMode='numeric' />}
+                      />
+                      {fieldError(formState.errors.installmentCount?.message) && (
+                        <div className='field-err'>{fieldError(formState.errors.installmentCount?.message)}</div>
+                      )}
+                    </Field>
+                    <Field label={t('payables.fields.intervalMonths')}>
+                      <Controller
+                        control={control}
+                        name='intervalMonths'
+                        render={({ field }) => <Input {...field} inputMode='numeric' />}
+                      />
+                    </Field>
+                  </>
+                )}
+              </div>
+
+              {mode === 'installments' && !xmlInstallments && preview.length > 0 && (
+                <div className='panel' style={{ marginTop: 14 }}>
+                  <div className='panel-head'>
+                    <span className='panel-title'>{t('payables.preview.title')}</span>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('payables.preview.installment')}</th>
+                        <th>{t('payables.preview.dueDate')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('payables.preview.amount')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.map((p) => (
+                        <tr key={p.sequence}>
+                          <td className='t-mono'>
+                            {p.sequence}/{preview.length}
+                          </td>
+                          <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                          <td className='amount-cell' style={{ textAlign: 'right' }}>
+                            {brl(p.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {xmlInstallments && xmlInstallments.length > 0 && (
+                <div className='panel' style={{ marginTop: 14 }}>
+                  <div className='panel-head'>
+                    <span className='panel-title'>{t('payables.fiscalReader.installmentsFromNf')}</span>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('payables.preview.installment')}</th>
+                        <th>{t('payables.preview.dueDate')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('payables.preview.amount')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {xmlInstallments.map((p, i) => (
+                        <tr key={`${p.dueDate}-${i}`}>
+                          <td className='t-mono'>
+                            {i + 1}/{xmlInstallments.length}
+                          </td>
+                          <td className='t-mono'>{fmtData(p.dueDate)}</td>
+                          <td className='amount-cell' style={{ textAlign: 'right' }}>
+                            {brl(p.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!editing && (
+                <div style={{ marginTop: 14 }}>
+                  <Field label={t('payables.upload.label')} help={t('payables.upload.help')}>
+                    <FilePicker
+                      accept='application/pdf,image/png,image/jpeg'
+                      fileName={file?.name}
+                      placeholder={t('common.noFileSelected')}
+                      onSelect={setFile}
+                    />
+                  </Field>
+                </div>
+              )}
+
+              {erro && (
+                <div className='create-err' style={{ marginTop: 10 }}>
+                  {erro}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+                <Button type='submit' variant='brand' disabled={!formState.isValid || saving}>
+                  {saving
+                    ? t('payables.actions.saving')
+                    : editing
+                      ? t('payables.actions.save')
+                      : t('payables.actions.create')}
+                </Button>
+                <Button type='button' onClick={() => nav(backTo)}>
+                  {t('payables.actions.cancel')}
+                </Button>
+              </div>
             </form>
           )}
         </div>
@@ -945,10 +1038,11 @@ function PayableForm({ initial }: { initial?: Payable }) {
   );
 }
 
-/* ============ FISCAL XML/PDF READER (right column) ============ */
+/* ============ FISCAL XML/PDF READER (NF card / band) ============ */
 /**
- * Stateless NF reader: upload an XML (NF-e/NFS-e) or PDF; the backend detects + parses it and the fields
- * are applied to the form automatically. Nothing is persisted until the payable is saved.
+ * NF reader: upload an XML (NF-e/NFS-e) or PDF.
+ * Flow: request presigned URL → PUT file to it → call parse by key → apply to form.
+ * On Storage.PresignNotSupported (local dev), shows a non-blocking notice and lets the user proceed manually.
  */
 function FiscalXmlReader({
   companyId,
@@ -956,71 +1050,119 @@ function FiscalXmlReader({
   onFile,
   onApply,
   onClear,
+  onUploadKey,
   variant,
+  embedded,
 }: {
   companyId: string;
   file: File | null;
   onFile: (f: File | null) => void;
   onApply: (p: ParsedFiscalDocument) => void;
   onClear: () => void;
+  /** Called when the file has been uploaded to blob storage and a key is available. */
+  onUploadKey: (key: string, meta: { fileName: string; contentType: string; sizeBytes: number }) => void;
   variant: 'hero' | 'band';
+  /** When true, suppresses the outer card wrapper (the parent card already provides it). */
+  embedded?: boolean;
 }) {
   const { t } = useTranslation();
+  const requestUrl = useRequestFiscalUploadUrl();
   const parse = useParseFiscalDocument();
   const [parsed, setParsed] = useState<ParsedFiscalDocument | null>(null);
+  const [uploadUnavailable, setUploadUnavailable] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
   const hero = variant === 'hero';
 
-  // Selecting a file clears whatever the previous NF filled, then parses + applies the new one.
+  // Selecting a file: request upload URL → PUT to it → parse by key → apply.
   const onSelect = (f: File | null) => {
     setParsed(null);
     parse.reset();
+    requestUrl.reset();
+    setUploadErr(null);
+    setUploadUnavailable(false);
     onClear();
     onFile(f);
-    if (f)
-      parse.mutate(
-        { companyId, file: f },
-        {
-          onSuccess: (p) => {
-            setParsed(p);
-            onApply(p);
-          },
+    if (!f) return;
+
+    requestUrl.mutate(
+      { fileName: f.name },
+      {
+        onSuccess: async (target) => {
+          try {
+            await uploadToPresignedUrl(target.uploadUrl, f);
+          } catch (e) {
+            setUploadErr(e instanceof Error ? e.message : String(e));
+            return;
+          }
+          onUploadKey(target.key, { fileName: f.name, contentType: f.type, sizeBytes: f.size });
+          parse.mutate(
+            { companyId, key: target.key, fileName: f.name },
+            {
+              onSuccess: (p) => {
+                setParsed(p);
+                onApply(p);
+              },
+            },
+          );
         },
-      );
+        onError: (err) => {
+          // Storage.PresignNotSupported → non-blocking notice, let user proceed manually.
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes('PresignNotSupported') || msg.includes('presign')) {
+            setUploadUnavailable(true);
+          } else {
+            setUploadErr(msg);
+          }
+        },
+      },
+    );
   };
 
   const clearAll = () => {
     setParsed(null);
     parse.reset();
+    requestUrl.reset();
+    setUploadErr(null);
+    setUploadUnavailable(false);
     onFile(null);
     onClear();
   };
 
-  return (
-    <div className={hero ? 'card-form fiscal-hero' : 'card-form fiscal-band'} style={{ maxWidth: 'none' }}>
-      <div className='section-title' style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-        {!hero && <Receipt style={{ width: 16, height: 16, color: 'var(--brand)' }} />}
-        {hero ? t('payables.fiscalReader.title') : t('payables.fiscalReader.bandTitle')}
-        {!hero && parsed && <span className='tag-readonly'>{t('payables.fiscalReader.readOnlyBadge')}</span>}
-      </div>
-      {hero && <p className='fiscal-hero-emphasis'>{t('payables.fiscalReader.heroEmphasis')}</p>}
+  const isPending = requestUrl.isPending || parse.isPending;
+
+  const inner = (
+    <>
+      {!embedded && (
+        <div className='section-title' style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!hero && <Receipt style={{ width: 16, height: 16, color: 'var(--brand)' }} />}
+          {hero ? t('payables.fiscalReader.title') : t('payables.fiscalReader.bandTitle')}
+          {!hero && parsed && <span className='tag-readonly'>{t('payables.fiscalReader.readOnlyBadge')}</span>}
+        </div>
+      )}
+      {hero && !embedded && <p className='fiscal-hero-emphasis'>{t('payables.fiscalReader.heroEmphasis')}</p>}
       <Field label={t('payables.fiscalReader.selectLabel')} help={t('payables.fiscalReader.selectHelp')}>
         <FilePicker
           accept='.xml,application/xml,text/xml,.pdf,application/pdf'
           fileName={file?.name}
           placeholder={hero ? t('payables.fiscalReader.dropHint') : t('common.noFileSelected')}
           onSelect={onSelect}
-          large={hero}
+          large={hero && !embedded}
         />
       </Field>
 
-      {parse.isPending && (
+      {uploadUnavailable && (
+        <div className='help' style={{ marginTop: 10 }}>
+          {t('payables.fiscalReader.uploadUnavailable')}
+        </div>
+      )}
+      {isPending && (
         <div className='help' style={{ marginTop: 10 }}>
           {t('payables.fiscalReader.parsing')}
         </div>
       )}
-      {parse.error != null && (
+      {(uploadErr ?? (parse.error != null ? getErrorMessage(parse.error) : null)) && (
         <div className='create-err' style={{ marginTop: 10 }}>
-          {getErrorMessage(parse.error)}
+          {uploadErr ?? getErrorMessage(parse.error)}
         </div>
       )}
 
@@ -1050,6 +1192,20 @@ function FiscalXmlReader({
               <FiscalField
                 label={t('payables.fiscalReader.installmentsCount')}
                 value={String(parsed.installments.length)}
+              />
+            )}
+            {/* Fiscal summary (NF-e): CFOP/NCM counts + total taxes */}
+            {parsed.fiscal && (
+              <FiscalField
+                full
+                label={t('payables.fiscalReader.taxes')}
+                value={[
+                  parsed.fiscal.cfops.length > 0 && `CFOPs: ${parsed.fiscal.cfops.join(', ')}`,
+                  parsed.fiscal.ncms.length > 0 && `NCMs: ${parsed.fiscal.ncms.length}`,
+                  parsed.fiscal.totalTaxes != null && `Total tributos: ${brl(parsed.fiscal.totalTaxes)}`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               />
             )}
             {/* Emitente e CNPJ do emitente lado a lado (linha própria de 2 colunas). */}
@@ -1086,6 +1242,14 @@ function FiscalXmlReader({
           </Button>
         </>
       )}
+    </>
+  );
+
+  if (embedded) return inner;
+
+  return (
+    <div className={hero ? 'card-form fiscal-hero' : 'card-form fiscal-band'} style={{ maxWidth: 'none' }}>
+      {inner}
     </div>
   );
 }

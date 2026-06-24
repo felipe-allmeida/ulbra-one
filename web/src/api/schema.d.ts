@@ -548,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/fiscal-document/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RequestFiscalUploadUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/fiscal-document/parse": {
         parameters: {
             query?: never;
@@ -660,22 +676,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/payables/{id}/classification-suggestion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ClassificationSuggestion"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/payables/{id}/ai-classification-suggestion": {
         parameters: {
             query?: never;
@@ -686,6 +686,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AiClassificationSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/classification-suggestion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ClassificationSuggestion"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1369,16 +1385,6 @@ export interface components {
             byVendor: components["schemas"]["AgingByVendorRow"][];
             byCostCenter: components["schemas"]["AgingByCostCenterRow"][];
         };
-        AiClassificationSuggestionResponse: {
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
-            /** Format: double */
-            confidence: number;
-            rationale: string;
-            source: string;
-        };
         /** @enum {string} */
         AuditAction: "Create" | "Update" | "Delete";
         AuditLogResponse: {
@@ -1593,6 +1599,16 @@ export interface components {
             companyId: string;
             requireToApprove: boolean;
             requireToPay: boolean;
+        };
+        AiClassificationSuggestionResponse: {
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
+            /** Format: double */
+            confidence: number;
+            rationale: string;
+            source: string;
         };
         ClassificationSuggestionResponse: {
             /** @example chart_account_3fa85f64571742199730000000000000 */
@@ -1872,7 +1888,25 @@ export interface components {
             active: boolean;
         };
         /** @enum {string} */
-        FiscalDocumentFormat: "NfeXml" | "NfseXml" | "PdfMock";
+        FiscalDocumentFormat: "NfeXml" | "NfseXml" | "Pdf" | "Image";
+        FiscalSummary: {
+            cfops: string[];
+            ncms: string[];
+            /** Format: double */
+            icms?: number | null;
+            /** Format: double */
+            ipi?: number | null;
+            /** Format: double */
+            pis?: number | null;
+            /** Format: double */
+            cofins?: number | null;
+            /** Format: double */
+            totalTaxes?: number | null;
+        };
+        UploadTarget: {
+            uploadUrl: string;
+            key: string;
+        };
         FiscalDocumentResponse: {
             /** @example fiscaldoc_3fa85f64571742199730000000000000 */
             id: string;
@@ -2078,6 +2112,7 @@ export interface components {
             cnaeCode: string | null;
             issuerPhone: string | null;
             issuerAddress: components["schemas"]["ParsedAddress"];
+            fiscal?: components["schemas"]["FiscalSummary"];
         };
         ParsedInstallment: {
             /** Format: date */
@@ -4323,6 +4358,41 @@ export interface operations {
             };
         };
     };
+    RequestFiscalUploadUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    fileName: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadTarget"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ParseFiscalDocument: {
         parameters: {
             query: {
@@ -4334,9 +4404,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
+                "application/json": {
+                    key: string;
+                    fileName: string;
                 };
             };
         };
@@ -4372,9 +4442,12 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
+                "application/json": {
+                    key: string;
+                    fileName: string;
+                    contentType: string;
+                    /** Format: int64 */
+                    sizeBytes: number;
                 };
             };
         };
@@ -4653,37 +4726,6 @@ export interface operations {
             };
         };
     };
-    ClassificationSuggestion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassificationSuggestionResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
     AiClassificationSuggestion: {
         parameters: {
             query?: never;
@@ -4702,6 +4744,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AiClassificationSuggestionResponse"];
+                };
+            };
+        };
+    };
+    ClassificationSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassificationSuggestionResponse"];
                 };
             };
             /** @description Not Found */

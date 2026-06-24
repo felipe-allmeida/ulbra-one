@@ -2294,6 +2294,53 @@
         }
       }
     },
+    "/api/payables/fiscal-document/upload-url": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RequestFiscalUploadUrl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "fileName"
+                ],
+                "type": "object",
+                "properties": {
+                  "fileName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTarget"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/fiscal-document/parse": {
       "post": {
         "tags": [
@@ -2312,22 +2359,20 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "required": [
-                  "file"
+                  "key",
+                  "fileName"
                 ],
                 "type": "object",
                 "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
+                  "key": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
                   }
-                }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
                 }
               }
             }
@@ -2375,22 +2420,29 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "required": [
-                  "file"
+                  "key",
+                  "fileName",
+                  "contentType",
+                  "sizeBytes"
                 ],
                 "type": "object",
                 "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
+                  "key": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "contentType": {
+                    "type": "string"
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "format": "int64"
                   }
-                }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
                 }
               }
             }
@@ -2786,46 +2838,6 @@
         }
       }
     },
-    "/api/payables/{id}/classification-suggestion": {
-      "get": {
-        "tags": [
-          "Finance"
-        ],
-        "operationId": "ClassificationSuggestion",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassificationSuggestionResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/payables/{id}/ai-classification-suggestion": {
       "post": {
         "tags": [
@@ -2849,6 +2861,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AiClassificationSuggestionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/classification-suggestion": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ClassificationSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationSuggestionResponse"
                 }
               }
             }
@@ -5854,39 +5896,6 @@
         },
         "additionalProperties": false
       },
-      "AiClassificationSuggestionResponse": {
-        "required": [
-          "accountingAccountId",
-          "financialAccountId",
-          "confidence",
-          "rationale",
-          "source"
-        ],
-        "type": "object",
-        "properties": {
-          "accountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "confidence": {
-            "type": "number",
-            "format": "double"
-          },
-          "rationale": {
-            "type": "string"
-          },
-          "source": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
       "AuditAction": {
         "enum": [
           "Create",
@@ -6608,6 +6617,39 @@
           },
           "requireToPay": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiClassificationSuggestionResponse": {
+        "required": [
+          "accountingAccountId",
+          "financialAccountId",
+          "confidence",
+          "rationale",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7593,9 +7635,73 @@
         "enum": [
           "NfeXml",
           "NfseXml",
-          "PdfMock"
+          "Pdf",
+          "Image"
         ],
         "type": "string"
+      },
+      "FiscalSummary": {
+        "required": [
+          "cfops",
+          "ncms"
+        ],
+        "type": "object",
+        "properties": {
+          "cfops": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ncms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "icms": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ipi": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pis": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cofins": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalTaxes": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadTarget": {
+        "required": [
+          "uploadUrl",
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "FiscalDocumentResponse": {
         "required": [
@@ -8318,6 +8424,9 @@
           },
           "issuerAddress": {
             "$ref": "#/components/schemas/ParsedAddress"
+          },
+          "fiscal": {
+            "$ref": "#/components/schemas/FiscalSummary"
           }
         },
         "additionalProperties": false

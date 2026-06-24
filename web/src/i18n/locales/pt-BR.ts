@@ -298,11 +298,22 @@ const ptBR = {
       productDescription: 'Descrição dos produtos',
       cnae: 'CNAE',
       clear: 'Limpar campos do XML',
+      uploadUnavailable: 'Anexo indisponível neste ambiente — preencha manualmente se necessário.',
+      taxes: 'Tributos (NF-e)',
       formats: {
         NfeXml: 'NF-e (produto)',
         NfseXml: 'NFS-e (serviço)',
+        Pdf: 'PDF (serviço)',
+        Image: 'Imagem (serviço)',
         PdfMock: 'PDF (serviço, mock)',
       },
+    },
+    intake: {
+      withNf: 'Preencher com NF',
+      withNfHint: 'Suba o XML da nota fiscal e os campos serão preenchidos automaticamente.',
+      manual: 'Preencher manualmente',
+      manualHint: 'Informe os dados da conta a pagar sem nota fiscal.',
+      createVendorFromNf: 'Cadastrar fornecedor da NF',
     },
     confirmSection: {
       title: 'Confirme os dados',

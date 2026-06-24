@@ -36,6 +36,7 @@ import {
   type FiscalDocument,
   type MatchStatus,
   type ParsedFiscalDocument,
+  type UploadTarget,
   type Payable,
   type PayableAttachment,
   type PayableInput,
@@ -607,21 +608,47 @@ export function useDeletePayableAttachment(
   );
 }
 
-/** Stateless parse/preview of an uploaded NF — no cache to invalidate. */
+/** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */
+export function useRequestFiscalUploadUrl(options?: UseMutationOptions<UploadTarget, unknown, { fileName: string }>) {
+  return useMutation<UploadTarget, unknown, { fileName: string }>({
+    mutationFn: ({ fileName }) => api.requestFiscalUploadUrl(fileName),
+    ...options,
+  });
+}
+
+/**
+ * PUTs the file directly to the presigned/SAS upload URL returned by `useRequestFiscalUploadUrl`.
+ * The `x-ms-blob-type` header is required by Azure Blob SAS and is harmless for S3/MinIO.
+ */
+export async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': file.type, 'x-ms-blob-type': 'BlockBlob' },
+  });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status} ${res.statusText}`);
+}
+
+/** Stateless parse/preview of an NF already in object storage — no cache to invalidate. */
 export function useParseFiscalDocument(
-  options?: UseMutationOptions<ParsedFiscalDocument, unknown, { companyId: string; file: File }>,
+  options?: UseMutationOptions<ParsedFiscalDocument, unknown, { companyId: string; key: string; fileName: string }>,
 ) {
-  return useMutation<ParsedFiscalDocument, unknown, { companyId: string; file: File }>({
-    mutationFn: ({ companyId, file }) => api.parseFiscalDocument(companyId, file),
+  return useMutation<ParsedFiscalDocument, unknown, { companyId: string; key: string; fileName: string }>({
+    mutationFn: ({ companyId, key, fileName }) => api.parseFiscalDocument(companyId, key, fileName),
     ...options,
   });
 }
 
 export function useUploadPayableFiscalDocument(
-  options?: UseMutationOptions<FiscalDocument, unknown, { id: string; file: File }>,
+  options?: UseMutationOptions<
+    FiscalDocument,
+    unknown,
+    { id: string; key: string; fileName: string; contentType: string; sizeBytes: number }
+  >,
 ) {
   return useInvalidatingMutation(
-    ({ id, file }) => api.uploadPayableFiscalDocument(id, file),
+    ({ id, key, fileName, contentType, sizeBytes }) =>
+      api.uploadPayableFiscalDocument(id, { key, fileName, contentType, sizeBytes }),
     (qc, _data, vars) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
