@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Time.Testing;
 using Ulbra.One.Common.Application.Persistence;
@@ -46,6 +47,32 @@ internal sealed class PmtAsyncQueryProvider<TEntity>(IQueryProvider inner) : IAs
             .Invoke(null, [syncResult])!;
     }
     private T? ExecuteSyncGeneric<T>(Expression expression) => inner.Execute<T>(expression);
+}
+
+/// <summary>No-op IPublishEndpoint for unit tests that don't need to assert on published messages.</summary>
+internal sealed class NoOpPublishEndpoint : IPublishEndpoint
+{
+    public Task Publish<T>(T message, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish<T>(T message, IPipe<PublishContext<T>> publishPipe, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish<T>(T message, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish<T>(object values, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish<T>(object values, IPipe<PublishContext<T>> publishPipe, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish<T>(object values, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+    public Task Publish(object message, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
+    public Task Publish(object message, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
+    public Task Publish(object message, Type messageType, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
+    public Task Publish(object message, Type messageType, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
+    public ConnectHandle ConnectPublishObserver(IPublishObserver observer) => throw new NotSupportedException();
 }
 
 /// <summary>Minimal IUnitOfWork backed by an in-memory object array (payment tests).</summary>
@@ -118,7 +145,7 @@ public class PayablePaymentServiceTests
     private static PayablePaymentService CreateSut(IUnitOfWork uow)
     {
         var clock = new FakeTimeProvider(FixedNow);
-        return new PayablePaymentService(uow, clock);
+        return new PayablePaymentService(uow, clock, new NoOpPublishEndpoint());
     }
 
     // ── tests ─────────────────────────────────────────────────────────────────

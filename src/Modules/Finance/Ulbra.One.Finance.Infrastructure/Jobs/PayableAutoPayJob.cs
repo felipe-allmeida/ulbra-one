@@ -27,21 +27,34 @@ public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider 
 
     public async Task RunOnceAsync(CancellationToken ct)
     {
-        using var scope = scopes.CreateScope();
-        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var payments = scope.ServiceProvider.GetRequiredService<IPayablePaymentService>();
+        // Collect IDs in a short-lived scope; process each payable in its own scope so that
+        // a failure (including the MassTransit EF outbox state) for one payable cannot
+        // contaminate the DbContext / outbox state of the next.
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-
-        var due = await uow.Set<Payable>()
-            .Include(p => p.Installments).ThenInclude(i => i.Payments)
-            .Where(p => p.Status == PayableStatus.Scheduled
-                && p.Installments.Any(i => i.Status != InstallmentStatus.Paid && i.DueDate <= today))
-            .ToListAsync(ct);
-
-        foreach (var payable in due)
+        List<Guid> dueIds;
+        using (var listScope = scopes.CreateScope())
         {
+            var listUow = listScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            dueIds = await listUow.Set<Payable>()
+                .Where(p => p.Status == PayableStatus.Scheduled
+                    && p.Installments.Any(i => i.Status != InstallmentStatus.Paid && i.DueDate <= today))
+                .Select(p => p.Id)
+                .ToListAsync(ct);
+        }
+
+        foreach (var payableId in dueIds)
+        {
+            using var scope = scopes.CreateScope();
+            var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var payments = scope.ServiceProvider.GetRequiredService<IPayablePaymentService>();
             try
             {
+                var payable = await uow.Set<Payable>()
+                    .Include(p => p.Installments).ThenInclude(i => i.Payments)
+                    .FirstOrDefaultAsync(p => p.Id == payableId, ct);
+                if (payable is null) continue; // deleted between list and process
+                if (payable.Status != PayableStatus.Scheduled) continue; // concurrently settled
+
                 var source = await ResolveSourceAsync(uow, payable, ct);
                 if (source is null) { log.LogWarning("Payable {Id} due but no payment source; skipping", payable.Id); continue; }
                 var (bankAccountId, method) = source.Value;
@@ -57,8 +70,7 @@ public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider 
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                log.LogError(ex, "Auto-pay failed for payable {Id}", payable.Id);
-                uow.ClearChangeTracker();
+                log.LogError(ex, "Auto-pay failed for payable {Id}", payableId);
             }
         }
     }

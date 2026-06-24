@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.Endpoints.Payables;
+using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -15,11 +17,13 @@ public sealed class PayablePaymentService : IPayablePaymentService
 {
     private readonly IUnitOfWork _uow;
     private readonly TimeProvider _clock;
+    private readonly IPublishEndpoint _publish;
 
-    public PayablePaymentService(IUnitOfWork uow, TimeProvider clock)
+    public PayablePaymentService(IUnitOfWork uow, TimeProvider clock, IPublishEndpoint publish)
     {
         _uow = uow;
         _clock = clock;
+        _publish = publish;
     }
 
     public async Task<Result<Payable>> RegisterAsync(
@@ -71,6 +75,8 @@ public sealed class PayablePaymentService : IPayablePaymentService
 
         payable.RecomputeSettlement();
         await _uow.AddAsync(payment, ct);
+
+        await _publish.Publish(new PaymentRegistered(payment.Id, payable.Id, payable.CompanyId, payment.Amount), ct);
 
         return Result.Success(payable);
     }

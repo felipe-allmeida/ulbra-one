@@ -9,7 +9,11 @@ using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Messaging;
 
-public sealed class PayableReceivedConsumer(IUnitOfWork uow, IPayableClassifier classifier, TimeProvider clock)
+public sealed class PayableReceivedConsumer(
+    IUnitOfWork uow,
+    IPayableClassifier classifier,
+    TimeProvider clock,
+    IPublishEndpoint publish)
     : IConsumer<PayableReceived>
 {
     internal const double AutoApplyThreshold = 0.8;
@@ -33,6 +37,15 @@ public sealed class PayableReceivedConsumer(IUnitOfWork uow, IPayableClassifier 
         var result = await classifier.ClassifyAsync(payable, ct);
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
         Apply(payable, result, cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
+
+        if (payable.Status == PayableStatus.Scheduled)
+        {
+            var code = payable.AccountingAccountId is { } acc
+                ? await uow.ReadSet<ChartAccount>().Where(c => c.Id == acc).Select(c => c.Code).FirstOrDefaultAsync(ct)
+                : null;
+            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, code), ct);
+        }
+
         // Payable carries an xmin rowversion. If a human mutated the payable between create and async
         // consumption, SaveChanges throws DbUpdateConcurrencyException — safe under at-least-once: MassTransit
         // retries, and on retry the Status==Received guard makes it a no-op. No explicit catch needed.

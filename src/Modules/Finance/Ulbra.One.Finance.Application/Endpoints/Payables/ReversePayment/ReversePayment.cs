@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,6 +8,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
@@ -22,7 +24,7 @@ public sealed class ReversePayment : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, PaymentId paymentId, Request req,
-        IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, IPublishEndpoint publish, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>()
             .Include(p => p.Installments).ThenInclude(i => i.Payments)
@@ -37,6 +39,7 @@ public sealed class ReversePayment : IEndpoint
         catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 409, title: "Payment.AlreadyReversed"); }
         payable.RecomputeSettlement();
 
+        await publish.Publish(new PaymentReversed(paymentId.Value, payable.Id, payable.CompanyId), ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(payable));
     }

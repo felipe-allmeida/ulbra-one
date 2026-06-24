@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,6 +8,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
+using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -25,7 +27,7 @@ public sealed class ClassifyPayableBatch : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
     private static async Task<IResult> Handle(Request req,
-        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
+        IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, CancellationToken ct)
     {
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
@@ -33,6 +35,13 @@ public sealed class ClassifyPayableBatch : IEndpoint
         var ids = req.PayableIds.Select(p => p.Value).ToList();
         var payables = await uow.Set<Payable>().Where(p => ids.Contains(p.Id)).ToListAsync(ct);
         var now = clock.GetUtcNow();
+
+        // Resolve the accounting code once (all payables in a batch share the same account).
+        string? accountingCode = null;
+        if (req.AccountingAccountId is { } acctId)
+            accountingCode = await uow.ReadSet<ChartAccount>()
+                .Where(c => c.Id == acctId.Value).Select(c => c.Code).FirstOrDefaultAsync(ct);
+
         foreach (var payable in payables)
         {
             payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
@@ -40,6 +49,9 @@ public sealed class ClassifyPayableBatch : IEndpoint
             payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, now);
             if (payable.Status is PayableStatus.Received or PayableStatus.PendingClassification)
                 payable.MarkPendingApproval();
+
+            if (payable.Status == PayableStatus.Scheduled)
+                await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, accountingCode), ct);
         }
 
         await uow.SaveChangesAsync(ct);
