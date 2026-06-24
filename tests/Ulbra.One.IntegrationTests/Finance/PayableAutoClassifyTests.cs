@@ -209,4 +209,178 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         var afterSecond = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
         Assert.Equal("Scheduled", afterSecond.GetProperty("status").GetString());
     }
+
+    // ---------------------------------------------------------------------------
+    // Task 4: classify endpoint runs auto-approval + PayableResponse suggestion fields
+    // ---------------------------------------------------------------------------
+
+    /// <summary>
+    /// Seeds a synthetic + analytical chart account of the given type via the public API.
+    /// Returns the prefixed id of the analytical (leaf) account.
+    /// </summary>
+    private static async Task<string> SeedChartAccountAsync(HttpClient client, string chartType)
+    {
+        var code = Random.Shared.Next(100_000, 999_999).ToString();
+        var syntheticRes = await client.PostAsJsonAsync("/api/chart-accounts", new
+        {
+            chartType,
+            code,
+            name = $"Root {chartType} {code}",
+            kind = "Synthetic",
+        });
+        syntheticRes.EnsureSuccessStatusCode();
+        var syntheticId = (await ReadJson(syntheticRes)).GetProperty("id").GetString()!;
+
+        var analyticalRes = await client.PostAsJsonAsync("/api/chart-accounts", new
+        {
+            chartType,
+            code = $"{code}.1",
+            name = $"Leaf {chartType} {code}",
+            kind = "Analytical",
+            parentId = syntheticId,
+            nature = "Debit",
+        });
+        analyticalRes.EnsureSuccessStatusCode();
+        return (await ReadJson(analyticalRes)).GetProperty("id").GetString()!;
+    }
+
+    /// <summary>
+    /// Parks a payable at PendingClassification by running the consumer with mid-band confidence,
+    /// then classifying via the endpoint should auto-approve when amount is under the cost-center limit.
+    /// </summary>
+    [Fact]
+    public async Task Classify_Endpoint_Under_Limit_Parks_To_Scheduled()
+    {
+        // Arrange: stub returns 0.6 confidence → parks at PendingClassification.
+        var suggestedAccId = Guid.NewGuid();
+        var suggestedFinId = Guid.NewGuid();
+        var midResult = new PayableClassificationResult(suggestedAccId, suggestedFinId, 0.6, "mid-band", "ai");
+
+        await using var factory = new ApiFactory(fixture.ConnectionString)
+            .WithWebHostBuilder(b => b.ConfigureServices(s =>
+            {
+                s.RemoveAll<IPayableClassifier>();
+                s.AddScoped<IPayableClassifier>(_ => new StubClassifier(midResult));
+            }));
+
+        var client = await CreateAdminClientAsync(factory);
+        // autoApprovalLimit = 500m; payable amount = 100m (under limit).
+        var seed = await SeedAsync(client, autoApprovalLimit: 500m);
+        var (prefixedId, rawId) = await CreatePayableAsync(client, seed, amount: 100m);
+
+        // Park it at PendingClassification via the consumer.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var consumer = scope.ServiceProvider.GetRequiredService<PayableReceivedConsumer>();
+            await consumer.ProcessAsync(rawId, CancellationToken.None);
+        }
+        Assert.Equal("PendingClassification",
+            (await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"))).GetProperty("status").GetString());
+
+        // Seed real chart accounts for the classify call.
+        var accId = await SeedChartAccountAsync(client, "Accounting");
+        var finId = await SeedChartAccountAsync(client, "Financial");
+
+        // Act: classify via endpoint — amount ≤ limit → should auto-approve to Scheduled.
+        var classifyRes = await client.PostAsJsonAsync($"/api/payables/{prefixedId}/classify",
+            new { accountingAccountId = accId, financialAccountId = finId });
+        Assert.Equal(HttpStatusCode.OK, classifyRes.StatusCode);
+        var body = await ReadJson(classifyRes);
+
+        // Assert: auto-approved → Scheduled.
+        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
+        Assert.True(body.GetProperty("isClassified").GetBoolean());
+        // Suggestion fields must be cleared after classify.
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("suggestedAccountingAccountId").ValueKind);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("suggestedFinancialAccountId").ValueKind);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("classificationConfidence").ValueKind);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("classificationRationale").ValueKind);
+    }
+
+    /// <summary>
+    /// When the payable amount exceeds the cost-center auto-approval limit, classifying via
+    /// the endpoint should advance to PendingApproval (not Scheduled).
+    /// </summary>
+    [Fact]
+    public async Task Classify_Endpoint_Over_Limit_Parks_To_PendingApproval()
+    {
+        // Arrange: mid-band → PendingClassification; autoApprovalLimit = 500m; amount = 1000m (over limit).
+        var midResult = new PayableClassificationResult(Guid.NewGuid(), Guid.NewGuid(), 0.6, "mid-band", "ai");
+
+        await using var factory = new ApiFactory(fixture.ConnectionString)
+            .WithWebHostBuilder(b => b.ConfigureServices(s =>
+            {
+                s.RemoveAll<IPayableClassifier>();
+                s.AddScoped<IPayableClassifier>(_ => new StubClassifier(midResult));
+            }));
+
+        var client = await CreateAdminClientAsync(factory);
+        var seed = await SeedAsync(client, autoApprovalLimit: 500m);
+        var (prefixedId, rawId) = await CreatePayableAsync(client, seed, amount: 1000m);
+
+        // Park it at PendingClassification.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var consumer = scope.ServiceProvider.GetRequiredService<PayableReceivedConsumer>();
+            await consumer.ProcessAsync(rawId, CancellationToken.None);
+        }
+        Assert.Equal("PendingClassification",
+            (await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"))).GetProperty("status").GetString());
+
+        var accId = await SeedChartAccountAsync(client, "Accounting");
+        var finId = await SeedChartAccountAsync(client, "Financial");
+
+        // Act: classify via endpoint — amount > limit → PendingApproval.
+        var classifyRes = await client.PostAsJsonAsync($"/api/payables/{prefixedId}/classify",
+            new { accountingAccountId = accId, financialAccountId = finId });
+        Assert.Equal(HttpStatusCode.OK, classifyRes.StatusCode);
+        var body = await ReadJson(classifyRes);
+
+        Assert.Equal("PendingApproval", body.GetProperty("status").GetString());
+        Assert.True(body.GetProperty("isClassified").GetBoolean());
+    }
+
+    /// <summary>
+    /// A parked payable (PendingClassification with suggestion) exposes the suggestion fields
+    /// on GET, and those fields are cleared to null after classify.
+    /// </summary>
+    [Fact]
+    public async Task Suggestion_Fields_Round_Trip_On_Parked_Payable()
+    {
+        // Arrange: mid-band → parked with suggestion.
+        var suggestedAccId = Guid.NewGuid();
+        var suggestedFinId = Guid.NewGuid();
+        var midResult = new PayableClassificationResult(suggestedAccId, suggestedFinId, 0.65, "maybe office supplies", "ai");
+
+        await using var factory = new ApiFactory(fixture.ConnectionString)
+            .WithWebHostBuilder(b => b.ConfigureServices(s =>
+            {
+                s.RemoveAll<IPayableClassifier>();
+                s.AddScoped<IPayableClassifier>(_ => new StubClassifier(midResult));
+            }));
+
+        var client = await CreateAdminClientAsync(factory);
+        var seed = await SeedAsync(client, autoApprovalLimit: 0m);
+        var (prefixedId, rawId) = await CreatePayableAsync(client, seed, amount: 100m);
+
+        // Run consumer → parked at PendingClassification with suggestion.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var consumer = scope.ServiceProvider.GetRequiredService<PayableReceivedConsumer>();
+            await consumer.ProcessAsync(rawId, CancellationToken.None);
+        }
+
+        // Act: GET — suggestion fields should be present.
+        var getRes = await client.GetAsync($"/api/payables/{prefixedId}");
+        Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
+        var body = await ReadJson(getRes);
+
+        Assert.Equal("PendingClassification", body.GetProperty("status").GetString());
+        Assert.False(body.GetProperty("isClassified").GetBoolean());
+        // The suggested ids are stored as prefixed strings (chart_account_<guid>).
+        Assert.NotEqual(JsonValueKind.Null, body.GetProperty("suggestedAccountingAccountId").ValueKind);
+        Assert.NotEqual(JsonValueKind.Null, body.GetProperty("suggestedFinancialAccountId").ValueKind);
+        Assert.Equal(0.65, body.GetProperty("classificationConfidence").GetDouble(), precision: 5);
+        Assert.Equal("maybe office supplies", body.GetProperty("classificationRationale").GetString());
+    }
 }
