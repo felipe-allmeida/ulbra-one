@@ -41,7 +41,7 @@ public sealed class UpdateVendor : IEndpoint
         if (vendor is null)
             return Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
         vendor.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,
-            req.Address.ToAddress(), req.PaymentTerms, req.BankInfo);
+            req.Address.ToAddress(), req.PaymentTerms, req.BankInfo.ToBankInfo(), req.TaxRegime);
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToOk();
     }

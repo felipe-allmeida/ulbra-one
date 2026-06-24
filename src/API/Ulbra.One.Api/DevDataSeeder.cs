@@ -94,22 +94,22 @@ public static class DevDataSeeder
 
         var vGoogle = new VendorEntity(ulbra.Id, PersonType.Company, "Google Brasil Internet Ltda.", "Google",
             "06990590000123", "ads@google.com", "1140003000", Addr("04538133", "Av. Brigadeiro Faria Lima", "3477", "Itaim Bibi", "São Paulo", "SP"),
-            "30 dias", "Banco 341 / Ag 0001 / CC 12345-6");
+            "30 dias", new BankInfo("341", "0001", "123456", "6", ""), TaxRegime.LucroReal);
         var vCeee = new VendorEntity(ulbra.Id, PersonType.Company, "CEEE Equatorial Energia S.A.", "CEEE",
             "08467115000100", "atendimento@ceee.com.br", "5132000000", Addr("90230000", "Rua dos Andradas", "1000", "Centro", "Porto Alegre", "RS"),
-            "à vista", null);
+            "à vista", BankInfo.Empty, TaxRegime.LucroReal);
         var vMicrosoft = new VendorEntity(ulbra.Id, PersonType.Company, "Microsoft Informática Ltda.", "Microsoft",
             "60316817000103", "licen@microsoft.com", "1150004000", Addr("04711130", "Av. das Nações Unidas", "12901", "Brooklin", "São Paulo", "SP"),
-            "anual", null);
+            "anual", BankInfo.Empty, TaxRegime.LucroReal);
         var vGrafica = new VendorEntity(ulbra.Id, PersonType.Company, "Gráfica Sul Impressões Ltda.", "Gráfica Sul",
             "92749225000180", "comercial@graficasul.com.br", "5133334444", Addr("92020000", "Rua Marechal Floriano", "250", "Centro", "Canoas", "RS"),
-            "28 dias", null);
+            "28 dias", BankInfo.Empty, TaxRegime.SimplesNacional);
         var vLimpeza = new VendorEntity(ulbra.Id, PersonType.Company, "Limpa Bem Serviços Ltda.", "Limpa Bem",
             "11444777000161", "contato@limpabem.com.br", "5133335555", Addr("94010000", "Av. Getúlio Vargas", "800", "Centro", "Gravataí", "RS"),
-            "30 dias", null);
+            "30 dias", BankInfo.Empty, TaxRegime.SimplesNacional);
         var vJoao = new VendorEntity(ulbra.Id, PersonType.Individual, "João Pedro Consultoria", null,
             "52998224725", "joao.consultor@gmail.com", "51999990000", Addr("90560000", "Rua Mostardeiro", "100", "Moinhos de Vento", "Porto Alegre", "RS"),
-            "à vista", null);
+            "à vista", BankInfo.Empty, TaxRegime.Mei);
         registry.Vendors.AddRange(vGoogle, vCeee, vMicrosoft, vGrafica, vLimpeza, vJoao);
 
         // ---------- Customers ----------

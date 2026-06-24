@@ -94,4 +94,69 @@ describe('VendorForm', () => {
       expect(screen.getByDisplayValue('Praça da Sé')).toBeInTheDocument();
     });
   });
+
+  it('renders structured bank fields and tax-regime select', () => {
+    renderForm();
+
+    // Structured bank inputs
+    expect(screen.getByPlaceholderText('ex.: 001')).toBeInTheDocument(); // bankCode
+    expect(screen.getByPlaceholderText('ex.: 0001')).toBeInTheDocument(); // branch
+    expect(screen.getByPlaceholderText('ex.: 12345')).toBeInTheDocument(); // account
+    expect(screen.getByPlaceholderText('ex.: 0')).toBeInTheDocument(); // accountDigit
+    expect(screen.getByPlaceholderText('CPF, CNPJ, e-mail, telefone ou chave aleatória')).toBeInTheDocument(); // pixKey
+
+    // Tax regime select with pt-BR option labels
+    const select = screen.getByDisplayValue('Não informado'); // default = Unknown
+    expect(select).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'MEI' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Simples Nacional' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Lucro Presumido' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Lucro Real' })).toBeInTheDocument();
+  });
+
+  it('submits structured bankInfo and taxRegime in the mutation payload', async () => {
+    (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
+      razaoSocial: 'TECH LTDA',
+      nomeFantasia: null,
+      address: null,
+    });
+    (api.createVendor as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'v2', companyId: 'c1' });
+    renderForm();
+
+    // Fill CNPJ and wait for auto-fill
+    const docInput = screen.getByPlaceholderText('00.000.000/0000-00');
+    fireEvent.change(docInput, { target: { value: '11222333000181' } });
+    fireEvent.blur(docInput);
+    await waitFor(() => expect(screen.getByDisplayValue('TECH LTDA')).toBeInTheDocument());
+
+    // Fill structured bank fields
+    fireEvent.change(screen.getByPlaceholderText('ex.: 001'), { target: { value: '341' } });
+    fireEvent.change(screen.getByPlaceholderText('ex.: 0001'), { target: { value: '0001' } });
+    fireEvent.change(screen.getByPlaceholderText('ex.: 12345'), { target: { value: '98765' } });
+    fireEvent.change(screen.getByPlaceholderText('ex.: 0'), { target: { value: '4' } });
+    fireEvent.change(screen.getByPlaceholderText('CPF, CNPJ, e-mail, telefone ou chave aleatória'), {
+      target: { value: 'pagamentos@tech.com' },
+    });
+
+    // Change tax regime
+    fireEvent.change(screen.getByDisplayValue('Não informado'), { target: { value: 'SimplesNacional' } });
+
+    // Submit
+    fireEvent.submit(screen.getByRole('button', { name: 'Criar' }).closest('form')!);
+
+    await waitFor(() => expect(api.createVendor).toHaveBeenCalledTimes(1));
+    const body = (api.createVendor as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(body).toMatchObject({
+      companyId: 'c1',
+      name: 'TECH LTDA',
+      taxRegime: 'SimplesNacional',
+      bankInfo: {
+        bankCode: '341',
+        branch: '0001',
+        account: '98765',
+        accountDigit: '4',
+        pixKey: 'pagamentos@tech.com',
+      },
+    });
+  });
 });

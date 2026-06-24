@@ -19,8 +19,8 @@ import { brlCents } from '../lib';
 import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select, ToolbarField } from '../ui';
 import { EmpresaPicker } from './shared';
 import { fieldError, journalEntrySchema, resolver, type JournalEntryValues } from './schemas';
+import { fmtDate } from '../datetime';
 
-const fmtDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 const STATUSES: JournalStatus[] = ['Draft', 'Posted', 'Reversed'];
 
 function statusBadge(status: JournalStatus) {

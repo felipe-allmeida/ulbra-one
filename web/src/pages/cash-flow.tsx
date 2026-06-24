@@ -18,8 +18,8 @@ import { brl, brlCompact } from '../lib';
 import { getErrorMessage } from '../apiError';
 import { Button, Drawer, EmptyState, Field, Input, Modal, Panel, Select, ToolbarField } from '../ui';
 import { fieldError, reconciledBalanceSchema, resolver, type ReconciledBalanceValues } from './schemas';
+import { fmtDate } from '../datetime';
 
-const fmtDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 const GRANULARITIES: CashFlowGranularity[] = ['Day', 'Week', 'Month'];

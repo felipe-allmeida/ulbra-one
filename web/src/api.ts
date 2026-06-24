@@ -88,6 +88,11 @@ export type Vendor = WithNullableAddress<Schemas['VendorResponse']>;
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
+/** Structured bank info returned by the API (all fields are non-null strings). */
+export type BankInfo = Schemas['BankInfoResponse'];
+/** Tax regime enum (serialised as string). */
+export type TaxRegime = Schemas['TaxRegime'];
+
 /**
  * Envelope returned by the paginated browse lists (transactions + registry).
  * Mirrors the backend `PaginatedResponse<T>`; kept as a stable hand-written alias
@@ -358,7 +363,19 @@ export const PersonType = {
 // server-owned fields) rather than the generated *Request schemas: Swashbuckle can't reliably express
 // the nullability of nested record members (e.g. `AddressRequest? Address`), so the generated request
 // types would force a non-null address. These Omit-derived types match what the forms actually send.
-export type VendorInput = Omit<Vendor, 'id' | 'active'>;
+
+/** BankInfo as sent to the API — all sub-fields nullable since they're optional in the request. */
+export interface BankInfoInput {
+  bankCode: string | null;
+  branch: string | null;
+  account: string | null;
+  accountDigit: string | null;
+  pixKey: string | null;
+}
+export type VendorInput = Omit<Vendor, 'id' | 'active' | 'bankInfo' | 'taxRegime'> & {
+  bankInfo: BankInfoInput | null;
+  taxRegime: TaxRegime;
+};
 export type CustomerInput = Omit<Customer, 'id' | 'active'>;
 export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
 

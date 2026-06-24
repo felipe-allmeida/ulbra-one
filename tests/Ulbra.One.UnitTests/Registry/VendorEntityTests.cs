@@ -9,7 +9,9 @@ public class VendorEntityTests
         companyId: Guid.NewGuid(), personType: PersonType.Company,
         name: "Gráfica Sul Ltda", tradeName: "Gráfica Sul", document: "11.222.333/0001-81",
         email: "contato@gs.com", phone: "5133334444", address: Address.Empty,
-        paymentTerms: "30 dias", bankInfo: "Banco 001 / Ag 1234");
+        paymentTerms: "30 dias",
+        bankInfo: new BankInfo("001", "1234", "56789", "6", ""),
+        taxRegime: TaxRegime.SimplesNacional);
 
     [Fact]
     public void New_Vendor_Is_Active_With_Normalized_Document()
@@ -26,10 +28,10 @@ public class VendorEntityTests
     {
         var v = NewVendor();
         v.Update(PersonType.Company, "Novo Nome", "NN", "11222333000181",
-            "novo@x.com", "5199998888", Address.Empty, "à vista", null);
+            "novo@x.com", "5199998888", Address.Empty, "à vista", BankInfo.Empty, TaxRegime.Unknown);
         Assert.Equal("Novo Nome", v.Name);
         Assert.Equal("à vista", v.PaymentTerms);
-        Assert.Null(v.BankInfo);
+        Assert.Equal(BankInfo.Empty, v.BankInfo);
     }
 
     [Fact]
