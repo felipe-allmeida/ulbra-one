@@ -56,6 +56,10 @@ public sealed class AiClassificationSuggestion : IEndpoint
         }
 
         var (hAcc, hFin, _) = await VendorHistorySuggestion.FindAsync(uow, payable, ct);
+        if (hAcc is null && hFin is null)
+            return TypedResults.Ok(new AiClassificationSuggestionResponse(
+                null, null, 0, "No suggestion available.", "none"));
+
         return TypedResults.Ok(new AiClassificationSuggestionResponse(
             hAcc, hFin, 0, "Based on prior classifications for this vendor.", "heuristic"));
     }

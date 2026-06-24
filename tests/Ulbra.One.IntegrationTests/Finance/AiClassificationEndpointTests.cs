@@ -131,7 +131,7 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Without_ai_falls_back_to_heuristic_source()
+    public async Task Without_ai_and_no_vendor_history_returns_source_none()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString); // default Fake provider
         var client = await factory.CreateAdminClientAsync();
@@ -142,6 +142,39 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
 
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<AiSuggestionDto>();
+        Assert.Equal("none", body!.Source);
+        Assert.Null(body.AccountingAccountId);
+        Assert.Null(body.FinancialAccountId);
+    }
+
+    [Fact]
+    public async Task Without_ai_and_prior_vendor_classification_returns_source_heuristic()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString); // default Fake provider
+        var client = await factory.CreateAdminClientAsync();
+
+        // Fetch chart accounts to pick valid analytical account ids for classification.
+        var accounts = await client.GetFromJsonAsync<List<ChartAccountDto>>("/api/chart-accounts");
+        var acc = accounts!.First(a => a.ChartType == "Accounting" && a.Kind == "Analytical" && a.IsActive);
+        var fin = accounts!.First(a => a.ChartType == "Financial" && a.Kind == "Analytical" && a.IsActive);
+
+        var seed = await SeedAsync(client);
+
+        // Create a first payable and classify it — this becomes the vendor history.
+        var firstPayableId = await CreatePayableAsync(client, seed);
+        var classifyRes = await client.PostAsJsonAsync(
+            $"/api/payables/{firstPayableId}/classify",
+            new { accountingAccountId = acc.Id, financialAccountId = fin.Id });
+        classifyRes.EnsureSuccessStatusCode();
+
+        // Create a second payable for the same vendor — AI (Fake) will fail, heuristic should kick in.
+        var secondPayableId = await CreatePayableAsync(client, seed);
+        var res = await client.PostAsync($"/api/payables/{secondPayableId}/ai-classification-suggestion", null);
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var body = await res.Content.ReadFromJsonAsync<AiSuggestionDto>();
         Assert.Equal("heuristic", body!.Source);
+        Assert.Equal(acc.Id, body.AccountingAccountId);
+        Assert.Equal(fin.Id, body.FinancialAccountId);
     }
 }
