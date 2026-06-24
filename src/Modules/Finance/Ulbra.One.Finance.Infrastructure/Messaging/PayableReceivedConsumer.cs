@@ -33,6 +33,9 @@ public sealed class PayableReceivedConsumer(IUnitOfWork uow, IPayableClassifier 
         var result = await classifier.ClassifyAsync(payable, ct);
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
         Apply(payable, result, cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
+        // Payable carries an xmin rowversion. If a human mutated the payable between create and async
+        // consumption, SaveChanges throws DbUpdateConcurrencyException — safe under at-least-once: MassTransit
+        // retries, and on retry the Status==Received guard makes it a no-op. No explicit catch needed.
         await uow.SaveChangesAsync(ct);
     }
 
