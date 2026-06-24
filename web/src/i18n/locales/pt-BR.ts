@@ -348,6 +348,14 @@ const ptBR = {
       documentNumber: 'Nº do documento',
       issueDate: 'Emissão',
     },
+    paymentSource: {
+      sectionTitle: 'Pagar de (opcional)',
+      sectionHint: 'Deixe em branco para usar a conta padrão da empresa.',
+      bankAccount: 'Conta bancária',
+      bankAccountSelect: '— padrão da empresa —',
+      method: 'Forma de pagamento',
+      methodSelect: '— padrão da conta —',
+    },
     sub: 'Conta a pagar',
     installmentsTitle: 'Parcelas',
     actions: {
@@ -697,7 +705,10 @@ const ptBR = {
       accountType: 'Tipo',
       alias: 'Apelido',
       openingBalance: 'Saldo inicial (R$)',
+      isDefaultForPayments: 'Conta padrão de pagamento',
+      defaultPaymentMethod: 'Forma de pagamento padrão',
     },
+    defaultPaymentBadge: 'Padrão',
     placeholders: {
       bankName: 'ex.: Banco do Brasil',
       bankCode: 'ex.: 001',
@@ -758,6 +769,7 @@ const ptBR = {
     reverse: 'Estornar',
     downloadProof: 'Baixar comprovante',
     downloadError: 'Não foi possível baixar o comprovante.',
+    autoPayTag: 'Automático (sistema)',
     actions: {
       register: 'Dar baixa',
       registering: 'Registrando…',

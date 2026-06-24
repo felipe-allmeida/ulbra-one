@@ -276,6 +276,8 @@ export interface BankAccountInput {
   accountType: BankAccountType;
   alias: string;
   openingBalance?: number | null;
+  isDefaultForPayments?: boolean;
+  defaultPaymentMethod?: PaymentMethod | null;
 }
 
 /** Request body for updating a bank account (no companyId; `active` toggles status). */
@@ -307,6 +309,9 @@ export interface PayableInput {
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
   accountingAccountId?: string | null;
   financialAccountId?: string | null;
+  /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
+  paymentBankAccountId?: string | null;
+  paymentMethod?: PaymentMethod | null;
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Wallet } from 'lucide-react';
-import { PersonType, type Payable, type PayableInput, type ParsedFiscalDocument } from '../../api';
+import { PersonType, type Payable, type PayableInput, type ParsedFiscalDocument, type PaymentMethod } from '../../api';
 import {
   resolver,
   fieldError,
@@ -14,6 +14,7 @@ import {
 } from '../schemas';
 import { useApp } from '../../store';
 import {
+  useBankAccounts,
   useChartAccounts,
   useCreatePayable,
   usePayable,
@@ -42,6 +43,14 @@ function PayableForm({ initial }: { initial?: Payable }) {
     useChartAccounts({ chartType: 'Financial', kind: 'Analytical', activeOnly: true }).data ?? [];
   const accountItems = (accs: typeof accountingAccounts) =>
     [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
+  const bankAccountsList = useBankAccounts(empresaId, false).data ?? [];
+  // Per-payable payment source override (null = use company default).
+  const [paymentBankAccountId, setPaymentBankAccountId] = useState<string | null>(
+    initial?.paymentBankAccountId ?? null,
+  );
+  const [paymentMethodOverride, setPaymentMethodOverride] = useState<PaymentMethod | null>(
+    initial?.paymentMethod ?? null,
+  );
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -227,6 +236,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       description: v.description.trim(),
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
+      paymentBankAccountId: paymentBankAccountId ?? null,
+      paymentMethod: paymentMethodOverride ?? null,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
     if (xmlInstallments && xmlInstallments.length > 0) {
@@ -469,6 +480,52 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     <div className='field-err'>{fieldError(formState.errors.description?.message)}</div>
                   )}
                 </Field>
+              </div>
+
+              {/* ——— Pagar de (optional payment source override) ——— */}
+              <div style={{ marginTop: 14 }}>
+                <div className='section-title' style={{ marginTop: 0, marginBottom: 2 }}>
+                  {t('payables.paymentSource.sectionTitle')}
+                </div>
+                <div className='help' style={{ marginBottom: 10 }}>
+                  {t('payables.paymentSource.sectionHint')}
+                </div>
+                <div className='edit-grid'>
+                  <Field label={t('payables.paymentSource.bankAccount')}>
+                    <Select
+                      value={paymentBankAccountId ?? ''}
+                      onChange={(e) => {
+                        setPaymentBankAccountId(e.target.value !== '' ? e.target.value : null);
+                        if (!e.target.value) setPaymentMethodOverride(null);
+                      }}
+                    >
+                      <option value=''>{t('payables.paymentSource.bankAccountSelect')}</option>
+                      {bankAccountsList.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.alias} — {b.bankName}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  {paymentBankAccountId && (
+                    <Field label={t('payables.paymentSource.method')}>
+                      <Select
+                        value={paymentMethodOverride ?? ''}
+                        onChange={(e) =>
+                          setPaymentMethodOverride(e.target.value !== '' ? (e.target.value as PaymentMethod) : null)
+                        }
+                      >
+                        <option value=''>{t('payables.paymentSource.methodSelect')}</option>
+                        <option value='Pix'>{t('payments.methods.Pix')}</option>
+                        <option value='Ted'>{t('payments.methods.Ted')}</option>
+                        <option value='Boleto'>{t('payments.methods.Boleto')}</option>
+                        <option value='Cash'>{t('payments.methods.Cash')}</option>
+                        <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
+                        <option value='Other'>{t('payments.methods.Other')}</option>
+                      </Select>
+                    </Field>
+                  )}
+                </div>
               </div>
 
               <div style={{ marginTop: 14 }}>

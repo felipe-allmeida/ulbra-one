@@ -1466,6 +1466,8 @@ export interface components {
             /** Format: double */
             openingBalance: number | null;
             active: boolean;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
@@ -1617,6 +1619,8 @@ export interface components {
             isActive: boolean;
         };
         /** @enum {string} */
+        ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
+        /** @enum {string} */
         ChartType: "Accounting" | "Financial";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -1691,6 +1695,8 @@ export interface components {
             alias: string;
             /** Format: double */
             openingBalance: number | null;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         CreateChartAccountRequest: {
             chartType: components["schemas"]["ChartType"];
@@ -1759,6 +1765,9 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
         };
         CreateReceivableCreateReceivableRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -2231,6 +2240,9 @@ export interface components {
             /** Format: double */
             classificationConfidence: number | null;
             classificationRationale: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
@@ -2264,6 +2276,8 @@ export interface components {
             hasProof: boolean;
             /** Format: date-time */
             createdAt: string;
+            /** Format: uuid */
+            createdById: string;
         };
         /** @enum {string} */
         PersonType: "Individual" | "Company";
@@ -2466,6 +2480,7 @@ export interface components {
         SeedLedgerAccountsRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
+            template: components["schemas"]["ChartTemplate"];
         };
         SetReconciledBalanceRequest: {
             /** Format: double */
@@ -2600,6 +2615,8 @@ export interface components {
             /** Format: double */
             openingBalance: number | null;
             active: boolean;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         UpdateChartAccountRequest: {
             name: string;
@@ -2662,6 +2679,9 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
         };
         UpdateReceivableUpdateReceivableRequest: {
             /** @example customer_3fa85f64571742199730000000000000 */

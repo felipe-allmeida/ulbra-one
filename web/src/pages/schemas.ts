@@ -190,16 +190,28 @@ export function previewInstallments(total: number, count: number, firstDue: stri
   return rows;
 }
 
-export const bankAccountSchema = z.object({
-  bankCode: z.string().trim().min(1, { message: 'validation.bankCodeRequired' }),
-  bankName: z.string().trim().min(1, { message: 'validation.bankNameRequired' }),
-  agency: z.string().trim().min(1, { message: 'validation.agencyRequired' }),
-  accountNumber: z.string().trim().min(1, { message: 'validation.accountNumberRequired' }),
-  accountDigit: z.string(),
-  accountType: z.enum(['Checking', 'Savings']),
-  alias: z.string().trim().min(1, { message: 'validation.aliasRequired' }),
-  openingBalance: nonNegativeNumberString,
-});
+export const bankAccountSchema = z
+  .object({
+    bankCode: z.string().trim().min(1, { message: 'validation.bankCodeRequired' }),
+    bankName: z.string().trim().min(1, { message: 'validation.bankNameRequired' }),
+    agency: z.string().trim().min(1, { message: 'validation.agencyRequired' }),
+    accountNumber: z.string().trim().min(1, { message: 'validation.accountNumberRequired' }),
+    accountDigit: z.string(),
+    accountType: z.enum(['Checking', 'Savings']),
+    alias: z.string().trim().min(1, { message: 'validation.aliasRequired' }),
+    openingBalance: nonNegativeNumberString,
+    isDefaultForPayments: z.boolean(),
+    defaultPaymentMethod: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']).nullable(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.isDefaultForPayments && !val.defaultPaymentMethod) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'validation.paymentMethodRequired',
+        path: ['defaultPaymentMethod'],
+      });
+    }
+  });
 export type BankAccountValues = z.infer<typeof bankAccountSchema>;
 
 export const paymentSchema = z.object({
