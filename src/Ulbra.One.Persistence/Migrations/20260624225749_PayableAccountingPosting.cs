@@ -20,7 +20,7 @@ namespace Ulbra.One.Persistence.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "pending_accounting_posting",
+                name: "pending_accounting_postings",
                 schema: "accounting",
                 columns: table => new
                 {
@@ -36,7 +36,7 @@ namespace Ulbra.One.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_pending_accounting_posting", x => x.id);
+                    table.PrimaryKey("pk_pending_accounting_postings", x => x.id);
                 });
 
             migrationBuilder.CreateIndex(
@@ -48,9 +48,9 @@ namespace Ulbra.One.Persistence.Migrations
                 filter: "source_key IS NOT NULL AND deleted_at IS NULL");
 
             migrationBuilder.CreateIndex(
-                name: "ix_pending_accounting_posting_company_id_resolved_at",
+                name: "ix_pending_accounting_postings_company_id_resolved_at",
                 schema: "accounting",
-                table: "pending_accounting_posting",
+                table: "pending_accounting_postings",
                 columns: new[] { "company_id", "resolved_at" });
         }
 
@@ -58,7 +58,7 @@ namespace Ulbra.One.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "pending_accounting_posting",
+                name: "pending_accounting_postings",
                 schema: "accounting");
 
             migrationBuilder.DropIndex(

@@ -524,12 +524,12 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnName("source_key");
 
                     b.HasKey("Id")
-                        .HasName("pk_pending_accounting_posting");
+                        .HasName("pk_pending_accounting_postings");
 
                     b.HasIndex("CompanyId", "ResolvedAt")
-                        .HasDatabaseName("ix_pending_accounting_posting_company_id_resolved_at");
+                        .HasDatabaseName("ix_pending_accounting_postings_company_id_resolved_at");
 
-                    b.ToTable("pending_accounting_posting", "accounting");
+                    b.ToTable("pending_accounting_postings", "accounting");
                 });
 
             modelBuilder.Entity("Ulbra.One.Audit.Domain.Entities.AuditLog", b =>
