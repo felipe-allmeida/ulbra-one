@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FilePicker } from './contas-a-pagar';
-import '../i18n';
+import { FilePicker } from './ui';
+import './i18n';
 
 /**
  * Regression for the "load → clear → reload the SAME file" bug: a native <input type=file> does not

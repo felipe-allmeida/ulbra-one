@@ -69,11 +69,25 @@ function refineDocument<T extends { personType: 'Individual' | 'Company'; docume
   });
 }
 
+/** Vendor bank info sub-schema — all fields optional strings (no required bank data). */
+export const vendorBankInfoSchema = z.object({
+  bankCode: z.string(),
+  branch: z.string(),
+  account: z.string(),
+  accountDigit: z.string(),
+  pixKey: z.string(),
+});
+export type VendorBankInfoValues = z.infer<typeof vendorBankInfoSchema>;
+
+export const TAX_REGIMES = ['Unknown', 'Mei', 'SimplesNacional', 'LucroPresumido', 'LucroReal'] as const;
+export type TaxRegimeValue = (typeof TAX_REGIMES)[number];
+
 export const vendorSchema = refineDocument(
   z.object({
     ...personFields(),
     paymentTerms: z.string(),
-    bankInfo: z.string(),
+    bankInfo: vendorBankInfoSchema,
+    taxRegime: z.enum(TAX_REGIMES),
   }),
 );
 export type VendorValues = z.infer<typeof vendorSchema>;

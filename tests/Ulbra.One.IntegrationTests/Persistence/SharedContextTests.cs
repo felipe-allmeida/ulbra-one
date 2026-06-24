@@ -101,7 +101,8 @@ public class SharedContextTests(PostgresFixture fixture)
             "51900000000",
             Address.Empty,
             "à vista",
-            null);
+            BankInfo.Empty,
+            TaxRegime.Unknown);
 
         await uow.AddAsync(company, CancellationToken.None);
         await uow.AddAsync(vendor, CancellationToken.None);
