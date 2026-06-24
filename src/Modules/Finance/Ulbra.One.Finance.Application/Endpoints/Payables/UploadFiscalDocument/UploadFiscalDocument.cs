@@ -85,7 +85,15 @@ public sealed class UploadFiscalDocument : IEndpoint
         var uploadedById = Guid.Parse(user.UserId);
         var doc = new FiscalDocument(payable.Id, parsed.Format, parsed.AccessKey, parsed.DocumentNumber,
             parsed.IssueDate, parsed.TotalAmount, parsed.IssuerDocument, parsed.IssuerName, parsed.RecipientDocument,
-            parsed.RawExtractionJson, file.FileName, file.ContentType, file.Length, key, uploadedById, timeProvider.GetUtcNow());
+            parsed.RawExtractionJson, file.FileName, file.ContentType, file.Length, key, uploadedById,
+            timeProvider.GetUtcNow(),
+            cfops: parsed.Fiscal?.Cfops ?? [],
+            ncms: parsed.Fiscal?.Ncms ?? [],
+            icmsAmount: parsed.Fiscal?.Icms,
+            ipiAmount: parsed.Fiscal?.Ipi,
+            pisAmount: parsed.Fiscal?.Pis,
+            cofinsAmount: parsed.Fiscal?.Cofins,
+            totalTaxesAmount: parsed.Fiscal?.TotalTaxes);
         await uow.AddAsync(doc, ct);
         await uow.SaveChangesAsync(ct);
 

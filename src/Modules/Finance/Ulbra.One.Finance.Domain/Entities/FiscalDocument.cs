@@ -33,12 +33,24 @@ public class FiscalDocument
     public Guid UploadedById { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
+    // Fiscal signals (NF-e only): distinct CFOPs/NCMs across items + ICMSTot tax totals.
+    public IReadOnlyList<string> Cfops { get; private set; } = [];
+    public IReadOnlyList<string> Ncms { get; private set; } = [];
+    public decimal? IcmsAmount { get; private set; }
+    public decimal? IpiAmount { get; private set; }
+    public decimal? PisAmount { get; private set; }
+    public decimal? CofinsAmount { get; private set; }
+    public decimal? TotalTaxesAmount { get; private set; }
+
     private FiscalDocument() { }
 
     public FiscalDocument(Guid payableId, FiscalDocumentFormat format, string? accessKey, string? documentNumber,
         DateOnly? issueDate, decimal? totalAmount, string? issuerDocument, string? issuerName,
         string? recipientDocument, string rawExtractionJson, string fileName, string contentType, long sizeBytes,
-        string storagePath, Guid uploadedById, DateTimeOffset createdAt)
+        string storagePath, Guid uploadedById, DateTimeOffset createdAt,
+        IReadOnlyList<string>? cfops = null, IReadOnlyList<string>? ncms = null,
+        decimal? icmsAmount = null, decimal? ipiAmount = null, decimal? pisAmount = null,
+        decimal? cofinsAmount = null, decimal? totalTaxesAmount = null)
     {
         PayableId = payableId;
         Format = format;
@@ -56,5 +68,12 @@ public class FiscalDocument
         StoragePath = storagePath;
         UploadedById = uploadedById;
         CreatedAt = createdAt;
+        Cfops = cfops ?? [];
+        Ncms = ncms ?? [];
+        IcmsAmount = icmsAmount;
+        IpiAmount = ipiAmount;
+        PisAmount = pisAmount;
+        CofinsAmount = cofinsAmount;
+        TotalTaxesAmount = totalTaxesAmount;
     }
 }

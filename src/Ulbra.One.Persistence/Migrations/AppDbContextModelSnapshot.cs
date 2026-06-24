@@ -1191,6 +1191,16 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(44)")
                         .HasColumnName("access_key");
 
+                    b.Property<string>("Cfops")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("cfops");
+
+                    b.Property<decimal?>("CofinsAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("cofins_amount");
+
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -1216,6 +1226,16 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("format");
 
+                    b.Property<decimal?>("IcmsAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("icms_amount");
+
+                    b.Property<decimal?>("IpiAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("ipi_amount");
+
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");
@@ -1230,9 +1250,19 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("issuer_name");
 
+                    b.Property<string>("Ncms")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ncms");
+
                     b.Property<Guid>("PayableId")
                         .HasColumnType("uuid")
                         .HasColumnName("payable_id");
+
+                    b.Property<decimal?>("PisAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("pis_amount");
 
                     b.Property<string>("RawExtractionJson")
                         .IsRequired()
@@ -1258,6 +1288,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("total_amount");
+
+                    b.Property<decimal?>("TotalTaxesAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_taxes_amount");
 
                     b.Property<Guid>("UploadedById")
                         .HasColumnType("uuid")
