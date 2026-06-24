@@ -26,7 +26,7 @@ public class PaymentTests
     }
 
     [Fact]
-    public void Full_payment_marks_installment_paid_and_payable_settled()
+    public void Full_payment_marks_installment_paid_and_payable_paid()
     {
         var payable = ApprovedPayable(1000m);
         var inst = payable.Installments[0];
@@ -34,11 +34,11 @@ public class PaymentTests
         payable.RecomputeSettlement();
         Assert.Equal(InstallmentStatus.Paid, inst.Status);
         Assert.Equal(1000m, inst.PaidAmount);
-        Assert.Equal(PayableStatus.Settled, payable.Status);
+        Assert.Equal(PayableStatus.Paid, payable.Status);
     }
 
     [Fact]
-    public void Partial_payment_marks_partially_paid_and_keeps_approved()
+    public void Partial_payment_marks_partially_paid_and_keeps_scheduled()
     {
         var payable = ApprovedPayable(1000m);
         var inst = payable.Installments[0];
@@ -46,7 +46,7 @@ public class PaymentTests
         payable.RecomputeSettlement();
         Assert.Equal(InstallmentStatus.PartiallyPaid, inst.Status);
         Assert.Equal(400m, inst.PaidAmount);
-        Assert.Equal(PayableStatus.Approved, payable.Status);
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
     }
 
     [Fact]
@@ -56,11 +56,11 @@ public class PaymentTests
         var i0 = payable.Installments[0];
         i0.RegisterPayment(NewPayment(i0, 500m));
         payable.RecomputeSettlement();
-        Assert.Equal(PayableStatus.Approved, payable.Status);
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
         var i1 = payable.Installments[1];
         i1.RegisterPayment(NewPayment(i1, 500m));
         payable.RecomputeSettlement();
-        Assert.Equal(PayableStatus.Settled, payable.Status);
+        Assert.Equal(PayableStatus.Paid, payable.Status);
     }
 
     [Fact]
@@ -72,18 +72,18 @@ public class PaymentTests
     }
 
     [Fact]
-    public void Reversing_a_payment_reopens_the_installment_and_unsettles_payable()
+    public void Reversing_a_payment_reopens_the_installment_and_unpaids_payable()
     {
         var payable = ApprovedPayable(1000m);
         var inst = payable.Installments[0];
         var pay = inst.RegisterPayment(NewPayment(inst, 1000m));
         payable.RecomputeSettlement();
-        Assert.Equal(PayableStatus.Settled, payable.Status);
+        Assert.Equal(PayableStatus.Paid, payable.Status);
         inst.ReversePayment(pay.Id, "conta errada");
         payable.RecomputeSettlement();
         Assert.Equal(InstallmentStatus.Open, inst.Status);
         Assert.Equal(0m, inst.PaidAmount);
-        Assert.Equal(PayableStatus.Approved, payable.Status);
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
         Assert.True(pay.IsReversed);
     }
 

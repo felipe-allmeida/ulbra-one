@@ -19,7 +19,7 @@ public class Payable : IAuditable, ISoftDeletable
     public Guid CostCenterId { get; private set; }
     public Guid? CategoryId { get; private set; }
     public decimal TotalAmount { get; private set; }
-    public PayableStatus Status { get; private set; } = PayableStatus.PendingApproval;
+    public PayableStatus Status { get; private set; } = PayableStatus.Received;
     public string? RejectionReason { get; private set; }
     public string? CancelReason { get; private set; }
     public string? ApprovedBy { get; private set; }
@@ -28,6 +28,10 @@ public class Payable : IAuditable, ISoftDeletable
     public DateTimeOffset? RejectedAt { get; private set; }
     public Guid? AccountingAccountId { get; private set; }
     public Guid? FinancialAccountId { get; private set; }
+    public Guid? SuggestedAccountingAccountId { get; private set; }
+    public Guid? SuggestedFinancialAccountId { get; private set; }
+    public double? ClassificationConfidence { get; private set; }
+    public string? ClassificationRationale { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public bool IsClassified => AccountingAccountId is not null && FinancialAccountId is not null;
@@ -102,15 +106,16 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void ApplyAutoApproval(decimal autoApprovalLimit, DateTimeOffset at)
     {
-        if (Origin == PayableOrigin.Manual && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit)
+        if (IsClassified && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit
+            && Status is PayableStatus.Received or PayableStatus.PendingClassification or PayableStatus.PendingApproval)
             Approve("system", at);
     }
 
     public void Approve(string approvedBy, DateTimeOffset at)
     {
-        if (Status is PayableStatus.Rejected or PayableStatus.Cancelled)
-            throw new InvalidOperationException("Cannot approve a rejected or cancelled payable.");
-        Status = PayableStatus.Approved;
+        if (Status is PayableStatus.Rejected or PayableStatus.Cancelled or PayableStatus.Paid)
+            throw new InvalidOperationException("Cannot approve a rejected, cancelled or paid payable.");
+        Status = PayableStatus.Scheduled;
         RejectionReason = null;
         ApprovedBy = approvedBy;
         ApprovedAt = at;
@@ -120,8 +125,8 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void Reject(string? reason, string rejectedBy, DateTimeOffset at)
     {
-        if (Status is PayableStatus.Settled or PayableStatus.Cancelled)
-            throw new InvalidOperationException("Cannot reject a settled or cancelled payable.");
+        if (Status is PayableStatus.Paid or PayableStatus.Cancelled)
+            throw new InvalidOperationException("Cannot reject a paid or cancelled payable.");
         Status = PayableStatus.Rejected;
         RejectionReason = reason;
         RejectedBy = rejectedBy;
@@ -130,19 +135,35 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void Cancel(string? reason)
     {
-        if (Status is PayableStatus.Settled or PayableStatus.Cancelled)
-            throw new InvalidOperationException("Cannot cancel a settled or already-cancelled payable.");
+        if (Status is PayableStatus.Paid or PayableStatus.Cancelled)
+            throw new InvalidOperationException("Cannot cancel a paid or already-cancelled payable.");
         Status = PayableStatus.Cancelled;
         CancelReason = reason;
     }
 
     public void AddAttachment(PayableAttachment attachment) => _attachments.Add(attachment);
 
+    public void MarkPendingClassification() => Status = PayableStatus.PendingClassification;
+    public void MarkPendingApproval() => Status = PayableStatus.PendingApproval;
+
+    /// <summary>Persists the AI's suggestion for the human-review band; cleared once classified.</summary>
+    public void SetSuggestion(Guid? accountingAccountId, Guid? financialAccountId, double confidence, string? rationale)
+    {
+        SuggestedAccountingAccountId = accountingAccountId;
+        SuggestedFinancialAccountId = financialAccountId;
+        ClassificationConfidence = confidence;
+        ClassificationRationale = rationale;
+    }
+
     /// <summary>Sets (or clears) the accounting + financial chart accounts that classify this payable.</summary>
     public void Classify(Guid? accountingAccountId, Guid? financialAccountId)
     {
         AccountingAccountId = accountingAccountId;
         FinancialAccountId = financialAccountId;
+        SuggestedAccountingAccountId = null;
+        SuggestedFinancialAccountId = null;
+        ClassificationConfidence = null;
+        ClassificationRationale = null;
     }
 
     public Installment? FindInstallment(Guid installmentId) =>
@@ -151,20 +172,20 @@ public class Payable : IAuditable, ISoftDeletable
     public Payment? FindPayment(Guid paymentId) =>
         _installments.SelectMany(i => i.Payments).FirstOrDefault(p => p.Id == paymentId);
 
-    public bool IsPayable => Status is PayableStatus.Approved or PayableStatus.Settled;
+    public bool IsPayable => Status is PayableStatus.Scheduled or PayableStatus.Paid;
 
     public void RecomputeSettlement()
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled) return;
         Status = _installments.All(i => i.Status == InstallmentStatus.Paid)
-            ? PayableStatus.Settled
-            : PayableStatus.Approved;
+            ? PayableStatus.Paid
+            : PayableStatus.Scheduled;
     }
 
     private void EnsureMutable()
     {
-        if (Status is not (PayableStatus.PendingApproval or PayableStatus.Approved))
-            throw new InvalidOperationException("Only a pending or approved payable can be edited.");
+        if (Status is PayableStatus.Paid or PayableStatus.Rejected or PayableStatus.Cancelled)
+            throw new InvalidOperationException("Only a payable that is not paid/rejected/cancelled can be edited.");
     }
 
     public void MarkDeleted(DateTimeOffset at) => DeletedAt = at;
