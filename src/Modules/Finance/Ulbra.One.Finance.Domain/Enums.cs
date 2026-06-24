@@ -38,4 +38,4 @@ public enum AccountNature { Debit, Credit }
 public enum AgingBucket { NotYetDue, Overdue1To30, Overdue31To60, Overdue61To90, Overdue90Plus }
 
 /// <summary>Concrete source format of a fiscal document attached to a payable.</summary>
-public enum FiscalDocumentFormat { NfeXml, NfseXml, PdfMock }
+public enum FiscalDocumentFormat { NfeXml, NfseXml, Pdf, Image }

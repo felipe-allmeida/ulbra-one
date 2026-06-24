@@ -1,5 +1,7 @@
 using System.Text;
 using System.Xml.Linq;
+using Ulbra.One.Common.Application.Ai;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.FiscalDocuments;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Infrastructure.FiscalDocuments;
@@ -160,8 +162,14 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    private sealed class DisabledAi : IAiCompletion
+    {
+        public Task<Result<T>> CompleteAsync<T>(AiPrompt p, AiOptions? o = null, CancellationToken ct = default) where T : class =>
+            Task.FromResult(Result.Failure<T>(Error.Failure(AiErrors.Disabled, "off")));
+    }
+
     private static IFiscalDocumentReader NewReader() =>
-        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new PdfMockReader());
+        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new AiFiscalExtractor(new DisabledAi()));
 
     private static Stream StreamOf(string xml) => new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
@@ -258,11 +266,11 @@ public class FiscalDocumentParserTests
     }
 
     [Fact]
-    public async Task Reader_returns_pdf_mock_for_pdf()
+    public async Task Reader_returns_pdf_format_for_pdf()
     {
         var parsed = await NewReader().ReadAsync("nota.pdf", new MemoryStream([0x25, 0x50, 0x44, 0x46]), default);
         Assert.NotNull(parsed);
-        Assert.Equal(FiscalDocumentFormat.PdfMock, parsed!.Format);
+        Assert.Equal(FiscalDocumentFormat.Pdf, parsed!.Format);
     }
 
     [Fact]
