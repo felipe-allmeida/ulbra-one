@@ -61,7 +61,8 @@ public static class ObservabilityExtensions
                 t.AddAspNetCoreInstrumentation(o =>
                         o.Filter = ctx => !ctx.Request.Path.StartsWithSegments("/health"))
                     .AddHttpClientInstrumentation()
-                    .AddEntityFrameworkCoreInstrumentation();
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddSource(Ai.AiTelemetry.SourceName);
 
                 if (hasOtlp)
                 {
