@@ -3,6 +3,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application.Ai;
 
 namespace Ulbra.One.Common.Infrastructure.Ai;
@@ -25,8 +26,9 @@ public static class AiRegistration
                 services.AddSingleton<IChatClient>(sp =>
                 {
                     var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-                    var anthropic = new AnthropicClient { ApiKey = opts.ApiKey };
-                    return anthropic.AsIChatClient(opts.Model)
+                    var aiOptions = sp.GetRequiredService<IOptions<AiProviderOptions>>().Value;
+                    var anthropic = new AnthropicClient { ApiKey = aiOptions.ApiKey };
+                    return anthropic.AsIChatClient(aiOptions.Model)
                         .AsBuilder()
                         .UseOpenTelemetry(loggerFactory, AiTelemetry.SourceName)
                         .UseLogging(loggerFactory)
