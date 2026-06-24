@@ -319,10 +319,10 @@ function VendorPicker({
             }
           />
         </div>
-        {/* When the NF issuer had no matching vendor, offer a prominent prefilled "register vendor". */}
+        {/* When the NF issuer had no matching vendor, offer a prominent prefilled "register vendor from NF". */}
         {prefill && (
           <Button type='button' variant='brand' icon={<Plus />} onClick={() => setDrawerOpen(true)}>
-            {t('payables.fiscalReader.registerVendor')}
+            {t('payables.intake.createVendorFromNf')}
           </Button>
         )}
       </div>
@@ -1108,7 +1108,7 @@ function FiscalXmlReader({
         onError: (err) => {
           // Storage.PresignNotSupported → non-blocking notice, let user proceed manually.
           const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes('PresignNotSupported') || msg.includes('presign')) {
+          if (msg.includes('PresignNotSupported')) {
             setUploadUnavailable(true);
           } else {
             setUploadErr(msg);
@@ -1202,7 +1202,8 @@ function FiscalXmlReader({
                 value={[
                   parsed.fiscal.cfops.length > 0 && `CFOPs: ${parsed.fiscal.cfops.join(', ')}`,
                   parsed.fiscal.ncms.length > 0 && `NCMs: ${parsed.fiscal.ncms.length}`,
-                  parsed.fiscal.totalTaxes != null && `Total tributos: ${brl(parsed.fiscal.totalTaxes)}`,
+                  parsed.fiscal.totalTaxes != null &&
+                    `${t('payables.fiscalReader.totalTaxes')}: ${brl(parsed.fiscal.totalTaxes)}`,
                 ]
                   .filter(Boolean)
                   .join(' · ')}

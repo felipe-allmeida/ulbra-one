@@ -303,10 +303,10 @@ const ptBR = {
       formats: {
         NfeXml: 'NF-e (produto)',
         NfseXml: 'NFS-e (serviço)',
-        Pdf: 'PDF (serviço)',
-        Image: 'Imagem (serviço)',
-        PdfMock: 'PDF (serviço, mock)',
+        Pdf: 'PDF',
+        Image: 'Imagem',
       },
+      totalTaxes: 'Total tributos',
     },
     intake: {
       withNf: 'Preencher com NF',

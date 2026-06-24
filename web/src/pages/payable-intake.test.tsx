@@ -185,5 +185,9 @@ describe('Two-card payable intake', () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue('NF-001')).toBeInTheDocument();
     });
+
+    // When the parsed NF has issuerDocument but no matchedVendorId, the
+    // "Cadastrar fornecedor da NF" button must be visible (Fix 1).
+    expect(screen.getByText('Cadastrar fornecedor da NF')).toBeInTheDocument();
   });
 });
