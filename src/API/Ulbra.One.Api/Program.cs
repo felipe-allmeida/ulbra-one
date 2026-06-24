@@ -17,6 +17,7 @@ using Ulbra.One.Audit.Application;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Accounting.Application;
 using Ulbra.One.Accounting.Infrastructure;
+using Ulbra.One.Common.Infrastructure.Ai;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
 using Ulbra.One.Common.Infrastructure.Storage;
@@ -191,6 +192,7 @@ builder.Services.AddAccountingModule(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
+builder.Services.AddAi(builder.Configuration);
 
 // Health checks
 builder.Services.AddHealthChecks()

@@ -2294,6 +2294,142 @@
         }
       }
     },
+    "/api/payables/fiscal-document/parse": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ParseFiscalDocument",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedFiscalDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/fiscal-document": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "UploadPayableFiscalDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/{id}/installments/{installmentId}/payments": {
       "post": {
         "tags": [
@@ -2673,6 +2809,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassificationSuggestionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/ai-classification-suggestion": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "AiClassificationSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiClassificationSuggestionResponse"
                 }
               }
             }
@@ -5678,6 +5854,39 @@
         },
         "additionalProperties": false
       },
+      "AiClassificationSuggestionResponse": {
+        "required": [
+          "accountingAccountId",
+          "financialAccountId",
+          "confidence",
+          "rationale",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "financialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "AuditAction": {
         "enum": [
           "Create",
@@ -7441,6 +7650,91 @@
         },
         "additionalProperties": false
       },
+      "FiscalDocumentFormat": {
+        "enum": [
+          "NfeXml",
+          "NfseXml",
+          "PdfMock"
+        ],
+        "type": "string"
+      },
+      "FiscalDocumentResponse": {
+        "required": [
+          "id",
+          "payableId",
+          "format",
+          "accessKey",
+          "documentNumber",
+          "issueDate",
+          "totalAmount",
+          "issuerDocument",
+          "issuerName",
+          "recipientDocument",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "fiscaldoc_3fa85f64571742199730000000000000"
+          },
+          "payableId": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "format": {
+            "$ref": "#/components/schemas/FiscalDocumentFormat"
+          },
+          "accessKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "issuerDocument": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipientDocument": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "GenerateInput": {
         "required": [
           "totalAmount",
@@ -7950,6 +8244,162 @@
           "Credit"
         ],
         "type": "string"
+      },
+      "ParsedAddress": {
+        "required": [
+          "cep",
+          "street",
+          "number",
+          "neighborhood",
+          "city",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "neighborhood": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParsedFiscalDocument": {
+        "required": [
+          "format",
+          "accessKey",
+          "documentNumber",
+          "issueDate",
+          "totalAmount",
+          "issuerDocument",
+          "issuerName",
+          "recipientDocument",
+          "rawExtractionJson",
+          "installments",
+          "matchedVendorId",
+          "matchedVendorName",
+          "rpsNumber",
+          "rpsSeries",
+          "serviceDescription",
+          "cnaeCode",
+          "issuerPhone",
+          "issuerAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/FiscalDocumentFormat"
+          },
+          "accessKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "issuerDocument": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipientDocument": {
+            "type": "string",
+            "nullable": true
+          },
+          "rawExtractionJson": {
+            "type": "string"
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParsedInstallment"
+            }
+          },
+          "matchedVendorId": {
+            "type": "string",
+            "nullable": true,
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "matchedVendorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rpsNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "rpsSeries": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "cnaeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuerAddress": {
+            "$ref": "#/components/schemas/ParsedAddress"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParsedInstallment": {
+        "required": [
+          "dueDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "PayableAttachmentResponse": {
         "required": [

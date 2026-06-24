@@ -46,6 +46,9 @@
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.24.0" />
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
+    <!-- AI / LLM -->
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.7.0" />
+    <PackageVersion Include="Anthropic" Version="12.30.0" />
     <!-- MassTransit -->
     <PackageVersion Include="MassTransit" Version="8.2.0" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.2.0" />

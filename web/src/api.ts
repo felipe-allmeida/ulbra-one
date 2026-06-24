@@ -195,6 +195,7 @@ export type ChartAccount = Schemas['ChartAccountResponse'];
 export type ChartType = Schemas['ChartType'];
 export type AccountKind = Schemas['AccountKind'];
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
+export type AiClassificationSuggestion = Schemas['AiClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
 
 // ---------- Accounting (Núcleo Contábil — ledger core) ----------
@@ -731,6 +732,8 @@ export const api = {
     request<{ classifiedCount: number }>('/payables/classify-batch', { method: 'POST', body: JSON.stringify(body) }),
   classificationSuggestion: (payableId: string) =>
     request<ClassificationSuggestion>(`/payables/${payableId}/classification-suggestion`),
+  aiClassificationSuggestion: (payableId: string) =>
+    request<AiClassificationSuggestion>(`/payables/${payableId}/ai-classification-suggestion`, { method: 'POST' }),
 
   // ---------- Classification Policies ----------
   getClassificationPolicy: (companyId: string) =>

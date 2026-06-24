@@ -548,6 +548,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/fiscal-document/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ParseFiscalDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/fiscal-document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UploadPayableFiscalDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/{id}/installments/{installmentId}/payments": {
         parameters: {
             query?: never;
@@ -638,6 +670,22 @@ export interface paths {
         get: operations["ClassificationSuggestion"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/ai-classification-suggestion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiClassificationSuggestion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1321,6 +1369,16 @@ export interface components {
             byVendor: components["schemas"]["AgingByVendorRow"][];
             byCostCenter: components["schemas"]["AgingByCostCenterRow"][];
         };
+        AiClassificationSuggestionResponse: {
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            financialAccountId: string | null;
+            /** Format: double */
+            confidence: number;
+            rationale: string;
+            source: string;
+        };
         /** @enum {string} */
         AuditAction: "Create" | "Update" | "Delete";
         AuditLogResponse: {
@@ -1827,6 +1885,30 @@ export interface components {
             name: string;
             active: boolean;
         };
+        /** @enum {string} */
+        FiscalDocumentFormat: "NfeXml" | "NfseXml" | "PdfMock";
+        FiscalDocumentResponse: {
+            /** @example fiscaldoc_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example payable_3fa85f64571742199730000000000000 */
+            payableId: string;
+            format: components["schemas"]["FiscalDocumentFormat"];
+            accessKey: string | null;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            /** Format: double */
+            totalAmount: number | null;
+            issuerDocument: string | null;
+            issuerName: string | null;
+            recipientDocument: string | null;
+            fileName: string;
+            contentType: string;
+            /** Format: int64 */
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
         GenerateInput: {
             /** Format: double */
             totalAmount: number;
@@ -1980,6 +2062,43 @@ export interface components {
         };
         /** @enum {string} */
         NormalBalance: "Debit" | "Credit";
+        ParsedAddress: {
+            cep: string | null;
+            street: string | null;
+            number: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+        };
+        ParsedFiscalDocument: {
+            format: components["schemas"]["FiscalDocumentFormat"];
+            accessKey: string | null;
+            documentNumber: string | null;
+            /** Format: date */
+            issueDate: string | null;
+            /** Format: double */
+            totalAmount: number | null;
+            issuerDocument: string | null;
+            issuerName: string | null;
+            recipientDocument: string | null;
+            rawExtractionJson: string;
+            installments: components["schemas"]["ParsedInstallment"][];
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            matchedVendorId: string | null;
+            matchedVendorName: string | null;
+            rpsNumber: string | null;
+            rpsSeries: string | null;
+            serviceDescription: string | null;
+            cnaeCode: string | null;
+            issuerPhone: string | null;
+            issuerAddress: components["schemas"]["ParsedAddress"];
+        };
+        ParsedInstallment: {
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number;
+        };
         PayableAttachmentResponse: {
             /** @example attachment_3fa85f64571742199730000000000000 */
             id: string;
@@ -4222,6 +4341,91 @@ export interface operations {
             };
         };
     };
+    ParseFiscalDocument: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParsedFiscalDocument"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UploadPayableFiscalDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalDocumentResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     RegisterPayment: {
         parameters: {
             query?: never;
@@ -4485,6 +4689,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassificationSuggestionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AiClassificationSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiClassificationSuggestionResponse"];
                 };
             };
             /** @description Not Found */

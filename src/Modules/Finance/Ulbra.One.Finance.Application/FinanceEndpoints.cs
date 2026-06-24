@@ -25,6 +25,7 @@ using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCat
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ClassificationSuggestion;
@@ -100,6 +101,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ClassifyPayable>();
         payables.MapEndpoint<ClassifyPayableBatch>();
         payables.MapEndpoint<ClassificationSuggestion>();
+        payables.MapEndpoint<AiClassificationSuggestion>();
 
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();

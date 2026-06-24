@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tags, Check, Lightbulb } from 'lucide-react';
-import { api, type ChartAccount, type PayableListItem } from '../api';
+import { Tags, Check, Lightbulb, Sparkles } from 'lucide-react';
+import { api, type AiClassificationSuggestion, type ChartAccount, type PayableListItem } from '../api';
 import { useApp } from '../store';
-import { useChartAccounts, useClassifyBatch, useClassifyPayable, usePayables } from '../queries';
+import {
+  useAiClassificationSuggestion,
+  useChartAccounts,
+  useClassifyBatch,
+  useClassifyPayable,
+  usePayables,
+} from '../queries';
 import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
@@ -19,6 +25,98 @@ function useAccountItems(accounts: ChartAccount[]) {
         .sort((a, b) => a.code.localeCompare(b.code))
         .map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` })),
     [accounts],
+  );
+}
+
+/** Resolves a chart account id to its `code — name` label from the item list. */
+function resolveAccountLabel(id: string | null | undefined, items: { id: string; label: string }[]): string | null {
+  if (!id) return null;
+  return items.find((it) => it.id === id)?.label ?? id;
+}
+
+/** Source badge for AI vs heuristic suggestions. */
+function SourceBadge({ source }: { source: string }) {
+  const { t } = useTranslation();
+  const isAi = source === 'ai';
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '1px 7px',
+        borderRadius: 10,
+        fontSize: 11,
+        fontWeight: 600,
+        background: isAi ? 'var(--brand, #2563eb)' : 'var(--border, #e5e7eb)',
+        color: isAi ? '#fff' : 'var(--fg, #374151)',
+      }}
+    >
+      {isAi ? t('classification.source.ai') : t('classification.source.heuristic')}
+    </span>
+  );
+}
+
+/** Inline panel shown after AI suggestion is loaded. */
+function AiSuggestionPanel({
+  suggestion,
+  accountingItems,
+  financialItems,
+  onApply,
+}: {
+  suggestion: AiClassificationSuggestion;
+  accountingItems: { id: string; label: string }[];
+  financialItems: { id: string; label: string }[];
+  onApply: () => void;
+}) {
+  const { t } = useTranslation();
+  const accLabel = resolveAccountLabel(suggestion.accountingAccountId, accountingItems);
+  const finLabel = resolveAccountLabel(suggestion.financialAccountId, financialItems);
+  const hasSuggestion = !!accLabel || !!finLabel;
+
+  if (!hasSuggestion) return null;
+
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: '10px 12px',
+        borderRadius: 8,
+        background: 'var(--surface-alt, #f9fafb)',
+        border: '1px solid var(--border, #e5e7eb)',
+        fontSize: 13,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+      }}
+    >
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <SourceBadge source={suggestion.source} />
+        <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 12 }}>
+          {t('classification.confidence')}: {Math.round(suggestion.confidence * 100)}%
+        </span>
+      </div>
+      {accLabel && (
+        <div>
+          <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 11 }}>
+            {t('classification.columns.accountingAccount')}:{' '}
+          </span>
+          {accLabel}
+        </div>
+      )}
+      {finLabel && (
+        <div>
+          <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 11 }}>
+            {t('classification.columns.financialAccount')}:{' '}
+          </span>
+          {finLabel}
+        </div>
+      )}
+      <div style={{ color: 'var(--fg-muted, #6b7280)', fontStyle: 'italic', fontSize: 12 }}>
+        {t('classification.rationale')}: {suggestion.rationale}
+      </div>
+      <Button variant='brand' onClick={onApply} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+        {t('classification.applySuggestion')}
+      </Button>
+    </div>
   );
 }
 
@@ -39,9 +137,21 @@ function RowClassify({
   const [accountingAccountId, setAccountingAccountId] = useState<string | null>(null);
   const [financialAccountId, setFinancialAccountId] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AiClassificationSuggestion | null>(null);
 
   const classify = useClassifyPayable({
     onSuccess: () => toast.success(t('classification.classified')),
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const aiMutation = useAiClassificationSuggestion({
+    onSuccess: (s) => {
+      if (!s.accountingAccountId && !s.financialAccountId) {
+        toast.error(t('classification.noSuggestion'));
+        return;
+      }
+      setAiSuggestion(s);
+    },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
@@ -63,44 +173,65 @@ function RowClassify({
     }
   };
 
+  const onApplyAiSuggestion = () => {
+    if (!aiSuggestion) return;
+    if (aiSuggestion.accountingAccountId) setAccountingAccountId(aiSuggestion.accountingAccountId);
+    if (aiSuggestion.financialAccountId) setFinancialAccountId(aiSuggestion.financialAccountId);
+    setAiSuggestion(null);
+    toast.success(t('classification.suggestionApplied'));
+  };
+
   // Classify is a full REPLACE — always send BOTH ids together.
   const canClassify = !!accountingAccountId && !!financialAccountId && !classify.isPending;
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-      <div style={{ minWidth: 200 }}>
-        <Combobox
-          value={accountingAccountId}
-          onChange={setAccountingAccountId}
-          items={accountingItems}
-          loading={accountsLoading}
-          placeholder={t('classification.selectAccount')}
-          searchPlaceholder={t('classification.searchAccount')}
-          emptyText={t('classification.emptyAccounts')}
-        />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ minWidth: 200 }}>
+          <Combobox
+            value={accountingAccountId}
+            onChange={setAccountingAccountId}
+            items={accountingItems}
+            loading={accountsLoading}
+            placeholder={t('classification.selectAccount')}
+            searchPlaceholder={t('classification.searchAccount')}
+            emptyText={t('classification.emptyAccounts')}
+          />
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <Combobox
+            value={financialAccountId}
+            onChange={setFinancialAccountId}
+            items={financialItems}
+            loading={accountsLoading}
+            placeholder={t('classification.selectAccount')}
+            searchPlaceholder={t('classification.searchAccount')}
+            emptyText={t('classification.emptyAccounts')}
+          />
+        </div>
+        <Button icon={<Sparkles />} disabled={aiMutation.isPending} onClick={() => aiMutation.mutate(payableId)}>
+          {aiMutation.isPending ? t('classification.suggesting') : t('classification.suggestWithAi')}
+        </Button>
+        <Button icon={<Lightbulb />} disabled={suggesting} onClick={() => void onSuggest()}>
+          {t('classification.suggest')}
+        </Button>
+        <Button
+          variant='brand'
+          icon={<Check />}
+          disabled={!canClassify}
+          onClick={() => classify.mutate({ id: payableId, body: { accountingAccountId, financialAccountId } })}
+        >
+          {classify.isPending ? t('classification.classifying') : t('classification.classify')}
+        </Button>
       </div>
-      <div style={{ minWidth: 200 }}>
-        <Combobox
-          value={financialAccountId}
-          onChange={setFinancialAccountId}
-          items={financialItems}
-          loading={accountsLoading}
-          placeholder={t('classification.selectAccount')}
-          searchPlaceholder={t('classification.searchAccount')}
-          emptyText={t('classification.emptyAccounts')}
+      {aiSuggestion && (
+        <AiSuggestionPanel
+          suggestion={aiSuggestion}
+          accountingItems={accountingItems}
+          financialItems={financialItems}
+          onApply={onApplyAiSuggestion}
         />
-      </div>
-      <Button icon={<Lightbulb />} disabled={suggesting} onClick={() => void onSuggest()}>
-        {t('classification.suggest')}
-      </Button>
-      <Button
-        variant='brand'
-        icon={<Check />}
-        disabled={!canClassify}
-        onClick={() => classify.mutate({ id: payableId, body: { accountingAccountId, financialAccountId } })}
-      >
-        {classify.isPending ? t('classification.classifying') : t('classification.classify')}
-      </Button>
+      )}
     </div>
   );
 }
