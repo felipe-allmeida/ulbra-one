@@ -10,10 +10,10 @@ public class RequestValidatorTests
     public void Vendor_Company_Requires_Valid_Cnpj()
     {
         var v = new VendorRequestValidator();
-        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Company, "X", null, "11222333000100", null, null, null, null, null);
+        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Company, "X", null, "11222333000100", null, null, null, null, null, TaxRegime.Unknown);
         Assert.False(v.Validate(bad).IsValid);
 
-        var ok = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Company, "X", null, "11222333000181", null, null, null, null, null);
+        var ok = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Company, "X", null, "11222333000181", null, null, null, null, null, TaxRegime.Unknown);
         Assert.True(v.Validate(ok).IsValid);
     }
 
@@ -21,7 +21,7 @@ public class RequestValidatorTests
     public void Vendor_Individual_Requires_Valid_Cpf()
     {
         var v = new VendorRequestValidator();
-        var ok = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, null, null, null);
+        var ok = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, null, null, null, TaxRegime.Unknown);
         Assert.True(v.Validate(ok).IsValid);
     }
 
@@ -29,7 +29,7 @@ public class RequestValidatorTests
     public void Vendor_Empty_Name_Is_Invalid()
     {
         var v = new VendorRequestValidator();
-        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "", null, "52998224725", null, null, null, null, null);
+        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "", null, "52998224725", null, null, null, null, null, TaxRegime.Unknown);
         Assert.False(v.Validate(bad).IsValid);
     }
 
@@ -37,7 +37,7 @@ public class RequestValidatorTests
     public void Vendor_Bad_Email_Is_Invalid()
     {
         var v = new VendorRequestValidator();
-        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", "not-an-email", null, null, null, null);
+        var bad = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", "not-an-email", null, null, null, null, TaxRegime.Unknown);
         Assert.False(v.Validate(bad).IsValid);
     }
 
@@ -45,7 +45,7 @@ public class RequestValidatorTests
     public void Vendor_Empty_CompanyId_Is_Invalid()
     {
         var v = new VendorRequestValidator();
-        var bad = new VendorRequest(new CompanyId(Guid.Empty), PersonType.Individual, "X", null, "52998224725", null, null, null, null, null);
+        var bad = new VendorRequest(new CompanyId(Guid.Empty), PersonType.Individual, "X", null, "52998224725", null, null, null, null, null, TaxRegime.Unknown);
         Assert.False(v.Validate(bad).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class RequestValidatorTests
     {
         var v = new VendorRequestValidator();
         var addr = new AddressRequest("01001-000", "Praça da Sé", "1", null, "Sé", "São Paulo", "SP");
-        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null);
+        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null, TaxRegime.Unknown);
         Assert.True(v.Validate(req).IsValid);
     }
 
@@ -63,7 +63,7 @@ public class RequestValidatorTests
     {
         var v = new VendorRequestValidator();
         var addr = new AddressRequest("123456789", "R", "1", null, "B", "C", "SP");
-        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null);
+        var req = new VendorRequest(new CompanyId(Guid.NewGuid()), PersonType.Individual, "X", null, "52998224725", null, null, addr, null, null, TaxRegime.Unknown);
         Assert.False(v.Validate(req).IsValid);
     }
 

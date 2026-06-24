@@ -18,6 +18,18 @@ public sealed record AddressResponse(
         new(a.Cep, a.Street, a.Number, a.Complement, a.Neighborhood, a.City, a.State);
 }
 
+/// <summary>BankInfo response shape. Matches the frontend <c>BankInfo</c> type.</summary>
+public sealed record BankInfoResponse(
+    string BankCode,
+    string Branch,
+    string Account,
+    string AccountDigit,
+    string PixKey)
+{
+    public static BankInfoResponse From(BankInfo b) =>
+        new(b.BankCode, b.Branch, b.Account, b.AccountDigit, b.PixKey);
+}
+
 /// <summary>Vendor response shape. Matches the frontend <c>Vendor</c> type.
 /// <c>PersonType</c> serializes as an enum string via the global converter (current behavior).</summary>
 public sealed record VendorResponse(
@@ -31,12 +43,13 @@ public sealed record VendorResponse(
     string? Phone,
     AddressResponse? Address,
     string? PaymentTerms,
-    string? BankInfo,
+    BankInfoResponse? BankInfo,
+    TaxRegime TaxRegime,
     bool Active)
 {
     public static VendorResponse From(VendorEntity v) => new(
         new VendorId(v.Id), new CompanyId(v.CompanyId), v.PersonType, v.Name, v.TradeName, v.Document, v.Email, v.Phone,
-        AddressResponse.From(v.Address), v.PaymentTerms, v.BankInfo, v.Active);
+        AddressResponse.From(v.Address), v.PaymentTerms, BankInfoResponse.From(v.BankInfo), v.TaxRegime, v.Active);
 }
 
 /// <summary>Customer response shape. Matches the frontend <c>Customer</c> type.</summary>

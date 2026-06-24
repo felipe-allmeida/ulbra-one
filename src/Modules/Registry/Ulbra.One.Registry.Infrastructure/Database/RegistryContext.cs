@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Registry.Domain.Entities;
+using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Registry.Infrastructure.Database;
 
@@ -24,7 +25,8 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
             e.Property(x => x.Email).HasMaxLength(200);
             e.Property(x => x.Phone).HasMaxLength(20);
             e.Property(x => x.PaymentTerms).HasMaxLength(100);
-            e.Property(x => x.BankInfo).HasMaxLength(200);
+            e.OwnsOne(x => x.BankInfo, ConfigureBankInfo);
+            e.Property(x => x.TaxRegime).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.CreatedBy).HasMaxLength(64);
             e.Property(x => x.UpdatedBy).HasMaxLength(64);
             e.OwnsOne(x => x.Address, ConfigureAddress);
@@ -73,7 +75,7 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
     }
 
     private static void ConfigureAddress<T>(
-        Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<T, Domain.ValueObjects.Address> a)
+        Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<T, Address> a)
         where T : class
     {
         a.Property(x => x.Cep).HasMaxLength(8);
@@ -83,5 +85,16 @@ public class RegistryContext(DbContextOptions<RegistryContext> options) : DbCont
         a.Property(x => x.Neighborhood).HasMaxLength(100);
         a.Property(x => x.City).HasMaxLength(100);
         a.Property(x => x.State).HasMaxLength(2);
+    }
+
+    private static void ConfigureBankInfo<T>(
+        Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<T, BankInfo> b)
+        where T : class
+    {
+        b.Property(x => x.BankCode).HasMaxLength(10);
+        b.Property(x => x.Branch).HasMaxLength(10);
+        b.Property(x => x.Account).HasMaxLength(20);
+        b.Property(x => x.AccountDigit).HasMaxLength(2);
+        b.Property(x => x.PixKey).HasMaxLength(100);
     }
 }

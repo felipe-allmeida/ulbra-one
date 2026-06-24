@@ -210,11 +210,6 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("active");
 
-                    b.Property<string>("BankInfo")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("bank_info");
-
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
@@ -263,6 +258,12 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
+
+                    b.Property<string>("TaxRegime")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tax_regime");
 
                     b.Property<string>("TradeName")
                         .HasMaxLength(200)
@@ -472,7 +473,55 @@ namespace Ulbra.One.Registry.Infrastructure.Database.Migrations
                                 .HasConstraintName("fk_vendors_vendors_id");
                         });
 
+                    b.OwnsOne("Ulbra.One.Registry.Domain.ValueObjects.BankInfo", "BankInfo", b1 =>
+                        {
+                            b1.Property<Guid>("VendorEntityId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Account")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("bank_info_account");
+
+                            b1.Property<string>("AccountDigit")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character varying(2)")
+                                .HasColumnName("bank_info_account_digit");
+
+                            b1.Property<string>("BankCode")
+                                .IsRequired()
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("bank_info_bank_code");
+
+                            b1.Property<string>("Branch")
+                                .IsRequired()
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("bank_info_branch");
+
+                            b1.Property<string>("PixKey")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("bank_info_pix_key");
+
+                            b1.HasKey("VendorEntityId");
+
+                            b1.ToTable("vendors", "registry");
+
+                            b1.WithOwner()
+                                .HasForeignKey("VendorEntityId")
+                                .HasConstraintName("fk_vendors_vendors_id");
+                        });
+
                     b.Navigation("Address")
+                        .IsRequired();
+
+                    b.Navigation("BankInfo")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618
