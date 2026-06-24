@@ -10,6 +10,7 @@ using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
 using CPCreatePayable = Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable.CreatePayable;
+using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Registry.Domain.Entities;
 
@@ -29,6 +30,8 @@ public sealed class UpdatePayable : IEndpoint
         public CPCreatePayable.GenerateInput? Generate { get; set; }
         public ChartAccountId? AccountingAccountId { get; set; }
         public ChartAccountId? FinancialAccountId { get; set; }
+        public BankAccountId? PaymentBankAccountId { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -82,6 +85,7 @@ public sealed class UpdatePayable : IEndpoint
             if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
             p.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
         }
+        p.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);
         // EF does not auto-track changes to the private List<T> backing field, so we manage the
         // installment set explicitly: delete old rows and register new ones.
         uow.RemoveRange(oldInstallments);

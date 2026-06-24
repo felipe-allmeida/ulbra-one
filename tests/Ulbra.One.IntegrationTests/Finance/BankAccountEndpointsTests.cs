@@ -183,4 +183,86 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         Assert.Equal("BankAccount.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
     }
+
+    // ---------------------------------------------------------------------------
+    // Default paying account (one-per-company)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Create_With_IsDefaultForPayments_Sets_Default_And_GET_Reflects_It()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = await SeedCompanyAsync(client);
+
+        var createRes = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId,
+            bankCode = "033",
+            bankName = "Banco Santander",
+            agency = "1234",
+            accountNumber = "00012345",
+            accountDigit = "6",
+            accountType = "Checking",
+            alias = "Conta Default",
+            openingBalance = 5_000m,
+            isDefaultForPayments = true,
+            defaultPaymentMethod = "Pix",
+        });
+
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var created = await ReadJson(createRes);
+        Assert.True(created.GetProperty("isDefaultForPayments").GetBoolean());
+        Assert.Equal("Pix", created.GetProperty("defaultPaymentMethod").GetString());
+    }
+
+    [Fact]
+    public async Task Create_Second_Default_Clears_First()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = await SeedCompanyAsync(client);
+
+        // First default account.
+        var first = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId,
+            bankCode = "001",
+            bankName = "BB",
+            agency = "0001",
+            accountNumber = "111111",
+            accountDigit = "1",
+            accountType = "Checking",
+            alias = "Conta A",
+            isDefaultForPayments = true,
+            defaultPaymentMethod = "Ted",
+        });
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        var firstId = (await ReadJson(first)).GetProperty("id").GetString()!;
+
+        // Second default account (different account number to avoid duplicate).
+        var second = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId,
+            bankCode = "341",
+            bankName = "Itaú",
+            agency = "2222",
+            accountNumber = "222222",
+            accountDigit = "2",
+            accountType = "Checking",
+            alias = "Conta B",
+            isDefaultForPayments = true,
+            defaultPaymentMethod = "Pix",
+        });
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        var secondBody = await ReadJson(second);
+        Assert.True(secondBody.GetProperty("isDefaultForPayments").GetBoolean());
+
+        // First account is no longer the default.
+        var listRes = await client.GetAsync($"/api/bank-accounts?companyId={companyId}");
+        var list = await ReadJson(listRes);
+        var firstEntry = list.EnumerateArray().FirstOrDefault(a => a.GetProperty("id").GetString() == firstId);
+        Assert.Equal(JsonValueKind.Object, firstEntry.ValueKind);
+        Assert.False(firstEntry.GetProperty("isDefaultForPayments").GetBoolean());
+    }
 }

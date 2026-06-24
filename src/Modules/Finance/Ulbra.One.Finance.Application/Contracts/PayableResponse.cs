@@ -12,6 +12,7 @@ public sealed record PayableResponse(
     DateTimeOffset? RejectedAt, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
     bool IsClassified, ChartAccountId? SuggestedAccountingAccountId, ChartAccountId? SuggestedFinancialAccountId,
     double? ClassificationConfidence, string? ClassificationRationale,
+    BankAccountId? PaymentBankAccountId, PaymentMethod? PaymentMethod,
     DateTimeOffset CreatedAt, IReadOnlyList<InstallmentResponse> Installments,
     IReadOnlyList<PayableAttachmentResponse> Attachments)
 {
@@ -27,6 +28,8 @@ public sealed record PayableResponse(
         p.SuggestedFinancialAccountId is { } sf ? new ChartAccountId(sf) : null,
         p.ClassificationConfidence,
         p.ClassificationRationale,
+        p.PaymentBankAccountId is { } pb ? new BankAccountId(pb) : null,
+        p.PaymentMethod,
         p.CreatedAt,
         p.Installments.OrderBy(i => i.Sequence).Select(InstallmentResponse.From).ToList(),
         p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList());

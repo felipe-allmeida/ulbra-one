@@ -1,4 +1,5 @@
 using Ulbra.One.Common.Domain.Auditing;
+using Ulbra.One.Finance.Domain;
 
 namespace Ulbra.One.Finance.Domain.Entities;
 
@@ -21,6 +22,9 @@ public class BankAccount : IAuditable, ISoftDeletable
 
     /// <summary>Date the <see cref="ReconciledBalance"/> refers to. Movements after this date are added to it.</summary>
     public DateOnly? ReconciledAt { get; private set; }
+
+    public bool IsDefaultForPayments { get; private set; }
+    public PaymentMethod? DefaultPaymentMethod { get; private set; }
 
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -62,6 +66,10 @@ public class BankAccount : IAuditable, ISoftDeletable
         ReconciledBalance = balance;
         ReconciledAt = asOf;
     }
+
+    /// <summary>Marks this account as the company's default paying account, with the method auto-payments use.</summary>
+    public void SetAsDefaultPayer(PaymentMethod method) { IsDefaultForPayments = true; DefaultPaymentMethod = method; }
+    public void ClearDefaultPayer() { IsDefaultForPayments = false; DefaultPaymentMethod = null; }
 
     public void Activate() => Active = true;
     public void Deactivate() => Active = false;

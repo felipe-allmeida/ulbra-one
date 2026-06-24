@@ -805,9 +805,17 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("created_by");
 
+                    b.Property<int?>("DefaultPaymentMethod")
+                        .HasColumnType("integer")
+                        .HasColumnName("default_payment_method");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDefaultForPayments")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default_for_payments");
 
                     b.Property<decimal?>("OpeningBalance")
                         .HasPrecision(18, 2)
@@ -837,7 +845,9 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasName("pk_bank_accounts");
 
                     b.HasIndex("CompanyId")
-                        .HasDatabaseName("ix_bank_accounts_company_id");
+                        .IsUnique()
+                        .HasDatabaseName("ix_bank_accounts_company_default_payer")
+                        .HasFilter("is_default_for_payments AND deleted_at IS NULL");
 
                     b.HasIndex("CompanyId", "BankCode", "Agency", "AccountNumber", "AccountDigit")
                         .IsUnique()
@@ -1450,6 +1460,14 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<int>("Origin")
                         .HasColumnType("integer")
                         .HasColumnName("origin");
+
+                    b.Property<Guid?>("PaymentBankAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_bank_account_id");
+
+                    b.Property<int?>("PaymentMethod")
+                        .HasColumnType("integer")
+                        .HasColumnName("payment_method");
 
                     b.Property<DateTimeOffset?>("RejectedAt")
                         .HasColumnType("timestamp with time zone")

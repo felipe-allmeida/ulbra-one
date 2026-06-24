@@ -26,6 +26,8 @@ public sealed class CreateBankAccount : IEndpoint
         public BankAccountType AccountType { get; set; }
         [NormalizeText] public string Alias { get; set; } = string.Empty;
         public decimal? OpeningBalance { get; set; }
+        public bool IsDefaultForPayments { get; set; }
+        public PaymentMethod? DefaultPaymentMethod { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -50,6 +52,18 @@ public sealed class CreateBankAccount : IEndpoint
 
         var acc = new BankAccount(companyId, req.BankCode, req.BankName, req.Agency, req.AccountNumber,
             req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance);
+
+        if (req.IsDefaultForPayments)
+        {
+            // Clear any existing default for this company first (DB unique index is the backstop).
+            var existingDefaults = await uow.Set<BankAccount>()
+                .Where(b => b.CompanyId == companyId && b.IsDefaultForPayments)
+                .ToListAsync(ct);
+            foreach (var other in existingDefaults)
+                other.ClearDefaultPayer();
+            acc.SetAsDefaultPayer(req.DefaultPaymentMethod ?? PaymentMethod.Pix);
+        }
+
         await uow.AddAsync(acc, ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/bank-accounts/{new BankAccountId(acc.Id)}", BankAccountResponse.From(acc));
