@@ -26,6 +26,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Database"] = _connectionString,
+                ["AutoPay:Enabled"] = "false",
             });
         });
         return base.CreateHost(builder);
