@@ -12,11 +12,18 @@ public sealed class MeaiAiCompletion(IChatClient chatClient) : IAiCompletion
         AiPrompt prompt, AiOptions? options = null, CancellationToken ct = default)
         where TResult : class
     {
+#pragma warning disable MEAI001
+        var userContents = new List<AIContent> { new TextContent(prompt.User) };
+        if (prompt.Attachments is { Count: > 0 })
+            foreach (var a in prompt.Attachments)
+                userContents.Add(new DataContent(a.Data, a.MediaType));
+
         var messages = new[]
         {
             new ChatMessage(ChatRole.System, prompt.System),
-            new ChatMessage(ChatRole.User, prompt.User),
+            new ChatMessage(ChatRole.User, userContents),
         };
+#pragma warning restore MEAI001
 
         // Effort is reserved (not wired in v1). Model override flows to ChatOptions.ModelId.
         var chatOptions = options?.Model is { Length: > 0 } model
