@@ -60,6 +60,6 @@ public sealed class CreateRemittance : IEndpoint
             RemittanceResponse.From(outcome.Remittance),
             outcome.Skipped.Select(SkippedInstallmentResponse.From).ToList());
 
-        return TypedResults.Created($"/api/finance/remittances/{new RemittanceId(outcome.Remittance.Id)}", body);
+        return TypedResults.Created($"/api/remittances/{new RemittanceId(outcome.Remittance.Id)}", body);
     }
 }
