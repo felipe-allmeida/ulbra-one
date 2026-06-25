@@ -31,7 +31,7 @@ public class Installment
     {
         if (Status == InstallmentStatus.Paid)
             throw new InvalidOperationException("Installment is already settled.");
-        var remaining = Amount - PaidAmount;
+        var remaining = NetAmount - PaidAmount;
         if (payment.PrincipalApplied > remaining + 0.005m)
             throw new InvalidOperationException("Payment principal exceeds the installment's outstanding balance.");
         _payments.Add(payment);
@@ -68,7 +68,7 @@ public class Installment
     {
         PaidAmount = _payments.Where(p => !p.IsReversed).Sum(p => p.PrincipalApplied);
         Status = PaidAmount <= 0 ? InstallmentStatus.Open
-            : PaidAmount >= Amount ? InstallmentStatus.Paid
+            : PaidAmount >= NetAmount ? InstallmentStatus.Paid
             : InstallmentStatus.PartiallyPaid;
     }
 }

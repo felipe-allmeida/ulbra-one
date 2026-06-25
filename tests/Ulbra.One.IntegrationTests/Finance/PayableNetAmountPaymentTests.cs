@@ -226,12 +226,16 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
         var job = BuildJob(factory.Services);
         await job.RunOnceAsync(CancellationToken.None);
 
-        // Reload the payable to inspect the payment amount.
-        // Note: the installment is PartiallyPaid (not Paid) because gross Amount = 800 but we paid
-        // NetAmount = 720; settlement to Paid is Task 4 (accounting split). The key assertion here
-        // is that the Payment.Amount == NetAmount (net sent to the supplier).
+        // Reload the payable to inspect the payment amount and settlement status.
+        // The installment must be Paid (not PartiallyPaid) because Installment.Recompute now
+        // compares PaidAmount against NetAmount — paying exactly NetAmount settles to Paid.
+        // Consequently the payable itself must also reach Paid (via RecomputeSettlement).
         var after = await ReadJson(await client.GetAsync($"/api/payables/{payablePrefixedId}"));
+
+        Assert.Equal("Paid", after.GetProperty("status").GetString());
+
         var installment = after.GetProperty("installments")[0];
+        Assert.Equal("Paid", installment.GetProperty("status").GetString());
         Assert.Equal(1, installment.GetProperty("payments").GetArrayLength());
 
         var payment = installment.GetProperty("payments")[0];
