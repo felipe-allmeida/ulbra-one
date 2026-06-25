@@ -4,33 +4,13 @@ using Ulbra.One.Finance.Domain;
 namespace Ulbra.One.Finance.Infrastructure.Cnab;
 
 /// <summary>
-/// Coarse outcome resolved from the occurrence codes on a CNAB240 Segmento-A return record.
-/// </summary>
-/// <remarks>
-/// Best-effort — 🔶 the accounting team must validate each code set against the bank's
-/// homologação return files before relying on this for automated posting.
-/// </remarks>
-public enum ReturnOutcome
-{
-    /// <summary>The payment was settled by the bank (occurrence code indicates success).</summary>
-    Paid,
-
-    /// <summary>The payment was rejected by the bank (at least one known rejection code present).</summary>
-    Rejected,
-
-    /// <summary>
-    /// The occurrence codes are not in the known Paid or Rejected sets; manual review required.
-    /// </summary>
-    Unknown,
-}
-
-/// <summary>
 /// A bank-specific CNAB240 layout: knows the COMPE code, how to map our
 /// <see cref="PaymentMethod"/> to a "forma de lançamento", and how to render each of the
 /// six record types. The writer (<see cref="Cnab240RemittanceWriter"/>) owns the file/lote
 /// structure and sequence counters; the profile owns the byte layout of each record.
+/// Implementors also implement <see cref="IReturnOutcomeResolver"/> for use in Application-layer services.
 /// </summary>
-public interface ICnabBankProfile
+public interface ICnabBankProfile : IReturnOutcomeResolver
 {
     /// <summary>COMPE code written into position 1-3 of every record (e.g. <c>033</c>).</summary>
     string BankCode { get; }
@@ -52,15 +32,6 @@ public interface ICnabBankProfile
     string BuildBatchTrailer(CnabBatchContext batch);
 
     string BuildFileTrailer(RemittanceFileInput input, CnabFileTotals totals);
-
-    /// <summary>
-    /// Resolve the coarse <see cref="ReturnOutcome"/> from the occurrence codes in a return record.
-    /// </summary>
-    /// <remarks>
-    /// Best-effort — 🔶 homologação flag: validate this map against actual Santander .RET files
-    /// before using the outcome for automated accounting entries.
-    /// </remarks>
-    ReturnOutcome OutcomeFor(IReadOnlyList<string> occurrenceCodes);
 }
 
 /// <summary>Per-lote context: the method group it carries, its 1-based lote number, and its lines.</summary>

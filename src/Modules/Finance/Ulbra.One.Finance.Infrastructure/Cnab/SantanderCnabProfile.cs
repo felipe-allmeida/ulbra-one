@@ -296,26 +296,26 @@ public sealed class SantanderCnabProfile : ICnabBankProfile
     };
 
     /// <inheritdoc/>
-    public ReturnOutcome OutcomeFor(IReadOnlyList<string> occurrenceCodes)
+    public Application.Remittances.ReturnOutcome OutcomeFor(IReadOnlyList<string> occurrenceCodes)
     {
         // A reject code anywhere in the list takes precedence (bank may combine codes).
         foreach (var code in occurrenceCodes)
         {
             if (SantanderRejectedCodes.Contains(code))
-                return ReturnOutcome.Rejected;
+                return Application.Remittances.ReturnOutcome.Rejected;
         }
 
-        // If every non-blank code is in the paid set → Paid.
+        // If any non-blank code is in the paid set → Paid.
         if (occurrenceCodes.Count > 0)
         {
             foreach (var code in occurrenceCodes)
             {
                 if (SantanderPaidCodes.Contains(code))
-                    return ReturnOutcome.Paid;
+                    return Application.Remittances.ReturnOutcome.Paid;
             }
         }
 
-        return ReturnOutcome.Unknown;
+        return Application.Remittances.ReturnOutcome.Unknown;
     }
 
     // ---- Helpers ----------------------------------------------------------------------------
