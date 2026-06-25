@@ -90,6 +90,7 @@ export const queryKeys = {
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
   cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
   cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
+  pendingPostings: (params: PendingPostingsParams) => ['pendingPostings', params] as const,
 };
 
 export interface LedgerAccountsParams {
@@ -131,6 +132,12 @@ export interface CashFlowItemsParams {
   to: string;
   direction: 'in' | 'out';
   asOf?: string;
+}
+
+export interface PendingPostingsParams {
+  companyId?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface BankTransactionsParams {
@@ -1152,5 +1159,15 @@ export function useBalanceSheet(params: BalanceSheetParams, options?: { enabled?
     queryKey: queryKeys.balanceSheet(params),
     queryFn: () => api.balanceSheet(params),
     enabled: options?.enabled ?? true,
+  });
+}
+
+/* ---------- Accounting: Pending postings (pendentes de contabilização) ---------- */
+export function usePendingPostings(params: PendingPostingsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.pendingPostings(params),
+    queryFn: () => api.listPendingPostings(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }

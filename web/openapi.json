@@ -712,6 +712,51 @@
         }
       }
     },
+    "/api/accounting/pending-postings": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetPendingPostings",
+        "parameters": [
+          {
+            "name": "CompanyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingAccountingPostingResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/audit-logs": {
       "get": {
         "tags": [
@@ -6113,7 +6158,9 @@
           "accountType",
           "alias",
           "openingBalance",
-          "active"
+          "active",
+          "isDefaultForPayments",
+          "defaultPaymentMethod"
         ],
         "type": "object",
         "properties": {
@@ -6153,6 +6200,12 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "isDefaultForPayments": {
+            "type": "boolean"
+          },
+          "defaultPaymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         },
         "additionalProperties": false
@@ -6659,6 +6712,14 @@
         },
         "additionalProperties": false
       },
+      "ChartTemplate": {
+        "enum": [
+          "Demo",
+          "RfbImunesIsentas",
+          "RfbPjLucroReal"
+        ],
+        "type": "string"
+      },
       "ChartType": {
         "enum": [
           "Accounting",
@@ -6897,7 +6958,9 @@
           "accountDigit",
           "accountType",
           "alias",
-          "openingBalance"
+          "openingBalance",
+          "isDefaultForPayments",
+          "defaultPaymentMethod"
         ],
         "type": "object",
         "properties": {
@@ -6930,6 +6993,12 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "isDefaultForPayments": {
+            "type": "boolean"
+          },
+          "defaultPaymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         },
         "additionalProperties": false
@@ -7121,7 +7190,9 @@
           "installments",
           "generate",
           "accountingAccountId",
-          "financialAccountId"
+          "financialAccountId",
+          "paymentBankAccountId",
+          "paymentMethod"
         ],
         "type": "object",
         "properties": {
@@ -7176,6 +7247,14 @@
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "paymentBankAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         },
         "additionalProperties": false
@@ -8212,7 +8291,8 @@
       },
       "JournalOrigin": {
         "enum": [
-          "Manual"
+          "Manual",
+          "Automatic"
         ],
         "type": "string"
       },
@@ -8699,6 +8779,8 @@
           "suggestedFinancialAccountId",
           "classificationConfidence",
           "classificationRationale",
+          "paymentBankAccountId",
+          "paymentMethod",
           "createdAt",
           "installments",
           "attachments"
@@ -8809,6 +8891,14 @@
             "type": "string",
             "nullable": true
           },
+          "paymentBankAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -8866,7 +8956,8 @@
           "isReversed",
           "reversalReason",
           "hasProof",
-          "createdAt"
+          "createdAt",
+          "createdById"
         ],
         "type": "object",
         "properties": {
@@ -8922,6 +9013,89 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "createdById": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingAccountingPostingResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "sourceKey",
+          "kind",
+          "amount",
+          "reason",
+          "intendedCodes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "pendpost_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PostingKind"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "intendedCodes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingAccountingPostingResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingAccountingPostingResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -8930,6 +9104,14 @@
         "enum": [
           "Individual",
           "Company"
+        ],
+        "type": "string"
+      },
+      "PostingKind": {
+        "enum": [
+          "Incurral",
+          "Settlement",
+          "Reversal"
         ],
         "type": "string"
       },
@@ -9567,13 +9749,17 @@
       },
       "SeedLedgerAccountsRequest": {
         "required": [
-          "companyId"
+          "companyId",
+          "template"
         ],
         "type": "object",
         "properties": {
           "companyId": {
             "type": "string",
             "example": "company_3fa85f64571742199730000000000000"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ChartTemplate"
           }
         },
         "additionalProperties": false
@@ -9973,7 +10159,9 @@
           "accountType",
           "alias",
           "openingBalance",
-          "active"
+          "active",
+          "isDefaultForPayments",
+          "defaultPaymentMethod"
         ],
         "type": "object",
         "properties": {
@@ -10005,6 +10193,12 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "isDefaultForPayments": {
+            "type": "boolean"
+          },
+          "defaultPaymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         },
         "additionalProperties": false
@@ -10191,7 +10385,9 @@
           "installments",
           "generate",
           "accountingAccountId",
-          "financialAccountId"
+          "financialAccountId",
+          "paymentBankAccountId",
+          "paymentMethod"
         ],
         "type": "object",
         "properties": {
@@ -10239,6 +10435,14 @@
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "paymentBankAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "bank_account_3fa85f64571742199730000000000000"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         },
         "additionalProperties": false

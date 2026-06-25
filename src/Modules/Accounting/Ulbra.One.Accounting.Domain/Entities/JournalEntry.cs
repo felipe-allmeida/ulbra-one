@@ -20,6 +20,8 @@ public sealed class JournalEntry : IAuditable, ISoftDeletable
     public string Description { get; private set; } = string.Empty;
     public JournalOrigin Origin { get; private set; }
     public string? SourceReference { get; private set; }
+    /// <summary>Idempotency key for system-generated entries (e.g. "payable-incurral:xyz"). Null for manual entries.</summary>
+    public string? SourceKey { get; private set; }
     public JournalStatus Status { get; private set; } = JournalStatus.Draft;
     public DateTimeOffset? PostedAt { get; private set; }
 
@@ -43,7 +45,7 @@ public sealed class JournalEntry : IAuditable, ISoftDeletable
     private JournalEntry() { }
 
     public JournalEntry(Guid companyId, DateOnly competenceDate, string description,
-        JournalOrigin origin = JournalOrigin.Manual, string? sourceReference = null)
+        JournalOrigin origin = JournalOrigin.Manual, string? sourceReference = null, string? sourceKey = null)
     {
         if (companyId == Guid.Empty) throw new ArgumentException("CompanyId required", nameof(companyId));
         CompanyId = companyId;
@@ -51,6 +53,7 @@ public sealed class JournalEntry : IAuditable, ISoftDeletable
         Description = description?.Trim() ?? string.Empty;
         Origin = origin;
         SourceReference = string.IsNullOrWhiteSpace(sourceReference) ? null : sourceReference.Trim();
+        SourceKey = string.IsNullOrWhiteSpace(sourceKey) ? null : sourceKey.Trim();
     }
 
     public decimal TotalDebit => _lines.Where(l => l.Side == EntrySide.Debit).Sum(l => l.Amount);
@@ -129,8 +132,9 @@ public sealed class JournalEntry : IAuditable, ISoftDeletable
         if (string.IsNullOrEmpty(trimmedReason))
             throw new ArgumentException("A reversal reason is required.", nameof(reason));
 
+        var reversalSourceKey = SourceKey is not null ? $"{SourceKey}:reversal" : null;
         var reversal = new JournalEntry(CompanyId, competenceDate,
-            $"Reversal of #{Number}: {trimmedReason}", Origin, SourceReference)
+            $"Reversal of #{Number}: {trimmedReason}", Origin, SourceReference, reversalSourceKey)
         {
             ReversalOfEntryId = Id,
         };

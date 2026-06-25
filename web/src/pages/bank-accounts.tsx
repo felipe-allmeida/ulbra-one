@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Plus, Landmark, Pencil, Trash2 } from 'lucide-react';
-import { type BankAccount, type BankAccountInput, type BankAccountUpdateInput } from '../api';
+import { type BankAccount, type BankAccountInput, type BankAccountUpdateInput, type PaymentMethod } from '../api';
 import { useApp } from '../store';
 import { useBankAccounts, useDeleteBankAccount, useSaveBankAccount } from '../queries';
 import { getErrorMessage } from '../apiError';
@@ -23,7 +23,7 @@ function BankAccountForm({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
-  const { control, handleSubmit, formState } = useForm<BankAccountValues>({
+  const { control, handleSubmit, watch, setValue, formState } = useForm<BankAccountValues>({
     resolver: resolver(bankAccountSchema),
     mode: 'onChange',
     defaultValues: {
@@ -35,14 +35,20 @@ function BankAccountForm({
       accountType: initial?.accountType ?? 'Checking',
       alias: initial?.alias ?? '',
       openingBalance: initial?.openingBalance != null ? String(initial.openingBalance) : '',
+      isDefaultForPayments: initial?.isDefaultForPayments ?? false,
+      defaultPaymentMethod: initial?.defaultPaymentMethod ?? null,
     },
   });
+  const isDefault = watch('isDefaultForPayments');
 
   const save = useSaveBankAccount({ onSuccess: () => onSaved() });
   const erro = save.error ? getErrorMessage(save.error) : null;
 
   const onValid = (v: BankAccountValues) => {
     const openingBalance = v.openingBalance.trim() === '' ? null : Number(v.openingBalance);
+    const defaultPaymentMethod: PaymentMethod | null = v.isDefaultForPayments
+      ? (v.defaultPaymentMethod ?? 'Pix')
+      : null;
     if (initial) {
       const body: BankAccountUpdateInput = {
         bankCode: v.bankCode.trim(),
@@ -54,6 +60,8 @@ function BankAccountForm({
         alias: v.alias.trim(),
         openingBalance,
         active: initial.active,
+        isDefaultForPayments: v.isDefaultForPayments,
+        defaultPaymentMethod,
       };
       save.mutate({ id: initial.id, update: body });
     } else {
@@ -67,6 +75,8 @@ function BankAccountForm({
         accountType: v.accountType,
         alias: v.alias.trim(),
         openingBalance,
+        isDefaultForPayments: v.isDefaultForPayments,
+        defaultPaymentMethod,
       };
       save.mutate({ create: body });
     }
@@ -157,6 +167,53 @@ function BankAccountForm({
           )}
         </Field>
       </div>
+      <div style={{ marginTop: 14 }}>
+        <Controller
+          control={control}
+          name='isDefaultForPayments'
+          render={({ field }) => (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input
+                type='checkbox'
+                checked={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.checked);
+                  if (e.target.checked) {
+                    // Pre-select Pix when toggled on so the form stays valid
+                    setValue('defaultPaymentMethod', 'Pix', { shouldValidate: true });
+                  } else {
+                    setValue('defaultPaymentMethod', null, { shouldValidate: true });
+                  }
+                }}
+              />
+              {t('bankAccounts.fields.isDefaultForPayments')}
+            </label>
+          )}
+        />
+        {isDefault && (
+          <div style={{ marginTop: 10 }}>
+            <Field label={t('bankAccounts.fields.defaultPaymentMethod')}>
+              <Controller
+                control={control}
+                name='defaultPaymentMethod'
+                render={({ field }) => (
+                  <Select {...field} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value || null)}>
+                    <option value='Pix'>{t('payments.methods.Pix')}</option>
+                    <option value='Ted'>{t('payments.methods.Ted')}</option>
+                    <option value='Boleto'>{t('payments.methods.Boleto')}</option>
+                    <option value='Cash'>{t('payments.methods.Cash')}</option>
+                    <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
+                    <option value='Other'>{t('payments.methods.Other')}</option>
+                  </Select>
+                )}
+              />
+              {fieldError(formState.errors.defaultPaymentMethod?.message) && (
+                <div className='field-err'>{fieldError(formState.errors.defaultPaymentMethod?.message)}</div>
+              )}
+            </Field>
+          </div>
+        )}
+      </div>
       {erro && (
         <div className='create-err' style={{ marginTop: 10 }}>
           {erro}
@@ -211,6 +268,8 @@ export function BankAccountsPage() {
         alias: c.alias,
         openingBalance: c.openingBalance,
         active: !c.active,
+        isDefaultForPayments: c.isDefaultForPayments,
+        defaultPaymentMethod: c.defaultPaymentMethod ?? null,
       },
     });
 

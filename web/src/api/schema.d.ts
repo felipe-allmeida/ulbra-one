@@ -164,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounting/pending-postings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPendingPostings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit-logs": {
         parameters: {
             query?: never;
@@ -1466,6 +1482,8 @@ export interface components {
             /** Format: double */
             openingBalance: number | null;
             active: boolean;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
@@ -1617,6 +1635,8 @@ export interface components {
             isActive: boolean;
         };
         /** @enum {string} */
+        ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
+        /** @enum {string} */
         ChartType: "Accounting" | "Financial";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -1691,6 +1711,8 @@ export interface components {
             alias: string;
             /** Format: double */
             openingBalance: number | null;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         CreateChartAccountRequest: {
             chartType: components["schemas"]["ChartType"];
@@ -1759,6 +1781,9 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
         };
         CreateReceivableCreateReceivableRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -2065,7 +2090,7 @@ export interface components {
             description: string | null;
         };
         /** @enum {string} */
-        JournalOrigin: "Manual";
+        JournalOrigin: "Manual" | "Automatic";
         /** @enum {string} */
         JournalStatus: "Draft" | "Posted" | "Reversed";
         /** @enum {string} */
@@ -2231,6 +2256,9 @@ export interface components {
             /** Format: double */
             classificationConfidence: number | null;
             classificationRationale: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
@@ -2264,9 +2292,38 @@ export interface components {
             hasProof: boolean;
             /** Format: date-time */
             createdAt: string;
+            /** Format: uuid */
+            createdById: string;
+        };
+        PendingAccountingPostingResponse: {
+            /** @example pendpost_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            sourceKey: string;
+            kind: components["schemas"]["PostingKind"];
+            /** Format: double */
+            amount: number;
+            reason: string;
+            intendedCodes: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PendingAccountingPostingResponsePaginatedResponse: {
+            items: components["schemas"]["PendingAccountingPostingResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
         };
         /** @enum {string} */
         PersonType: "Individual" | "Company";
+        /** @enum {string} */
+        PostingKind: "Incurral" | "Settlement" | "Reversal";
         ProblemDetails: {
             type: string | null;
             title: string | null;
@@ -2466,6 +2523,7 @@ export interface components {
         SeedLedgerAccountsRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
+            template: components["schemas"]["ChartTemplate"];
         };
         SetReconciledBalanceRequest: {
             /** Format: double */
@@ -2600,6 +2658,8 @@ export interface components {
             /** Format: double */
             openingBalance: number | null;
             active: boolean;
+            isDefaultForPayments: boolean;
+            defaultPaymentMethod: components["schemas"]["PaymentMethod"];
         };
         UpdateChartAccountRequest: {
             name: string;
@@ -2662,6 +2722,9 @@ export interface components {
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            paymentBankAccountId: string | null;
+            paymentMethod: components["schemas"]["PaymentMethod"];
         };
         UpdateReceivableUpdateReceivableRequest: {
             /** @example customer_3fa85f64571742199730000000000000 */
@@ -3254,6 +3317,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BalanceSheetResponse"];
+                };
+            };
+        };
+    };
+    GetPendingPostings: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingAccountingPostingResponsePaginatedResponse"];
                 };
             };
         };

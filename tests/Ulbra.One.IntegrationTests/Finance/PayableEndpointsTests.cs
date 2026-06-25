@@ -542,4 +542,48 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         Assert.Equal("Payable.NotFound", (await ReadJson(res)).GetProperty("title").GetString());
     }
+
+    // ---------------------------------------------------------------------------
+    // Payment source override (per-payable bank account + method)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Create_With_PaymentBankAccountId_And_Method_GET_Reflects_Override()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // Seed a bank account for the company.
+        var bankRes = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId = seed.CompanyId,
+            bankCode = "341",
+            bankName = "Itaú",
+            agency = "1234",
+            accountNumber = "99988877",
+            accountDigit = "7",
+            accountType = "Checking",
+            alias = "Conta Pagamentos",
+        });
+        bankRes.EnsureSuccessStatusCode();
+        var bankId = (await ReadJson(bankRes)).GetProperty("id").GetString()!;
+
+        // Create payable with payment source override.
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Pagamento via Pix especificado",
+            installments = new[] { new { dueDate = "2026-07-15", amount = 2500m } },
+            paymentBankAccountId = bankId,
+            paymentMethod = "Pix",
+        });
+
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var body = await ReadJson(createRes);
+        Assert.Equal(bankId, body.GetProperty("paymentBankAccountId").GetString());
+        Assert.Equal("Pix", body.GetProperty("paymentMethod").GetString());
+    }
 }

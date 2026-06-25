@@ -39,6 +39,7 @@ const ptBR = {
     aging: 'Vencimentos (aging)',
     ledgerAccounts: 'Plano de contas contábil',
     journalEntries: 'Lançamentos contábeis',
+    pendingPostings: 'Pendentes de contabilização',
     trialBalance: 'Balancete',
     incomeStatement: 'DRE',
     balanceSheet: 'Balanço Patrimonial',
@@ -348,6 +349,14 @@ const ptBR = {
       documentNumber: 'Nº do documento',
       issueDate: 'Emissão',
     },
+    paymentSource: {
+      sectionTitle: 'Pagar de (opcional)',
+      sectionHint: 'Deixe em branco para usar a conta padrão da empresa.',
+      bankAccount: 'Conta bancária',
+      bankAccountSelect: '— padrão da empresa —',
+      method: 'Forma de pagamento',
+      methodSelect: '— padrão da conta —',
+    },
     sub: 'Conta a pagar',
     installmentsTitle: 'Parcelas',
     actions: {
@@ -620,6 +629,32 @@ const ptBR = {
         sub: 'Crie o primeiro lançamento contábil.',
       },
     },
+    pendingPostings: {
+      title: 'Pendentes de contabilização',
+      subtitle: 'Lançamentos automáticos que não puderam ser gerados por falta de conta contábil mapeada.',
+      loading: 'Carregando…',
+      count_one: '{{count}} pendência',
+      count_other: '{{count}} pendências',
+      postingKind: {
+        Incurral: 'Apropriação',
+        Settlement: 'Liquidação',
+        Reversal: 'Estorno',
+      },
+      columns: {
+        kind: 'Tipo',
+        amount: 'Valor',
+        reason: 'Motivo',
+        intendedCodes: 'Códigos pretendidos',
+        createdAt: 'Data',
+        sourceKey: 'Origem',
+      },
+      empty: {
+        noCompanyTitle: 'Selecione uma empresa',
+        noCompanySub: 'Escolha a empresa para ver as pendências de contabilização.',
+        title: 'Sem pendências',
+        sub: 'Todos os lançamentos contábeis foram processados com sucesso.',
+      },
+    },
     trialBalance: {
       title: 'Balancete',
       subtitle: 'Saldos por conta — débitos, créditos e saldo.',
@@ -697,6 +732,8 @@ const ptBR = {
       accountType: 'Tipo',
       alias: 'Apelido',
       openingBalance: 'Saldo inicial (R$)',
+      isDefaultForPayments: 'Conta padrão de pagamento',
+      defaultPaymentMethod: 'Forma de pagamento padrão',
     },
     placeholders: {
       bankName: 'ex.: Banco do Brasil',
@@ -758,6 +795,7 @@ const ptBR = {
     reverse: 'Estornar',
     downloadProof: 'Baixar comprovante',
     downloadError: 'Não foi possível baixar o comprovante.',
+    autoPayTag: 'Automático (sistema)',
     actions: {
       register: 'Dar baixa',
       registering: 'Registrando…',

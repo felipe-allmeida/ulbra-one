@@ -26,6 +26,8 @@ public sealed class UpdateBankAccount : IEndpoint
         [NormalizeText] public string Alias { get; set; } = string.Empty;
         public decimal? OpeningBalance { get; set; }
         public bool Active { get; set; } = true;
+        public bool IsDefaultForPayments { get; set; }
+        public PaymentMethod? DefaultPaymentMethod { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -53,6 +55,22 @@ public sealed class UpdateBankAccount : IEndpoint
 
         acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance);
         if (req.Active) acc.Activate(); else acc.Deactivate();
+
+        if (req.IsDefaultForPayments)
+        {
+            // Clear any existing default for this company first (DB unique index is the backstop).
+            var existingDefaults = await uow.Set<BankAccount>()
+                .Where(b => b.CompanyId == companyId && b.IsDefaultForPayments && b.Id != id.Value)
+                .ToListAsync(ct);
+            foreach (var other in existingDefaults)
+                other.ClearDefaultPayer();
+            acc.SetAsDefaultPayer(req.DefaultPaymentMethod ?? PaymentMethod.Pix);
+        }
+        else
+        {
+            acc.ClearDefaultPayer();
+        }
+
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(BankAccountResponse.From(acc));
     }

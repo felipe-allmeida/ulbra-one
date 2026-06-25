@@ -62,6 +62,7 @@ import { ContabilLancamentosPage } from './pages/contabil-lancamentos';
 import { ContabilBalancetePage } from './pages/contabil-balancete';
 import { ContabilDrePage } from './pages/contabil-dre';
 import { ContabilBalancoPage } from './pages/contabil-balanco';
+import { ContabilPendentesPage } from './pages/contabil-pendentes';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
@@ -103,6 +104,7 @@ export default function App() {
         <Route path='contabil/balancete' element={<ContabilBalancetePage />} />
         <Route path='contabil/dre' element={<ContabilDrePage />} />
         <Route path='contabil/balanco' element={<ContabilBalancoPage />} />
+        <Route path='contabil/pendentes' element={<ContabilPendentesPage />} />
         <Route path='classificacao' element={<ClassificacaoPage />} />
         <Route path='conciliacao' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
@@ -181,6 +183,10 @@ function Shell({ children }: { children: ReactNode }) {
   ) : at('contabil/balanco') ? (
     <>
       {t('nav.sections.accounting')} <b>/ {t('nav.balanceSheet')}</b>
+    </>
+  ) : at('contabil/pendentes') ? (
+    <>
+      {t('nav.sections.accounting')} <b>/ {t('nav.pendingPostings')}</b>
     </>
   ) : at('estrutura') ? (
     <>
@@ -362,6 +368,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.balanceSheet')}
             active={at('contabil/balanco')}
             onClick={() => go('/app/contabil/balanco')}
+          />
+          <NavItem
+            icon={<ClipboardCheck />}
+            label={t('nav.pendingPostings')}
+            active={at('contabil/pendentes')}
+            onClick={() => go('/app/contabil/pendentes')}
           />
           <Section>{t('nav.sections.registry')}</Section>
           <NavItem

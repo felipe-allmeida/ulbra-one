@@ -1,3 +1,6 @@
+/** The reserved system-actor Guid stamped on payments created by the auto-pay job. */
+export const SYSTEM_ACTOR_ID = '00000000-0000-0000-0000-0000000005ed';
+
 export const brl = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 

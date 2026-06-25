@@ -36,6 +36,8 @@ public sealed class CreatePayable : IEndpoint
         public GenerateInput? Generate { get; set; }
         public ChartAccountId? AccountingAccountId { get; set; }
         public ChartAccountId? FinancialAccountId { get; set; }
+        public BankAccountId? PaymentBankAccountId { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -92,6 +94,8 @@ public sealed class CreatePayable : IEndpoint
             if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
             payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
         }
+
+        payable.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);
 
         // Payable stays at Received; the consumer (PayableReceivedConsumer) handles auto-approval.
         await uow.AddAsync(payable, ct);

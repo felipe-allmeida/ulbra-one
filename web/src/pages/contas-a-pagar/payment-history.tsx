@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Download, Undo2 } from 'lucide-react';
 import { type Payable, type Installment, type Payment } from '../../api';
 import { useReversePayment } from '../../queries';
-import { brl } from '../../lib';
+import { brl, SYSTEM_ACTOR_ID } from '../../lib';
 import { Button, Input, ConfirmDialog } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { downloadPaymentProof } from './download';
@@ -40,6 +40,9 @@ export function PaymentHistory({ payable, installment }: { payable: Payable; ins
               <td>{t(`payments.methods.${pay.method}`)}</td>
               <td className='td-action'>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  {pay.createdById === SYSTEM_ACTOR_ID && (
+                    <span className='badge-status badge-aprovado'>{t('payments.autoPayTag')}</span>
+                  )}
                   {pay.isReversed ? (
                     <span className='badge-status badge-rejeitado'>{t('payments.reversed')}</span>
                   ) : (

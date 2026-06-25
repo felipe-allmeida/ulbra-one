@@ -202,6 +202,8 @@ export type IncomeStatement = Schemas['IncomeStatementResponse'];
 export type IncomeStatementLine = Schemas['IncomeStatementLineResponse'];
 export type BalanceSheet = Schemas['BalanceSheetResponse'];
 export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
+export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse'];
+export type PostingKind = Schemas['PostingKind'];
 
 /** Request body for creating a ledger account. */
 export interface LedgerAccountInput {
@@ -276,6 +278,8 @@ export interface BankAccountInput {
   accountType: BankAccountType;
   alias: string;
   openingBalance?: number | null;
+  isDefaultForPayments?: boolean;
+  defaultPaymentMethod?: PaymentMethod | null;
 }
 
 /** Request body for updating a bank account (no companyId; `active` toggles status). */
@@ -307,6 +311,9 @@ export interface PayableInput {
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
   accountingAccountId?: string | null;
   financialAccountId?: string | null;
+  /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
+  paymentBankAccountId?: string | null;
+  paymentMethod?: PaymentMethod | null;
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
@@ -888,6 +895,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ reason, competenceDate: competenceDate ?? null }),
     }),
+
+  // ---------- Accounting: Pending postings (pendentes de contabilização) ----------
+  listPendingPostings: (params: { companyId?: string; page?: number; pageSize?: number }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<PendingAccountingPosting>>(`/accounting/pending-postings?${q}`);
+  },
 
   // ---------- Accounting: Reports ----------
   trialBalance: (companyId?: string) => {

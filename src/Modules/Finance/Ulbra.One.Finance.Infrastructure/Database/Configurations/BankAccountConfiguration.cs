@@ -20,8 +20,11 @@ public sealed class BankAccountConfiguration : BaseEntityConfiguration<BankAccou
         e.Property(x => x.Alias).HasMaxLength(60).IsRequired();
         e.Property(x => x.OpeningBalance).HasPrecision(18, 2);
         e.Property(x => x.ReconciledBalance).HasPrecision(18, 2);
-        e.HasIndex(x => x.CompanyId);
         e.HasIndex(x => new { x.CompanyId, x.BankCode, x.Agency, x.AccountNumber, x.AccountDigit })
             .IsUnique().HasFilter("deleted_at IS NULL");
+        // At most one default paying account per company (live rows only).
+        e.HasIndex(x => x.CompanyId).IsUnique()
+            .HasFilter("is_default_for_payments AND deleted_at IS NULL")
+            .HasDatabaseName("ix_bank_accounts_company_default_payer");
     }
 }

@@ -11,6 +11,7 @@ using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.GetLedgerAccount
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.ListLedgerAccounts;
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.SeedLedgerAccounts;
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.UpdateLedgerAccount;
+using Ulbra.One.Accounting.Application.Endpoints.PendingPostings.GetPendingPostings;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetBalanceSheet;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetIncomeStatement;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetTrialBalance;
@@ -41,6 +42,9 @@ public static class AccountingEndpoints
         reports.MapEndpoint<GetTrialBalance>();
         reports.MapEndpoint<GetIncomeStatement>();
         reports.MapEndpoint<GetBalanceSheet>();
+
+        var pendingPostings = builder.MapGroup("/accounting/pending-postings");
+        pendingPostings.MapEndpoint<GetPendingPostings>();
 
         return builder;
     }
