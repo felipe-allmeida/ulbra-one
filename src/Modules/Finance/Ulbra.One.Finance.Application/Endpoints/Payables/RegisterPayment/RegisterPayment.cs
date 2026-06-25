@@ -39,6 +39,8 @@ public sealed class RegisterPayment : IEndpoint
         var installment = payable.FindInstallment(installmentId.Value);
         if (installment is null)
             return TypedResults.Problem(detail: "Installment not found.", statusCode: 404, title: "Payable.InstallmentNotFound");
+        if (installment.Status == InstallmentStatus.InRemittance)
+            return TypedResults.Problem(detail: "Esta parcela está em uma remessa pendente.", statusCode: 409, title: "Payment.InstallmentInRemittance");
         if (installment.Status == InstallmentStatus.Paid)
             return TypedResults.Problem(detail: "Installment is already settled.", statusCode: 409, title: "Payment.InstallmentSettled");
 

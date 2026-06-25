@@ -34,7 +34,7 @@ public static class FinanceModule
         services.AddScoped<AiFiscalExtractor>();
         services.AddScoped<IFiscalDocumentReader, FiscalDocumentReader>();
 
-        var autoPayEnabled = configuration.GetValue("AutoPay:Enabled", true);
+        var autoPayEnabled = configuration.GetValue("AutoPay:Enabled", false);
         var autoPayInterval = configuration.GetValue("AutoPay:Interval", TimeSpan.FromHours(24));
         services.AddHostedService(sp => new PayableAutoPayJob(
             sp.GetRequiredService<IServiceScopeFactory>(),
