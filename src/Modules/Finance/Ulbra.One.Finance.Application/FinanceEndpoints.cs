@@ -35,6 +35,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadPaymentProof;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AuditTrail;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ParseFiscalDocument;
@@ -112,6 +113,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ClassificationSuggestion>();
         payables.MapEndpoint<AiClassificationSuggestion>();
         payables.MapEndpoint<GetPayableStageSummary>();
+        payables.MapEndpoint<GetPayableAuditTrail>();
 
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();

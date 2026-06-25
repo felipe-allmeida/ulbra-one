@@ -50,4 +50,19 @@ public class PayableAuditTrailBuilderTests
 
         Assert.Equal("Sistema", events[0].ActorName);
     }
+
+    [Fact]
+    public void Build_emits_attachment_uploaded_events()
+    {
+        var uploader = Guid.NewGuid();
+        var payable = PayableTestFactory.ReceivedWithAttachment(actorId: Guid.NewGuid().ToString(), createdAt: T0,
+            uploaderId: uploader, fileName: "nf.xml", uploadedAt: T0.AddHours(1));
+        var names = new Dictionary<Guid, string> { [uploader] = "Carlos" };
+
+        var events = PayableAuditTrailBuilder.Build(payable, names, null, new Dictionary<Guid, DateTimeOffset>());
+
+        var att = Assert.Single(events, e => e.Type == "AttachmentUploaded");
+        Assert.Equal("nf.xml", att.Metadata["fileName"]);
+        Assert.Equal("Carlos", att.ActorName);
+    }
 }

@@ -47,4 +47,16 @@ public static class PayableTestFactory
         p.Cancel(reason);
         return p;
     }
+
+    /// <summary>
+    /// Payable in the <c>Received</c> state with one attachment, for testing attachment events.
+    /// </summary>
+    public static Payable ReceivedWithAttachment(string actorId, DateTimeOffset createdAt,
+        Guid uploaderId, string fileName, DateTimeOffset uploadedAt)
+    {
+        var p = BasePayable();
+        p.MarkCreated(actorId, createdAt);
+        p.AddAttachment(new PayableAttachment(p.Id, fileName, "application/xml", 1024L, $"path/{fileName}", uploaderId, uploadedAt));
+        return p;
+    }
 }

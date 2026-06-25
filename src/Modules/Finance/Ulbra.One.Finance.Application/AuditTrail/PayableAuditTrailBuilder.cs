@@ -75,6 +75,15 @@ public static class PayableAuditTrailBuilder
             }
         }
 
+        // AttachmentUploaded — reconstructed from current attachment state.
+        // Note: AttachmentDeleted is intentionally omitted; deleted attachments are gone from current state.
+        // A future iteration can source deleted-attachment events from the AuditLog if needed.
+        foreach (var attachment in payable.Attachments)
+        {
+            var meta = new Dictionary<string, string> { ["fileName"] = attachment.FileName };
+            events.Add(EventByGuid("AttachmentUploaded", attachment.UploadedById, attachment.CreatedAt, userNames, meta));
+        }
+
         return events.OrderBy(e => e.Timestamp).ToList();
     }
 
