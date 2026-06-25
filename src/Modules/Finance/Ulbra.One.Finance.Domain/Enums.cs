@@ -45,3 +45,6 @@ public enum RemittanceStatus { Generated, Cancelled, Confirmed, PartiallyReturne
 
 /// <summary>Lifecycle of a single line within a remittance.</summary>
 public enum RemittanceLineStatus { Pending, Paid, Returned }
+
+/// <summary>Brazilian tax withholding types applicable to a payable (retenções na fonte).</summary>
+public enum WithholdingTaxType { Irrf, Iss, Inss, Pis, Cofins, Csll, Other }

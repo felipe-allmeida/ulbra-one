@@ -10,6 +10,7 @@ public class Installment
     public int Sequence { get; private set; }
     public DateOnly DueDate { get; private set; }
     public decimal Amount { get; private set; }
+    public decimal NetAmount { get; private set; }
     public InstallmentStatus Status { get; private set; } = InstallmentStatus.Open;
     public decimal PaidAmount { get; private set; }
 
@@ -21,7 +22,10 @@ public class Installment
         Sequence = sequence;
         DueDate = dueDate;
         Amount = amount;
+        NetAmount = amount;
     }
+
+    internal void SetNetAmount(decimal net) => NetAmount = net;
 
     public Payment RegisterPayment(Payment payment)
     {
