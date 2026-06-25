@@ -22,6 +22,8 @@ describe('dueTone', () => {
   it('warn between 3 and 7 days', () => expect(dueTone(5)).toBe('warn'));
   it('danger under 3 days', () => expect(dueTone(2)).toBe('danger'));
   it('danger when overdue', () => expect(dueTone(-1)).toBe('danger'));
+  it('warn at exactly 7 days (>7 is the ok threshold)', () => expect(dueTone(7)).toBe('warn'));
+  it('warn at exactly 3 days', () => expect(dueTone(3)).toBe('warn'));
 });
 
 describe('SlaChips', () => {
