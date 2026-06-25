@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Ulbra.One.Audit.Domain;
-using Ulbra.One.Audit.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Auditing;
 using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
@@ -26,7 +24,7 @@ public sealed class GetPayableAuditTrail : IEndpoint
     private static async Task<IResult> Handle(
         PayableId id,
         IUnitOfWork uow,
-        [FromKeyedServices("audit")] IUnitOfWork audit,
+        IAuditReader auditReader,
         IUserDirectory users,
         CancellationToken ct)
     {
@@ -40,14 +38,7 @@ public sealed class GetPayableAuditTrail : IEndpoint
         DateTimeOffset? cancelledAt = null;
         if (payable.Status == PayableStatus.Cancelled)
         {
-            var pk = payable.Id.ToString();
-            cancelledAt = await audit.ReadSet<AuditLog>()
-                .Where(a => a.EntityType == "Payable" && a.PrimaryKey == pk
-                            && a.Action == AuditAction.Update && a.AffectedColumns != null
-                            && a.AffectedColumns.Contains("CancelReason"))
-                .OrderByDescending(a => a.OccurredAt)
-                .Select(a => (DateTimeOffset?)a.OccurredAt)
-                .FirstOrDefaultAsync(ct);
+            cancelledAt = await auditReader.GetLatestChangeAsync("Payable", payable.Id.ToString(), "CancelReason", ct);
         }
 
         var reversedPaymentIds = payable.Installments
@@ -55,15 +46,10 @@ public sealed class GetPayableAuditTrail : IEndpoint
         var paymentReversalTimes = new Dictionary<Guid, DateTimeOffset>();
         if (reversedPaymentIds.Count > 0)
         {
-            var rows = await audit.ReadSet<AuditLog>()
-                .Where(a => a.EntityType == "Payment" && reversedPaymentIds.Contains(a.PrimaryKey)
-                            && a.Action == AuditAction.Update && a.AffectedColumns != null
-                            && a.AffectedColumns.Contains("IsReversed"))
-                .Select(a => new { a.PrimaryKey, a.OccurredAt })
-                .ToListAsync(ct);
-            foreach (var g in rows.GroupBy(r => r.PrimaryKey))
-                if (Guid.TryParse(g.Key, out var pid))
-                    paymentReversalTimes[pid] = g.Max(x => x.OccurredAt);
+            var reversalsByKey = await auditReader.GetLatestChangesAsync("Payment", reversedPaymentIds, "IsReversed", ct);
+            foreach (var (key, timestamp) in reversalsByKey)
+                if (Guid.TryParse(key, out var pid))
+                    paymentReversalTimes[pid] = timestamp;
         }
 
         // --- Resolve actor names for every Guid actor referenced. ---

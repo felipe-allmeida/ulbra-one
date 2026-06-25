@@ -10,6 +10,5 @@
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
     <ProjectReference Include="../../Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
     <ProjectReference Include="../../Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
-    <ProjectReference Include="../../Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
   </ItemGroup>
 </Project>
