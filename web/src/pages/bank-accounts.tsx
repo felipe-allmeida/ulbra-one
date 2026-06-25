@@ -172,7 +172,7 @@ function BankAccountForm({
         </Field>
       </div>
       <div style={{ marginTop: 14 }}>
-        <Field label={t('bankAccounts.fields.cnabAgreementCode')}>
+        <Field label={t('bankAccounts.fields.cnabAgreementCode')} help={t('bankAccounts.fields.cnabAgreementCodeHelp')}>
           <Controller
             control={control}
             name='cnabAgreementCode'
