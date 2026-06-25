@@ -221,6 +221,45 @@ const ptBR = {
     },
   },
 
+  workflow: {
+    sla: {
+      dueIn: 'Vence em {{days}}d',
+      overdue: 'Vencido há {{days}}d',
+      today: 'Vence hoje',
+    },
+    dashboard: {
+      viewPending: 'Ver pendências',
+      itemsCount_one: '{{count}} título',
+      itemsCount_other: '{{count}} títulos',
+    },
+    forecast: {
+      projectedBalance: 'Saldo projetado',
+      reserve: 'Reserva mínima',
+      lowest: 'Menor saldo projetado',
+      runway: 'Autonomia: {{periods}} períodos',
+      netResult: 'Resultado líquido',
+      impactLabel: 'Impacto da aprovação',
+      afterApproval: 'Saldo após aprovação',
+      confirm: 'Confirmar aprovação',
+    },
+    timeline: {
+      empty: 'Nenhum evento registrado',
+      by: 'por {{actor}}',
+      Created: 'Título criado',
+      Classified: 'Classificado',
+      Approved: 'Aprovado',
+      Rejected: 'Rejeitado',
+      Cancelled: 'Cancelado',
+      WrittenOff: 'Baixa por perda',
+      PaymentRegistered: 'Pagamento registrado',
+      PaymentReversed: 'Pagamento estornado',
+      ReceiptRegistered: 'Recebimento registrado',
+      ReceiptReversed: 'Recebimento estornado',
+      AttachmentUploaded: 'Anexo adicionado',
+      AttachmentDeleted: 'Anexo removido',
+    },
+  },
+
   payables: {
     title: 'Contas a pagar',
     subtitle: 'Despesas a pagar, com parcelamento, categorias e anexos.',

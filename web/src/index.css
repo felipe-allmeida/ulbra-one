@@ -2893,3 +2893,241 @@ tbody tr:last-child td {
 .cf-acct-name {
   font-weight: 500;
 }
+
+/* ---------- workflow components ---------- */
+.sla-chip {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.sla-ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+.sla-warn {
+  background: #fffbeb;
+  color: #b45309;
+}
+.sla-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.stage-tabbar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted, #6b7280);
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+}
+.stage-tab.active {
+  color: var(--brand, #4f46e5);
+  border-bottom-color: var(--brand, #4f46e5);
+}
+.stage-tab-count {
+  font-size: 12px;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.stage-tab-count.count-warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+.stage-tab-count.count-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.pendency-dashboard {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+}
+.pendency-card {
+  flex: 0 0 200px;
+  text-align: left;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.pendency-card:hover {
+  border-color: var(--brand, #4f46e5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.pendency-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted, #6b7280);
+}
+.pendency-card-count {
+  font-size: 22px;
+  font-weight: 700;
+}
+.pendency-card-amount {
+  color: var(--muted, #6b7280);
+  font-size: 13px;
+}
+.pendency-card-link {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--brand, #4f46e5);
+  font-weight: 600;
+}
+
+.audit-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.audit-event {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+.audit-event-dot {
+  color: var(--brand, #4f46e5);
+  display: flex;
+  align-items: center;
+}
+.audit-event-desc {
+  font-weight: 500;
+}
+.audit-event-meta {
+  display: flex;
+  gap: 10px;
+  color: var(--muted, #6b7280);
+  font-size: 12px;
+}
+.audit-timeline-empty {
+  color: var(--muted, #6b7280);
+  padding: 12px 0;
+}
+
+.forecast-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.forecast-banner.tone-ok {
+  background: #ecfdf5;
+  color: #065f46;
+}
+.forecast-banner.tone-danger {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.forecast-banner-value {
+  font-weight: 700;
+}
+.forecast-banner-lowest {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.forecast-impact {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.forecast-impact-value {
+  font-weight: 700;
+}
+.forecast-kpis {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+.forecast-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 160px;
+  margin-top: 16px;
+}
+.forecast-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.forecast-bar {
+  width: 100%;
+  background: var(--brand, #4f46e5);
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+}
+.forecast-bar.below {
+  background: #ef4444;
+}
+.forecast-bar-label {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+}
+
+/* workflow components — element hooks */
+.stage-tab-label {
+  font-weight: 500;
+}
+.pendency-card-icon {
+  display: inline-flex;
+  color: var(--brand, #4f46e5);
+}
+.pendency-card-label {
+  font-weight: 600;
+}
+.audit-event-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.audit-event-actor {
+  font-weight: 500;
+}
+.audit-event-time {
+  white-space: nowrap;
+}
+.audit-timeline-skeleton {
+  width: 100%;
+}
+.forecast-banner-loading {
+  background: #f3f4f6;
+}
+.forecast-banner-label {
+  opacity: 0.85;
+}
+.forecast-impact-label {
+  color: var(--muted, #6b7280);
+}
