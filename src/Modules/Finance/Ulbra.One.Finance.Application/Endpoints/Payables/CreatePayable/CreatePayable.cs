@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -9,6 +10,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Registry.Domain.Entities;
@@ -45,6 +47,7 @@ public sealed class CreatePayable : IEndpoint
     private static async Task<IResult> Handle(
         Request req,
         IUnitOfWork uow,
+        IPublishEndpoint publish,
         TimeProvider clock,
         CancellationToken ct)
     {
@@ -90,9 +93,9 @@ public sealed class CreatePayable : IEndpoint
             payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
         }
 
-        payable.ApplyAutoApproval(cc.AutoApprovalLimit, clock.GetUtcNow());
-
+        // Payable stays at Received; the consumer (PayableReceivedConsumer) handles auto-approval.
         await uow.AddAsync(payable, ct);
+        await publish.Publish(new PayableReceived(payable.Id, companyId), ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/payables/{new PayableId(payable.Id)}", PayableResponse.From(payable));
     }

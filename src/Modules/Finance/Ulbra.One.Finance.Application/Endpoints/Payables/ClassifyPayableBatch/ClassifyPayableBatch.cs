@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Core.Domain.Entities;
+using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
@@ -23,15 +25,22 @@ public sealed class ClassifyPayableBatch : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
     private static async Task<IResult> Handle(Request req,
-        IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         var ids = req.PayableIds.Select(p => p.Value).ToList();
         var payables = await uow.Set<Payable>().Where(p => ids.Contains(p.Id)).ToListAsync(ct);
+        var now = clock.GetUtcNow();
         foreach (var payable in payables)
+        {
             payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+            var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
+            payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, now);
+            if (payable.Status is PayableStatus.Received or PayableStatus.PendingClassification)
+                payable.MarkPendingApproval();
+        }
 
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(new Response(payables.Count));

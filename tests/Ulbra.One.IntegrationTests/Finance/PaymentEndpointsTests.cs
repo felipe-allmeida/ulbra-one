@@ -117,7 +117,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
-        Assert.Equal("Settled", body.GetProperty("status").GetString());
+        Assert.Equal("Paid", body.GetProperty("status").GetString());
         var installment = body.GetProperty("installments")[0];
         Assert.Equal("Paid", installment.GetProperty("status").GetString());
         // Exactly ONE payment — no dup (double insert) and no missing (zero insert).
@@ -144,7 +144,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
-        Assert.Equal("Approved", body.GetProperty("status").GetString());
+        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
         Assert.Equal("PartiallyPaid", body.GetProperty("installments")[0].GetProperty("status").GetString());
     }
 
@@ -293,7 +293,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.OK, reverseRes.StatusCode);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
-        Assert.Equal("Approved", body.GetProperty("status").GetString());
+        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
         var installment = body.GetProperty("installments")[0];
         Assert.Equal("Open", installment.GetProperty("status").GetString());
         Assert.True(installment.GetProperty("payments")[0].GetProperty("isReversed").GetBoolean());

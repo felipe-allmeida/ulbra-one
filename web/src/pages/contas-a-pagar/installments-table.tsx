@@ -43,7 +43,7 @@ export function InstallmentsTable({
                   <InstallmentStatusBadge s={inst.status} />
                 </td>
                 <td className='td-action'>
-                  {p.status === 'Approved' && inst.status !== 'Paid' && (
+                  {p.status === 'Scheduled' && inst.status !== 'Paid' && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button icon={<Receipt />} onClick={() => onRegister(inst)}>
                         {t('payments.register')}

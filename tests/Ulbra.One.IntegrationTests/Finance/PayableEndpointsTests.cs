@@ -140,8 +140,11 @@ public class PayableEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task AutoApproval_Within_Limit_Is_Approved_Above_Is_PendingApproval()
+    public async Task Create_Always_Returns_Received_Status()
     {
+        // Since SP-2, auto-approval is handled asynchronously by PayableReceivedConsumer.
+        // The create endpoint always returns Received; see PayableAutoClassifyTests for
+        // the consumer-driven approval flow.
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client, autoApprovalLimit: 5000m);
@@ -155,7 +158,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
             installments = new[] { new { dueDate = "2026-07-10", amount = 1000m } },
         });
         Assert.Equal(HttpStatusCode.Created, within.StatusCode);
-        Assert.Equal("Approved", (await ReadJson(within)).GetProperty("status").GetString());
+        Assert.Equal("Received", (await ReadJson(within)).GetProperty("status").GetString());
 
         var above = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -166,7 +169,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
             installments = new[] { new { dueDate = "2026-07-10", amount = 9000m } },
         });
         Assert.Equal(HttpStatusCode.Created, above.StatusCode);
-        Assert.Equal("PendingApproval", (await ReadJson(above)).GetProperty("status").GetString());
+        Assert.Equal("Received", (await ReadJson(above)).GetProperty("status").GetString());
     }
 
     [Fact]
@@ -256,7 +259,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         Assert.Equal(HttpStatusCode.OK, approveRes.StatusCode);
         var body = await ReadJson(approveRes);
-        Assert.Equal("Approved", body.GetProperty("status").GetString());
+        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -283,7 +286,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var getRes = await client.GetAsync($"/api/payables/{payableId}");
         Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
         var body = await ReadJson(getRes);
-        Assert.Equal("Approved", body.GetProperty("status").GetString());
+        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
         Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("approvedBy").GetString()));
         Assert.NotEqual(default, body.GetProperty("approvedAt").GetDateTimeOffset());
         Assert.Equal(JsonValueKind.Null, body.GetProperty("rejectedBy").ValueKind);

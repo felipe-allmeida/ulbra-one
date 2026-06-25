@@ -2224,13 +2224,20 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             financialAccountId: string | null;
             isClassified: boolean;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            suggestedAccountingAccountId: string | null;
+            /** @example chart_account_3fa85f64571742199730000000000000 */
+            suggestedFinancialAccountId: string | null;
+            /** Format: double */
+            classificationConfidence: number | null;
+            classificationRationale: string | null;
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
             attachments: components["schemas"]["PayableAttachmentResponse"][];
         };
         /** @enum {string} */
-        PayableStatus: "PendingApproval" | "Approved" | "Rejected" | "Cancelled" | "Settled";
+        PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
         /** @enum {string} */
         PaymentMethod: "Pix" | "Ted" | "Boleto" | "Cash" | "DirectDebit" | "Other";
         PaymentResponse: {

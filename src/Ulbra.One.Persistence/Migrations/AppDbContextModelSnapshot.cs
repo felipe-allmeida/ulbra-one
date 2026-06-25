@@ -1391,6 +1391,15 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
+                    b.Property<double?>("ClassificationConfidence")
+                        .HasColumnType("double precision")
+                        .HasColumnName("classification_confidence");
+
+                    b.Property<string>("ClassificationRationale")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("classification_rationale");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
@@ -1456,9 +1465,19 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("rejection_reason");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("status");
+
+                    b.Property<Guid?>("SuggestedAccountingAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("suggested_accounting_account_id");
+
+                    b.Property<Guid?>("SuggestedFinancialAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("suggested_financial_account_id");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)

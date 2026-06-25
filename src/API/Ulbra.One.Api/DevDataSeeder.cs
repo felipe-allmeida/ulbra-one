@@ -163,15 +163,15 @@ public static class DevDataSeeder
             return p;
         }
 
-        var pLimpeza = PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10); // auto-approved (<= 2000)
+        var pLimpeza = PayableVista(infra, "Serviço de limpeza - mensal", vLimpeza, Cat("Limpeza e conservação"), "NF-LB-0098", 1_800m, 10); // classified then auto-approved → Scheduled (1 800 ≤ 2 000 limit; see classify block below)
         var pGoogle = PayableVista(mkt, "Google Ads - campanha vestibular", vGoogle, Cat("Marketing e captação de alunos"), "NF-2026-0451", 12_000m, -5);
-        if (pGoogle.Status != PayableStatus.Approved) pGoogle.Approve("system", time.GetUtcNow());
+        if (pGoogle.Status != PayableStatus.Scheduled) pGoogle.Approve("system", time.GetUtcNow());
 
         var pEnergiaGravatai = PayableVista(infra, "Conta de energia - Campus Gravataí", vCeee, Cat("Energia elétrica"), "NF-CEEE-77121", 21_300m, 3);
         // Above INFRA's auto-approval limit (2_000), so approve explicitly: its open
         // installment is the counterpart of the seeded Suggested bank transaction and
         // a reconciliation can only confirm against an approved payable.
-        if (pEnergiaGravatai.Status != PayableStatus.Approved) pEnergiaGravatai.Approve("system", time.GetUtcNow());
+        if (pEnergiaGravatai.Status != PayableStatus.Scheduled) pEnergiaGravatai.Approve("system", time.GetUtcNow());
         await finance.Payables.AddRangeAsync(new[]
         {
             // À vista
@@ -218,8 +218,13 @@ public static class DevDataSeeder
 
         if (pEnergiaGravatai.AccountingAccountId == null)
             pEnergiaGravatai.Classify(accEnergia.Id, finEnergia.Id);
+        // pLimpeza: classify first (IsClassified gate), then re-run auto-approval so it advances to Scheduled.
+        // ApplyAutoApproval called at create-time was a silent no-op because IsClassified was false then.
         if (pLimpeza.AccountingAccountId == null)
+        {
             pLimpeza.Classify(accServicos.Id, finServicos.Id);
+            pLimpeza.ApplyAutoApproval(infra.AutoApprovalLimit, time.GetUtcNow()); // → Scheduled (1 800 ≤ 2 000 limit)
+        }
         await finance.SaveChangesAsync(ct);
 
         // ---------- Classification policy (per company, both flags OFF so existing flows are unaffected) ----------

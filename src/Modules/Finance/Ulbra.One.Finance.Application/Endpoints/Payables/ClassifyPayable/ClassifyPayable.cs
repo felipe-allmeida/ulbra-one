@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
@@ -21,7 +23,7 @@ public sealed class ClassifyPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
@@ -30,6 +32,12 @@ public sealed class ClassifyPayable : IEndpoint
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+
+        var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
+        payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
+        if (payable.Status is PayableStatus.Received or PayableStatus.PendingClassification)
+            payable.MarkPendingApproval();
+
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(payable));
     }

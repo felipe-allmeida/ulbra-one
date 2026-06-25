@@ -15,12 +15,12 @@ public class PayableTests
             Payable.GenerateInstallments(total, count, new DateOnly(2026, 7, 10), 1));
 
     [Fact]
-    public void New_payable_totals_installments_and_starts_pending()
+    public void New_payable_totals_installments_and_starts_received()
     {
         var p = NewPayable(100m, 4);
         Assert.Equal(100m, p.TotalAmount);
         Assert.Equal(4, p.Installments.Count);
-        Assert.Equal(PayableStatus.PendingApproval, p.Status);
+        Assert.Equal(PayableStatus.Received, p.Status);
         Assert.All(p.Installments, i => Assert.Equal(InstallmentStatus.Open, i.Status));
     }
 
@@ -33,21 +33,31 @@ public class PayableTests
     }
 
     [Fact]
-    public void Auto_approval_approves_when_total_within_limit()
+    public void Auto_approval_approves_when_classified_and_within_limit()
     {
         var p = NewPayable(500m);
+        p.Classify(Guid.NewGuid(), Guid.NewGuid());
         p.ApplyAutoApproval(1000m, At);
-        Assert.Equal(PayableStatus.Approved, p.Status);
+        Assert.Equal(PayableStatus.Scheduled, p.Status);
         Assert.Equal("system", p.ApprovedBy);
         Assert.Equal(At, p.ApprovedAt);
     }
 
     [Fact]
-    public void Auto_approval_keeps_pending_when_above_limit()
+    public void Auto_approval_keeps_received_when_not_classified()
+    {
+        var p = NewPayable(500m);
+        p.ApplyAutoApproval(1000m, At);
+        Assert.Equal(PayableStatus.Received, p.Status);
+    }
+
+    [Fact]
+    public void Auto_approval_keeps_received_when_above_limit()
     {
         var p = NewPayable(1500m);
+        p.Classify(Guid.NewGuid(), Guid.NewGuid());
         p.ApplyAutoApproval(1000m, At);
-        Assert.Equal(PayableStatus.PendingApproval, p.Status);
+        Assert.Equal(PayableStatus.Received, p.Status);
     }
 
     [Fact]
@@ -109,13 +119,13 @@ public class PayableTests
     }
 
     [Fact]
-    public void Approve_from_pending_succeeds_and_is_idempotent()
+    public void Approve_from_received_succeeds_and_is_idempotent()
     {
         var p = NewPayable(100m);
         p.Approve("u1", At);
-        Assert.Equal(PayableStatus.Approved, p.Status);
+        Assert.Equal(PayableStatus.Scheduled, p.Status);
         p.Approve("u1", At);
-        Assert.Equal(PayableStatus.Approved, p.Status);
+        Assert.Equal(PayableStatus.Scheduled, p.Status);
     }
 
     [Fact]

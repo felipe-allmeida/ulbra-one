@@ -386,11 +386,13 @@ const ptBR = {
     },
     loading: 'Carregando…',
     status: {
-      PendingApproval: 'Pendente',
-      Approved: 'Aprovada',
+      Received: 'Recebida',
+      PendingClassification: 'Aguardando classificação',
+      PendingApproval: 'Aguardando aprovação',
+      Scheduled: 'Agendada',
+      Paid: 'Paga',
       Rejected: 'Rejeitada',
       Cancelled: 'Cancelada',
-      Settled: 'Liquidada',
     },
   },
 
@@ -1024,6 +1026,7 @@ const ptBR = {
     noSuggestion: 'Sem sugestão.',
     suggestionApplied: 'Sugestão aplicada.',
     classified: 'Conta classificada.',
+    aiPrefillHint: 'Sugestão da IA — confirme',
     bulk: {
       selected_one: '{{count}} selecionada',
       selected_other: '{{count}} selecionadas',

@@ -8695,6 +8695,10 @@
           "accountingAccountId",
           "financialAccountId",
           "isClassified",
+          "suggestedAccountingAccountId",
+          "suggestedFinancialAccountId",
+          "classificationConfidence",
+          "classificationRationale",
           "createdAt",
           "installments",
           "attachments"
@@ -8786,6 +8790,25 @@
           "isClassified": {
             "type": "boolean"
           },
+          "suggestedAccountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "suggestedFinancialAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "chart_account_3fa85f64571742199730000000000000"
+          },
+          "classificationConfidence": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "classificationRationale": {
+            "type": "string",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -8807,11 +8830,13 @@
       },
       "PayableStatus": {
         "enum": [
+          "Received",
+          "PendingClassification",
           "PendingApproval",
-          "Approved",
+          "Scheduled",
+          "Paid",
           "Rejected",
-          "Cancelled",
-          "Settled"
+          "Cancelled"
         ],
         "type": "string"
       },
