@@ -23,6 +23,9 @@ public class BankAccount : IAuditable, ISoftDeletable
     /// <summary>Date the <see cref="ReconciledBalance"/> refers to. Movements after this date are added to it.</summary>
     public DateOnly? ReconciledAt { get; private set; }
 
+    /// <summary>CNAB 240 agreement/convenio code assigned by the bank for this account. Empty string when not configured.</summary>
+    public string CnabAgreementCode { get; private set; } = string.Empty;
+
     public bool IsDefaultForPayments { get; private set; }
     public PaymentMethod? DefaultPaymentMethod { get; private set; }
 
@@ -37,18 +40,21 @@ public class BankAccount : IAuditable, ISoftDeletable
     private BankAccount() { }
 
     public BankAccount(Guid companyId, string bankCode, string bankName, string agency, string accountNumber,
-        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance)
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
+        string cnabAgreementCode = "")
     {
         CompanyId = companyId;
-        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance);
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode);
     }
 
     public void Update(string bankCode, string bankName, string agency, string accountNumber,
-        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance) =>
-        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance);
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
+        string cnabAgreementCode = "") =>
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode);
 
     private void Apply(string bankCode, string bankName, string agency, string accountNumber,
-        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance)
+        string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
+        string cnabAgreementCode)
     {
         BankCode = bankCode.Trim();
         BankName = bankName.Trim();
@@ -58,6 +64,7 @@ public class BankAccount : IAuditable, ISoftDeletable
         AccountType = accountType;
         Alias = alias.Trim();
         OpeningBalance = openingBalance;
+        CnabAgreementCode = string.IsNullOrWhiteSpace(cnabAgreementCode) ? "" : cnabAgreementCode.Trim();
     }
 
     /// <summary>Sets the reconciled-balance anchor: the real balance of the account as of a given date.</summary>
