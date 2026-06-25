@@ -21,4 +21,11 @@ describe('PendencyDashboard', () => {
     fireEvent.click(screen.getByText('Aprovação'));
     expect(onCardClick).toHaveBeenCalledWith('approval');
   });
+  it('uses the singular form when count is 1', () => {
+    const one: PendencyCard[] = [
+      { stageKey: 'approval', label: 'Aprovação', icon: <span />, count: 1, totalAmount: 1000 },
+    ];
+    render(<PendencyDashboard cards={one} onCardClick={() => {}} />);
+    expect(screen.getByText('1 título')).toBeInTheDocument();
+  });
 });

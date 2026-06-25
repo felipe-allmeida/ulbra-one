@@ -229,7 +229,8 @@ const ptBR = {
     },
     dashboard: {
       viewPending: 'Ver pendências',
-      itemsCount: '{{count}} títulos',
+      itemsCount_one: '{{count}} título',
+      itemsCount_other: '{{count}} títulos',
     },
     forecast: {
       projectedBalance: 'Saldo projetado',
