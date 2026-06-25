@@ -846,6 +846,10 @@ body {
   background: var(--danger-subtle);
   color: var(--danger);
 }
+.badge-remessa {
+  background: var(--info-subtle);
+  color: var(--info);
+}
 .amount-cell {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
