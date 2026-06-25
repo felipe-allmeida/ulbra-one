@@ -24,6 +24,7 @@ public static class FinanceModule
         // CNAB240 remittance file engine (Santander 033). Pure — no I/O.
         services.AddSingleton<ICnabBankProfile, SantanderCnabProfile>();
         services.AddSingleton<IRemittanceFileGenerator, Cnab240RemittanceWriter>();
+        services.AddSingleton<ICnabReturnParser, Cnab240ReturnParser>();
 
         // Remittance generation use-case.
         services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();

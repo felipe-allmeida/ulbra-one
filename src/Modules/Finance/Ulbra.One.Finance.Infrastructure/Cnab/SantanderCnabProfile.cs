@@ -247,6 +247,77 @@ public sealed class SantanderCnabProfile : ICnabBankProfile
         return b.BuildComplete();
     }
 
+    // ---- Return outcome map ----------------------------------------------------------------
+
+    /// <summary>
+    /// Occurrence codes that indicate the payment was successfully settled by Santander.
+    /// <list type="bullet">
+    ///   <item><c>00</c> — FEBRABAN sentinel: "sem ocorrência" / crédito efetuado (accepted with no errors).</item>
+    ///   <item><c>BD</c> — Santander: "Pagamento Efetuado" (payment settled — most common success code in retorno).</item>
+    ///   <item><c>EB</c> — Santander: "Agendamento Confirmado" (scheduled, treated as eventual-paid at this stage).</item>
+    /// </list>
+    /// 🔶 Homologação flag: confirm these codes against a real Santander .RET file in homologação
+    /// before using <see cref="ReturnOutcome.Paid"/> for automated accounting entries.
+    /// </summary>
+    private static readonly IReadOnlySet<string> SantanderPaidCodes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "00", // FEBRABAN: sem ocorrência / aceito sem erros
+        "BD", // Santander: pagamento efetuado
+        "EB", // Santander: agendamento confirmado
+    };
+
+    /// <summary>
+    /// Occurrence codes that indicate the payment was rejected by Santander.
+    /// <list type="bullet">
+    ///   <item><c>AG</c> — Santander: "Não Efetuado" (payment not made — generic bank rejection).</item>
+    ///   <item><c>02</c> — FEBRABAN/Santander: "Débito não efetuado — insuficiência de fundos".</item>
+    ///   <item><c>03</c> — FEBRABAN: "Banco inválido".</item>
+    ///   <item><c>05</c> — FEBRABAN: "Agência inválida".</item>
+    ///   <item><c>06</c> — FEBRABAN: "Número da conta inválido/encerrada".</item>
+    ///   <item><c>09</c> — FEBRABAN: "Dados bancários inconsistentes".</item>
+    ///   <item><c>10</c> — FEBRABAN: "Produto de empresa bloqueado".</item>
+    ///   <item><c>AB</c> — Santander: "Rejeitado — erro de favorecido".</item>
+    ///   <item><c>AC</c> — Santander: "Rejeitado — dado do favorecido inválido".</item>
+    /// </list>
+    /// 🔶 Homologação flag: this set is best-effort from the FEBRABAN v10.11 table and
+    /// Santander YLEC_2403 v11.3.1. Validate against live .RET files in homologação.
+    /// </summary>
+    private static readonly IReadOnlySet<string> SantanderRejectedCodes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "AG", // Santander: não efetuado (generic bank rejection)
+        "02", // FEBRABAN: débito não efetuado — insuficiência de fundos
+        "03", // FEBRABAN: banco inválido
+        "05", // FEBRABAN: agência inválida
+        "06", // FEBRABAN: número da conta inválido / encerrada
+        "09", // FEBRABAN: dados bancários inconsistentes
+        "10", // FEBRABAN: produto bloqueado
+        "AB", // Santander: rejeitado — erro de favorecido
+        "AC", // Santander: rejeitado — dado do favorecido inválido
+    };
+
+    /// <inheritdoc/>
+    public ReturnOutcome OutcomeFor(IReadOnlyList<string> occurrenceCodes)
+    {
+        // A reject code anywhere in the list takes precedence (bank may combine codes).
+        foreach (var code in occurrenceCodes)
+        {
+            if (SantanderRejectedCodes.Contains(code))
+                return ReturnOutcome.Rejected;
+        }
+
+        // If every non-blank code is in the paid set → Paid.
+        if (occurrenceCodes.Count > 0)
+        {
+            foreach (var code in occurrenceCodes)
+            {
+                if (SantanderPaidCodes.Contains(code))
+                    return ReturnOutcome.Paid;
+            }
+        }
+
+        return ReturnOutcome.Unknown;
+    }
+
     // ---- Helpers ----------------------------------------------------------------------------
 
     /// <summary>
