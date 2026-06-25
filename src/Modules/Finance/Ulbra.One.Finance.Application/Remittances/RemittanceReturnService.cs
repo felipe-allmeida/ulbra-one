@@ -73,6 +73,7 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
             // re-processing of a return file (idempotency).
             var candidates = await _uow.Set<RemittanceLine>()
                 .Where(l => l.Reference == entry.Reference && l.Status == RemittanceLineStatus.Pending)
+                .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync(ct);
 
             // Among Pending candidates, prefer lines whose installment is InRemittance.
@@ -189,15 +190,24 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
 
                 var installment = payable?.FindInstallment(line.InstallmentId);
 
-                if (installment is not null)
-                {
-                    installment.ReleaseFromRemittance();
-                }
-                else
+                if (installment is null)
                 {
                     _logger.LogWarning(
                         "ProcessReturn: line {Id} rejected — installment {InstallmentId} not found; skipping release.",
                         line.Id, line.InstallmentId);
+                }
+                else if (installment.Status != InstallmentStatus.InRemittance)
+                {
+                    _logger.LogWarning(
+                        "ProcessReturn: line {Id} rejected — installment {InstallmentId} in unexpected state {Status}; manual review required.",
+                        line.Id, line.InstallmentId, installment.Status);
+                    divergent++;
+                    notes.Add($"Linha {line.Reference}: parcela em estado inesperado ({installment.Status}), revisão manual");
+                    continue;
+                }
+                else
+                {
+                    installment.ReleaseFromRemittance();
                 }
 
                 var reason = entry.OccurrenceCodes.Count > 0
@@ -325,12 +335,21 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
 
         var installment = payable?.FindInstallment(line.InstallmentId);
 
-        if (installment is not null)
-            installment.ReleaseFromRemittance();
-        else
+        if (installment is null)
+        {
             _logger.LogWarning(
                 "MarkLineReturned: installment {InstallmentId} not found for line {LineId}; skipping release.",
                 line.InstallmentId, line.Id);
+        }
+        else if (installment.Status != InstallmentStatus.InRemittance)
+        {
+            return Result.Failure(Error.Failure("RemittanceLine.InstallmentNotInRemittance",
+                $"Installment {line.InstallmentId} is in state {installment.Status} — expected InRemittance. Manual review required."));
+        }
+        else
+        {
+            installment.ReleaseFromRemittance();
+        }
 
         line.MarkReturned(reason);
         remittance.Recompute();

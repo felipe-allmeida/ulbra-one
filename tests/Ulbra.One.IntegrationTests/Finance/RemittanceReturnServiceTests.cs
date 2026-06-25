@@ -389,6 +389,89 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
         Assert.Equal("RemittanceLine.NotPending", result.Error.Code);
     }
 
+    [Fact]
+    public async Task MarkLineReturnedAsync_PendingLine_ReleasesInstallmentAndMarksReturned()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(factory, client);
+
+        var remittance = await GenerateRemittanceAsync(factory, seed.CompanyId, seed.BankAccountId);
+        // Pick the TED line — installment is InRemittance after generation.
+        var lineA = remittance.Lines.First(l => l.PayableId == seed.PayableAId);
+        var lineB = remittance.Lines.First(l => l.PayableId == seed.PayableBId);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
+        var result = await svc.MarkLineReturnedAsync(lineA.Id, "Manual rejection test", CancellationToken.None);
+
+        Assert.True(result.IsSuccess, $"MarkLineReturnedAsync failed: {result.Error}");
+
+        // Also mark lineB returned so no Pending lines remain in the shared DB.
+        // Tests in the same collection share one Postgres container; leaving Pending lines with
+        // sequence-scoped references (e.g. "00000100002") would collide with subsequent tests.
+        var resultB = await svc.MarkLineReturnedAsync(lineB.Id, "Cleanup rejection", CancellationToken.None);
+        Assert.True(resultB.IsSuccess, $"MarkLineReturnedAsync lineB cleanup failed: {resultB.Error}");
+
+        // Verify DB state in a new scope.
+        await using var verifyScope = factory.Services.CreateAsyncScope();
+        var uow = verifyScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        // LineA must be Returned with the specified reason.
+        var verifyLine = await uow.ReadSet<RemittanceLine>().FirstAsync(l => l.Id == lineA.Id);
+        Assert.Equal(RemittanceLineStatus.Returned, verifyLine.Status);
+        Assert.Equal("Manual rejection test", verifyLine.ReturnReason);
+
+        // InstallmentA must be back to Open.
+        var payableA = await uow.ReadSet<Payable>()
+            .Include(p => p.Installments)
+            .FirstAsync(p => p.Id == seed.PayableAId);
+        Assert.All(payableA.Installments, i => Assert.Equal(InstallmentStatus.Open, i.Status));
+
+        // Remittance fully recomputed — both lines Returned, no Pending → PartiallyReturned.
+        var verifyRemittance = await uow.ReadSet<Remittance>()
+            .FirstAsync(r => r.Id == remittance.Id);
+        Assert.Equal(RemittanceStatus.PartiallyReturned, verifyRemittance.Status);
+    }
+
+    [Fact]
+    public async Task MarkLineReturnedAsync_NonPendingLine_ReturnsFailure()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(factory, client);
+
+        var remittance = await GenerateRemittanceAsync(factory, seed.CompanyId, seed.BankAccountId);
+        var lineA = remittance.Lines.First(l => l.PayableId == seed.PayableAId);
+        var lineB = remittance.Lines.First(l => l.PayableId == seed.PayableBId);
+
+        // Mark both lines returned to leave a clean DB; lineA is returned first so it becomes non-Pending.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
+            var r = await svc.MarkLineReturnedAsync(lineA.Id, "First rejection", CancellationToken.None);
+            Assert.True(r.IsSuccess);
+            // Cleanup lineB so no Pending lines remain in the shared DB.
+            var rb = await svc.MarkLineReturnedAsync(lineB.Id, "Cleanup rejection", CancellationToken.None);
+            Assert.True(rb.IsSuccess);
+        }
+
+        // Attempt to mark lineA returned again — line is no longer Pending.
+        await using var scope2 = factory.Services.CreateAsyncScope();
+        var svc2 = scope2.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
+        var result = await svc2.MarkLineReturnedAsync(lineA.Id, "Second rejection", CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("RemittanceLine.NotPending", result.Error.Code);
+
+        // Verify no state change occurred — lineA still Returned with original reason.
+        await using var verifyScope = factory.Services.CreateAsyncScope();
+        var uow = verifyScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var verifyLine = await uow.ReadSet<RemittanceLine>().FirstAsync(l => l.Id == lineA.Id);
+        Assert.Equal(RemittanceLineStatus.Returned, verifyLine.Status);
+        Assert.Equal("First rejection", verifyLine.ReturnReason);
+    }
+
     // -----------------------------------------------------------------------
     // CNAB record builders (mirrors Cnab240ReturnParserTests golden file)
     // -----------------------------------------------------------------------
