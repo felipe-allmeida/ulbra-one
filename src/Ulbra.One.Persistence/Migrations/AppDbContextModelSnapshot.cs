@@ -856,6 +856,12 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("bank_name");
 
+                    b.Property<string>("CnabAgreementCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("cnab_agreement_code");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
@@ -2038,6 +2044,223 @@ namespace Ulbra.One.Persistence.Migrations
                     b.ToTable("receivable_installments", "finance");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Remittance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BankCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("bank_code");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("FileName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long?>("FileSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size_bytes");
+
+                    b.Property<string>("FileStorageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("file_storage_key");
+
+                    b.Property<DateTimeOffset>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at");
+
+                    b.Property<string>("GeneratedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("generated_by");
+
+                    b.Property<Guid>("PayingBankAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("paying_bank_account_id");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence_number");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_remittances");
+
+                    b.HasIndex("CompanyId", "PayingBankAccountId", "SequenceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_remittances_company_id_paying_bank_account_id_sequence_numb")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.ToTable("remittances", "finance");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.RemittanceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("FavoredAccount")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("favored_account");
+
+                    b.Property<string>("FavoredAccountDigit")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("favored_account_digit");
+
+                    b.Property<string>("FavoredAgency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("favored_agency");
+
+                    b.Property<string>("FavoredBankCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("favored_bank_code");
+
+                    b.Property<string>("FavoredDocument")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("favored_document");
+
+                    b.Property<string>("FavoredName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("favored_name");
+
+                    b.Property<string>("FavoredPixKey")
+                        .IsRequired()
+                        .HasMaxLength(140)
+                        .HasColumnType("character varying(140)")
+                        .HasColumnName("favored_pix_key");
+
+                    b.Property<Guid>("InstallmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("installment_id");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("method");
+
+                    b.Property<Guid>("PayableId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payable_id");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reference");
+
+                    b.Property<Guid>("RemittanceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("remittance_id");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_remittance_lines");
+
+                    b.HasIndex("RemittanceId")
+                        .HasDatabaseName("ix_remittance_lines_remittance_id");
+
+                    b.ToTable("remittance_lines", "finance");
+                });
+
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2579,6 +2802,16 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasConstraintName("fk_receivable_installments_receivables_receivable_id");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.RemittanceLine", b =>
+                {
+                    b.HasOne("Ulbra.One.Finance.Domain.Entities.Remittance", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("RemittanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_remittance_lines_remittances_remittance_id");
+                });
+
             modelBuilder.Entity("Ulbra.One.Registry.Domain.Entities.CustomerEntity", b =>
                 {
                     b.OwnsOne("Ulbra.One.Registry.Domain.ValueObjects.Address", "Address", b1 =>
@@ -2838,6 +3071,11 @@ namespace Ulbra.One.Persistence.Migrations
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ReceivableInstallment", b =>
                 {
                     b.Navigation("Receipts");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Remittance", b =>
+                {
+                    b.Navigation("Lines");
                 });
 #pragma warning restore 612, 618
         }
