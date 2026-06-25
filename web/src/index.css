@@ -2936,3 +2936,15 @@ tbody tr:last-child td {
 .forecast-bar { width: 100%; background: var(--brand, #4f46e5); border-radius: 6px 6px 0 0; min-height: 4px; }
 .forecast-bar.below { background: #ef4444; }
 .forecast-bar-label { font-size: 11px; color: var(--muted, #6b7280); }
+
+/* workflow components — element hooks */
+.stage-tab-label { font-weight: 500; }
+.pendency-card-icon { display: inline-flex; color: var(--brand, #4f46e5); }
+.pendency-card-label { font-weight: 600; }
+.audit-event-body { display: flex; flex-direction: column; gap: 2px; }
+.audit-event-actor { font-weight: 500; }
+.audit-event-time { white-space: nowrap; }
+.audit-timeline-skeleton { width: 100%; }
+.forecast-banner-loading { background: #f3f4f6; }
+.forecast-banner-label { opacity: .85; }
+.forecast-impact-label { color: var(--muted, #6b7280); }
