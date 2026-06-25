@@ -1,0 +1,50 @@
+using Ulbra.One.Finance.Domain;
+using Ulbra.One.Finance.Domain.Entities;
+
+namespace Ulbra.One.UnitTests.Finance;
+
+/// <summary>
+/// Builds real <see cref="Payable"/> aggregates in well-known states for unit tests.
+/// Uses the real constructor and domain method signatures — never bypasses domain logic.
+/// </summary>
+public static class PayableTestFactory
+{
+    private static Payable BasePayable() =>
+        new(Guid.NewGuid(), PayableOrigin.Manual, Guid.NewGuid(), "Fornecedor Teste",
+            documentNumber: "NF-001", issueDate: new DateOnly(2026, 6, 1), description: "Teste",
+            costCenterId: Guid.NewGuid(), categoryId: null,
+            Payable.GenerateInstallments(100m, 1, new DateOnly(2026, 7, 1), 1));
+
+    /// <summary>Payable in the <c>Received</c> state (created, not yet classified or approved).</summary>
+    public static Payable Received(string actorId, DateTimeOffset createdAt)
+    {
+        var p = BasePayable();
+        p.MarkCreated(actorId, createdAt);
+        return p;
+    }
+
+    /// <summary>
+    /// Payable in the <c>Scheduled</c> state (created → classified → approved).
+    /// The <c>Classified</c> event has no dedicated entity timestamp; the builder uses <c>UpdatedAt</c>,
+    /// which is set by <c>MarkCreated</c> and not altered by <c>Classify</c>/<c>Approve</c> here
+    /// (unit tests don't call <c>MarkUpdated</c>), so Classified and Created share the same timestamp.
+    /// </summary>
+    public static Payable Scheduled(string actorId, DateTimeOffset createdAt, DateTimeOffset approvedAt,
+        Guid accountingAccountId, Guid financialAccountId)
+    {
+        var p = BasePayable();
+        p.MarkCreated(actorId, createdAt);
+        p.Classify(accountingAccountId, financialAccountId);
+        p.Approve(actorId, approvedAt);
+        return p;
+    }
+
+    /// <summary>Payable in the <c>Cancelled</c> state (created → cancelled with reason).</summary>
+    public static Payable Cancelled(DateTimeOffset createdAt, string reason)
+    {
+        var p = BasePayable();
+        p.MarkCreated("system", createdAt);
+        p.Cancel(reason);
+        return p;
+    }
+}
