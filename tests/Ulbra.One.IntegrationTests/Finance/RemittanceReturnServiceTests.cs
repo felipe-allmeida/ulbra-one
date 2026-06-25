@@ -215,7 +215,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
 
         await using var scope = factory.Services.CreateAsyncScope();
         var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
-        var processResult = await svc.ProcessReturnAsync(retBytes, "test.ret", "operator", Guid.NewGuid(), CancellationToken.None);
+        var processResult = await svc.ProcessReturnAsync(remittance.Id, retBytes, "test.ret", "operator", Guid.NewGuid(), CancellationToken.None);
         Assert.True(processResult.IsSuccess, $"ProcessReturn failed: {processResult.Error}");
 
         var outcome = processResult.Value;
@@ -279,7 +279,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
         await using (var scope = factory.Services.CreateAsyncScope())
         {
             var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
-            var r = await svc.ProcessReturnAsync(retBytes, "test.ret", "op", Guid.NewGuid(), CancellationToken.None);
+            var r = await svc.ProcessReturnAsync(remittance.Id, retBytes, "test.ret", "op", Guid.NewGuid(), CancellationToken.None);
             Assert.True(r.IsSuccess);
         }
 
@@ -287,7 +287,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
         await using (var scope = factory.Services.CreateAsyncScope())
         {
             var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
-            var r = await svc.ProcessReturnAsync(retBytes, "test.ret", "op", Guid.NewGuid(), CancellationToken.None);
+            var r = await svc.ProcessReturnAsync(remittance.Id, retBytes, "test.ret", "op", Guid.NewGuid(), CancellationToken.None);
             Assert.True(r.IsSuccess);
         }
 
@@ -320,11 +320,74 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
 
         await using var scope = factory.Services.CreateAsyncScope();
         var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
-        var result = await svc.ProcessReturnAsync(retBytes, "test-unmatched.ret", "op", Guid.NewGuid(), CancellationToken.None);
+        var result = await svc.ProcessReturnAsync(remittance.Id, retBytes, "test-unmatched.ret", "op", Guid.NewGuid(), CancellationToken.None);
 
         Assert.True(result.IsSuccess, $"Expected success: {result.Error}");
         Assert.Equal(1, result.Value.Unmatched); // the extra fake reference
         Assert.Equal(2, result.Value.Matched);   // lineA + lineB
+    }
+
+    [Fact]
+    public async Task ProcessReturnAsync_ScopedToRemittance_DoesNotTouchSiblingRemittanceLines()
+    {
+        // Multitenant safety: two independent remittances (A and B) seeded in the same Postgres container.
+        // Both generate lines whose References start from the same sequence (000001xxxxx) because each
+        // remittance starts at sequence 1.  Processing remittance A's .RET must NOT touch remittance B's
+        // lines, even though their References are lexically identical.
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        // Seed two independent companies / bank accounts / payables.
+        var seedA = await SeedAsync(factory, client);
+        var seedB = await SeedAsync(factory, client);
+
+        // Generate a remittance for each company.
+        var remittanceA = await GenerateRemittanceAsync(factory, seedA.CompanyId, seedA.BankAccountId);
+        var remittanceB = await GenerateRemittanceAsync(factory, seedB.CompanyId, seedB.BankAccountId);
+
+        Assert.True(remittanceA.Lines.Count > 0, "Remittance A must have at least one line.");
+        Assert.True(remittanceB.Lines.Count > 0, "Remittance B must have at least one line.");
+
+        // Pick the first line from each remittance.
+        var lineA1 = remittanceA.Lines.First(l => l.PayableId == seedA.PayableAId);
+        var lineB1 = remittanceB.Lines.First(l => l.PayableId == seedB.PayableAId);
+
+        // Both lines should have the same Reference because the sequence counters restart per remittance.
+        // If they differ (rare, due to prior test data) the test still proves isolation — a file with
+        // lineA1's reference will match A's line and leave B's line Pending regardless.
+
+        // Build a .RET that marks lineA1 as paid and lineA's second line (if any) as rejected.
+        var lineA2 = remittanceA.Lines.FirstOrDefault(l => l.PayableId == seedA.PayableBId);
+        var retBytesA = lineA2 is not null
+            ? BuildReturnFile(lineA1.Reference, lineA1.Amount, lineA2.Reference)
+            : BuildReturnFile(lineA1.Reference, lineA1.Amount, "XXXXXXXXXXXXXXXXXX00");
+
+        // Process remittance A's .RET — scoped to remittanceA.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var svc = scope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
+        var result = await svc.ProcessReturnAsync(remittanceA.Id, retBytesA, "a.ret", "op", Guid.NewGuid(), CancellationToken.None);
+        Assert.True(result.IsSuccess, $"ProcessReturn for A failed: {result.Error}");
+
+        // Verify remittance B's lines are untouched — all still Pending.
+        await using var verifyScope = factory.Services.CreateAsyncScope();
+        var uow = verifyScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        foreach (var lineB in remittanceB.Lines)
+        {
+            var dbLine = await uow.ReadSet<RemittanceLine>().FirstAsync(l => l.Id == lineB.Id);
+            Assert.True(dbLine.Status == RemittanceLineStatus.Pending,
+                $"Remittance B line {lineB.Id} (ref '{lineB.Reference}') should still be Pending after processing A's .RET, but was {dbLine.Status}.");
+        }
+
+        // Also verify remittance A's lineA1 was actually paid (proves the test exercised the paid path).
+        var dbLineA1 = await uow.ReadSet<RemittanceLine>().FirstAsync(l => l.Id == lineA1.Id);
+        Assert.Equal(RemittanceLineStatus.Paid, dbLineA1.Status);
+
+        // Clean up B's lines so remaining tests in the shared container see no orphaned Pending refs.
+        await using var cleanupScope = factory.Services.CreateAsyncScope();
+        var cleanupSvc = cleanupScope.ServiceProvider.GetRequiredService<IRemittanceReturnService>();
+        foreach (var lineB in remittanceB.Lines)
+            await cleanupSvc.MarkLineReturnedAsync(lineB.Id, "Collision-test cleanup", CancellationToken.None);
     }
 
     [Fact]

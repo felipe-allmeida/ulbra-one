@@ -15,7 +15,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Remittances.ImportRemittanceRe
 /// <c>POST /remittances/{id}/return</c> — uploads and processes a CNAB240 return (.RET) file.
 /// Reads the file bytes from a multipart request, delegates parsing + conciliation to
 /// <see cref="IRemittanceReturnService.ProcessReturnAsync"/> and returns the aggregate outcome.
-/// The <c>{id}</c> route segment scopes the URL; the service matches lines by Reference globally.
+/// The <c>{id}</c> route segment scopes the line-matching to this remittance only (multitenant safety).
 /// </summary>
 public sealed class ImportRemittanceReturn : IEndpoint
 {
@@ -38,13 +38,14 @@ public sealed class ImportRemittanceReturn : IEndpoint
             return TypedResults.Problem(detail: "File is empty.", statusCode: 400, title: "File.Empty");
 
         await using var stream = file.OpenReadStream();
-        var bytes = new byte[file.Length];
-        _ = await stream.ReadAsync(bytes, ct);
+        using var ms = new MemoryStream((int)file.Length);
+        await stream.CopyToAsync(ms, ct);
+        var bytes = ms.ToArray();
 
         var processedById = Guid.TryParse(user.UserId, out var uid) ? uid : SystemActor.Id;
         var processedBy = user.UserName ?? user.UserEmail ?? user.UserId;
 
-        var result = await service.ProcessReturnAsync(bytes, file.FileName, processedBy, processedById, ct);
+        var result = await service.ProcessReturnAsync(id.Value, bytes, file.FileName, processedBy, processedById, ct);
 
         if (result.IsFailure)
             return TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code);

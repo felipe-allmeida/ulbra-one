@@ -18,13 +18,17 @@ public interface IRemittanceReturnService
     /// Parse, match and reconcile a CNAB240 return file.
     /// Stores the raw file, creates a <see cref="Finance.Domain.Entities.RemittanceReturn"/> history record,
     /// updates <see cref="Finance.Domain.Entities.RemittanceLine"/> statuses and registers payments — all in one UoW commit.
+    /// Line matching is scoped to <paramref name="remittanceId"/> so that two paying accounts that produce
+    /// the same <c>Reference</c> value cannot cross-contaminate each other's lines (multitenant safety).
     /// </summary>
+    /// <param name="remittanceId">Id of the remittance whose .RET file is being uploaded (from the route).</param>
     /// <param name="file">Raw bytes of the .RET file.</param>
     /// <param name="fileName">Original file name (for storage and audit).</param>
     /// <param name="processedBy">Human-readable name/login of the operator who uploaded the file.</param>
     /// <param name="processedById">Id of the operator (for Payment.CreatedById audit).</param>
     /// <param name="ct">Cancellation token.</param>
     Task<Result<RemittanceReturnOutcome>> ProcessReturnAsync(
+        Guid remittanceId,
         byte[] file,
         string fileName,
         string processedBy,

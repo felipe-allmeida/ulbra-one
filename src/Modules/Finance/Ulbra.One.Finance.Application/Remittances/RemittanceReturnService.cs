@@ -45,12 +45,22 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
 
     /// <inheritdoc/>
     public async Task<Result<RemittanceReturnOutcome>> ProcessReturnAsync(
+        Guid remittanceId,
         byte[] file,
         string fileName,
         string processedBy,
         Guid processedById,
         CancellationToken ct)
     {
+        // Load and validate the remittance up front — it is the scope of all line matches.
+        var remittance = await _uow.Set<Remittance>()
+            .Include(r => r.Lines)
+            .FirstOrDefaultAsync(r => r.Id == remittanceId, ct);
+
+        if (remittance is null)
+            return Result.Failure<RemittanceReturnOutcome>(
+                Error.NotFound("Remittance.NotFound", $"Remittance {remittanceId} not found."));
+
         var now = _clock.GetUtcNow();
         var today = DateOnly.FromDateTime(now.UtcDateTime);
 
@@ -59,43 +69,23 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
         int matched = 0, paid = 0, returned = 0, unmatched = 0, divergent = 0;
         var notes = new List<string>();
 
-        // Track which remittances were touched so we can Recompute() each once.
-        var touchedRemittances = new Dictionary<Guid, Remittance>();
-
         foreach (var entry in entries)
         {
-            // Match by Reference (tracked — we will mutate the line).
-            // Load all candidates, then prefer the one whose installment is InRemittance (actively in a
-            // live remittance that hasn't been reconciled). This resolves ambiguity when multiple
-            // remittances share the same sequence-scoped reference (e.g. in integration-test databases
-            // with many companies, or when a reference was reused after a cancel+resubmit cycle).
-            // If no InRemittance candidate is found, fall back to the first Pending line to handle
-            // re-processing of a return file (idempotency).
-            var candidates = await _uow.Set<RemittanceLine>()
-                .Where(l => l.Reference == entry.Reference && l.Status == RemittanceLineStatus.Pending)
-                .OrderByDescending(l => l.CreatedAt)
-                .ToListAsync(ct);
-
-            // Among Pending candidates, prefer lines whose installment is InRemittance.
-            RemittanceLine? line = null;
-            foreach (var candidate in candidates)
-            {
-                var installment = await _uow.ReadSet<Installment>()
-                    .FirstOrDefaultAsync(i => i.Id == candidate.InstallmentId, ct);
-                if (installment?.Status == InstallmentStatus.InRemittance)
-                {
-                    line = candidate;
-                    break;
-                }
-            }
-            // Fall back: any Pending candidate.
-            line ??= candidates.FirstOrDefault();
+            // Match by Reference scoped to this remittance — within one remittance the Reference is
+            // unique, so a single Pending match is expected. Scoping prevents cross-remittance
+            // (multitenant) contamination: two paying accounts may produce identical Reference values.
+            var line = await _uow.Set<RemittanceLine>()
+                .FirstOrDefaultAsync(l => l.RemittanceId == remittanceId
+                    && l.Reference == entry.Reference
+                    && l.Status == RemittanceLineStatus.Pending, ct);
 
             if (line is null)
             {
-                // No Pending match — check for an already-processed line (idempotent re-run).
+                // No Pending match within this remittance — check for an already-processed line
+                // (idempotent re-run of the same .RET file).
                 var processedLine = await _uow.Set<RemittanceLine>()
-                    .FirstOrDefaultAsync(l => l.Reference == entry.Reference
+                    .FirstOrDefaultAsync(l => l.RemittanceId == remittanceId
+                        && l.Reference == entry.Reference
                         && l.Status != RemittanceLineStatus.Pending, ct);
                 if (processedLine is not null)
                 {
@@ -106,32 +96,12 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
                 }
 
                 unmatched++;
-                _logger.LogDebug("ProcessReturn: unmatched reference '{Ref}'.", entry.Reference);
+                _logger.LogDebug("ProcessReturn: unmatched reference '{Ref}' in remittance {RemittanceId}.", entry.Reference, remittanceId);
                 continue;
             }
 
-            // At this point line.Status == Pending (guaranteed by the candidates query).
+            // At this point line.Status == Pending (guaranteed by the query above).
             matched++;
-
-            // Load the remittance (tracked) to Recompute() later.
-            if (!touchedRemittances.TryGetValue(line.RemittanceId, out var remittance))
-            {
-                remittance = await _uow.Set<Remittance>()
-                    .Include(r => r.Lines)
-                    .FirstOrDefaultAsync(r => r.Id == line.RemittanceId, ct);
-
-                if (remittance is null)
-                {
-                    _logger.LogWarning(
-                        "ProcessReturn: line {Id} references remittance {RemittanceId} which does not exist — skipping line.",
-                        line.Id, line.RemittanceId);
-                    unmatched++;
-                    matched--;
-                    continue;
-                }
-
-                touchedRemittances[remittance.Id] = remittance;
-            }
 
             var outcome = _outcomeResolver.OutcomeFor(entry.OccurrenceCodes);
 
@@ -228,18 +198,14 @@ public sealed class RemittanceReturnService : IRemittanceReturnService
             }
         }
 
-        // Recompute status on all touched remittances.
-        foreach (var remittance in touchedRemittances.Values)
-            remittance.Recompute();
+        // Recompute status on the remittance (all line mutations are scoped to it).
+        remittance.Recompute();
 
         // Store the raw .RET file.
         var storageKey = await _storage.SaveAsync(fileName, new MemoryStream(file), ct);
 
-        // Determine companyId from the first touched remittance (or Guid.Empty if none).
-        var companyId = touchedRemittances.Values.FirstOrDefault()?.CompanyId ?? Guid.Empty;
-
         var returnRecord = RemittanceReturn.Create(
-            companyId: companyId,
+            companyId: remittance.CompanyId,
             fileStorageKey: storageKey,
             fileName: fileName,
             matchedCount: matched,
