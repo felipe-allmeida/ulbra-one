@@ -101,6 +101,10 @@ export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
 
+// ---------- Withholdings (Retenções) ----------
+export type WithholdingTaxType = Schemas['WithholdingTaxType'];
+export type PayableWithholding = Schemas['PayableWithholdingResponse'];
+
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
 
@@ -536,6 +540,10 @@ export const api = {
     `${BASE_URL}/payables/${id}/attachments/${attachmentId}`,
   deletePayableAttachment: (id: string, attachmentId: string) =>
     request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
+  setPayableWithholdings: (
+    id: string,
+    items: { taxType: Schemas['WithholdingTaxType']; baseAmount: number; rate?: number | null; amount: number }[],
+  ) => request<Payable>(`/payables/${id}/withholdings`, { method: 'PUT', body: JSON.stringify({ items }) }),
 
   // ---------- Fiscal documents (leitor de NF) ----------
   /** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */

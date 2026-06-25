@@ -32,8 +32,7 @@ public sealed class SetWithholdings : IEndpoint
             .RequireAuthorization()
             .Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req, IUnitOfWork uow, CancellationToken ct)
     {
