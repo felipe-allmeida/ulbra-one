@@ -89,6 +89,35 @@ public static class DevDataSeeder
             logger.LogInformation("Dev seed: 3 bank accounts seeded.");
         }
 
+        // Make the demo Santander account able to generate CNAB payment remittances: it needs a
+        // CNAB agreement code (convênio) + a default payment method. Idempotent — also enriches a
+        // pre-existing DB (the block above is skipped once any account exists), so an already-seeded
+        // environment becomes remittance-ready on the next startup without a DB reset.
+        var payerAccount = await finance.BankAccounts
+            .FirstOrDefaultAsync(b => b.CompanyId == ulbra.Id && b.BankCode == "033", ct);
+        if (payerAccount is not null)
+        {
+            var changed = false;
+            if (string.IsNullOrWhiteSpace(payerAccount.CnabAgreementCode))
+            {
+                payerAccount.Update(payerAccount.BankCode, payerAccount.BankName, payerAccount.Agency,
+                    payerAccount.AccountNumber, payerAccount.AccountDigit, payerAccount.AccountType,
+                    payerAccount.Alias, payerAccount.OpeningBalance, "1234567");
+                changed = true;
+            }
+            // A payment method must resolve for an installment to be eligible (payable override OR the
+            // paying account's default). Mark this account the default payer with TED so the demo payables
+            // (no per-payable method) resolve to TED and become eligible.
+            var hasDefaultPayer = await finance.BankAccounts
+                .AnyAsync(b => b.CompanyId == ulbra.Id && b.IsDefaultForPayments, ct);
+            if (!hasDefaultPayer) { payerAccount.SetAsDefaultPayer(PaymentMethod.Ted); changed = true; }
+            if (changed)
+            {
+                await finance.SaveChangesAsync(ct);
+                logger.LogInformation("Dev seed: Santander account set up for CNAB remittance (convênio + default payer TED).");
+            }
+        }
+
         // ---------- Vendors ----------
         Address Addr(string cep, string street, string number, string bairro, string city, string uf) =>
             new(cep, street, number, null, bairro, city, uf);
