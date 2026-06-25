@@ -152,4 +152,58 @@ public static class FinanceSeed
         });
         res.EnsureSuccessStatusCode();
     }
+
+    public static async Task<string> CreateCustomerAsync(HttpClient client, string companyId, string name)
+    {
+        var res = await client.PostAsJsonAsync("/api/customers", new
+        {
+            companyId,
+            personType = 1,
+            name,
+            tradeName = name,
+            document = RandomCnpj(),
+            email = "financeiro@hu.com",
+            phone = "5133334444",
+            address = (object?)null,
+            creditLimit = (decimal?)null,
+        });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    /// <summary>
+    /// Creates a single-installment receivable. Returns (receivableId, firstInstallmentId).
+    /// </summary>
+    public static async Task<(string ReceivableId, string InstallmentId)> CreateReceivableAsync(
+        HttpClient client, string companyId, string payerId, string costCenterId, DateOnly dueDate, decimal amount)
+    {
+        var createRes = await client.PostAsJsonAsync("/api/receivables", new
+        {
+            companyId,
+            payerId,
+            costCenterId,
+            description = "Mensalidade",
+            installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+        });
+        createRes.EnsureSuccessStatusCode();
+        var body = await ReadJson(createRes);
+        var receivableId = body.GetProperty("id").GetString()!;
+
+        var detail = await ReadJson(await client.GetAsync($"/api/receivables/{receivableId}"));
+        var installmentId = detail.GetProperty("installments")[0].GetProperty("id").GetString()!;
+
+        return (receivableId, installmentId);
+    }
+
+    public static async Task RegisterReceiptAsync(HttpClient client, string receivableId, string installmentId, string bankId, decimal amount, DateOnly date)
+    {
+        var res = await client.PostAsJsonAsync($"/api/receivables/{receivableId}/installments/{installmentId}/receipts", new
+        {
+            receiptDate = date.ToString("yyyy-MM-dd"),
+            amount,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        res.EnsureSuccessStatusCode();
+    }
 }

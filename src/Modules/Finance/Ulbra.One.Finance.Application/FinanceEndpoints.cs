@@ -55,6 +55,7 @@ using Ulbra.One.Finance.Application.Endpoints.Receivables.ListReceivables;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.RegisterReceipt;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.ReverseReceipt;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UpdateReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.StageSummary;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UploadReceiptProof;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
@@ -126,6 +127,7 @@ public static class FinanceEndpoints
         receivables.MapEndpoint<ReverseReceipt>();
         receivables.MapEndpoint<UploadReceiptProof>();
         receivables.MapEndpoint<DownloadReceiptProof>();
+        receivables.MapEndpoint<GetReceivableStageSummary>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");
         bankAccounts.MapEndpoint<ListBankAccounts>();
