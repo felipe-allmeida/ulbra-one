@@ -256,11 +256,12 @@ public sealed class SantanderCnabProfile : ICnabBankProfile
     private string AgreementField(RemittancePayerInfo payer)
     {
         var bank = BankCode.PadLeft(4, '0');                  // 0033
-        var agency = OnlyDigits(payer.Agency).PadLeft(4, '0')[..4];
+        var ag = OnlyDigits(payer.Agency);
+        ag = ag.Length >= 4 ? ag[^4..] : ag.PadLeft(4, '0');
         var agreement = OnlyDigits(payer.AgreementCode).PadLeft(12, '0');
         if (agreement.Length > 12)
             agreement = agreement[^12..];
-        return bank + agency + agreement;
+        return bank + ag + agreement;
     }
 
     /// <summary>Favorecido inscription type: 1 = CPF (11 digits), 2 = CNPJ (14 digits), 0 = isento/unknown.</summary>

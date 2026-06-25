@@ -242,4 +242,38 @@ public class Cnab240RemittanceWriterTests
         Assert.Equal("000002", Field(trailer, 18, 6)); // 2 lotes
         Assert.Equal("000010", Field(trailer, 24, 6)); // 10 records (0,1,3,3,5,1,3,3,5,9)
     }
+
+    // ----- Convênio agency-segment tests (AEL-613 fix: right-justify agency in pos 33-52) -----
+
+    [Fact]
+    public void Convenio_4digit_agency_is_unchanged_in_header_pos33to52()
+    {
+        // Payer.Agency = "1234" (4 digits) — must produce 0033 + 1234 + 987654321098 (20 chars total).
+        var header = Generate()[0];
+        var convenio = Field(header, 33, 20); // full 20-char convenio field
+        Assert.Equal("00331234987654321098", convenio);
+        // Verify the 4-digit agency sits at pos 37-40 (chars 5-8 of the 20-char field).
+        Assert.Equal("1234", convenio.Substring(4, 4));
+    }
+
+    [Fact]
+    public void Convenio_5digit_agency_keeps_rightmost_4_in_header()
+    {
+        // Agency "12345" (5 digits): rightmost 4 = "2345"; result must NOT be "1234".
+        var payer5 = Payer with { Agency = "12345" };
+        var input = new RemittanceFileInput(
+            BankCode: "033",
+            SequenceNumber: 42,
+            GeneratedAt: GeneratedAt,
+            Payer: payer5,
+            Lines: new[] { TedLine });
+
+        var writer = new Cnab240RemittanceWriter(new SantanderCnabProfile());
+        var bytes = writer.Generate(input);
+        var header = Encoding.Latin1.GetString(bytes).Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[0];
+
+        var convenio = Field(header, 33, 20);
+        Assert.Equal("2345", convenio.Substring(4, 4)); // rightmost 4 of "12345"
+        Assert.NotEqual("1234", convenio.Substring(4, 4)); // must NOT silently truncate leftmost 4
+    }
 }
