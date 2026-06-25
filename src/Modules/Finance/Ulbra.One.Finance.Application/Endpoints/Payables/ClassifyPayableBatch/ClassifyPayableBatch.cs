@@ -51,7 +51,10 @@ public sealed class ClassifyPayableBatch : IEndpoint
                 payable.MarkPendingApproval();
 
             if (payable.Status == PayableStatus.Scheduled)
-                await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, accountingCode), ct);
+            {
+                var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
+                await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, accountingCode, withholdings), ct);
+            }
         }
 
         await uow.SaveChangesAsync(ct);
