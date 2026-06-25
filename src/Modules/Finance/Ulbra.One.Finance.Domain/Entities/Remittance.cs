@@ -47,7 +47,8 @@ public class Remittance : IAuditable, ISoftDeletable
         };
     }
 
-    public RemittanceLine AddLine(RemittanceLineDraft draft, DateTimeOffset at)
+    /// <summary>Appends a new line to the remittance. Audit timestamps are applied by the AuditInterceptor on save.</summary>
+    public RemittanceLine AddLine(RemittanceLineDraft draft)
     {
         var sequence = _lines.Count + 1;
         var line = new RemittanceLine(Id, draft, sequence, SequenceNumber);

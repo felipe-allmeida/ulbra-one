@@ -52,8 +52,8 @@ public class RemittanceAggregateTests
     {
         var r = NewRemittance(sequenceNumber: 1);
 
-        var line1 = r.AddLine(NewDraft(500m), At);
-        var line2 = r.AddLine(NewDraft(300m), At);
+        var line1 = r.AddLine(NewDraft(500m));
+        var line2 = r.AddLine(NewDraft(300m));
 
         Assert.Equal(2, r.Lines.Count);
         Assert.Equal(1, line1.Sequence);
@@ -65,8 +65,8 @@ public class RemittanceAggregateTests
     {
         var r = NewRemittance(sequenceNumber: 42);
 
-        var line1 = r.AddLine(NewDraft(), At);
-        var line2 = r.AddLine(NewDraft(), At);
+        var line1 = r.AddLine(NewDraft());
+        var line2 = r.AddLine(NewDraft());
 
         // Reference = $"{SequenceNumber:D6}{Sequence:D5}" → "000042" + "00001" = "00004200001"
         Assert.Equal("00004200001", line1.Reference);
@@ -77,7 +77,7 @@ public class RemittanceAggregateTests
     public void AddLine_sets_RemittanceId_on_new_line()
     {
         var r = NewRemittance();
-        var line = r.AddLine(NewDraft(), At);
+        var line = r.AddLine(NewDraft());
 
         Assert.Equal(r.Id, line.RemittanceId);
     }
@@ -86,7 +86,7 @@ public class RemittanceAggregateTests
     public void AddLine_line_status_is_Pending()
     {
         var r = NewRemittance();
-        var line = r.AddLine(NewDraft(), At);
+        var line = r.AddLine(NewDraft());
 
         Assert.Equal(RemittanceLineStatus.Pending, line.Status);
     }
@@ -95,9 +95,9 @@ public class RemittanceAggregateTests
     public void TotalAmount_sums_all_line_amounts()
     {
         var r = NewRemittance();
-        r.AddLine(NewDraft(500m), At);
-        r.AddLine(NewDraft(300m), At);
-        r.AddLine(NewDraft(200m), At);
+        r.AddLine(NewDraft(500m));
+        r.AddLine(NewDraft(300m));
+        r.AddLine(NewDraft(200m));
 
         Assert.Equal(1000m, r.TotalAmount);
     }
@@ -192,7 +192,7 @@ public class RemittanceAggregateTests
             FavoredPixKey: ""
         );
 
-        var line = r.AddLine(draft, At);
+        var line = r.AddLine(draft);
 
         Assert.Equal(draft.PayableId, line.PayableId);
         Assert.Equal(draft.InstallmentId, line.InstallmentId);
