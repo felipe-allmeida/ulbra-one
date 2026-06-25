@@ -21,6 +21,7 @@ export function InstallmentStatusBadge({ s }: { s: InstallmentStatus }) {
     Open: 'badge-pendente',
     PartiallyPaid: 'badge-aprovado',
     Paid: 'badge-pago',
+    InRemittance: 'badge-remessa',
   };
   return <span className={`badge-status ${cls[s]}`}>{t(`installments.status.${s}`)}</span>;
 }

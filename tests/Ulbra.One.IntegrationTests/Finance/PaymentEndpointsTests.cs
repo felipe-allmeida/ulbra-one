@@ -3,6 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Finance.Domain;
+using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
@@ -442,6 +446,95 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var res = await client.PostAsync($"/api/payables/{payableId}/payments/{paymentId}/proof", content);
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("File.TooLarge", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Block manual baixa on InRemittance installment (I2)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Register_On_InRemittance_Installment_Returns_409_InstallmentInRemittance()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        // Seed: company + cost center + vendor with TED bank info.
+        var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
+        var companyRes = await client.PostAsJsonAsync("/api/companies", new { legalName = "Empresa Remessa Block Test", cnpj });
+        companyRes.EnsureSuccessStatusCode();
+        var companyPrefixedId = (await ReadJson(companyRes)).GetProperty("id").GetString()!;
+        var companyId = Guid.Parse(companyPrefixedId[(companyPrefixedId.LastIndexOf('_') + 1)..]);
+
+        var ccRes = await client.PostAsJsonAsync("/api/cost-centers",
+            new { companyId = companyPrefixedId, code = "CC-BLK", name = "Block Test", annualBudget = 1_000_000m, autoApprovalLimit = 0m, unitIds = Array.Empty<string>() });
+        ccRes.EnsureSuccessStatusCode();
+        var costCenterId = (await ReadJson(ccRes)).GetProperty("id").GetString()!;
+
+        var vendorRes = await client.PostAsJsonAsync("/api/vendors", new
+        {
+            companyId = companyPrefixedId,
+            personType = 1,
+            name = "Fornecedor TED Block Ltda",
+            tradeName = "FornecedorTEDBlock",
+            document = "11.222.333/0001-81",
+            email = "tedblock@test.com",
+            phone = "5133334444",
+            address = (object?)null,
+            paymentTerms = "30 dias",
+            bankInfo = new { bankCode = "341", branch = "0001", account = "123456", accountDigit = "7", pixKey = "" },
+        });
+        vendorRes.EnsureSuccessStatusCode();
+        var vendorPrefixedId = (await ReadJson(vendorRes)).GetProperty("id").GetString()!;
+
+        // Bank account: Santander 033 with agreement code + TED default (must be created via DI as in RemittanceEndpointTests).
+        await using var setupScope = factory.Services.CreateAsyncScope();
+        var uow = setupScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var bankAccount = new BankAccount(companyId, "033", "Banco Santander", "1234",
+            "00099999", "6", BankAccountType.Checking, "Conta Block Test", null,
+            cnabAgreementCode: "999999999999");
+        bankAccount.SetAsDefaultPayer(PaymentMethod.Ted);
+        await uow.AddAsync(bankAccount, CancellationToken.None);
+        await uow.SaveChangesAsync(CancellationToken.None);
+        var bankAccountPrefixedId = $"bank_account_{bankAccount.Id:N}";
+
+        // Payable with past due date so it's picked up by remittance generation.
+        var payableRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = companyPrefixedId,
+            vendorId = vendorPrefixedId,
+            costCenterId,
+            description = "Payable InRemittance Block",
+            installments = new[] { new { dueDate = "2026-06-01", amount = 500m } },
+        });
+        payableRes.EnsureSuccessStatusCode();
+        var payableId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
+        var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        approveRes.EnsureSuccessStatusCode();
+
+        var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
+
+        // Generate remittance — this sets the installment to InRemittance.
+        var remittanceRes = await client.PostAsJsonAsync("/api/remittances", new
+        {
+            payingBankAccountId = bankAccountPrefixedId,
+            dueCutoff = "2026-06-30",
+        });
+        Assert.Equal(HttpStatusCode.Created, remittanceRes.StatusCode);
+
+        // Verify the installment is now InRemittance.
+        var payableBody = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.Equal("InRemittance", payableBody.GetProperty("installments")[0].GetProperty("status").GetString());
+
+        // Attempt manual payment → must return 409 InRemittance.
+        var payRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
+        {
+            paymentDate = "2026-06-25",
+            amount = 500m,
+            bankAccountId = bankAccountPrefixedId,
+            method = "Ted",
+        });
+        Assert.Equal(HttpStatusCode.Conflict, payRes.StatusCode);
+        Assert.Equal("Payment.InstallmentInRemittance", (await ReadJson(payRes)).GetProperty("title").GetString());
     }
 
     // ---------------------------------------------------------------------------

@@ -205,6 +205,18 @@ export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
 export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse'];
 export type PostingKind = Schemas['PostingKind'];
 
+// ---------- Remittances (Remessas CNAB240) ----------
+export type Remittance = Schemas['RemittanceResponse'];
+export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
+export type CreateRemittanceResponse = Schemas['CreateRemittanceResponse'];
+export type SkippedInstallment = Schemas['SkippedInstallmentResponse'];
+
+/** Request body for generating a CNAB240 remittance file. */
+export interface CreateRemittanceInput {
+  payingBankAccountId: string;
+  dueCutoff?: string | null;
+}
+
 /** Request body for creating a ledger account. */
 export interface LedgerAccountInput {
   companyId: string;
@@ -280,6 +292,7 @@ export interface BankAccountInput {
   openingBalance?: number | null;
   isDefaultForPayments?: boolean;
   defaultPaymentMethod?: PaymentMethod | null;
+  cnabAgreementCode?: string | null;
 }
 
 /** Request body for updating a bank account (no companyId; `active` toggles status). */
@@ -928,4 +941,19 @@ export const api = {
   // ---------- Registry: Lookups ----------
   lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),
   lookupCnpj: (cnpj: string) => request<CnpjLookup>(`/lookup/cnpj/${cnpj}`),
+
+  // ---------- Remittances (Remessas CNAB240) ----------
+  listRemittances: (params: { companyId?: string; page?: number; pageSize?: number }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<RemittanceListItem>>(`/remittances?${q}`);
+  },
+  getRemittance: (id: string) => request<Remittance>(`/remittances/${id}`),
+  createRemittance: (body: CreateRemittanceInput) =>
+    request<CreateRemittanceResponse>('/remittances', { method: 'POST', body: JSON.stringify(body) }),
+  cancelRemittance: (id: string) => request<Remittance>(`/remittances/${id}/cancel`, { method: 'POST' }),
+  /** Direct URL for downloading the CNAB240 .REM file (text/plain). */
+  remittanceFileUrl: (id: string) => `${BASE_URL}/remittances/${id}/file`,
 };

@@ -55,6 +55,10 @@ import {
   type Unit,
   type Vendor,
   type VendorInput,
+  type Remittance,
+  type RemittanceListItem,
+  type CreateRemittanceResponse,
+  type CreateRemittanceInput,
 } from './api';
 
 /** Stable query-key factory — single source of truth for cache keys + invalidation. */
@@ -91,6 +95,8 @@ export const queryKeys = {
   cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
   cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
   pendingPostings: (params: PendingPostingsParams) => ['pendingPostings', params] as const,
+  remittances: (params: RemittancesParams) => ['remittances', params] as const,
+  remittance: (id: string) => ['remittance', id] as const,
 };
 
 export interface LedgerAccountsParams {
@@ -135,6 +141,12 @@ export interface CashFlowItemsParams {
 }
 
 export interface PendingPostingsParams {
+  companyId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface RemittancesParams {
   companyId?: string;
   page?: number;
   pageSize?: number;
@@ -1171,3 +1183,45 @@ export function usePendingPostings(params: PendingPostingsParams, options?: { en
     placeholderData: keepPreviousData,
   });
 }
+
+/* ---------- Remittances (Remessas CNAB240) ---------- */
+export function useRemittances(params: RemittancesParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.remittances(params),
+    queryFn: () => api.listRemittances(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useRemittance(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.remittance(id ?? ''),
+    queryFn: () => api.getRemittance(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCreateRemittance(
+  options?: UseMutationOptions<CreateRemittanceResponse, unknown, CreateRemittanceInput>,
+) {
+  return useInvalidatingMutation(
+    (body) => api.createRemittance(body),
+    (qc) => void qc.invalidateQueries({ queryKey: ['remittances'] }),
+    options,
+  );
+}
+
+export function useCancelRemittance(options?: UseMutationOptions<Remittance, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.cancelRemittance(id),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['remittances'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.remittance(vars.id) });
+    },
+    options,
+  );
+}
+
+// Re-export types for consumers that only import from queries
+export type { Remittance, RemittanceListItem, CreateRemittanceResponse, CreateRemittanceInput };

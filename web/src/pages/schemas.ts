@@ -202,6 +202,7 @@ export const bankAccountSchema = z
     openingBalance: nonNegativeNumberString,
     isDefaultForPayments: z.boolean(),
     defaultPaymentMethod: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']).nullable(),
+    cnabAgreementCode: z.string(),
   })
   .superRefine((val, ctx) => {
     if (val.isDefaultForPayments && !val.defaultPaymentMethod) {

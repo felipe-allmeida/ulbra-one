@@ -37,6 +37,7 @@ function BankAccountForm({
       openingBalance: initial?.openingBalance != null ? String(initial.openingBalance) : '',
       isDefaultForPayments: initial?.isDefaultForPayments ?? false,
       defaultPaymentMethod: initial?.defaultPaymentMethod ?? null,
+      cnabAgreementCode: initial?.cnabAgreementCode ?? '',
     },
   });
   const isDefault = watch('isDefaultForPayments');
@@ -49,6 +50,7 @@ function BankAccountForm({
     const defaultPaymentMethod: PaymentMethod | null = v.isDefaultForPayments
       ? (v.defaultPaymentMethod ?? 'Pix')
       : null;
+    const cnabAgreementCode = v.cnabAgreementCode.trim() || null;
     if (initial) {
       const body: BankAccountUpdateInput = {
         bankCode: v.bankCode.trim(),
@@ -62,6 +64,7 @@ function BankAccountForm({
         active: initial.active,
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
+        cnabAgreementCode,
       };
       save.mutate({ id: initial.id, update: body });
     } else {
@@ -77,6 +80,7 @@ function BankAccountForm({
         openingBalance,
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
+        cnabAgreementCode,
       };
       save.mutate({ create: body });
     }
@@ -165,6 +169,15 @@ function BankAccountForm({
           {fieldError(formState.errors.openingBalance?.message) && (
             <div className='field-err'>{fieldError(formState.errors.openingBalance?.message)}</div>
           )}
+        </Field>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Field label={t('bankAccounts.fields.cnabAgreementCode')}>
+          <Controller
+            control={control}
+            name='cnabAgreementCode'
+            render={({ field }) => <Input {...field} placeholder={t('bankAccounts.placeholders.cnabAgreementCode')} />}
+          />
         </Field>
       </div>
       <div style={{ marginTop: 14 }}>

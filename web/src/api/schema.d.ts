@@ -1076,6 +1076,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/remittances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListRemittances"];
+        put?: never;
+        post: operations["CreateRemittance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/remittances/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetRemittance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/remittances/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DownloadRemittanceFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/remittances/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CancelRemittance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -1484,6 +1548,7 @@ export interface components {
             active: boolean;
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
+            cnabAgreementCode: string | null;
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
@@ -1804,6 +1869,16 @@ export interface components {
             installments: components["schemas"]["ReceivableInstallmentInput"][] | null;
             generate: components["schemas"]["ReceivableGenerateInput"];
         };
+        CreateRemittanceRequest: {
+            /** @example bank_account_3fa85f64571742199730000000000000 */
+            payingBankAccountId: string;
+            /** Format: date */
+            dueCutoff: string | null;
+        };
+        CreateRemittanceResponse: {
+            remittance: components["schemas"]["RemittanceResponse"];
+            skipped: components["schemas"]["SkippedInstallmentResponse"][];
+        };
         CreateTransactionRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -2037,7 +2112,7 @@ export interface components {
             payments: components["schemas"]["PaymentResponse"][];
         };
         /** @enum {string} */
-        InstallmentStatus: "Open" | "PartiallyPaid" | "Paid";
+        InstallmentStatus: "Open" | "PartiallyPaid" | "Paid" | "InRemittance";
         JournalEntryResponse: {
             /** @example journal_3fa85f64571742199730000000000000 */
             id: string;
@@ -2502,6 +2577,67 @@ export interface components {
         RejectTransactionRejectRequest: {
             reason: string | null;
         };
+        RemittanceLineResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            payableId: string;
+            /** Format: uuid */
+            installmentId: string;
+            method: string;
+            /** Format: double */
+            amount: number;
+            favoredName: string;
+            favoredDocument: string;
+            reference: string;
+            status: string;
+        };
+        RemittanceListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            sequenceNumber: number;
+            status: string;
+            /** Format: int32 */
+            lineCount: number;
+            /** Format: double */
+            totalAmount: number;
+            /** Format: date-time */
+            generatedAt: string;
+        };
+        RemittanceListItemResponsePaginatedResponse: {
+            items: components["schemas"]["RemittanceListItemResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        RemittanceResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            payingBankAccountId: string;
+            bankCode: string;
+            /** Format: int32 */
+            sequenceNumber: number;
+            status: string;
+            fileStorageKey: string | null;
+            fileName: string | null;
+            /** Format: int64 */
+            fileSizeBytes: number | null;
+            /** Format: date-time */
+            generatedAt: string;
+            generatedBy: string;
+            /** Format: double */
+            totalAmount: number;
+            lines: components["schemas"]["RemittanceLineResponse"][];
+        };
         RequestFiscalUploadUrlRequest: {
             fileName: string;
         };
@@ -2540,6 +2676,13 @@ export interface components {
             reconciledAt: string;
             /** Format: double */
             currentBalance: number;
+        };
+        SkippedInstallmentResponse: {
+            /** Format: uuid */
+            payableId: string;
+            /** Format: uuid */
+            installmentId: string;
+            reason: string;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
@@ -6017,6 +6160,164 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListRemittances: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                payingBankAccountId?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemittanceListItemResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    CreateRemittance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRemittanceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateRemittanceResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetRemittance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemittanceResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DownloadRemittanceFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CancelRemittance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemittanceResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

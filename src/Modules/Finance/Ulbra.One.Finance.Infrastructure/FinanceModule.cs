@@ -5,6 +5,8 @@ using Ulbra.One.Finance.Application.Classification;
 using Ulbra.One.Finance.Application.Conciliation;
 using Ulbra.One.Finance.Application.FiscalDocuments;
 using Ulbra.One.Finance.Application.Payments;
+using Ulbra.One.Finance.Application.Remittances;
+using Ulbra.One.Finance.Infrastructure.Cnab;
 using Ulbra.One.Finance.Infrastructure.Conciliation;
 using Ulbra.One.Finance.Infrastructure.FiscalDocuments;
 using Ulbra.One.Finance.Infrastructure.Jobs;
@@ -19,13 +21,20 @@ public static class FinanceModule
         services.AddScoped<IPayablePaymentService, PayablePaymentService>();
         services.AddScoped<IBankStatementParser, OfxStatementParser>();
 
+        // CNAB240 remittance file engine (Santander 033). Pure — no I/O.
+        services.AddSingleton<ICnabBankProfile, SantanderCnabProfile>();
+        services.AddSingleton<IRemittanceFileGenerator, Cnab240RemittanceWriter>();
+
+        // Remittance generation use-case.
+        services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();
+
         // Fiscal-document reading: XML parsers (detected by namespace) + AI extractor for PDF/image.
         services.AddScoped<IFiscalXmlParser, NfeM55XmlParser>();
         services.AddScoped<IFiscalXmlParser, NfseAbrasfXmlParser>();
         services.AddScoped<AiFiscalExtractor>();
         services.AddScoped<IFiscalDocumentReader, FiscalDocumentReader>();
 
-        var autoPayEnabled = configuration.GetValue("AutoPay:Enabled", true);
+        var autoPayEnabled = configuration.GetValue("AutoPay:Enabled", false);
         var autoPayInterval = configuration.GetValue("AutoPay:Interval", TimeSpan.FromHours(24));
         services.AddHostedService(sp => new PayableAutoPayJob(
             sp.GetRequiredService<IServiceScopeFactory>(),

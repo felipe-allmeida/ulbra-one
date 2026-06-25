@@ -43,6 +43,23 @@ public class Installment
         Recompute();
     }
 
+    /// <summary>Locks an open installment into a payment remittance (prevents double-remittance).
+    /// Reversed by <see cref="ReleaseFromRemittance"/> if the remittance is cancelled before sending.
+    /// Settlement (→ Paid) happens only when a Payment is registered on return confirmation (SP-3b-2).</summary>
+    public void MarkInRemittance()
+    {
+        if (Status != InstallmentStatus.Open)
+            throw new InvalidOperationException($"Only an open installment can enter a remittance (was {Status}).");
+        Status = InstallmentStatus.InRemittance;
+    }
+
+    public void ReleaseFromRemittance()
+    {
+        if (Status != InstallmentStatus.InRemittance)
+            throw new InvalidOperationException($"Only an in-remittance installment can be released (was {Status}).");
+        Status = InstallmentStatus.Open;
+    }
+
     private void Recompute()
     {
         PaidAmount = _payments.Where(p => !p.IsReversed).Sum(p => p.PrincipalApplied);

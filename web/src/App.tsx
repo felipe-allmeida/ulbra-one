@@ -32,6 +32,7 @@ import {
   BookText,
   BookOpen,
   Scale,
+  SendHorizonal,
   LogOut,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
@@ -72,6 +73,7 @@ import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
 import { LandingPage } from './pages/landing';
 import { LoginPage } from './pages/login';
+import { RemessasPage } from './pages/remessas/list';
 
 export default function App() {
   return (
@@ -98,6 +100,7 @@ export default function App() {
         <Route path='contas-a-receber/:id/editar' element={<EditarContaReceberPage />} />
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
+        <Route path='remessas' element={<RemessasPage />} />
         <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
         <Route path='contabil/plano-de-contas' element={<ContabilPlanoPage />} />
         <Route path='contabil/lancamentos' element={<ContabilLancamentosPage />} />
@@ -232,6 +235,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.aging')}</b>
     </>
+  ) : at('remessas') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.remittances')}</b>
+    </>
   ) : at('cash-flow') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.cashFlow')}</b>
@@ -333,6 +340,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.aging')}
             active={at('aging')}
             onClick={() => go('/app/aging')}
+          />
+          <NavItem
+            icon={<SendHorizonal />}
+            label={t('nav.remittances')}
+            active={at('remessas')}
+            onClick={() => go('/app/remessas')}
           />
           <NavItem icon={<FileText />} label={t('nav.reports')} />
           <NavItem icon={<FileBox />} label={t('nav.documents')} />

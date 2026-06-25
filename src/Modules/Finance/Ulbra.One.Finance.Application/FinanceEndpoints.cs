@@ -60,6 +60,11 @@ using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ListTransactions;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.PayTransaction;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.CancelRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.CreateRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.DownloadRemittanceFile;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.GetRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ListRemittances;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.RejectTransaction;
 
 namespace Ulbra.One.Finance.Application;
@@ -151,6 +156,13 @@ public static class FinanceEndpoints
         bankTransactions.MapEndpoint<MatchManually>();
         bankTransactions.MapEndpoint<IgnoreTransaction>();
         bankTransactions.MapEndpoint<UnmatchTransaction>();
+
+        var remittances = builder.MapGroup("/remittances");
+        remittances.MapEndpoint<CreateRemittance>();
+        remittances.MapEndpoint<ListRemittances>();
+        remittances.MapEndpoint<GetRemittance>();
+        remittances.MapEndpoint<DownloadRemittanceFile>();
+        remittances.MapEndpoint<CancelRemittance>();
 
         return builder;
     }
