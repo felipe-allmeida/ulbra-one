@@ -212,8 +212,8 @@ public class PayableAutoPayJobTests(PostgresFixture fixture)
 
     /// <summary>
     /// Isolation test: when processing payable A throws mid-sweep, payable B (which comes next)
-    /// still gets paid. Proves that ClearChangeTracker() in the catch prevents the stale tracked
-    /// changes from payable A from poisoning the DbContext for payable B.
+    /// still gets paid. Proves that the per-payable DI scope keeps payable A's failed (and rolled-back)
+    /// DbContext from poisoning the fresh DbContext used for payable B.
     ///
     /// Failure injection: we register a test-only IPayablePaymentService decorator via
     /// ConfigureTestServices that throws a DbUpdateConcurrencyException for payable A's id and

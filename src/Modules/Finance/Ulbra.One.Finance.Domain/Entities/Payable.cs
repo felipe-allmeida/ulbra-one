@@ -139,6 +139,11 @@ public class Payable : IAuditable, ISoftDeletable
     {
         if (Status is PayableStatus.Paid or PayableStatus.Cancelled)
             throw new InvalidOperationException("Cannot cancel a paid or already-cancelled payable.");
+        // A partially-paid payable must have its payments reversed (estornadas) first: cancelling here would
+        // reverse the accounting incurral while the settlement entries linger, leaving the liability unbalanced
+        // (the human resolves by reversing the payment, then cancelling).
+        if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
+            throw new InvalidOperationException("Cannot cancel a payable that has registered payments; reverse the payments first.");
         Status = PayableStatus.Cancelled;
         CancelReason = reason;
     }

@@ -647,9 +647,7 @@ const ptBR = {
         intendedCodes: 'Códigos pretendidos',
         createdAt: 'Data',
         sourceKey: 'Origem',
-        actions: 'Ações',
       },
-      registerEntry: 'Lançar manualmente',
       empty: {
         noCompanyTitle: 'Selecione uma empresa',
         noCompanySub: 'Escolha a empresa para ver as pendências de contabilização.',

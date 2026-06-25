@@ -119,6 +119,37 @@ public class PayableTests
     }
 
     [Fact]
+    public void Cancel_throws_when_payable_has_registered_payments()
+    {
+        var p = NewPayable(1000m);
+        p.Approve("u1", At);
+        var inst = p.Installments[0];
+        inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 7, 10), 400m, Guid.NewGuid(),
+            PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));
+        p.RecomputeSettlement(); // partially paid → still Scheduled, not auto-cancellable
+
+        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Throws<InvalidOperationException>(() => p.Cancel("erro"));
+    }
+
+    [Fact]
+    public void Cancel_allowed_when_a_payment_was_reversed()
+    {
+        var p = NewPayable(1000m);
+        p.Approve("u1", At);
+        var inst = p.Installments[0];
+        var pay = inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 7, 10), 400m, Guid.NewGuid(),
+            PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));
+        inst.ReversePayment(pay.Id, "estorno");
+        p.RecomputeSettlement();
+
+        // only reversed payments remain → cancelling is allowed again
+        p.Cancel("duplicada");
+        Assert.Equal(PayableStatus.Cancelled, p.Status);
+        Assert.Equal("duplicada", p.CancelReason);
+    }
+
+    [Fact]
     public void Approve_from_received_succeeds_and_is_idempotent()
     {
         var p = NewPayable(100m);
