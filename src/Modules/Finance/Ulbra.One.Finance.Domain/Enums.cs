@@ -42,3 +42,6 @@ public enum FiscalDocumentFormat { NfeXml, NfseXml, Pdf, Image }
 
 /// <summary>Lifecycle of a CNAB payment remittance batch. Generated → (SP-3b-2) Confirmed; or Cancelled before sending.</summary>
 public enum RemittanceStatus { Generated, Cancelled }
+
+/// <summary>Lifecycle of a single line within a remittance. Paga/Devolvida are added in SP-3b-2.</summary>
+public enum RemittanceLineStatus { Pending }
