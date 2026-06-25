@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -20,17 +21,20 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
     private readonly IRemittanceFileGenerator _generator;
     private readonly IFileStorageService _storage;
     private readonly TimeProvider _clock;
+    private readonly ILogger<RemittanceGenerationService> _logger;
 
     public RemittanceGenerationService(
         IUnitOfWork uow,
         IRemittanceFileGenerator generator,
         IFileStorageService storage,
-        TimeProvider clock)
+        TimeProvider clock,
+        ILogger<RemittanceGenerationService> logger)
     {
         _uow = uow;
         _generator = generator;
         _storage = storage;
         _clock = clock;
+        _logger = logger;
     }
 
     public async Task<Result<GenerateRemittanceOutcome>> GenerateAsync(
@@ -70,18 +74,8 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
         var now = _clock.GetUtcNow();
         var paymentDate = DateOnly.FromDateTime(now.UtcDateTime);
 
-        // Compute sequence number: 1 + max existing for this paying account.
-        var maxSeq = await _uow.ReadSet<Remittance>()
-            .Where(r => r.PayingBankAccountId == payingBankAccountId)
-            .Select(r => (int?)r.SequenceNumber)
-            .MaxAsync(ct) ?? 0;
-        var sequenceNumber = maxSeq + 1;
-
-        var remittance = Remittance.Create(companyId, payingBankAccountId, payingAccount.BankCode,
-            sequenceNumber, generatedBy, now);
-
         var skipped = new List<SkippedInstallment>();
-        var fileLines = new List<RemittanceFileLine>();
+        var pendingDrafts = new List<(Installment Inst, RemittanceLineDraft Draft, RemittanceFileLine FileLine)>();
 
         foreach (var payable in payables)
         {
@@ -144,11 +138,9 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                 }
             }
 
-            // All checks passed — add each installment.
+            // All checks passed — stage each installment (not yet marked or saved).
             foreach (var inst in dueInstallments)
             {
-                inst.MarkInRemittance();
-
                 var draft = new RemittanceLineDraft(
                     PayableId: payable.Id,
                     InstallmentId: inst.Id,
@@ -162,9 +154,8 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                     FavoredAccountDigit: bankInfo.AccountDigit,
                     FavoredPixKey: bankInfo.PixKey);
 
-                var line = remittance.AddLine(draft);
-
-                fileLines.Add(new RemittanceFileLine(
+                // Placeholder FileLine — Reference assigned after Remittance.Create below.
+                var fileLine = new RemittanceFileLine(
                     Method: method.Value,
                     Amount: inst.Amount,
                     PaymentDate: paymentDate,
@@ -175,8 +166,46 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                     FavoredAccount: bankInfo.Account,
                     FavoredAccountDigit: bankInfo.AccountDigit,
                     FavoredPixKey: bankInfo.PixKey,
-                    Reference: line.Reference));
+                    Reference: string.Empty);
+
+                pendingDrafts.Add((inst, draft, fileLine));
             }
+        }
+
+        // Guard: nothing eligible — return failure without any side effects.
+        if (pendingDrafts.Count == 0)
+            return Result.Failure<GenerateRemittanceOutcome>(
+                Error.Failure("Remittance.NothingToRemit",
+                    "No eligible installments found for remittance. All were skipped or no payables are due."));
+
+        // Compute sequence number: 1 + max existing for this paying account.
+        var maxSeq = await _uow.ReadSet<Remittance>()
+            .Where(r => r.PayingBankAccountId == payingBankAccountId)
+            .Select(r => (int?)r.SequenceNumber)
+            .MaxAsync(ct) ?? 0;
+        var sequenceNumber = maxSeq + 1;
+
+        var remittance = Remittance.Create(companyId, payingBankAccountId, payingAccount.BankCode,
+            sequenceNumber, generatedBy, now);
+
+        var fileLines = new List<RemittanceFileLine>(pendingDrafts.Count);
+
+        foreach (var (inst, draft, _) in pendingDrafts)
+        {
+            inst.MarkInRemittance();
+            var line = remittance.AddLine(draft);
+            fileLines.Add(new RemittanceFileLine(
+                Method: draft.Method,
+                Amount: draft.Amount,
+                PaymentDate: paymentDate,
+                FavoredName: draft.FavoredName,
+                FavoredDocument: draft.FavoredDocument,
+                FavoredBankCode: draft.FavoredBankCode,
+                FavoredAgency: draft.FavoredAgency,
+                FavoredAccount: draft.FavoredAccount,
+                FavoredAccountDigit: draft.FavoredAccountDigit,
+                FavoredPixKey: draft.FavoredPixKey,
+                Reference: line.Reference));
         }
 
         // Generate the CNAB240 file bytes.
@@ -226,7 +255,16 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                 .FirstOrDefaultAsync(p => p.Id == line.PayableId, ct);
 
             var installment = payable?.FindInstallment(line.InstallmentId);
-            installment?.ReleaseFromRemittance();
+
+            if (installment is null)
+            {
+                _logger.LogWarning(
+                    "CancelAsync: remittance {RemittanceId} — could not find installment {InstallmentId} for payable {PayableId}; skipping release.",
+                    remittanceId, line.InstallmentId, line.PayableId);
+                continue;
+            }
+
+            installment.ReleaseFromRemittance();
         }
 
         remittance.Cancel();

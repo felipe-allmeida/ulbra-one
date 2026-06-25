@@ -311,4 +311,138 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             .FirstAsync(p => p.Id == seed.PayableAId);
         Assert.All(payableA.Installments, i => Assert.Equal(InstallmentStatus.Open, i.Status));
     }
+
+    [Fact]
+    public async Task GenerateAsync_NonSantanderBankAccount_Returns_Failure_NoRemittance_Persisted()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        // Minimal seed: just a company. The BankCode guard fires before any payable is loaded,
+        // so no payables are needed. Create a non-033 bank account via HTTP to keep it
+        // properly scoped and avoid timing conflicts with the EF outbox interceptor.
+        var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
+        var companyRes = await client.PostAsJsonAsync("/api/companies",
+            new { legalName = "Empresa Itaú Test", cnpj });
+        companyRes.EnsureSuccessStatusCode();
+        var companyPrefixedId = (await ReadJson(companyRes)).GetProperty("id").GetString()!;
+        var companyId = Guid.Parse(companyPrefixedId[(companyPrefixedId.LastIndexOf('_') + 1)..]);
+
+        // Create a non-033 bank account via the HTTP API (isDefaultForPayments = false).
+        var bankAccountRes = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId = companyPrefixedId,
+            bankCode = "341",
+            bankName = "Banco Itaú",
+            agency = "5678",
+            accountNumber = "99988877",
+            accountDigit = "1",
+            accountType = "Checking",
+            alias = "Conta Itaú",
+            isDefaultForPayments = false,
+        });
+        bankAccountRes.EnsureSuccessStatusCode();
+        var bankAccountPrefixedId = (await ReadJson(bankAccountRes)).GetProperty("id").GetString()!;
+        var itauAccountId = Guid.Parse(bankAccountPrefixedId[(bankAccountPrefixedId.LastIndexOf('_') + 1)..]);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var service = scope.ServiceProvider.GetRequiredService<IRemittanceGenerationService>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var cutoff = new DateOnly(2026, 6, 30);
+        var result = await service.GenerateAsync(companyId, itauAccountId, cutoff, "test-user", CancellationToken.None);
+
+        // Must fail with bank-not-supported error.
+        Assert.True(result.IsFailure);
+        Assert.Equal("Remittance.BankNotSupported", result.Error.Code);
+
+        // No remittance created for this bank account.
+        var exists = await uow.ReadSet<Remittance>()
+            .AnyAsync(r => r.PayingBankAccountId == itauAccountId);
+        Assert.False(exists);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_AllInstallmentsSkipped_Returns_NothingToRemit_NoRemittance_NoSequenceConsumed()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        // Seed a company with a valid Santander account but only Vendor C (no bank data).
+        var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
+        var companyRes = await client.PostAsJsonAsync("/api/companies",
+            new { legalName = "Empresa NothingToRemit", cnpj });
+        companyRes.EnsureSuccessStatusCode();
+        var companyPrefixedId = (await ReadJson(companyRes)).GetProperty("id").GetString()!;
+        var companyId = Guid.Parse(companyPrefixedId[(companyPrefixedId.LastIndexOf('_') + 1)..]);
+
+        var ccRes = await client.PostAsJsonAsync("/api/cost-centers",
+            new { companyId = companyPrefixedId, code = "CC-NTR", name = "NothingToRemit TI", annualBudget = 500_000m, autoApprovalLimit = 0m, unitIds = Array.Empty<string>() });
+        ccRes.EnsureSuccessStatusCode();
+        var costCenterId = (await ReadJson(ccRes)).GetProperty("id").GetString()!;
+
+        // Vendor with NO bank data.
+        var vendorRes = await client.PostAsJsonAsync("/api/vendors", new
+        {
+            companyId = companyPrefixedId,
+            personType = 1,
+            name = "Fornecedor SemDados SA",
+            tradeName = "SemDados",
+            document = "33.000.167/0001-01",
+            email = "semdados@test.com",
+            phone = "5133337777",
+            address = (object?)null,
+            paymentTerms = "30 dias",
+            bankInfo = (object?)null,
+        });
+        vendorRes.EnsureSuccessStatusCode();
+        var vendorPrefixedId = (await ReadJson(vendorRes)).GetProperty("id").GetString()!;
+
+        await using var setupScope = factory.Services.CreateAsyncScope();
+        var setupUow = setupScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var bankAccount = new BankAccount(companyId, "033", "Banco Santander", "9876",
+            "11122233", "4", BankAccountType.Checking, "Conta Remessa NTR", null,
+            cnabAgreementCode: "555555555555");
+        bankAccount.SetAsDefaultPayer(PaymentMethod.Ted);
+        await setupUow.AddAsync(bankAccount, CancellationToken.None);
+        await setupUow.SaveChangesAsync(CancellationToken.None);
+
+        // One payable whose installment will be skipped (no vendor bank data).
+        var payableRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = companyPrefixedId,
+            vendorId = vendorPrefixedId,
+            costCenterId,
+            description = "Payable SemDados",
+            installments = new[] { new { dueDate = "2026-06-10", amount = 750m } },
+        });
+        payableRes.EnsureSuccessStatusCode();
+        var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
+        var approveRes = await client.PostAsJsonAsync($"/api/payables/{payablePrefixedId}/approve", new { });
+        approveRes.EnsureSuccessStatusCode();
+        var payableId = Guid.Parse(payablePrefixedId[(payablePrefixedId.LastIndexOf('_') + 1)..]);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var service = scope.ServiceProvider.GetRequiredService<IRemittanceGenerationService>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var cutoff = new DateOnly(2026, 6, 30);
+        var result = await service.GenerateAsync(companyId, bankAccount.Id, cutoff, "test-user", CancellationToken.None);
+
+        // Must fail with NothingToRemit.
+        Assert.True(result.IsFailure);
+        Assert.Equal("Remittance.NothingToRemit", result.Error.Code);
+
+        // No remittance persisted — no sequence consumed.
+        var exists = await uow.ReadSet<Remittance>()
+            .AnyAsync(r => r.PayingBankAccountId == bankAccount.Id);
+        Assert.False(exists);
+
+        // The installment remains Open (not InRemittance).
+        var payable = await uow.ReadSet<Payable>()
+            .Include(p => p.Installments)
+            .FirstAsync(p => p.Id == payableId);
+        Assert.All(payable.Installments, i => Assert.Equal(InstallmentStatus.Open, i.Status));
+    }
 }
