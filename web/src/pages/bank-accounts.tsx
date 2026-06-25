@@ -37,7 +37,7 @@ function BankAccountForm({
       openingBalance: initial?.openingBalance != null ? String(initial.openingBalance) : '',
       isDefaultForPayments: initial?.isDefaultForPayments ?? false,
       defaultPaymentMethod: initial?.defaultPaymentMethod ?? null,
-      cnabAgreementCode: '',
+      cnabAgreementCode: initial?.cnabAgreementCode ?? '',
     },
   });
   const isDefault = watch('isDefaultForPayments');
@@ -176,7 +176,7 @@ function BankAccountForm({
           <Controller
             control={control}
             name='cnabAgreementCode'
-            render={({ field }) => <Input {...field} placeholder='ex.: 123456' />}
+            render={({ field }) => <Input {...field} placeholder={t('bankAccounts.placeholders.cnabAgreementCode')} />}
           />
         </Field>
       </div>

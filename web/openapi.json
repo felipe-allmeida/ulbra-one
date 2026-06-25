@@ -6419,6 +6419,10 @@
           },
           "defaultPaymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "cnabAgreementCode": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

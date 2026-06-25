@@ -786,6 +786,7 @@ const ptBR = {
       accountDigit: 'ex.: 0',
       alias: 'ex.: Conta principal',
       openingBalance: 'ex.: 1000',
+      cnabAgreementCode: 'ex.: 123456',
     },
     types: {
       Checking: 'Corrente',
