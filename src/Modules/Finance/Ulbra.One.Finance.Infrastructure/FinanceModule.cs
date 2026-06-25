@@ -32,6 +32,9 @@ public static class FinanceModule
         services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();
         services.AddScoped<IRemittanceReturnService, RemittanceReturnService>();
 
+        // Development-only: synthetic return file simulator.
+        services.AddScoped<IRemittanceReturnSimulator, CnabReturnSimulator>();
+
         // Fiscal-document reading: XML parsers (detected by namespace) + AI extractor for PDF/image.
         services.AddScoped<IFiscalXmlParser, NfeM55XmlParser>();
         services.AddScoped<IFiscalXmlParser, NfseAbrasfXmlParser>();
