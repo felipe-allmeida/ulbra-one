@@ -1240,9 +1240,7 @@ export function useImportRemittanceReturn(
   );
 }
 
-export function useConfirmRemittanceLine(
-  options?: UseMutationOptions<Remittance, unknown, { id: string; lineId: string }>,
-) {
+export function useConfirmRemittanceLine(options?: UseMutationOptions<void, unknown, { id: string; lineId: string }>) {
   return useInvalidatingMutation(
     ({ id, lineId }) => api.confirmRemittanceLine(id, lineId),
     (qc, _data, vars) => invalidateRemittance(qc, vars.id),
@@ -1251,7 +1249,7 @@ export function useConfirmRemittanceLine(
 }
 
 export function useMarkRemittanceLineReturned(
-  options?: UseMutationOptions<Remittance, unknown, { id: string; lineId: string; reason: string }>,
+  options?: UseMutationOptions<void, unknown, { id: string; lineId: string; reason: string }>,
 ) {
   return useInvalidatingMutation(
     ({ id, lineId, reason }) => api.markRemittanceLineReturned(id, lineId, reason),

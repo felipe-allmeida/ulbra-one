@@ -973,10 +973,10 @@ export const api = {
   },
   /** Manually confirms a remittance line as paid. */
   confirmRemittanceLine: (id: string, lineId: string) =>
-    request<Remittance>(`/remittances/${id}/lines/${lineId}/confirm-paid`, { method: 'POST' }),
+    request<void>(`/remittances/${id}/lines/${lineId}/confirm-paid`, { method: 'POST' }),
   /** Manually marks a remittance line as returned with a reason. */
   markRemittanceLineReturned: (id: string, lineId: string, reason: string) =>
-    request<Remittance>(`/remittances/${id}/lines/${lineId}/mark-returned`, {
+    request<void>(`/remittances/${id}/lines/${lineId}/mark-returned`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),

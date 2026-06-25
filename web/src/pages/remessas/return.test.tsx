@@ -201,6 +201,23 @@ describe('Remittance return conciliation UI', () => {
     expect(screen.getByText('Importar retorno (.RET)')).toBeTruthy();
   });
 
+  it('shows the import outcome toast after a .RET file is selected', async () => {
+    openDetail();
+
+    // The hidden file <input> is inside the label that shows "Importar retorno (.RET)"
+    const inputEl = document.querySelector('input[type="file"]');
+    expect(inputEl).toBeTruthy();
+    const input = inputEl!;
+
+    const retFile = new File(['DUMMY CNAB240 CONTENT'], 'retorno.ret', { type: 'text/plain' });
+    fireEvent.change(input, { target: { files: [retFile] } });
+
+    // The mock resolves synchronously with { matched:2, paid:1, returned:1, unmatched:0, divergent:0, notes:[] }
+    // and the page calls toast.success(t('remittances.return.importSuccess', {...}))
+    const toast = await screen.findByText(/Retorno processado/i);
+    expect(toast).toBeTruthy();
+  });
+
   it('displays effectiveDate for paid lines and dash for pending/returned lines with no date', () => {
     openDetail();
     // Paid line has effectiveDate 2026-06-20 → should render as a pt-BR date
