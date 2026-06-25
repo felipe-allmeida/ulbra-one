@@ -1548,7 +1548,7 @@ export interface components {
             active: boolean;
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
-            cnabAgreementCode?: string | null;
+            cnabAgreementCode: string | null;
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";

@@ -6373,7 +6373,8 @@
           "openingBalance",
           "active",
           "isDefaultForPayments",
-          "defaultPaymentMethod"
+          "defaultPaymentMethod",
+          "cnabAgreementCode"
         ],
         "type": "object",
         "properties": {
