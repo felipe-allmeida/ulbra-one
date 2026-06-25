@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { type PayableStatus, type InstallmentStatus } from '../../api';
+import { type PayableStatus, type InstallmentStatus, type RemittanceLineStatus } from '../../api';
 
 export function PayableStatusBadge({ s }: { s: PayableStatus }) {
   const { t } = useTranslation();
@@ -24,4 +24,14 @@ export function InstallmentStatusBadge({ s }: { s: InstallmentStatus }) {
     InRemittance: 'badge-remessa',
   };
   return <span className={`badge-status ${cls[s]}`}>{t(`installments.status.${s}`)}</span>;
+}
+
+export function RemittanceLineStatusBadge({ s }: { s: RemittanceLineStatus }) {
+  const { t } = useTranslation();
+  const cls: Record<RemittanceLineStatus, string> = {
+    Pending: 'badge-pendente',
+    Paid: 'badge-pago',
+    Returned: 'badge-rejeitado',
+  };
+  return <span className={`badge-status ${cls[s]}`}>{t(`remittances.lineStatus.${s}`)}</span>;
 }

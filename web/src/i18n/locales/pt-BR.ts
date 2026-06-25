@@ -440,6 +440,37 @@ const ptBR = {
     status: {
       Generated: 'Gerada',
       Cancelled: 'Cancelada',
+      Confirmed: 'Confirmada',
+      PartiallyReturned: 'Parcialmente devolvida',
+    },
+    lineStatus: {
+      Pending: 'Pendente',
+      Paid: 'Paga',
+      Returned: 'Devolvida',
+    },
+    return: {
+      importButton: 'Importar retorno (.RET)',
+      importSuccess:
+        'Retorno processado: {{paid}} pag. + {{returned}} dev. / {{unmatched}} não localizados / {{divergent}} divergentes.',
+      importError: 'Falha ao importar o retorno.',
+      confirmPaid: 'Confirmar pago',
+      confirmPaidSuccess: 'Parcela marcada como paga.',
+      returnLine: 'Devolver',
+      returnLinePrompt: 'Motivo da devolução (obrigatório):',
+      returnLineSuccess: 'Parcela marcada como devolvida.',
+      returnLineCancel: 'Cancelar',
+      returnLineConfirm: 'Devolver',
+      simulateReturn: 'Simular retorno (.RET dev)',
+      linesTitle: 'Títulos da remessa',
+      columns: {
+        reference: 'Referência',
+        favored: 'Favorecido',
+        amount: 'Valor',
+        status: 'Status',
+        effectiveDate: 'Data efetiva',
+        bankRef: 'Ref. banco',
+        actions: 'Ações',
+      },
     },
     generate_dialog: {
       title: 'Gerar remessa',
