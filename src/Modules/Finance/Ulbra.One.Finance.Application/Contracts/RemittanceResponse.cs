@@ -1,3 +1,4 @@
+using Ulbra.One.Finance.Application.Remittances;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -56,6 +57,15 @@ public sealed record RemittanceResponse(
         remittance.TotalAmount,
         remittance.Lines.Select(RemittanceLineResponse.From).ToList());
 }
+
+public sealed record SkippedInstallmentResponse(Guid PayableId, Guid InstallmentId, string Reason)
+{
+    public static SkippedInstallmentResponse From(SkippedInstallment s) => new(s.PayableId, s.InstallmentId, s.Reason);
+}
+
+public sealed record CreateRemittanceResponse(
+    RemittanceResponse Remittance,
+    IReadOnlyList<SkippedInstallmentResponse> Skipped);
 
 public sealed record RemittanceListItemResponse(
     Guid Id,
