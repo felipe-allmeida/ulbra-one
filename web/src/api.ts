@@ -635,6 +635,12 @@ export const api = {
     return request<Paginated<ReceivableListItem>>(`/receivables?${q}`);
   },
   getReceivable: (id: string) => request<Receivable>(`/receivables/${id}`),
+  receivableStageSummary: (companyId: string): Promise<ReceivableStageSummaryResponse> => {
+    const q = new URLSearchParams({ companyId });
+    return request<ReceivableStageSummaryResponse>(`/receivables/stage-summary?${q}`);
+  },
+  receivableAuditTrail: (id: string): Promise<AuditTrailEvent[]> =>
+    request<AuditTrailEvent[]>(`/receivables/${id}/audit-trail`),
   createReceivable: (body: ReceivableInput) =>
     request<Receivable>('/receivables', { method: 'POST', body: JSON.stringify(body) }),
   updateReceivable: (id: string, body: Omit<ReceivableInput, 'origin'>) =>

@@ -47,6 +47,7 @@ import {
   type Receipt,
   type Receivable,
   type ReceivableInput,
+  type ReceivableStageSummaryResponse,
   type ReceivableStatus,
   type RegisterPaymentInput,
   type RegisterReceiptInput,
@@ -83,6 +84,8 @@ export const queryKeys = {
   payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
+  receivableStageSummary: (companyId: string) => ['receivableStageSummary', companyId] as const,
+  receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
@@ -342,6 +345,22 @@ export function useReceivable(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.receivable(id ?? ''),
     queryFn: () => api.getReceivable(id!),
+    enabled: !!id,
+  });
+}
+
+export function useReceivableStageSummary(companyId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.receivableStageSummary(companyId ?? ''),
+    queryFn: () => api.receivableStageSummary(companyId!),
+    enabled: !!companyId,
+  });
+}
+
+export function useReceivableAuditTrail(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.receivableAuditTrail(id ?? ''),
+    queryFn: () => api.receivableAuditTrail(id!),
     enabled: !!id,
   });
 }
@@ -1303,6 +1322,7 @@ export function useMarkRemittanceLineReturned(
 export type {
   AuditTrailEvent,
   PayableStageSummaryResponse,
+  ReceivableStageSummaryResponse,
   Remittance,
   RemittanceListItem,
   RemittanceReturnOutcome,

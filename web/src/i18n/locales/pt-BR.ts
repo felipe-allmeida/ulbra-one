@@ -989,13 +989,18 @@ const ptBR = {
     back: 'Contas a receber',
     count_one: '{{count}} parcela',
     count_other: '{{count}} parcelas',
+    stages: { entry: 'Entrada', receipt: 'Recebimento', reconciled: 'Conciliado' },
     tabs: {
       all: 'Todas',
       overdue: 'Vencidas',
       thisMonth: 'Este mês',
       future: 'Futuras',
       received: 'Recebidas',
+      areceber: 'A receber',
+      reconciled: 'Conciliado',
     },
+    dashboard: { title: 'Triagem' },
+    reconciled: { receivedAmount: 'Valor recebido', lastReceipt: 'Último recebimento' },
     columns: {
       dueDate: 'Vencimento',
       description: 'Descrição',
