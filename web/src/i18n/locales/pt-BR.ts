@@ -1047,6 +1047,7 @@ const ptBR = {
       payer: 'Devedor',
       documentNumber: 'Nº do documento',
       issueDate: 'Emissão',
+      timeline: 'Linha do tempo',
     },
     sub: 'Conta a receber',
     installmentsTitle: 'Parcelas',
