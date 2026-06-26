@@ -258,6 +258,13 @@ const ptBR = {
       AttachmentUploaded: 'Anexo adicionado',
       AttachmentDeleted: 'Anexo removido',
     },
+    payment: {
+      weekSummary: '{{count}} parcelas no período',
+      groupToday: 'Vence hoje',
+      groupThisWeek: 'Esta semana',
+      groupNextWeek: 'Próxima semana',
+      groupFuture: 'Futuro',
+    },
   },
 
   payables: {
