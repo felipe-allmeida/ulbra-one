@@ -1,0 +1,80 @@
+import { type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Wallet } from 'lucide-react';
+import { type PayableListItem } from '../../api';
+import { brl } from '../../lib';
+import { Panel, Pager, EmptyState } from '../../ui';
+import { fmtDate } from '../../datetime';
+import { SlaChips } from '../../components/workflow';
+import { useNames } from './use-names';
+
+export function PayableTable({
+  companyId,
+  stageLabel,
+  items,
+  total,
+  page,
+  totalPages,
+  onPage,
+  extraColumn,
+}: {
+  companyId: string;
+  stageLabel: string;
+  items: PayableListItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+  onPage: (p: number) => void;
+  extraColumn?: { header: string; cell: (item: PayableListItem) => ReactNode };
+}) {
+  const { t } = useTranslation();
+  const nav = useNavigate();
+  const { centroNome } = useNames(companyId);
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={<Wallet />}
+        title={`${stageLabel} — ${t('payables.empty.noItemsTitle')}`}
+        sub={t('payables.empty.noItemsSub')}
+      />
+    );
+  }
+
+  return (
+    <Panel title={`${stageLabel} · ${t('payables.count', { count: total })}`}>
+      <table>
+        <thead>
+          <tr>
+            <th>{t('payables.columns.dueDate')}</th>
+            <th>{t('payables.columns.description')}</th>
+            <th>{t('payables.columns.vendor')}</th>
+            <th>{t('payables.columns.costCenter')}</th>
+            <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+            <th>{t('payables.columns.status')}</th>
+            {extraColumn && <th>{extraColumn.header}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((l) => (
+            <tr key={l.installmentId} className='row-click' onClick={() => nav(`/app/payables/${l.payableId}`)}>
+              <td className='t-mono'>{fmtDate(l.dueDate)}</td>
+              <td>{l.description}</td>
+              <td>{l.counterpartyName || '—'}</td>
+              <td>{centroNome[l.costCenterId] ?? '—'}</td>
+              <td className='amount-cell' style={{ textAlign: 'right' }}>
+                {brl(l.amount)}
+              </td>
+              <td onClick={(e) => e.stopPropagation()}>
+                <SlaChips stageLabel={stageLabel} dueDate={l.dueDate} />
+              </td>
+              {extraColumn && <td onClick={(e) => e.stopPropagation()}>{extraColumn.cell(l)}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Pager page={page} totalPages={totalPages} onPage={onPage} />
+    </Panel>
+  );
+}
