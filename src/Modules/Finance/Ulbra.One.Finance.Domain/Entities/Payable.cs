@@ -7,6 +7,7 @@ public class Payable : IAuditable, ISoftDeletable
 {
     private readonly List<Installment> _installments = new();
     private readonly List<PayableAttachment> _attachments = new();
+    private readonly List<PayableWithholding> _withholdings = new();
 
     public Guid Id { get; private set; } = Guid.NewGuid();
     public Guid CompanyId { get; private set; }
@@ -45,6 +46,10 @@ public class Payable : IAuditable, ISoftDeletable
 
     public IReadOnlyList<Installment> Installments => _installments;
     public IReadOnlyList<PayableAttachment> Attachments => _attachments;
+    public IReadOnlyList<PayableWithholding> Withholdings => _withholdings;
+
+    public decimal TotalWithheld => _withholdings.Sum(w => w.Amount);
+    public decimal NetTotal => TotalAmount - TotalWithheld;
 
     private Payable() { }
 
@@ -104,6 +109,63 @@ public class Payable : IAuditable, ISoftDeletable
         _installments.Clear();
         _installments.AddRange(list);
         TotalAmount = list.Sum(i => i.Amount);
+    }
+
+    /// <summary>Replaces all withholdings (retenções) on this payable and recomputes each installment's
+    /// <see cref="Installment.NetAmount"/>. Pass an empty sequence to clear all withholdings.</summary>
+    public void SetWithholdings(IEnumerable<(WithholdingTaxType TaxType, decimal BaseAmount, decimal? Rate, decimal Amount)> items)
+    {
+        EnsureMutable();
+        // Once scheduled, the accounting incurral (PayableScheduled → multi-line posting) has
+        // already been booked against these withholdings; changing them now would desync the
+        // booked liability from the net actually paid. Withholdings are captured before approval.
+        if (Status == PayableStatus.Scheduled)
+            throw new InvalidOperationException("Cannot change withholdings after the payable is scheduled.");
+        if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
+            throw new InvalidOperationException("Cannot change withholdings on a payable that already has registered payments.");
+
+        var list = items.ToList();
+
+        foreach (var item in list)
+        {
+            if (item.Amount <= 0)
+                throw new InvalidOperationException("Each withholding amount must be greater than zero.");
+        }
+
+        var totalWithheld = list.Sum(x => x.Amount);
+        if (totalWithheld >= TotalAmount)
+            throw new InvalidOperationException("Total withheld cannot equal or exceed the payable's gross total amount.");
+
+        _withholdings.Clear();
+        foreach (var item in list)
+            _withholdings.Add(new PayableWithholding(Id, item.TaxType, item.BaseAmount, item.Rate, item.Amount));
+
+        RecomputeInstallmentNetAmounts();
+    }
+
+    private void RecomputeInstallmentNetAmounts()
+    {
+        var netTotal = NetTotal;
+
+        if (_withholdings.Count == 0 || netTotal == TotalAmount)
+        {
+            foreach (var inst in _installments)
+                inst.SetNetAmount(inst.Amount);
+            return;
+        }
+
+        var ordered = _installments.OrderBy(i => i.Sequence).ToList();
+        var runningSum = 0m;
+
+        for (var idx = 0; idx < ordered.Count - 1; idx++)
+        {
+            var net = Math.Round(ordered[idx].Amount * netTotal / TotalAmount, 2);
+            ordered[idx].SetNetAmount(net);
+            runningSum += net;
+        }
+
+        // Last installment absorbs rounding to ensure Σ NetAmount == NetTotal exactly
+        ordered[^1].SetNetAmount(netTotal - runningSum);
     }
 
     public void ApplyAutoApproval(decimal autoApprovalLimit, DateTimeOffset at)

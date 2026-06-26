@@ -11,6 +11,7 @@ import {
   type AccountKind,
   type AgingBucket,
   type AiClassificationSuggestion,
+  type AuditTrailEvent,
   type JournalEntry,
   type JournalEntryInput,
   type JournalStatus,
@@ -36,6 +37,7 @@ import {
   type FiscalDocument,
   type MatchStatus,
   type ParsedFiscalDocument,
+  type PayableStageSummaryResponse,
   type UploadTarget,
   type Payable,
   type PayableAttachment,
@@ -55,8 +57,10 @@ import {
   type Unit,
   type Vendor,
   type VendorInput,
+  type WithholdingTaxType,
   type Remittance,
   type RemittanceListItem,
+  type RemittanceReturnOutcome,
   type CreateRemittanceResponse,
   type CreateRemittanceInput,
 } from './api';
@@ -75,6 +79,8 @@ export const queryKeys = {
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
+  payableStageSummary: (companyId: string) => ['payableStageSummary', companyId] as const,
+  payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
@@ -303,6 +309,22 @@ export function usePayable(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payable(id ?? ''),
     queryFn: () => api.getPayable(id!),
+    enabled: !!id,
+  });
+}
+
+export function usePayableStageSummary(companyId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableStageSummary(companyId ?? ''),
+    queryFn: () => api.payableStageSummary(companyId!),
+    enabled: !!companyId,
+  });
+}
+
+export function usePayableAuditTrail(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableAuditTrail(id ?? ''),
+    queryFn: () => api.payableAuditTrail(id!),
     enabled: !!id,
   });
 }
@@ -620,6 +642,26 @@ export function useDeletePayableAttachment(
   return useInvalidatingMutation(
     ({ id, attachmentId }) => api.deletePayableAttachment(id, attachmentId),
     (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+export interface WithholdingItem {
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  rate?: number | null;
+  amount: number;
+}
+
+export function useSetPayableWithholdings(
+  options?: UseMutationOptions<Payable, unknown, { id: string; items: WithholdingItem[] }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, items }) => api.setPayableWithholdings(id, items),
+    (qc, _d, vars) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
     },
@@ -1223,5 +1265,48 @@ export function useCancelRemittance(options?: UseMutationOptions<Remittance, unk
   );
 }
 
+/** Invalidates remittance list + detail after a return-related action. */
+function invalidateRemittance(qc: ReturnType<typeof useQueryClient>, remittanceId: string) {
+  void qc.invalidateQueries({ queryKey: ['remittances'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.remittance(remittanceId) });
+}
+
+export function useImportRemittanceReturn(
+  options?: UseMutationOptions<RemittanceReturnOutcome, unknown, { id: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, file }) => api.importRemittanceReturn(id, file),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
+export function useConfirmRemittanceLine(options?: UseMutationOptions<void, unknown, { id: string; lineId: string }>) {
+  return useInvalidatingMutation(
+    ({ id, lineId }) => api.confirmRemittanceLine(id, lineId),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
+export function useMarkRemittanceLineReturned(
+  options?: UseMutationOptions<void, unknown, { id: string; lineId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, lineId, reason }) => api.markRemittanceLineReturned(id, lineId, reason),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
 // Re-export types for consumers that only import from queries
-export type { Remittance, RemittanceListItem, CreateRemittanceResponse, CreateRemittanceInput };
+export type {
+  AuditTrailEvent,
+  PayableStageSummaryResponse,
+  Remittance,
+  RemittanceListItem,
+  RemittanceReturnOutcome,
+  CreateRemittanceResponse,
+  CreateRemittanceInput,
+  WithholdingTaxType,
+};

@@ -41,7 +41,10 @@ public enum AgingBucket { NotYetDue, Overdue1To30, Overdue31To60, Overdue61To90,
 public enum FiscalDocumentFormat { NfeXml, NfseXml, Pdf, Image }
 
 /// <summary>Lifecycle of a CNAB payment remittance batch. Generated → (SP-3b-2) Confirmed; or Cancelled before sending.</summary>
-public enum RemittanceStatus { Generated, Cancelled }
+public enum RemittanceStatus { Generated, Cancelled, Confirmed, PartiallyReturned }
 
-/// <summary>Lifecycle of a single line within a remittance. Paga/Devolvida are added in SP-3b-2.</summary>
-public enum RemittanceLineStatus { Pending }
+/// <summary>Lifecycle of a single line within a remittance.</summary>
+public enum RemittanceLineStatus { Pending, Paid, Returned }
+
+/// <summary>Brazilian tax withholding types applicable to a payable (retenções na fonte).</summary>
+public enum WithholdingTaxType { Irrf, Iss, Inss, Pis, Cofins, Csll, Other }

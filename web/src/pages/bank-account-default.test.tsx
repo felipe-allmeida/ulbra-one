@@ -229,6 +229,9 @@ const basePayable: Payable = {
   createdAt: '2025-06-01T00:00:00Z',
   installments: [],
   attachments: [],
+  withholdings: [],
+  totalWithheld: 0,
+  netTotal: 500,
 };
 
 function makePayment(overrides: Partial<Payment> = {}): Payment {
@@ -261,6 +264,7 @@ function makeInstallment(payments: Payment[]): Installment {
     paidAmount: 500,
     status: 'Paid',
     payments,
+    netAmount: 500,
   };
 }
 

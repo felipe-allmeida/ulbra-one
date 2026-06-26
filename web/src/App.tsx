@@ -41,6 +41,7 @@ import { ColaboradoresPage } from './pages/colaboradores';
 import { LandingPage } from './pages/landing';
 import { LoginPage } from './pages/login';
 import { RemessasPage } from './pages/remessas/list';
+import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 
 export default function App() {
   return (
@@ -61,6 +62,10 @@ export default function App() {
         <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
         <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
         <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
+        <Route path='payables' element={<PayablesLayout />} />
+        <Route path='payables/novo' element={<NewPayablePage />} />
+        <Route path='payables/:id' element={<PayableDetailPage />} />
+        <Route path='payables/:id/editar' element={<EditPayablePage />} />
         <Route path='contas-a-receber' element={<ContasReceberPage />} />
         <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
         <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />

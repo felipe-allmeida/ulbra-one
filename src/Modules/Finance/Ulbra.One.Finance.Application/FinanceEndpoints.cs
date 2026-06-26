@@ -35,6 +35,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadPaymentProof;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AuditTrail;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ParseFiscalDocument;
@@ -42,9 +43,11 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.RegisterPayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RequestFiscalUploadUrl;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.SetWithholdings;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
+using Ulbra.One.Finance.Application.Endpoints.Payables.StageSummary;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CancelReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable;
@@ -54,6 +57,8 @@ using Ulbra.One.Finance.Application.Endpoints.Receivables.ListReceivables;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.RegisterReceipt;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.ReverseReceipt;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UpdateReceivable;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.AuditTrail;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.StageSummary;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UploadReceiptProof;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
@@ -61,10 +66,14 @@ using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ListTransactions;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.PayTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.CancelRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ConfirmRemittanceLine;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.CreateRemittance;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.DownloadRemittanceFile;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.GetRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ImportRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.ListRemittances;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ReturnRemittanceLine;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.SimulateRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.RejectTransaction;
 
 namespace Ulbra.One.Finance.Application;
@@ -92,6 +101,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<GetPayable>();
         payables.MapEndpoint<CreatePayable>();
         payables.MapEndpoint<UpdatePayable>();
+        payables.MapEndpoint<SetWithholdings>();
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
         payables.MapEndpoint<RejectPayable>();
@@ -109,6 +119,8 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ClassifyPayableBatch>();
         payables.MapEndpoint<ClassificationSuggestion>();
         payables.MapEndpoint<AiClassificationSuggestion>();
+        payables.MapEndpoint<GetPayableStageSummary>();
+        payables.MapEndpoint<GetPayableAuditTrail>();
 
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();
@@ -124,6 +136,8 @@ public static class FinanceEndpoints
         receivables.MapEndpoint<ReverseReceipt>();
         receivables.MapEndpoint<UploadReceiptProof>();
         receivables.MapEndpoint<DownloadReceiptProof>();
+        receivables.MapEndpoint<GetReceivableStageSummary>();
+        receivables.MapEndpoint<GetReceivableAuditTrail>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");
         bankAccounts.MapEndpoint<ListBankAccounts>();
@@ -163,6 +177,10 @@ public static class FinanceEndpoints
         remittances.MapEndpoint<GetRemittance>();
         remittances.MapEndpoint<DownloadRemittanceFile>();
         remittances.MapEndpoint<CancelRemittance>();
+        remittances.MapEndpoint<ImportRemittanceReturn>();
+        remittances.MapEndpoint<ConfirmRemittanceLine>();
+        remittances.MapEndpoint<ReturnRemittanceLine>();
+        remittances.MapEndpoint<SimulateRemittanceReturn>();
 
         return builder;
     }

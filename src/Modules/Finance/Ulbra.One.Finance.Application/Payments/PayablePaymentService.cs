@@ -50,7 +50,7 @@ public sealed class PayablePaymentService : IPayablePaymentService
             return Result.Failure<Payable>(Error.Failure("Payment.PrincipalNegative",
                 "Payment principal cannot be negative (interest and fine exceed amount plus discount)."));
 
-        var remaining = installment.Amount - installment.PaidAmount;
+        var remaining = installment.NetAmount - installment.PaidAmount;
         if (principal > remaining + 0.005m)
             return Result.Failure<Payable>(Error.Failure("Payment.Overpay",
                 "Payment principal exceeds the installment's outstanding balance."));

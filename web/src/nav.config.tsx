@@ -6,6 +6,7 @@ import {
   Contact,
   Building2,
   Settings,
+  Layers,
   ArrowUpRight,
   ArrowDownLeft,
   ClipboardCheck,
@@ -81,6 +82,7 @@ export const NAV_DOMAINS: NavDomain[] = [
         labelKey: 'nav.subgroups.operation',
         items: [
           { labelKey: 'nav.accountsPayable', to: '/app/contas-a-pagar', icon: <ArrowUpRight /> },
+          { labelKey: 'nav.payablesWorkflow', to: '/app/payables', icon: <Layers /> },
           { labelKey: 'nav.accountsReceivable', to: '/app/contas-a-receber', icon: <ArrowDownLeft /> },
           { labelKey: 'nav.approvals', to: '/app/aprovacoes', icon: <ClipboardCheck /> },
           { labelKey: 'nav.conciliacao', to: '/app/conciliacao', icon: <ArrowLeftRight /> },

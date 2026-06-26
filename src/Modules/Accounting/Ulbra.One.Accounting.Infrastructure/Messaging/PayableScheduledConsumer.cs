@@ -11,11 +11,15 @@ public sealed class PayableScheduledConsumer(IPayablePostingService posting, IUn
     public async Task Consume(ConsumeContext<PayableScheduled> ctx)
     {
         var m = ctx.Message;
+        var withholdings = m.Withholdings
+            .Select(w => (w.TaxType, w.Amount))
+            .ToList();
         await posting.PostIncurralAsync(
             m.CompanyId,
             $"payable-incurral:{m.PayableId}",
             m.Amount,
             m.AccountingAccountCode,
+            withholdings,
             ctx.CancellationToken);
         await uow.SaveChangesAsync(ctx.CancellationToken);
     }
