@@ -14,7 +14,7 @@ public sealed class ObjectStorageRegistrationTests
             .Build();
 
         var services = new ServiceCollection();
-        // AddLogging is needed by hosted services (BucketInitializer, BlobContainerInitializer)
+        // AddLogging is needed by the BlobContainerInitializer hosted service
         services.AddLogging();
         services.AddObjectStorage(configuration);
         return services.BuildServiceProvider();
@@ -29,22 +29,6 @@ public sealed class ObjectStorageRegistrationTests
         var service = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
 
         Assert.IsType<LocalFileStorageService>(service);
-    }
-
-    [Fact]
-    public void S3Config_ResolvesS3FileStorageService()
-    {
-        var provider = BuildProvider(new Dictionary<string, string?>
-        {
-            ["ObjectStorage:Endpoint"] = "http://minio:9000",
-            ["ObjectStorage:AccessKey"] = "minioadmin",
-            ["ObjectStorage:SecretKey"] = "minioadmin",
-        });
-
-        using var scope = provider.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
-
-        Assert.IsType<S3FileStorageService>(service);
     }
 
     [Fact]

@@ -1,5 +1,4 @@
-using Amazon.Runtime;
-using Amazon.S3;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Infrastructure.Storage;
 
@@ -8,14 +7,18 @@ namespace Ulbra.One.UnitTests.Storage;
 public sealed class CreateUploadUrlTests
 {
     [Fact]
-    public async Task S3_returns_presigned_put_url()
+    public async Task Azure_returns_sas_put_url()
     {
-        var s3 = new AmazonS3Client(new BasicAWSCredentials("ak", "sk"),
-            new AmazonS3Config { ServiceURL = "http://localhost:9000", ForcePathStyle = true });
-        var sut = new S3FileStorageService(s3, Options.Create(new ObjectStorageOptions { Bucket = "b" }));
+        // UseDevelopmentStorage=true carries the well-known Azurite account key, so the client
+        // can generate the SAS locally (no running Azurite needed).
+        var serviceClient = new BlobServiceClient("UseDevelopmentStorage=true");
+        var container = serviceClient.GetBlobContainerClient("attachments");
+        var sut = new AzureBlobStorageService(container, serviceClient);
+
         var t = await sut.CreateUploadUrl("nota.pdf", TimeSpan.FromMinutes(10));
+
         Assert.Contains("nota.pdf", t.Key);
-        Assert.Contains("X-Amz-Signature", t.UploadUrl);
+        Assert.Contains("sig=", t.UploadUrl);
     }
 
     [Fact]
