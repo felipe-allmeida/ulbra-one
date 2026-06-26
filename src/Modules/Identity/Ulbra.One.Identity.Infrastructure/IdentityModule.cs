@@ -17,6 +17,7 @@ public static class IdentityModule
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<UserContext>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
 
         services.AddJwtAuthentication(configuration);
 

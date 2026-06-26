@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Auditing;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Infrastructure.Persistence;
 
@@ -25,6 +26,8 @@ public static class AuditModule
 
         services.AddKeyedScoped<IUnitOfWork>("audit",
             (sp, _) => new EfUnitOfWork<AuditContext>(sp.GetRequiredService<AuditContext>()));
+
+        services.AddScoped<IAuditReader, AuditReader>();
 
         return services;
     }
