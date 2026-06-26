@@ -35,6 +35,7 @@ import {
   SendHorizonal,
   LogOut,
   Layers,
+  HandCoins,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
 import { auth } from './api';
@@ -76,6 +77,7 @@ import { LandingPage } from './pages/landing';
 import { LoginPage } from './pages/login';
 import { RemessasPage } from './pages/remessas/list';
 import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
+import { ReceivablesLayout, ReceivableDetailPage, NewReceivablePage, EditReceivablePage } from './pages/receivables';
 
 export default function App() {
   return (
@@ -104,6 +106,10 @@ export default function App() {
         <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
         <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />
         <Route path='contas-a-receber/:id/editar' element={<EditarContaReceberPage />} />
+        <Route path='receivables' element={<ReceivablesLayout />} />
+        <Route path='receivables/novo' element={<NewReceivablePage />} />
+        <Route path='receivables/:id' element={<ReceivableDetailPage />} />
+        <Route path='receivables/:id/editar' element={<EditReceivablePage />} />
         <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
         <Route path='contas-bancarias' element={<BankAccountsPage />} />
         <Route path='remessas' element={<RemessasPage />} />
@@ -217,6 +223,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.payablesWorkflow')}</b>
     </>
+  ) : at('receivables') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.receivablesWorkflow')}</b>
+    </>
   ) : at('contas-a-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
@@ -314,6 +324,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.accountsReceivable')}
             active={at('contas-a-receber')}
             onClick={() => go('/app/contas-a-receber')}
+          />
+          <NavItem
+            icon={<HandCoins />}
+            label={t('nav.receivablesWorkflow')}
+            active={at('receivables')}
+            onClick={() => go('/app/receivables')}
           />
           <NavItem
             icon={<Activity />}
