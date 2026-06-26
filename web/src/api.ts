@@ -100,6 +100,10 @@ export type ExpenseCategory = Schemas['ExpenseCategoryResponse'];
 export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
+export type PayableStageSummaryResponse = Schemas['PayableStageSummaryResponse'];
+export type ReceivableStageSummaryResponse = Schemas['ReceivableStageSummaryResponse'];
+export type StageBucket = Schemas['StageBucket'];
+export type AuditTrailEvent = Schemas['AuditTrailEventResponse'];
 
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
@@ -509,6 +513,12 @@ export const api = {
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
   },
   getPayable: (id: string) => request<Payable>(`/payables/${id}`),
+  payableStageSummary: (companyId: string): Promise<PayableStageSummaryResponse> => {
+    const q = new URLSearchParams({ companyId });
+    return request<PayableStageSummaryResponse>(`/payables/stage-summary?${q}`);
+  },
+  payableAuditTrail: (id: string): Promise<AuditTrailEvent[]> =>
+    request<AuditTrailEvent[]>(`/payables/${id}/audit-trail`),
   createPayable: (body: PayableInput) => request<Payable>('/payables', { method: 'POST', body: JSON.stringify(body) }),
   updatePayable: (id: string, body: Omit<PayableInput, 'origin'>) =>
     request<Payable>(`/payables/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
