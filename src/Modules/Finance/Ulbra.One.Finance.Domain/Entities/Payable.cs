@@ -116,6 +116,11 @@ public class Payable : IAuditable, ISoftDeletable
     public void SetWithholdings(IEnumerable<(WithholdingTaxType TaxType, decimal BaseAmount, decimal? Rate, decimal Amount)> items)
     {
         EnsureMutable();
+        // Once scheduled, the accounting incurral (PayableScheduled → multi-line posting) has
+        // already been booked against these withholdings; changing them now would desync the
+        // booked liability from the net actually paid. Withholdings are captured before approval.
+        if (Status == PayableStatus.Scheduled)
+            throw new InvalidOperationException("Cannot change withholdings after the payable is scheduled.");
         if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
             throw new InvalidOperationException("Cannot change withholdings on a payable that already has registered payments.");
 
