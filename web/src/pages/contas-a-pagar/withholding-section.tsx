@@ -61,7 +61,7 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
   }, [payable.id, payable.withholdings]);
 
   const save = useSetPayableWithholdings({
-    onSuccess: () => toast.success(t('payables.withholding.save')),
+    onSuccess: () => toast.success(t('payables.withholding.saveSuccess')),
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 

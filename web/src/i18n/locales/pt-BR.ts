@@ -385,6 +385,7 @@ const ptBR = {
       removeRow: 'Remover',
       save: 'Salvar retenções',
       saving: 'Salvando…',
+      saveSuccess: 'Retenções salvas.',
     },
     actions: {
       approve: 'Aprovar',

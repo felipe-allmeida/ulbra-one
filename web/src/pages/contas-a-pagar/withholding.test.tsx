@@ -151,9 +151,9 @@ describe('WithholdingSection — read-only', () => {
     // Should show IRRF label
     expect(screen.getByText('IRRF')).toBeTruthy();
 
-    // Líquido from server (1700) should appear
+    // Líquido from server (netTotal 1700) should appear — pin the actual value
     const liquidoEl = screen.getByTestId('withholding-liquido');
-    expect(liquidoEl.textContent).toContain('1');
+    expect(liquidoEl.textContent).toContain('1.700');
 
     // No editable controls
     expect(screen.queryByText('Adicionar retenção')).toBeNull();
