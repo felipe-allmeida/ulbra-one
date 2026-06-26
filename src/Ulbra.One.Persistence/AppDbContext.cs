@@ -37,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
     public DbSet<ChartAccount> ChartAccounts => Set<ChartAccount>();
     public DbSet<ClassificationPolicy> ClassificationPolicies => Set<ClassificationPolicy>();
+    public DbSet<PayableWithholding> PayableWithholdings => Set<PayableWithholding>();
     public DbSet<Remittance> Remittances => Set<Remittance>();
     public DbSet<RemittanceLine> RemittanceLines => Set<RemittanceLine>();
     public DbSet<RemittanceReturn> RemittanceReturns => Set<RemittanceReturn>();

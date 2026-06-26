@@ -13,6 +13,7 @@ public sealed class InstallmentConfiguration : BaseEntityConfiguration<Installme
     {
         e.HasKey(x => x.Id);
         e.Property(x => x.Amount).HasPrecision(18, 2);
+        e.Property(x => x.NetAmount).HasPrecision(18, 2);
         e.Property(x => x.PaidAmount).HasPrecision(18, 2);
         e.HasIndex(x => x.PayableId);
         e.HasIndex(x => x.DueDate);

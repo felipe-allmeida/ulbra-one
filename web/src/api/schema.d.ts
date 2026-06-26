@@ -484,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/{id}/withholdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetWithholdings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/{id}/cancel": {
         parameters: {
             query?: never;
@@ -2175,9 +2191,20 @@ export interface components {
             /** Format: double */
             paidAmount: number;
             payments: components["schemas"]["PaymentResponse"][];
+            /** Format: double */
+            netAmount: number;
         };
         /** @enum {string} */
         InstallmentStatus: "Open" | "PartiallyPaid" | "Paid" | "InRemittance";
+        Item: {
+            taxType: components["schemas"]["WithholdingTaxType"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            rate: number | null;
+            /** Format: double */
+            amount: number;
+        };
         JournalEntryResponse: {
             /** @example journal_3fa85f64571742199730000000000000 */
             id: string;
@@ -2403,9 +2430,25 @@ export interface components {
             createdAt: string;
             installments: components["schemas"]["InstallmentResponse"][];
             attachments: components["schemas"]["PayableAttachmentResponse"][];
+            withholdings: components["schemas"]["PayableWithholdingResponse"][];
+            /** Format: double */
+            totalWithheld: number;
+            /** Format: double */
+            netTotal: number;
         };
         /** @enum {string} */
         PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
+        PayableWithholdingResponse: {
+            /** @example withholding_3fa85f64571742199730000000000000 */
+            id: string;
+            taxType: components["schemas"]["WithholdingTaxType"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            rate: number | null;
+            /** Format: double */
+            amount: number;
+        };
         /** @enum {string} */
         PaymentMethod: "Pix" | "Ted" | "Boleto" | "Cash" | "DirectDebit" | "Other";
         PaymentResponse: {
@@ -2761,6 +2804,9 @@ export interface components {
             /** Format: double */
             currentBalance: number;
         };
+        SetWithholdingsRequest: {
+            items: components["schemas"]["Item"][] | null;
+        };
         SkippedInstallmentResponse: {
             /** Format: uuid */
             payableId: string;
@@ -3034,6 +3080,8 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        /** @enum {string} */
+        WithholdingTaxType: "Irrf" | "Iss" | "Inss" | "Pis" | "Cofins" | "Csll" | "Other";
     };
     responses: never;
     parameters: never;
@@ -4489,6 +4537,50 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SetWithholdings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetWithholdingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

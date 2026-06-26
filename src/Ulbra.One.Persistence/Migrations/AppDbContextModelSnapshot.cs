@@ -1405,6 +1405,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("date")
                         .HasColumnName("due_date");
 
+                    b.Property<decimal>("NetAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("net_amount");
+
                     b.Property<decimal>("PaidAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -1659,6 +1664,47 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasDatabaseName("ix_payable_attachments_payable_id");
 
                     b.ToTable("payable_attachments", "finance");
+                });
+
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.PayableWithholding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<decimal>("BaseAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("base_amount");
+
+                    b.Property<Guid>("PayableId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payable_id");
+
+                    b.Property<decimal?>("Rate")
+                        .HasPrecision(10, 6)
+                        .HasColumnType("numeric(10,6)")
+                        .HasColumnName("rate");
+
+                    b.Property<string>("TaxType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tax_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payable_withholdings");
+
+                    b.HasIndex("PayableId")
+                        .HasDatabaseName("ix_payable_withholdings_payable_id");
+
+                    b.ToTable("payable_withholdings", "finance");
                 });
 
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Payment", b =>
@@ -2868,6 +2914,16 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasConstraintName("fk_payable_attachments_payables_payable_id");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.PayableWithholding", b =>
+                {
+                    b.HasOne("Ulbra.One.Finance.Domain.Entities.Payable", null)
+                        .WithMany("Withholdings")
+                        .HasForeignKey("PayableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_payable_withholdings_payables_payable_id");
+                });
+
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("Ulbra.One.Finance.Domain.Entities.Installment", null)
@@ -3164,6 +3220,8 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("Installments");
+
+                    b.Navigation("Withholdings");
                 });
 
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.Receivable", b =>

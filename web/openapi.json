@@ -2026,6 +2026,66 @@
         }
       }
     },
+    "/api/payables/{id}/withholdings": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SetWithholdings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWithholdingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/{id}/cancel": {
       "post": {
         "tags": [
@@ -8567,7 +8627,8 @@
           "amount",
           "status",
           "paidAmount",
-          "payments"
+          "payments",
+          "netAmount"
         ],
         "type": "object",
         "properties": {
@@ -8599,6 +8660,10 @@
             "items": {
               "$ref": "#/components/schemas/PaymentResponse"
             }
+          },
+          "netAmount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -8611,6 +8676,34 @@
           "InRemittance"
         ],
         "type": "string"
+      },
+      "Item": {
+        "required": [
+          "taxType",
+          "baseAmount",
+          "rate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "JournalEntryResponse": {
         "required": [
@@ -9270,7 +9363,10 @@
           "paymentMethod",
           "createdAt",
           "installments",
-          "attachments"
+          "attachments",
+          "withholdings",
+          "totalWithheld",
+          "netTotal"
         ],
         "type": "object",
         "properties": {
@@ -9401,6 +9497,20 @@
             "items": {
               "$ref": "#/components/schemas/PayableAttachmentResponse"
             }
+          },
+          "withholdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableWithholdingResponse"
+            }
+          },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -9416,6 +9526,39 @@
           "Cancelled"
         ],
         "type": "string"
+      },
+      "PayableWithholdingResponse": {
+        "required": [
+          "id",
+          "taxType",
+          "baseAmount",
+          "rate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "withholding_3fa85f64571742199730000000000000"
+          },
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "PaymentMethod": {
         "enum": [
@@ -10553,6 +10696,22 @@
         },
         "additionalProperties": false
       },
+      "SetWithholdingsRequest": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SkippedInstallmentResponse": {
         "required": [
           "payableId",
@@ -11512,6 +11671,18 @@
           }
         },
         "additionalProperties": false
+      },
+      "WithholdingTaxType": {
+        "enum": [
+          "Irrf",
+          "Iss",
+          "Inss",
+          "Pis",
+          "Cofins",
+          "Csll",
+          "Other"
+        ],
+        "type": "string"
       }
     },
     "securitySchemes": {

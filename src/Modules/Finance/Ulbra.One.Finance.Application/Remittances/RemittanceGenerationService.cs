@@ -145,7 +145,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                     PayableId: payable.Id,
                     InstallmentId: inst.Id,
                     Method: method.Value,
-                    Amount: inst.Amount,
+                    Amount: inst.NetAmount,
                     FavoredName: vendor.Name,
                     FavoredDocument: vendor.Document,
                     FavoredBankCode: bankInfo.BankCode,
@@ -157,7 +157,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                 // Placeholder FileLine — Reference assigned after Remittance.Create below.
                 var fileLine = new RemittanceFileLine(
                     Method: method.Value,
-                    Amount: inst.Amount,
+                    Amount: inst.NetAmount,
                     PaymentDate: paymentDate,
                     FavoredName: vendor.Name,
                     FavoredDocument: vendor.Document,

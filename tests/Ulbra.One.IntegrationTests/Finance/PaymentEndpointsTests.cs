@@ -564,4 +564,108 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Conflict, deleteRes.StatusCode);
         Assert.Equal("BankAccount.InUse", (await ReadJson(deleteRes)).GetProperty("title").GetString());
     }
+
+    // ---------------------------------------------------------------------------
+    // Manual baixa uses NetAmount (withholding guard, AEL-619)
+    // ---------------------------------------------------------------------------
+
+    /// <summary>
+    /// Creates a payable with an IRRF withholding via domain (avoids HTTP which does not expose
+    /// withholdings) so that installment.NetAmount &lt; installment.Amount.
+    /// Returns (payablePrefixedId, installmentPrefixedId).
+    /// </summary>
+    private static async Task<(string PayablePrefixedId, string InstallmentPrefixedId)> CreateWithheldPayableAsync(
+        ApiFactory factory, Seed seed, decimal grossAmount, decimal withholdingAmount)
+    {
+        var companyId = Guid.Parse(seed.CompanyId[(seed.CompanyId.LastIndexOf('_') + 1)..]);
+        var vendorId = Guid.Parse(seed.VendorId[(seed.VendorId.LastIndexOf('_') + 1)..]);
+        var ccId = Guid.Parse(seed.CostCenterId[(seed.CostCenterId.LastIndexOf('_') + 1)..]);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+
+        var installment = new Installment(1, new DateOnly(2026, 7, 10), grossAmount);
+        var payable = new Payable(
+            companyId: companyId,
+            origin: PayableOrigin.Manual,
+            vendorId: vendorId,
+            counterpartyName: "Fornecedor Retencao Baixa",
+            documentNumber: null,
+            issueDate: null,
+            description: "Payable with IRRF for manual baixa test",
+            costCenterId: ccId,
+            categoryId: null,
+            installments: [installment]);
+
+        payable.SetWithholdings([
+            (WithholdingTaxType.Irrf, BaseAmount: grossAmount, Rate: null, Amount: withholdingAmount)
+        ]);
+        payable.Approve("test-user", clock.GetUtcNow());
+
+        await uow.AddAsync(payable, CancellationToken.None);
+        await uow.SaveChangesAsync(CancellationToken.None);
+
+        var payablePrefixedId = $"payable_{payable.Id:N}";
+        var installmentPrefixedId = $"installment_{installment.Id:N}";
+        return (payablePrefixedId, installmentPrefixedId);
+    }
+
+    [Fact]
+    public async Task Register_NetAmount_On_Withheld_Payable_Settles_Installment_And_Payable()
+    {
+        // Gross 1000, IRRF 150 → NetAmount = 850; bank owes 850 in cash.
+        const decimal gross = 1000m;
+        const decimal withheld = 150m;
+        const decimal net = gross - withheld; // 850
+
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var (payableId, installmentId) = await CreateWithheldPayableAsync(factory, seed, gross, withheld);
+
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
+        {
+            paymentDate = "2026-07-10",
+            amount = net,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+
+        var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.Equal("Paid", body.GetProperty("status").GetString());
+        var inst = body.GetProperty("installments")[0];
+        Assert.Equal("Paid", inst.GetProperty("status").GetString());
+        Assert.Equal(1, inst.GetProperty("payments").GetArrayLength());
+        Assert.Equal(net, inst.GetProperty("payments")[0].GetProperty("amount").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Register_AboveNet_But_BelowGross_On_Withheld_Payable_Returns_400_Overpay_Not_500()
+    {
+        // Gross 1000, IRRF 150 → NetAmount = 850.
+        // Paying 900 (between net and gross) must return Payment.Overpay (400), not throw (500).
+        const decimal gross = 1000m;
+        const decimal withheld = 150m;
+        const decimal aboveNet = 900m; // > 850 net but < 1000 gross
+
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var (payableId, installmentId) = await CreateWithheldPayableAsync(factory, seed, gross, withheld);
+
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
+        {
+            paymentDate = "2026-07-10",
+            amount = aboveNet,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        // Must be a clean 400 with Payment.Overpay — not an unhandled 500.
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("Payment.Overpay", (await ReadJson(res)).GetProperty("title").GetString());
+    }
 }

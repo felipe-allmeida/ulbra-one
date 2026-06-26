@@ -55,6 +55,7 @@ import {
   type Unit,
   type Vendor,
   type VendorInput,
+  type WithholdingTaxType,
   type Remittance,
   type RemittanceListItem,
   type RemittanceReturnOutcome,
@@ -621,6 +622,26 @@ export function useDeletePayableAttachment(
   return useInvalidatingMutation(
     ({ id, attachmentId }) => api.deletePayableAttachment(id, attachmentId),
     (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+export interface WithholdingItem {
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  rate?: number | null;
+  amount: number;
+}
+
+export function useSetPayableWithholdings(
+  options?: UseMutationOptions<Payable, unknown, { id: string; items: WithholdingItem[] }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, items }) => api.setPayableWithholdings(id, items),
+    (qc, _d, vars) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
     },
@@ -1265,4 +1286,5 @@ export type {
   RemittanceReturnOutcome,
   CreateRemittanceResponse,
   CreateRemittanceInput,
+  WithholdingTaxType,
 };
