@@ -28,6 +28,9 @@ public sealed class UpdateBankAccount : IEndpoint
         public bool Active { get; set; } = true;
         public bool IsDefaultForPayments { get; set; }
         public PaymentMethod? DefaultPaymentMethod { get; set; }
+
+        /// <summary>CNAB payment-remittance agreement code (convênio). Required to generate a remittance for this account.</summary>
+        public string CnabAgreementCode { get; set; } = string.Empty;
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -53,7 +56,7 @@ public sealed class UpdateBankAccount : IEndpoint
         if (duplicate)
             return TypedResults.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
 
-        acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance);
+        acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode);
         if (req.Active) acc.Activate(); else acc.Deactivate();
 
         if (req.IsDefaultForPayments)

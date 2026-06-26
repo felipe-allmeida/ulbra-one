@@ -90,7 +90,11 @@ public class PayablePostingServiceTests
     private const string CashCode = "1.1.01";
 
     private static readonly AccountingPostingOptions Opts =
-        new(PayablesLiabilityCode: LiabilityCode, CashCode: CashCode);
+        new(PayablesLiabilityCode: LiabilityCode, CashCode: CashCode,
+            WithholdingCodes: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Irrf"] = "2.1.tax",
+            });
 
     private static LedgerAccount MakeAnalytical(Guid companyId, string code, AccountGroup group)
     {
@@ -115,7 +119,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(CompanyId, LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, [], CancellationToken.None);
 
         var entries = uow.JournalEntries;
         Assert.Single(entries);
@@ -150,8 +154,8 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(CompanyId, LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, CancellationToken.None);
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, [], CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, ExpenseCode, [], CancellationToken.None);
 
         // Still only ONE entry — second call was idempotent
         Assert.Single(uow.JournalEntries);
@@ -167,7 +171,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(CompanyId, LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:y", 200m, "9.9.99.UNKNOWN", CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:y", 200m, "9.9.99.UNKNOWN", [], CancellationToken.None);
 
         Assert.Empty(uow.JournalEntries);
 
@@ -187,7 +191,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(CompanyId, LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:z", 50m, null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:z", 50m, null, [], CancellationToken.None);
 
         Assert.Empty(uow.JournalEntries);
         var pending = Assert.Single(uow.Pendings);
@@ -231,7 +235,7 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut(expense, liability);
 
         // First post an incurral
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev", 300m, ExpenseCode, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev", 300m, ExpenseCode, [], CancellationToken.None);
         Assert.Single(uow.JournalEntries);
 
         // Now reverse it
@@ -257,7 +261,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(CompanyId, LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev2", 100m, ExpenseCode, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev2", 100m, ExpenseCode, [], CancellationToken.None);
         await sut.ReverseAsync(CompanyId, "payable-incurral:rev2", "cancelled", CancellationToken.None);
         await sut.ReverseAsync(CompanyId, "payable-incurral:rev2", "cancelled again", CancellationToken.None);
 

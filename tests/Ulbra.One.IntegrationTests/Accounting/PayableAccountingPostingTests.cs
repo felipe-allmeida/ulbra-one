@@ -55,7 +55,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var entry = await uow.ReadSet<JournalEntry>()
@@ -144,7 +144,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownCode, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownCode, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No journal entry created.
@@ -173,11 +173,11 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Second call with same key — must be idempotent.
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var count = await uow.ReadSet<JournalEntry>()

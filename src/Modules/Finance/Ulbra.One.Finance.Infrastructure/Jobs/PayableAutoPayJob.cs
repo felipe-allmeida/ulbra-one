@@ -10,7 +10,7 @@ using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Infrastructure.Jobs;
 
-/// <summary>Daily sweep: registers the baixa for due Scheduled installments at face amount → Paid.</summary>
+/// <summary>Daily sweep: registers the baixa for due Scheduled installments at net amount (after withholdings) → Paid.</summary>
 public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider clock,
     ILogger<PayableAutoPayJob> log, bool enabled, TimeSpan interval) : BackgroundService
 {
@@ -60,9 +60,9 @@ public sealed class PayableAutoPayJob(IServiceScopeFactory scopes, TimeProvider 
                 var (bankAccountId, method) = source.Value;
                 foreach (var inst in payable.Installments.Where(i => i.Status != InstallmentStatus.Paid && i.DueDate <= today).ToList())
                 {
-                    var face = inst.Amount - inst.PaidAmount;
-                    if (face <= 0) { log.LogWarning("Auto-pay {Payable}/{Inst} face amount is {Face}; skipping", payable.Id, inst.Id, face); continue; }
-                    var input = new RegisterPaymentInput(today, face, bankAccountId, method, 0, 0, 0, "Pagamento automático");
+                    var net = inst.NetAmount - inst.PaidAmount;
+                    if (net <= 0) { log.LogWarning("Auto-pay {Payable}/{Inst} net amount is {Net}; skipping", payable.Id, inst.Id, net); continue; }
+                    var input = new RegisterPaymentInput(today, net, bankAccountId, method, 0, 0, 0, "Pagamento automático");
                     var result = await payments.RegisterAsync(payable, inst, input, SystemActor.Id, ct);
                     if (result.IsFailure) log.LogWarning("Auto-pay {Payable}/{Inst} failed: {Err}", payable.Id, inst.Id, result.Error.Code);
                 }

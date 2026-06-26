@@ -100,6 +100,14 @@ export type ExpenseCategory = Schemas['ExpenseCategoryResponse'];
 export type PayableOrigin = Schemas['PayableOrigin'];
 export type PayableStatus = Schemas['PayableStatus'];
 export type InstallmentStatus = Schemas['InstallmentStatus'];
+export type PayableStageSummaryResponse = Schemas['PayableStageSummaryResponse'];
+export type ReceivableStageSummaryResponse = Schemas['ReceivableStageSummaryResponse'];
+export type StageBucket = Schemas['StageBucket'];
+export type AuditTrailEvent = Schemas['AuditTrailEventResponse'];
+
+// ---------- Withholdings (Retenções) ----------
+export type WithholdingTaxType = Schemas['WithholdingTaxType'];
+export type PayableWithholding = Schemas['PayableWithholdingResponse'];
 
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
@@ -208,8 +216,12 @@ export type PostingKind = Schemas['PostingKind'];
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
 export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
+export type RemittanceLine = Schemas['RemittanceLineResponse'];
+export type RemittanceReturnOutcome = Schemas['RemittanceReturnOutcome'];
 export type CreateRemittanceResponse = Schemas['CreateRemittanceResponse'];
 export type SkippedInstallment = Schemas['SkippedInstallmentResponse'];
+/** Remittance line status — serialized as string at runtime. */
+export type RemittanceLineStatus = 'Pending' | 'Paid' | 'Returned';
 
 /** Request body for generating a CNAB240 remittance file. */
 export interface CreateRemittanceInput {
@@ -509,6 +521,12 @@ export const api = {
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
   },
   getPayable: (id: string) => request<Payable>(`/payables/${id}`),
+  payableStageSummary: (companyId: string): Promise<PayableStageSummaryResponse> => {
+    const q = new URLSearchParams({ companyId });
+    return request<PayableStageSummaryResponse>(`/payables/stage-summary?${q}`);
+  },
+  payableAuditTrail: (id: string): Promise<AuditTrailEvent[]> =>
+    request<AuditTrailEvent[]>(`/payables/${id}/audit-trail`),
   createPayable: (body: PayableInput) => request<Payable>('/payables', { method: 'POST', body: JSON.stringify(body) }),
   updatePayable: (id: string, body: Omit<PayableInput, 'origin'>) =>
     request<Payable>(`/payables/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
@@ -532,6 +550,10 @@ export const api = {
     `${BASE_URL}/payables/${id}/attachments/${attachmentId}`,
   deletePayableAttachment: (id: string, attachmentId: string) =>
     request<void>(`/payables/${id}/attachments/${attachmentId}`, { method: 'DELETE' }),
+  setPayableWithholdings: (
+    id: string,
+    items: { taxType: Schemas['WithholdingTaxType']; baseAmount: number; rate?: number | null; amount: number }[],
+  ) => request<Payable>(`/payables/${id}/withholdings`, { method: 'PUT', body: JSON.stringify({ items }) }),
 
   // ---------- Fiscal documents (leitor de NF) ----------
   /** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */
@@ -956,4 +978,26 @@ export const api = {
   cancelRemittance: (id: string) => request<Remittance>(`/remittances/${id}/cancel`, { method: 'POST' }),
   /** Direct URL for downloading the CNAB240 .REM file (text/plain). */
   remittanceFileUrl: (id: string) => `${BASE_URL}/remittances/${id}/file`,
+
+  /** Imports a .RET return file via multipart/form-data. Uses fetch directly so the browser sets the boundary. */
+  importRemittanceReturn: async (id: string, file: File): Promise<RemittanceReturnOutcome> => {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = new Headers();
+    if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+    const res = await fetch(`${BASE_URL}/remittances/${id}/return`, { method: 'POST', headers, body: form });
+    if (!res.ok) throw new Error((await res.text()) || `${res.status} ${res.statusText}`);
+    return res.json() as Promise<RemittanceReturnOutcome>;
+  },
+  /** Manually confirms a remittance line as paid. */
+  confirmRemittanceLine: (id: string, lineId: string) =>
+    request<void>(`/remittances/${id}/lines/${lineId}/confirm-paid`, { method: 'POST' }),
+  /** Manually marks a remittance line as returned with a reason. */
+  markRemittanceLineReturned: (id: string, lineId: string, reason: string) =>
+    request<void>(`/remittances/${id}/lines/${lineId}/mark-returned`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  /** Development-only: direct URL for downloading a simulated .RET file. */
+  remittanceSimulateReturnUrl: (id: string) => `${BASE_URL}/remittances/${id}/simulate-return`,
 };

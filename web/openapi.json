@@ -2026,6 +2026,66 @@
         }
       }
     },
+    "/api/payables/{id}/withholdings": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SetWithholdings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWithholdingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/{id}/cancel": {
       "post": {
         "tags": [
@@ -2925,6 +2985,79 @@
         }
       }
     },
+    "/api/payables/stage-summary": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableStageSummary",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableStageSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/audit-trail": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditTrailEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/aging": {
       "get": {
         "tags": [
@@ -3580,6 +3713,79 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/receivables/stage-summary": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivableStageSummary",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableStageSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/audit-trail": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivableAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditTrailEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4819,6 +5025,232 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/return": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ImportRemittanceReturn",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceReturnOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/lines/{lineId}/confirm-paid": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ConfirmRemittanceLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/lines/{lineId}/mark-returned": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ReturnRemittanceLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnRemittanceLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/simulate-return": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SimulateRemittanceReturn",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -6264,6 +6696,39 @@
         },
         "additionalProperties": false
       },
+      "AuditTrailEventResponse": {
+        "required": [
+          "type",
+          "actorId",
+          "actorName",
+          "timestamp",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "BalanceSheetLineResponse": {
         "required": [
           "ledgerAccountId",
@@ -7178,7 +7643,8 @@
           "alias",
           "openingBalance",
           "isDefaultForPayments",
-          "defaultPaymentMethod"
+          "defaultPaymentMethod",
+          "cnabAgreementCode"
         ],
         "type": "object",
         "properties": {
@@ -7217,6 +7683,9 @@
           },
           "defaultPaymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "cnabAgreementCode": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -8337,7 +8806,8 @@
           "amount",
           "status",
           "paidAmount",
-          "payments"
+          "payments",
+          "netAmount"
         ],
         "type": "object",
         "properties": {
@@ -8369,6 +8839,10 @@
             "items": {
               "$ref": "#/components/schemas/PaymentResponse"
             }
+          },
+          "netAmount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -8381,6 +8855,34 @@
           "InRemittance"
         ],
         "type": "string"
+      },
+      "Item": {
+        "required": [
+          "taxType",
+          "baseAmount",
+          "rate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "JournalEntryResponse": {
         "required": [
@@ -9040,7 +9542,10 @@
           "paymentMethod",
           "createdAt",
           "installments",
-          "attachments"
+          "attachments",
+          "withholdings",
+          "totalWithheld",
+          "netTotal"
         ],
         "type": "object",
         "properties": {
@@ -9171,6 +9676,48 @@
             "items": {
               "$ref": "#/components/schemas/PayableAttachmentResponse"
             }
+          },
+          "withholdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableWithholdingResponse"
+            }
+          },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableStageSummaryResponse": {
+        "required": [
+          "entry",
+          "classification",
+          "approval",
+          "payment",
+          "reconciled"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "approval": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
           }
         },
         "additionalProperties": false
@@ -9186,6 +9733,39 @@
           "Cancelled"
         ],
         "type": "string"
+      },
+      "PayableWithholdingResponse": {
+        "required": [
+          "id",
+          "taxType",
+          "baseAmount",
+          "rate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "withholding_3fa85f64571742199730000000000000"
+          },
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "PaymentMethod": {
         "enum": [
@@ -9806,6 +10386,26 @@
         },
         "additionalProperties": false
       },
+      "ReceivableStageSummaryResponse": {
+        "required": [
+          "entry",
+          "receipt",
+          "reconciled"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReceivableStatus": {
         "enum": [
           "AwaitingReceipt",
@@ -9945,7 +10545,9 @@
           "favoredName",
           "favoredDocument",
           "reference",
-          "status"
+          "status",
+          "effectiveDate",
+          "bankReference"
         ],
         "type": "object",
         "properties": {
@@ -9979,6 +10581,15 @@
           },
           "status": {
             "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "bankReference": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10128,6 +10739,46 @@
         },
         "additionalProperties": false
       },
+      "RemittanceReturnOutcome": {
+        "required": [
+          "matched",
+          "paid",
+          "returned",
+          "unmatched",
+          "divergent",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paid": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "returned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "divergent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "RequestFiscalUploadUrlRequest": {
         "required": [
           "fileName"
@@ -10149,6 +10800,18 @@
           "classifiedCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReturnRemittanceLineRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10260,6 +10923,22 @@
         },
         "additionalProperties": false
       },
+      "SetWithholdingsRequest": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SkippedInstallmentResponse": {
         "required": [
           "payableId",
@@ -10278,6 +10957,24 @@
           },
           "reason": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StageBucket": {
+        "required": [
+          "count",
+          "totalAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -10633,7 +11330,8 @@
           "openingBalance",
           "active",
           "isDefaultForPayments",
-          "defaultPaymentMethod"
+          "defaultPaymentMethod",
+          "cnabAgreementCode"
         ],
         "type": "object",
         "properties": {
@@ -10671,6 +11369,9 @@
           },
           "defaultPaymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "cnabAgreementCode": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -11215,6 +11916,18 @@
           }
         },
         "additionalProperties": false
+      },
+      "WithholdingTaxType": {
+        "enum": [
+          "Irrf",
+          "Iss",
+          "Inss",
+          "Pis",
+          "Cofins",
+          "Csll",
+          "Other"
+        ],
+        "type": "string"
       }
     },
     "securitySchemes": {

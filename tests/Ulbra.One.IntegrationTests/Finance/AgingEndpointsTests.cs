@@ -12,116 +12,6 @@ public class AgingEndpointsTests(PostgresFixture fixture)
 
     private sealed record Seed(string CompanyId, string CostCenterId, string VendorId);
 
-    private static async Task<string> CreateCompanyAsync(HttpClient client)
-    {
-        var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
-        var res = await client.PostAsJsonAsync("/api/companies", new { legalName = "ULBRA Teste", cnpj });
-        res.EnsureSuccessStatusCode();
-        return (await ReadJson(res)).GetProperty("id").GetString()!;
-    }
-
-    private static async Task<string> CreateCostCenterAsync(HttpClient client, string companyId, string code, string name)
-    {
-        var res = await client.PostAsJsonAsync("/api/cost-centers",
-            new { companyId, code, name, annualBudget = 1_000_000m, autoApprovalLimit = 1_000_000m, unitIds = Array.Empty<string>() });
-        res.EnsureSuccessStatusCode();
-        return (await ReadJson(res)).GetProperty("id").GetString()!;
-    }
-
-    /// <summary>Generates a valid (check-digit) CNPJ from a random 12-digit base.</summary>
-    private static string RandomCnpj()
-    {
-        var digits = new int[14];
-        for (var i = 0; i < 12; i++) digits[i] = Random.Shared.Next(0, 10);
-        int[] w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        int[] w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        digits[12] = Dv(digits, w1);
-        digits[13] = Dv(digits, w2);
-        return string.Concat(digits);
-
-        static int Dv(int[] d, int[] w)
-        {
-            var sum = 0;
-            for (var i = 0; i < w.Length; i++) sum += d[i] * w[i];
-            var rest = sum % 11;
-            return rest < 2 ? 0 : 11 - rest;
-        }
-    }
-
-    private static async Task<string> CreateVendorAsync(HttpClient client, string companyId, string name, string document)
-    {
-        var res = await client.PostAsJsonAsync("/api/vendors", new
-        {
-            companyId,
-            personType = 1,
-            name,
-            tradeName = name,
-            document,
-            email = "contato@fs.com",
-            phone = "5133334444",
-            address = (object?)null,
-            paymentTerms = "30 dias",
-            bankInfo = (string?)null,
-        });
-        res.EnsureSuccessStatusCode();
-        return (await ReadJson(res)).GetProperty("id").GetString()!;
-    }
-
-    private static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string accountNumber)
-    {
-        var res = await client.PostAsJsonAsync("/api/bank-accounts", new
-        {
-            companyId,
-            bankCode = "033",
-            bankName = "Banco Santander",
-            agency = "1234",
-            accountNumber,
-            accountDigit = "6",
-            accountType = "Checking",
-            alias = "Conta " + accountNumber,
-            openingBalance = 1_000_000m,
-        });
-        res.EnsureSuccessStatusCode();
-        return (await ReadJson(res)).GetProperty("id").GetString()!;
-    }
-
-    /// <summary>Creates a single-installment payable and (optionally) approves it. Returns (payableId, installmentId).</summary>
-    private static async Task<(string PayableId, string InstallmentId)> CreatePayableAsync(
-        HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
-    {
-        var createRes = await client.PostAsJsonAsync("/api/payables", new
-        {
-            companyId,
-            vendorId,
-            costCenterId,
-            description = "Para pagar",
-            installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
-        });
-        createRes.EnsureSuccessStatusCode();
-        var body = await ReadJson(createRes);
-        var payableId = body.GetProperty("id").GetString()!;
-        var installmentId = body.GetProperty("installments")[0].GetProperty("id").GetString()!;
-
-        if (approve)
-        {
-            var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
-            approveRes.EnsureSuccessStatusCode();
-        }
-        return (payableId, installmentId);
-    }
-
-    private static async Task RegisterPaymentAsync(HttpClient client, string payableId, string installmentId, string bankId, decimal amount, DateOnly date)
-    {
-        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
-        {
-            paymentDate = date.ToString("yyyy-MM-dd"),
-            amount,
-            bankAccountId = bankId,
-            method = "Pix",
-        });
-        res.EnsureSuccessStatusCode();
-    }
-
     /// <summary>
     /// Seeds one company with two vendors / two cost centers and a mix of installments across buckets:
     /// vendor A / CC1: NotYetDue 100, Overdue1To30 200; vendor B / CC2: Overdue31To60 300, partial (remaining 50 in 1-30);
@@ -129,30 +19,30 @@ public class AgingEndpointsTests(PostgresFixture fixture)
     /// </summary>
     private async Task<(string CompanyId, string VendorA, string VendorB, string Cc1, string Cc2)> SeedAgingAsync(HttpClient client, DateOnly today)
     {
-        var companyId = await CreateCompanyAsync(client);
-        var cc1 = await CreateCostCenterAsync(client, companyId, "CC1", "Marketing");
-        var cc2 = await CreateCostCenterAsync(client, companyId, "CC2", "TI");
-        var vendorA = await CreateVendorAsync(client, companyId, "Fornecedor A", RandomCnpj());
-        var vendorB = await CreateVendorAsync(client, companyId, "Fornecedor B", RandomCnpj());
-        var bankId = await CreateBankAccountAsync(client, companyId, "00012345");
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc1 = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Marketing");
+        var cc2 = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC2", "TI");
+        var vendorA = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A", FinanceSeed.RandomCnpj());
+        var vendorB = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor B", FinanceSeed.RandomCnpj());
+        var bankId = await FinanceSeed.CreateBankAccountAsync(client, companyId, "00012345");
 
         // Vendor A / CC1
-        await CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(10), 100m);   // NotYetDue
-        await CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-10), 200m);   // Overdue1To30
+        await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(10), 100m);   // NotYetDue
+        await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-10), 200m);  // Overdue1To30
 
         // Vendor B / CC2
-        await CreatePayableAsync(client, companyId, vendorB, cc2, today.AddDays(-45), 300m);   // Overdue31To60
+        await FinanceSeed.CreatePayableAsync(client, companyId, vendorB, cc2, today.AddDays(-45), 300m);  // Overdue31To60
 
         // Vendor B / CC2 partial: amount 80, pay 30, remaining 50 -> Overdue1To30
-        var (partialPayable, partialInst) = await CreatePayableAsync(client, companyId, vendorB, cc2, today.AddDays(-5), 80m);
-        await RegisterPaymentAsync(client, partialPayable, partialInst, bankId, 30m, today);
+        var (partialPayable, partialInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(client, companyId, vendorB, cc2, today.AddDays(-5), 80m);
+        await FinanceSeed.RegisterPaymentAsync(client, partialPayable, partialInst, bankId, 30m, today);
 
         // Excluded: fully paid installment (vendor A / CC1)
-        var (paidPayable, paidInst) = await CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-3), 500m);
-        await RegisterPaymentAsync(client, paidPayable, paidInst, bankId, 500m, today);
+        var (paidPayable, paidInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(client, companyId, vendorA, cc1, today.AddDays(-3), 500m);
+        await FinanceSeed.RegisterPaymentAsync(client, paidPayable, paidInst, bankId, 500m, today);
 
         // Excluded: cancelled payable (vendor A / CC1)
-        var (cancelledPayable, _) = await CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-20), 999m, approve: false);
+        var cancelledPayable = await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-20), 999m, approve: false);
         var cancelRes = await client.PostAsJsonAsync($"/api/payables/{cancelledPayable}/cancel", new { reason = "Nao vai mais" });
         cancelRes.EnsureSuccessStatusCode();
 
@@ -237,13 +127,13 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var companyId = await CreateCompanyAsync(client);
-        var cc = await CreateCostCenterAsync(client, companyId, "CC-PA", "Pending Approval CC");
-        var vendor = await CreateVendorAsync(client, companyId, "Fornecedor PA", RandomCnpj());
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC-PA", "Pending Approval CC");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor PA", FinanceSeed.RandomCnpj());
 
         // Unapproved, non-cancelled payable with an overdue installment (approve: false, no cancel call).
         // Amount 400 -> should appear in Overdue1To30.
-        await CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(-5), 400m, approve: false);
+        await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(-5), 400m, approve: false);
 
         var res = await client.GetAsync($"/api/payables/aging?companyId={companyId}");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);

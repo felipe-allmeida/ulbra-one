@@ -21,6 +21,7 @@ import { InstallmentsTable } from './installments-table';
 import { AttachmentsPanel } from './attachments-panel';
 import { PaymentHistory } from './payment-history';
 import { PaymentForm } from './payment-form';
+import { WithholdingSection } from './withholding-section';
 
 /* ============ DETAIL ============ */
 export function ContaPagarDetailPage() {
@@ -169,6 +170,8 @@ export function ContaPagarDetailPage() {
       )}
 
       <InstallmentsTable payable={p} onRegister={setBaixaInstallment} />
+
+      <WithholdingSection payable={p} editable={editable} />
 
       {[...p.installments]
         .sort((a, b) => a.sequence - b.sequence)

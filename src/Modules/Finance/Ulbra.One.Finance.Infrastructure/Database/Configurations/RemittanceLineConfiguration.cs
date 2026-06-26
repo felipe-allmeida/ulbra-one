@@ -23,6 +23,8 @@ public sealed class RemittanceLineConfiguration : BaseEntityConfiguration<Remitt
         e.Property(x => x.Amount).HasPrecision(18, 2);
         e.Property(x => x.Method).HasConversion<string>().HasMaxLength(20);
         e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+        e.Property(x => x.BankReference).HasMaxLength(20);
+        e.Property(x => x.ReturnReason).HasMaxLength(200);
         e.HasIndex(x => x.RemittanceId);
     }
 }

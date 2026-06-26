@@ -28,23 +28,42 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             .Where(e => e.CompanyId == companyId && e.Number != null)
             .MaxAsync(e => (int?)e.Number, ct) ?? 0) + 1;
 
-    // ── Core: post two-line balanced entry or park a pending ─────────────────
-    private async Task PostTwoLineAsync(
+    // ── Core: post a multi-line balanced entry or park a pending ─────────────
+    // lines: list of (code, side, amount). All codes must resolve; first unresolvable → Pending.
+    private async Task PostEntryAsync(
         Guid companyId, string sourceKey, string description, PostingKind kind,
-        decimal amount, string? debitCode, string? creditCode, CancellationToken ct)
+        IReadOnlyList<(string? Code, EntrySide Side, decimal Amount)> lines, CancellationToken ct)
     {
         if (await AlreadyPostedAsync(companyId, sourceKey, ct)) return; // idempotent
 
-        var debit = await ResolveAsync(companyId, debitCode, ct);
-        var credit = await ResolveAsync(companyId, creditCode, ct);
-
-        if (debit is null || credit is null)
+        // Resolve all accounts up-front (all-or-nothing).
+        var resolved = new List<(LedgerAccount Account, EntrySide Side, decimal Amount)>(lines.Count);
+        bool anyUnresolvable = false;
+        string firstMissingLabel = string.Empty;
+        foreach (var (code, side, amount) in lines)
         {
-            var reason = debit is null
-                ? $"AccountNotFound:{debitCode}"
-                : $"AccountNotFound:{creditCode}";
+            var account = await ResolveAsync(companyId, code, ct);
+            if (account is null)
+            {
+                if (!anyUnresolvable)
+                {
+                    anyUnresolvable = true;
+                    firstMissingLabel = code ?? "(null)";
+                }
+            }
+            else
+            {
+                resolved.Add((account, side, amount));
+            }
+        }
+
+        if (anyUnresolvable)
+        {
+            // Park a single PendingAccountingPosting naming the first unresolvable code.
+            var desc = string.Join(" / ", lines.Select(l => $"{(l.Side == EntrySide.Debit ? "Dr" : "Cr")} {l.Code}"));
             var pending = new PendingAccountingPosting(
-                companyId, sourceKey, kind, amount, reason, $"Dr {debitCode} / Cr {creditCode}");
+                companyId, sourceKey, kind, lines.Sum(l => l.Side == EntrySide.Debit ? l.Amount : 0m),
+                $"AccountNotFound:{firstMissingLabel}", desc);
             pending.Stamp(clock.GetUtcNow());
             await uow.AddAsync(pending, ct);
             return;
@@ -53,28 +72,49 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
         var entry = new JournalEntry(companyId, today, description,
             JournalOrigin.Automatic, sourceReference: sourceKey, sourceKey: sourceKey);
-        entry.AddLine(new JournalLine(debit.Id, EntrySide.Debit, amount));
-        entry.AddLine(new JournalLine(credit.Id, EntrySide.Credit, amount));
+        foreach (var (account, side, amount) in resolved)
+            entry.AddLine(new JournalLine(account.Id, side, amount));
         entry.Post(await NextNumberAsync(companyId, ct), clock.GetUtcNow());
         await uow.AddAsync(entry, ct);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public Task PostIncurralAsync(Guid companyId, string sourceKey, decimal amount, string? expenseCode, CancellationToken ct) =>
-        PostTwoLineAsync(companyId, sourceKey,
-            "Provisão de despesa (a pagar)",
-            PostingKind.Incurral, amount,
-            debitCode: expenseCode,
-            creditCode: opts.PayablesLiabilityCode,
-            ct);
+    public Task PostIncurralAsync(
+        Guid companyId, string sourceKey, decimal amount, string? expenseCode,
+        IReadOnlyList<(string TaxType, decimal Amount)> withholdings, CancellationToken ct)
+    {
+        // Build the multi-line plan:
+        //   Dr expenseCode         = gross amount
+        //   Cr PayablesLiability   = gross − Σwithholdings  (net)
+        //   Cr WithholdingCode[t]  = each withholding.Amount  (one line per withholding)
+        // When withholdings is empty the net == gross → exactly the classic 2-line entry.
+        var totalWithheld = withholdings.Sum(w => w.Amount);
+        var netAmount = amount - totalWithheld;
+
+        var lineList = new List<(string? Code, EntrySide Side, decimal Amount)>(2 + withholdings.Count)
+        {
+            (expenseCode, EntrySide.Debit, amount),
+            (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount),
+        };
+
+        foreach (var w in withholdings)
+        {
+            opts.WithholdingCodes.TryGetValue(w.TaxType, out var withholdingCode);
+            lineList.Add((withholdingCode, EntrySide.Credit, w.Amount));
+        }
+
+        return PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
+    }
 
     public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, CancellationToken ct) =>
-        PostTwoLineAsync(companyId, sourceKey,
+        PostEntryAsync(companyId, sourceKey,
             "Pagamento de fornecedor",
-            PostingKind.Settlement, amount,
-            debitCode: opts.PayablesLiabilityCode,
-            creditCode: opts.CashCode,
+            PostingKind.Settlement,
+            [
+                (opts.PayablesLiabilityCode, EntrySide.Debit, amount),
+                (opts.CashCode, EntrySide.Credit, amount),
+            ],
             ct);
 
     public async Task ReverseAsync(Guid companyId, string sourceKey, string reason, CancellationToken ct)

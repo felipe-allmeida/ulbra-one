@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Persistence;
@@ -336,6 +337,120 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var res = await client.PostAsJsonAsync($"/api/bank-transactions/{txnId}/ignore", new { });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         Assert.Equal("Ignored", (await ReadJson(res)).GetProperty("matchStatus").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Conciliation match uses NetAmount (withholding fix, AEL-619)
+    // ---------------------------------------------------------------------------
+
+    /// <summary>Generates an OFX SGML snippet with a single debit of <paramref name="debitAmount"/> (positive value → written as negative).</summary>
+    private static MultipartFormDataContent OfxFileWithDebit(decimal debitAmount, string fitId = "TXN-WH-1")
+    {
+        var amountStr = (-debitAmount).ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        var ofx = $"""
+            OFXHEADER:100
+            DATA:OFXSGML
+            VERSION:102
+            SECURITY:NONE
+            ENCODING:USASCII
+
+            <OFX>
+            <SIGNONMSGSRSV1><SONRS><STATUS><CODE>0<SEVERITY>INFO</STATUS><DTSERVER>20260731<LANGUAGE>POR</SONRS></SIGNONMSGSRSV1>
+            <BANKMSGSRSV1><STMTTRNRS><TRNUID>0<STATUS><CODE>0<SEVERITY>INFO</STATUS><STMTRS>
+            <CURDEF>BRL
+            <BANKACCTFROM><BANKID>033<ACCTID>12345<ACCTTYPE>CHECKING</BANKACCTFROM>
+            <BANKTRANLIST>
+            <DTSTART>20260701
+            <DTEND>20260731
+            <STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260710<TRNAMT>{amountStr}<FITID>{fitId}<MEMO>PAG RETENCAO</STMTTRN>
+            </BANKTRANLIST>
+            <LEDGERBAL><BALAMT>0.00<DTASOF>20260731</LEDGERBAL>
+            </STMTRS></STMTTRNRS></BANKMSGSRSV1>
+            </OFX>
+            """;
+        var content = new MultipartFormDataContent();
+        var fileBytes = new ByteArrayContent(Encoding.ASCII.GetBytes(ofx));
+        fileBytes.Headers.ContentType = new MediaTypeHeaderValue("application/x-ofx");
+        content.Add(fileBytes, "file", "extrato_retencao.ofx");
+        return content;
+    }
+
+    /// <summary>Seeds a withheld payable (approved/Scheduled) via domain — HTTP CreatePayable does not expose withholdings.</summary>
+    private static async Task<(string PayablePrefixedId, Guid InstallmentId)> CreateWithheldPayableAsync(
+        ApiFactory factory, Seed seed, decimal grossAmount, decimal withholdingAmount)
+    {
+        var companyId = Guid.Parse(seed.CompanyId[(seed.CompanyId.LastIndexOf('_') + 1)..]);
+        var vendorId = Guid.Parse(seed.VendorId[(seed.VendorId.LastIndexOf('_') + 1)..]);
+        var ccId = Guid.Parse(seed.CostCenterId[(seed.CostCenterId.LastIndexOf('_') + 1)..]);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+
+        var installment = new Installment(1, new DateOnly(2026, 7, 10), grossAmount);
+        var payable = new Payable(
+            companyId: companyId,
+            origin: PayableOrigin.Manual,
+            vendorId: vendorId,
+            counterpartyName: "Fornecedor Retencao Conciliacao",
+            documentNumber: null,
+            issueDate: null,
+            description: "Payable with IRRF for conciliation test",
+            costCenterId: ccId,
+            categoryId: null,
+            installments: [installment]);
+
+        payable.SetWithholdings([
+            (WithholdingTaxType.Irrf, BaseAmount: grossAmount, Rate: null, Amount: withholdingAmount)
+        ]);
+        payable.Approve("test-user", clock.GetUtcNow());
+
+        await uow.AddAsync(payable, CancellationToken.None);
+        await uow.SaveChangesAsync(CancellationToken.None);
+
+        return ($"payable_{payable.Id:N}", installment.Id);
+    }
+
+    [Fact]
+    public async Task ConfirmMatch_WithheldPayable_NetAmountDebit_ReconcilesCleanlly()
+    {
+        // Gross 1200, IRRF 120 → NetAmount = 1080. Bank debits 1080 (the net cash).
+        const decimal gross = 1200m;
+        const decimal withheld = 120m;
+        const decimal net = gross - withheld; // 1080
+
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        var (payablePrefixedId, installmentId) = await CreateWithheldPayableAsync(factory, seed, gross, withheld);
+
+        // Import an OFX with a debit of exactly NetAmount.
+        using (var content = OfxFileWithDebit(net))
+        {
+            var importRes = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+            Assert.Equal(HttpStatusCode.Created, importRes.StatusCode);
+        }
+
+        // The installment's Remaining = NetAmount − 0 = 1080, which matches the debit exactly → Suggested.
+        var bankAccountGuid = Ulbra.One.Common.Application.Ids.BankAccountId.Parse(bankId, null).Value;
+        using var scope = factory.Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var debit = Assert.Single(ctx.BankTransactions.Where(t => t.BankAccountId == bankAccountGuid));
+        Assert.Equal(MatchStatus.Suggested, debit.MatchStatus);
+        Assert.Equal(installmentId, debit.SuggestedInstallmentId);
+
+        // Confirm the match → installment must reach Paid and transaction Reconciled.
+        var txnPrefixedId = $"bank_txn_{debit.Id:N}";
+        var confirmRes = await client.PostAsJsonAsync($"/api/bank-transactions/{txnPrefixedId}/confirm", new { });
+        Assert.Equal(HttpStatusCode.OK, confirmRes.StatusCode);
+        var confirmed = await ReadJson(confirmRes);
+        Assert.Equal("Reconciled", confirmed.GetProperty("matchStatus").GetString());
+
+        var installment = await GetInstallmentAsync(client, payablePrefixedId);
+        Assert.Equal("Paid", installment.GetProperty("status").GetString());
+        Assert.Equal(1, installment.GetProperty("payments").GetArrayLength());
+        Assert.Equal(net, installment.GetProperty("payments")[0].GetProperty("amount").GetDecimal());
     }
 
     [Fact]

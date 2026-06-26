@@ -4,6 +4,13 @@ using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Contracts;
 
+public sealed record PayableWithholdingResponse(
+    PayableWithholdingId Id, WithholdingTaxType TaxType, decimal BaseAmount, decimal? Rate, decimal Amount)
+{
+    public static PayableWithholdingResponse From(PayableWithholding w) =>
+        new(new PayableWithholdingId(w.Id), w.TaxType, w.BaseAmount, w.Rate, w.Amount);
+}
+
 public sealed record PayableResponse(
     PayableId Id, CompanyId CompanyId, PayableOrigin Origin, VendorId VendorId, string CounterpartyName,
     string? DocumentNumber, DateOnly? IssueDate, string Description, CostCenterId CostCenterId,
@@ -14,7 +21,8 @@ public sealed record PayableResponse(
     double? ClassificationConfidence, string? ClassificationRationale,
     BankAccountId? PaymentBankAccountId, PaymentMethod? PaymentMethod,
     DateTimeOffset CreatedAt, IReadOnlyList<InstallmentResponse> Installments,
-    IReadOnlyList<PayableAttachmentResponse> Attachments)
+    IReadOnlyList<PayableAttachmentResponse> Attachments,
+    IReadOnlyList<PayableWithholdingResponse> Withholdings, decimal TotalWithheld, decimal NetTotal)
 {
     public static PayableResponse From(Payable p) => new(
         new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
@@ -32,5 +40,8 @@ public sealed record PayableResponse(
         p.PaymentMethod,
         p.CreatedAt,
         p.Installments.OrderBy(i => i.Sequence).Select(InstallmentResponse.From).ToList(),
-        p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList());
+        p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList(),
+        p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
+        p.TotalWithheld,
+        p.NetTotal);
 }

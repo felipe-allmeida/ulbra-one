@@ -28,6 +28,15 @@ public class RemittanceLine : IAuditable, ISoftDeletable
 
     public RemittanceLineStatus Status { get; private set; } = RemittanceLineStatus.Pending;
 
+    /// <summary>Effective settlement date, set when the bank confirms payment.</summary>
+    public DateOnly? EffectiveDate { get; private set; }
+
+    /// <summary>Bank-assigned reference returned in the CNAB return file (e.g. "Nosso Número").</summary>
+    public string? BankReference { get; private set; }
+
+    /// <summary>Reason code / description from the CNAB return file when the line is rejected.</summary>
+    public string? ReturnReason { get; private set; }
+
     public DateTimeOffset? DeletedAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public string CreatedBy { get; private set; } = string.Empty;
@@ -52,6 +61,29 @@ public class RemittanceLine : IAuditable, ISoftDeletable
         FavoredPixKey = draft.FavoredPixKey;
         Sequence = sequence;
         Reference = $"{remittanceSequenceNumber:D6}{sequence:D5}";
+    }
+
+    /// <summary>Transitions the line from <see cref="RemittanceLineStatus.Pending"/> to <see cref="RemittanceLineStatus.Paid"/>.</summary>
+    /// <exception cref="InvalidOperationException">Thrown when the line is not in <see cref="RemittanceLineStatus.Pending"/> status.</exception>
+    public void MarkPaid(DateOnly effectiveDate, string? bankReference)
+    {
+        if (Status != RemittanceLineStatus.Pending)
+            throw new InvalidOperationException($"Cannot mark a {Status} line as Paid. Only Pending lines can be paid.");
+
+        Status = RemittanceLineStatus.Paid;
+        EffectiveDate = effectiveDate;
+        BankReference = bankReference;
+    }
+
+    /// <summary>Transitions the line from <see cref="RemittanceLineStatus.Pending"/> to <see cref="RemittanceLineStatus.Returned"/>.</summary>
+    /// <exception cref="InvalidOperationException">Thrown when the line is not in <see cref="RemittanceLineStatus.Pending"/> status.</exception>
+    public void MarkReturned(string reason)
+    {
+        if (Status != RemittanceLineStatus.Pending)
+            throw new InvalidOperationException($"Cannot mark a {Status} line as Returned. Only Pending lines can be returned.");
+
+        Status = RemittanceLineStatus.Returned;
+        ReturnReason = reason;
     }
 
     public void MarkDeleted(DateTimeOffset at) => DeletedAt = at;
