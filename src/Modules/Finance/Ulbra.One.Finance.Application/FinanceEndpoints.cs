@@ -43,6 +43,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.RegisterPayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RequestFiscalUploadUrl;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
+using Ulbra.One.Finance.Application.Endpoints.Payables.SetWithholdings;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
@@ -65,10 +66,14 @@ using Ulbra.One.Finance.Application.Endpoints.Transactions.GetTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ListTransactions;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.PayTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.CancelRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ConfirmRemittanceLine;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.CreateRemittance;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.DownloadRemittanceFile;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.GetRemittance;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ImportRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.ListRemittances;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.ReturnRemittanceLine;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.SimulateRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.RejectTransaction;
 
 namespace Ulbra.One.Finance.Application;
@@ -96,6 +101,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<GetPayable>();
         payables.MapEndpoint<CreatePayable>();
         payables.MapEndpoint<UpdatePayable>();
+        payables.MapEndpoint<SetWithholdings>();
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
         payables.MapEndpoint<RejectPayable>();
@@ -171,6 +177,10 @@ public static class FinanceEndpoints
         remittances.MapEndpoint<GetRemittance>();
         remittances.MapEndpoint<DownloadRemittanceFile>();
         remittances.MapEndpoint<CancelRemittance>();
+        remittances.MapEndpoint<ImportRemittanceReturn>();
+        remittances.MapEndpoint<ConfirmRemittanceLine>();
+        remittances.MapEndpoint<ReturnRemittanceLine>();
+        remittances.MapEndpoint<SimulateRemittanceReturn>();
 
         return builder;
     }

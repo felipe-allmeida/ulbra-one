@@ -70,6 +70,30 @@ public class Remittance : IAuditable, ISoftDeletable
         Status = RemittanceStatus.Cancelled;
     }
 
+    /// <summary>
+    /// Recomputes the remittance status based on its lines. Has no effect on a <see cref="RemittanceStatus.Cancelled"/> remittance.
+    /// <list type="bullet">
+    ///   <item>All lines <see cref="RemittanceLineStatus.Paid"/>, none <see cref="RemittanceLineStatus.Returned"/> → <see cref="RemittanceStatus.Confirmed"/>.</item>
+    ///   <item>Some lines <see cref="RemittanceLineStatus.Returned"/>, rest resolved (no <see cref="RemittanceLineStatus.Pending"/>) → <see cref="RemittanceStatus.PartiallyReturned"/>.</item>
+    ///   <item>Any line still <see cref="RemittanceLineStatus.Pending"/> → stays <see cref="RemittanceStatus.Generated"/>.</item>
+    /// </list>
+    /// </summary>
+    public void Recompute()
+    {
+        if (Status == RemittanceStatus.Cancelled)
+            return;
+
+        bool anyPending = _lines.Any(l => l.Status == RemittanceLineStatus.Pending);
+        if (anyPending)
+        {
+            Status = RemittanceStatus.Generated;
+            return;
+        }
+
+        bool anyReturned = _lines.Any(l => l.Status == RemittanceLineStatus.Returned);
+        Status = anyReturned ? RemittanceStatus.PartiallyReturned : RemittanceStatus.Confirmed;
+    }
+
     public void MarkDeleted(DateTimeOffset at) => DeletedAt = at;
     public void MarkCreated(string userId, DateTimeOffset at) { CreatedBy = userId; CreatedAt = at; MarkUpdated(userId, at); }
     public void MarkUpdated(string userId, DateTimeOffset at) { UpdatedBy = userId; UpdatedAt = at; }

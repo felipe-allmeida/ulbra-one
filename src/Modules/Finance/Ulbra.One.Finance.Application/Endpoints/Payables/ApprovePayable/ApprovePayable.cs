@@ -36,7 +36,8 @@ public sealed class ApprovePayable : IEndpoint
             var code = p.AccountingAccountId is { } acc
                 ? await uow.ReadSet<ChartAccount>().Where(c => c.Id == acc).Select(c => c.Code).FirstOrDefaultAsync(ct)
                 : null;
-            await publish.Publish(new PayableScheduled(p.Id, p.CompanyId, p.TotalAmount, code), ct);
+            var withholdings = p.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
+            await publish.Publish(new PayableScheduled(p.Id, p.CompanyId, p.TotalAmount, code, withholdings), ct);
         }
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));

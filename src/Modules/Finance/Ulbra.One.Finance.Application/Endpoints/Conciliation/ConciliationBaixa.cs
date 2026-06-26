@@ -30,7 +30,7 @@ internal static class ConciliationBaixa
             return TypedResults.Problem(detail: "Only an approved payable can be reconciled.", statusCode: 400, title: "Payable.NotPayable");
 
         var installment = payable.FindInstallment(installmentId)!;
-        var remaining = installment.Amount - installment.PaidAmount;
+        var remaining = installment.NetAmount - installment.PaidAmount;
         if (installment.Status == InstallmentStatus.Paid || remaining != Math.Abs(txn.Amount))
             return TypedResults.Problem(detail: "The transaction amount does not match the installment's remaining amount.",
                 statusCode: 400, title: "Match.AmountMismatch");

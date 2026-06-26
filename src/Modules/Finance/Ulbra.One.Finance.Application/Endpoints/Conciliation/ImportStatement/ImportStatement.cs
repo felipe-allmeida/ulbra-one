@@ -92,7 +92,7 @@ public sealed class ImportStatement : IEndpoint
             where p.CompanyId == account.CompanyId && (p.Status == PayableStatus.Scheduled || p.Status == PayableStatus.Paid)
             from i in p.Installments
             where i.Status == InstallmentStatus.Open || i.Status == InstallmentStatus.PartiallyPaid
-            select new InstallmentCandidate(i.Id, i.Amount - i.PaidAmount, i.DueDate))
+            select new InstallmentCandidate(i.Id, i.NetAmount - i.PaidAmount, i.DueDate))
             .ToListAsync(ct);
 
         foreach (var t in newTxns.Where(t => t.Direction == TransactionDirection.Debit))
