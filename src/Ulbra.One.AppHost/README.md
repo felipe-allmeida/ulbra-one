@@ -38,7 +38,7 @@ Aspire injects environment variables into the `api` process:
 | `MassTransit__Password`        | RabbitMQ password parameter                                     |
 | `ObjectStorage__Provider`      | Hardcoded `AzureBlob`                                           |
 | `ObjectStorage__Bucket`        | Hardcoded `attachments`                                         |
-| `ObjectStorage__ConnectionString` | Azurite blob endpoint (injected via `WithReference(blobs)`)  |
+| `ObjectStorage__ConnectionString` | Azurite blob connection string (from `blobs.Resource.ConnectionStringExpression`) |
 
 The web app receives `PORT` (HTTP port) and `VITE_API_BASE_URL` pointing at the running API.
 

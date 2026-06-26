@@ -32,9 +32,12 @@ var api = builder.AddProject<Projects.Ulbra_One_Api>("api")
     // Pass ParameterResource directly (not .Value — obsolete in Aspire 9.5)
     .WithEnvironment("MassTransit__User", rabbit.Resource.UserNameParameter!)
     .WithEnvironment("MassTransit__Password", rabbit.Resource.PasswordParameter!)
-    // Azure Blob Storage via Azurite; Aspire injects the connection string via WithReference.
+    // Azure Blob Storage via Azurite.
     .WithEnvironment("ObjectStorage__Provider", "AzureBlob")
     .WithEnvironment("ObjectStorage__Bucket", "attachments")
+    // WithReference(blobs) injects ConnectionStrings__attachments, but AddObjectStorage reads
+    // ObjectStorage:ConnectionString — bridge the Azurite connection string to that key.
+    .WithEnvironment("ObjectStorage__ConnectionString", blobs.Resource.ConnectionStringExpression)
     .WithReference(blobs);
 
 // ── Web (Vite dev server) ───────────────────────────────────────────────────
