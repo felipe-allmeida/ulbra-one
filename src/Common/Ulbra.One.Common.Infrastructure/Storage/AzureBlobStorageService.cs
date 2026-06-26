@@ -1,10 +1,14 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
+using Microsoft.Extensions.Options;
 using Ulbra.One.Common.Application;
 
 namespace Ulbra.One.Common.Infrastructure.Storage;
 
-public sealed class AzureBlobStorageService(BlobContainerClient container, BlobServiceClient serviceClient) : IFileStorageService
+public sealed class AzureBlobStorageService(
+    BlobContainerClient container,
+    BlobServiceClient serviceClient,
+    IOptions<ObjectStorageOptions> options) : IFileStorageService
 {
     public async Task<string> SaveAsync(string fileName, Stream content, CancellationToken ct = default)
     {
@@ -49,6 +53,22 @@ public sealed class AzureBlobStorageService(BlobContainerClient container, BlobS
                 DateTimeOffset.UtcNow.AddMinutes(-5), expiry, ct);
             var sas = builder.ToSasQueryParameters(udk.Value, serviceClient.AccountName).ToString();
             url = new UriBuilder(blob.Uri) { Query = sas }.Uri;
+        }
+
+        // The browser PUTs directly to this URL. When the server reaches the blob endpoint via a host
+        // the browser can't resolve (e.g. Azurite at azurite:10000 inside docker), rewrite only the
+        // scheme/host/port to a browser-reachable base. The SAS signature covers the canonical resource
+        // path, not the host, so the rewritten URL stays valid.
+        var publicEndpoint = options.Value.PublicBlobEndpoint;
+        if (!string.IsNullOrWhiteSpace(publicEndpoint))
+        {
+            var pub = new Uri(publicEndpoint);
+            url = new UriBuilder(url)
+            {
+                Scheme = pub.Scheme,
+                Host = pub.Host,
+                Port = pub.IsDefaultPort ? -1 : pub.Port,
+            }.Uri;
         }
 
         return new UploadTarget(url.ToString(), key);

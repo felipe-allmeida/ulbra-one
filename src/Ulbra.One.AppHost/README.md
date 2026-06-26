@@ -44,12 +44,12 @@ The web app receives `PORT` (HTTP port) and `VITE_API_BASE_URL` pointing at the 
 
 ## Upload flow (fiscal / SAS)
 
-Use **this AppHost** to exercise the full file-upload flow locally. The fiscal-document upload is
-*presigned*: the browser PUTs the file directly to a SAS URL returned by the API. Under Aspire the
-API runs as a host process and Azurite is exposed on `127.0.0.1:<port>`, so the SAS URL host is
-reachable from the browser and the PUT succeeds. In `docker-compose` the SAS URL host is the
-in-network `azurite` name, which the browser can't resolve — there only the multipart uploads
-(attachments / payment proofs) work.
+The fiscal-document upload is *presigned*: the browser PUTs the file directly to a SAS URL returned
+by the API. Under Aspire the API runs as a host process and Azurite is exposed on `127.0.0.1:<port>`,
+so the SAS URL host is already reachable from the browser. In `docker-compose` the server reaches
+Azurite at the in-network `azurite:10000`, which the browser can't resolve — there
+`ObjectStorage:PublicBlobEndpoint` (`http://localhost:10000`) rewrites the SAS URL host so the
+browser PUT works. Either way the full upload flow (incl. fiscal/SAS) works locally.
 
 ## Notes
 

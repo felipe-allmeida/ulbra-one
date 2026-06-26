@@ -16,11 +16,11 @@ services:
       timeout: 3s
       retries: 10
 
-  # Azurite (emulador do Azure Blob). Uploads multipart (anexos/comprovantes:
-  # navegador -> API -> storage) funcionam aqui. O fluxo fiscal é presigned (SAS):
-  # o navegador faz PUT direto na URL do storage, cujo host é "azurite" (só resolve
-  # dentro da rede docker) -> não funciona no navegador. Para o fluxo de upload
-  # completo (incl. fiscal/SAS) use o Aspire: dotnet run --project src/Ulbra.One.AppHost
+  # Azurite (emulador do Azure Blob). A API (no container) acessa via azurite:10000.
+  # O fluxo fiscal é presigned (SAS): o navegador faz PUT direto na URL do storage.
+  # Como "azurite" não resolve no navegador, ObjectStorage__PublicBlobEndpoint (na API)
+  # reescreve o host da URL SAS para localhost:10000 (porta publicada abaixo) — o sig
+  # continua válido pois assina o caminho do recurso, não o host.
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     container_name: ulbra-one-azurite
@@ -67,6 +67,9 @@ services:
       ObjectStorage__Provider: AzureBlob
       ObjectStorage__Bucket: attachments
       ObjectStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      # SAS URLs are PUT directly by the browser; rewrite their host from azurite:10000 to the
+      # host-published localhost:10000 so the browser can reach them.
+      ObjectStorage__PublicBlobEndpoint: http://localhost:10000
       MassTransit__Host: rabbitmq
       MassTransit__User: guest
       MassTransit__Password: guest
