@@ -52,6 +52,22 @@ const ptBR = {
     supplies: 'Suprimentos',
     search: 'Buscar…',
     logout: 'Sair',
+    noResults: 'Nenhuma tela encontrada',
+    domains: {
+      home: 'Início',
+      finance: 'Financeiro',
+      accounting: 'Contábil',
+      registry: 'Cadastros',
+      structure: 'Estrutura',
+      settings: 'Config',
+    },
+    subgroups: {
+      operation: 'Operação',
+      analysis: 'Análise',
+      configuration: 'Configuração',
+      movement: 'Movimento',
+      statements: 'Demonstrações',
+    },
   },
 
   landing: {
