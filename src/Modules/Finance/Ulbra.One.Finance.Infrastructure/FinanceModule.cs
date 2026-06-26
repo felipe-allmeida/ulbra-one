@@ -22,11 +22,18 @@ public static class FinanceModule
         services.AddScoped<IBankStatementParser, OfxStatementParser>();
 
         // CNAB240 remittance file engine (Santander 033). Pure — no I/O.
-        services.AddSingleton<ICnabBankProfile, SantanderCnabProfile>();
+        services.AddSingleton<SantanderCnabProfile>();
+        services.AddSingleton<ICnabBankProfile>(sp => sp.GetRequiredService<SantanderCnabProfile>());
+        services.AddSingleton<IReturnOutcomeResolver>(sp => sp.GetRequiredService<SantanderCnabProfile>());
         services.AddSingleton<IRemittanceFileGenerator, Cnab240RemittanceWriter>();
+        services.AddSingleton<ICnabReturnParser, Cnab240ReturnParser>();
 
-        // Remittance generation use-case.
+        // Remittance generation + return conciliation use-cases.
         services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();
+        services.AddScoped<IRemittanceReturnService, RemittanceReturnService>();
+
+        // Development-only: synthetic return file simulator.
+        services.AddScoped<IRemittanceReturnSimulator, CnabReturnSimulator>();
 
         // Fiscal-document reading: XML parsers (detected by namespace) + AI extractor for PDF/image.
         services.AddScoped<IFiscalXmlParser, NfeM55XmlParser>();

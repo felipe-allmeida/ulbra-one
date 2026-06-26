@@ -8,8 +8,9 @@ namespace Ulbra.One.Finance.Infrastructure.Cnab;
 /// <see cref="PaymentMethod"/> to a "forma de lançamento", and how to render each of the
 /// six record types. The writer (<see cref="Cnab240RemittanceWriter"/>) owns the file/lote
 /// structure and sequence counters; the profile owns the byte layout of each record.
+/// Implementors also implement <see cref="IReturnOutcomeResolver"/> for use in Application-layer services.
 /// </summary>
-public interface ICnabBankProfile
+public interface ICnabBankProfile : IReturnOutcomeResolver
 {
     /// <summary>COMPE code written into position 1-3 of every record (e.g. <c>033</c>).</summary>
     string BankCode { get; }

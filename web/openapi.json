@@ -4836,6 +4836,232 @@
         }
       }
     },
+    "/api/remittances/{id}/return": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ImportRemittanceReturn",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceReturnOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/lines/{lineId}/confirm-paid": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ConfirmRemittanceLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/lines/{lineId}/mark-returned": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ReturnRemittanceLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnRemittanceLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/{id}/simulate-return": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "SimulateRemittanceReturn",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vendors": {
       "get": {
         "tags": [
@@ -9949,7 +10175,9 @@
           "favoredName",
           "favoredDocument",
           "reference",
-          "status"
+          "status",
+          "effectiveDate",
+          "bankReference"
         ],
         "type": "object",
         "properties": {
@@ -9983,6 +10211,15 @@
           },
           "status": {
             "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "bankReference": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10132,6 +10369,46 @@
         },
         "additionalProperties": false
       },
+      "RemittanceReturnOutcome": {
+        "required": [
+          "matched",
+          "paid",
+          "returned",
+          "unmatched",
+          "divergent",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paid": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "returned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "divergent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "RequestFiscalUploadUrlRequest": {
         "required": [
           "fileName"
@@ -10153,6 +10430,18 @@
           "classifiedCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReturnRemittanceLineRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
           }
         },
         "additionalProperties": false

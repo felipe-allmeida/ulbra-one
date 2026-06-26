@@ -13,7 +13,9 @@ public sealed record RemittanceLineResponse(
     string FavoredName,
     string FavoredDocument,
     string Reference,
-    string Status)
+    string Status,
+    DateOnly? EffectiveDate,
+    string? BankReference)
 {
     public static RemittanceLineResponse From(RemittanceLine line) => new(
         line.Id,
@@ -24,7 +26,9 @@ public sealed record RemittanceLineResponse(
         line.FavoredName,
         line.FavoredDocument,
         line.Reference,
-        line.Status.ToString());
+        line.Status.ToString(),
+        line.EffectiveDate,
+        line.BankReference);
 }
 
 public sealed record RemittanceResponse(

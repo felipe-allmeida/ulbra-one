@@ -57,6 +57,7 @@ import {
   type VendorInput,
   type Remittance,
   type RemittanceListItem,
+  type RemittanceReturnOutcome,
   type CreateRemittanceResponse,
   type CreateRemittanceInput,
 } from './api';
@@ -1223,5 +1224,45 @@ export function useCancelRemittance(options?: UseMutationOptions<Remittance, unk
   );
 }
 
+/** Invalidates remittance list + detail after a return-related action. */
+function invalidateRemittance(qc: ReturnType<typeof useQueryClient>, remittanceId: string) {
+  void qc.invalidateQueries({ queryKey: ['remittances'] });
+  void qc.invalidateQueries({ queryKey: queryKeys.remittance(remittanceId) });
+}
+
+export function useImportRemittanceReturn(
+  options?: UseMutationOptions<RemittanceReturnOutcome, unknown, { id: string; file: File }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, file }) => api.importRemittanceReturn(id, file),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
+export function useConfirmRemittanceLine(options?: UseMutationOptions<void, unknown, { id: string; lineId: string }>) {
+  return useInvalidatingMutation(
+    ({ id, lineId }) => api.confirmRemittanceLine(id, lineId),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
+export function useMarkRemittanceLineReturned(
+  options?: UseMutationOptions<void, unknown, { id: string; lineId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, lineId, reason }) => api.markRemittanceLineReturned(id, lineId, reason),
+    (qc, _data, vars) => invalidateRemittance(qc, vars.id),
+    options,
+  );
+}
+
 // Re-export types for consumers that only import from queries
-export type { Remittance, RemittanceListItem, CreateRemittanceResponse, CreateRemittanceInput };
+export type {
+  Remittance,
+  RemittanceListItem,
+  RemittanceReturnOutcome,
+  CreateRemittanceResponse,
+  CreateRemittanceInput,
+};
