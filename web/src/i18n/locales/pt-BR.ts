@@ -20,6 +20,7 @@ const ptBR = {
     },
     home: 'Início',
     accountsPayable: 'Contas a pagar',
+    payablesWorkflow: 'Contas a pagar (esteira)',
     accountsReceivable: 'Contas a receber',
     cashFlow: 'Fluxo de caixa',
     approvals: 'Aprovações',
