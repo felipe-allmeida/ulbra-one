@@ -32,7 +32,7 @@ export function stageIcon(key: StageKey): ReactNode {
 
 export function dashboardCards(summary: PayableStageSummaryResponse, t: (k: string) => string): PendencyCard[] {
   return STAGE_ORDER.map((key) => {
-    const bucket = summary[key] as StageBucket;
+    const bucket = summary[key];
     return {
       stageKey: key,
       label: t(`payables.stages.${key}`),
