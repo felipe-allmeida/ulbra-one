@@ -37,6 +37,7 @@ describe('PaymentTab', () => {
       expect.anything(),
     );
     expect(screen.getByText('ACME')).toBeInTheDocument();
-    expect(screen.getByText(/R\$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/R\$/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Total:/)).toBeInTheDocument();
   });
 });

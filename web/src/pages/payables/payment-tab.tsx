@@ -11,6 +11,13 @@ import { groupByPeriod } from './payment-periods';
 import { InstallmentStatusBadge } from './badges';
 import { PaymentForm } from './payment-form';
 
+const GROUP_LABEL: Record<string, string> = {
+  today: 'workflow.payment.groupToday',
+  thisWeek: 'workflow.payment.groupThisWeek',
+  nextWeek: 'workflow.payment.groupNextWeek',
+  future: 'workflow.payment.groupFuture',
+};
+
 export function PaymentTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const nav = useNavigate();
@@ -47,11 +54,7 @@ export function PaymentTab({ companyId }: { companyId: string }) {
       </div>
 
       {groups.map((g) => (
-        <Panel
-          key={g.key}
-          title={t('workflow.payment.group' + g.key[0].toUpperCase() + g.key.slice(1))}
-          action={<span aria-label={brl(g.subtotal)} data-subtotal={brl(g.subtotal)} />}
-        >
+        <Panel key={g.key} title={`${t(GROUP_LABEL[g.key] ?? '')} · ${brl(g.subtotal)}`}>
           <table>
             <thead>
               <tr>
