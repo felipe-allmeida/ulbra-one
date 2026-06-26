@@ -6,6 +6,14 @@ namespace Ulbra.One.IntegrationTests.Finance;
 /// <summary>Shared HTTP seeding helpers for Finance integration tests.</summary>
 public static class FinanceSeed
 {
+    /// <summary>
+    /// "Today" in Brazil local time (UTC-3), matching the API's ReceivableClock/business clock.
+    /// Tests must use this (not DateTime.UtcNow) for receipt/payment dates: near UTC midnight the UTC
+    /// date is a day ahead of the Brazil date, which the server rejects as a future-dated receipt.
+    /// </summary>
+    public static DateOnly Today() =>
+        DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-3)).DateTime);
+
     private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
         JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
 

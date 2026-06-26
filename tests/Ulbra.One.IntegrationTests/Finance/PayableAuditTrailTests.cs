@@ -15,7 +15,7 @@ public class PayableAuditTrailTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = FinanceSeed.Today();
 
         var companyId = await FinanceSeed.CreateCompanyAsync(client);
         var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
