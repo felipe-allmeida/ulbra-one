@@ -7178,7 +7178,8 @@
           "alias",
           "openingBalance",
           "isDefaultForPayments",
-          "defaultPaymentMethod"
+          "defaultPaymentMethod",
+          "cnabAgreementCode"
         ],
         "type": "object",
         "properties": {
@@ -7217,6 +7218,9 @@
           },
           "defaultPaymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "cnabAgreementCode": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -10633,7 +10637,8 @@
           "openingBalance",
           "active",
           "isDefaultForPayments",
-          "defaultPaymentMethod"
+          "defaultPaymentMethod",
+          "cnabAgreementCode"
         ],
         "type": "object",
         "properties": {
@@ -10671,6 +10676,9 @@
           },
           "defaultPaymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "cnabAgreementCode": {
+            "type": "string"
           }
         },
         "additionalProperties": false

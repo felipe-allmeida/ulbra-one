@@ -1778,6 +1778,7 @@ export interface components {
             openingBalance: number | null;
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
+            cnabAgreementCode: string;
         };
         CreateChartAccountRequest: {
             chartType: components["schemas"]["ChartType"];
@@ -2803,6 +2804,7 @@ export interface components {
             active: boolean;
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
+            cnabAgreementCode: string;
         };
         UpdateChartAccountRequest: {
             name: string;

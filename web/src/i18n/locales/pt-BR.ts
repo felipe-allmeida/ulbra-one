@@ -815,7 +815,9 @@ const ptBR = {
       openingBalance: 'Saldo inicial (R$)',
       isDefaultForPayments: 'Conta padrão de pagamento',
       defaultPaymentMethod: 'Forma de pagamento padrão',
-      cnabAgreementCode: 'Código de convênio CNAB',
+      cnabAgreementCode: 'Código de convênio CNAB (opcional)',
+      cnabAgreementCodeHelp:
+        'Número que o banco (ex.: Santander) fornece ao contratar o serviço de Pagamento a Fornecedores. Só é necessário para gerar a remessa CNAB desta conta — peça ao seu gerente PJ ou consulte o internet banking da empresa.',
     },
     placeholders: {
       bankName: 'ex.: Banco do Brasil',
