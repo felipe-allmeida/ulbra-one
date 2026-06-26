@@ -42,4 +42,53 @@ public static class ReceivableTestFactory
         r.WriteOff(reason);
         return r;
     }
+
+    /// <summary>Receivable with a single non-reversed receipt on the first installment.</summary>
+    public static Receivable WithReceipt(string createdActorId, DateTimeOffset createdAt,
+        Guid receiptCreatedById, DateTimeOffset receiptCreatedAt, decimal receiptAmount = 100m)
+    {
+        var r = BaseReceivable();
+        r.MarkCreated(createdActorId, createdAt);
+        var installment = r.Installments[0];
+        var receipt = new Receipt(
+            installmentId: installment.Id,
+            receivableId: r.Id,
+            receiptDate: DateOnly.FromDateTime(receiptCreatedAt.Date),
+            amount: receiptAmount,
+            bankAccountId: Guid.NewGuid(),
+            method: PaymentMethod.Pix,
+            interest: 0m, fine: 0m, discount: 0m,
+            notes: null,
+            createdById: receiptCreatedById,
+            createdAt: receiptCreatedAt);
+        installment.RegisterReceipt(receipt);
+        r.RecomputeSettlement();
+        return r;
+    }
+
+    /// <summary>Receivable with a single receipt that has been reversed on the first installment.</summary>
+    public static Receivable WithReversedReceipt(string createdActorId, DateTimeOffset createdAt,
+        Guid receiptCreatedById, DateTimeOffset receiptCreatedAt,
+        Guid reversedById, DateTimeOffset reversedAt, string? reversalReason,
+        decimal receiptAmount = 100m)
+    {
+        var r = BaseReceivable();
+        r.MarkCreated(createdActorId, createdAt);
+        var installment = r.Installments[0];
+        var receipt = new Receipt(
+            installmentId: installment.Id,
+            receivableId: r.Id,
+            receiptDate: DateOnly.FromDateTime(receiptCreatedAt.Date),
+            amount: receiptAmount,
+            bankAccountId: Guid.NewGuid(),
+            method: PaymentMethod.Pix,
+            interest: 0m, fine: 0m, discount: 0m,
+            notes: null,
+            createdById: receiptCreatedById,
+            createdAt: receiptCreatedAt);
+        installment.RegisterReceipt(receipt);
+        installment.ReverseReceipt(receipt.Id, reversedById, reversedAt, reversalReason);
+        r.RecomputeSettlement();
+        return r;
+    }
 }
