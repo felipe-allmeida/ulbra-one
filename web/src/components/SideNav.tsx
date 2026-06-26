@@ -193,8 +193,10 @@ function PanelItem({
       onClick={onClick}
     >
       {icon}
-      <span className='nav-panel-item-label'>{label}</span>
-      {hint && <span className='nav-panel-item-hint'>{hint}</span>}
+      <span className='nav-panel-item-text'>
+        <span className='nav-panel-item-label'>{label}</span>
+        {hint && <span className='nav-panel-item-hint'>{hint}</span>}
+      </span>
       {soon && <span className='soon-badge'>{t('common.soon')}</span>}
     </button>
   );
