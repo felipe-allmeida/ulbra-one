@@ -20,6 +20,7 @@ const ptBR = {
     },
     home: 'Início',
     accountsPayable: 'Contas a pagar',
+    payablesWorkflow: 'Contas a pagar (esteira)',
     accountsReceivable: 'Contas a receber',
     cashFlow: 'Fluxo de caixa',
     approvals: 'Aprovações',
@@ -258,6 +259,13 @@ const ptBR = {
       AttachmentUploaded: 'Anexo adicionado',
       AttachmentDeleted: 'Anexo removido',
     },
+    payment: {
+      weekSummary: 'Total: {{amount}} ({{count}} parcelas)',
+      groupToday: 'Vence hoje',
+      groupThisWeek: 'Esta semana',
+      groupNextWeek: 'Próxima semana',
+      groupFuture: 'Futuro',
+    },
   },
 
   payables: {
@@ -269,6 +277,25 @@ const ptBR = {
     back: 'Contas a pagar',
     count_one: '{{count}} parcela',
     count_other: '{{count}} parcelas',
+    stages: {
+      entry: 'Entrada',
+      classification: 'Classificação',
+      approval: 'Aprovação',
+      payment: 'Pagamento',
+      reconciled: 'Conciliado',
+    },
+    dashboard: { title: 'Triagem' },
+    approval: { myPending: 'Meus pendentes', all: 'Todos' },
+    classify: {
+      title: 'Classificar título',
+      accounting: 'Conta contábil',
+      financial: 'Conta financeira',
+      suggestion: 'Sugestão da IA',
+      confirm: 'Confirmar classificação',
+      rationale: 'Justificativa',
+    },
+    payment: { generateRemittance: 'Gerar remessa' },
+    reconciled: { paidAmount: 'Valor pago', lastPayment: 'Último pagamento' },
     tabs: {
       all: 'Todas',
       overdue: 'Vencidas',
@@ -388,6 +415,7 @@ const ptBR = {
       financialAccount: 'Conta financeira',
       documentNumber: 'Nº do documento',
       issueDate: 'Emissão',
+      timeline: 'Linha do tempo',
     },
     paymentSource: {
       sectionTitle: 'Pagar de (opcional)',

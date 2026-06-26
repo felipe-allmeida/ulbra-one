@@ -11,6 +11,7 @@ import {
   type AccountKind,
   type AgingBucket,
   type AiClassificationSuggestion,
+  type AuditTrailEvent,
   type JournalEntry,
   type JournalEntryInput,
   type JournalStatus,
@@ -36,6 +37,7 @@ import {
   type FiscalDocument,
   type MatchStatus,
   type ParsedFiscalDocument,
+  type PayableStageSummaryResponse,
   type UploadTarget,
   type Payable,
   type PayableAttachment,
@@ -77,6 +79,8 @@ export const queryKeys = {
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
+  payableStageSummary: (companyId: string) => ['payableStageSummary', companyId] as const,
+  payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
@@ -305,6 +309,22 @@ export function usePayable(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payable(id ?? ''),
     queryFn: () => api.getPayable(id!),
+    enabled: !!id,
+  });
+}
+
+export function usePayableStageSummary(companyId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableStageSummary(companyId ?? ''),
+    queryFn: () => api.payableStageSummary(companyId!),
+    enabled: !!companyId,
+  });
+}
+
+export function usePayableAuditTrail(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableAuditTrail(id ?? ''),
+    queryFn: () => api.payableAuditTrail(id!),
     enabled: !!id,
   });
 }
@@ -1281,6 +1301,8 @@ export function useMarkRemittanceLineReturned(
 
 // Re-export types for consumers that only import from queries
 export type {
+  AuditTrailEvent,
+  PayableStageSummaryResponse,
   Remittance,
   RemittanceListItem,
   RemittanceReturnOutcome,

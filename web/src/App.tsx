@@ -34,6 +34,7 @@ import {
   Scale,
   SendHorizonal,
   LogOut,
+  Layers,
 } from 'lucide-react';
 import { AppDataProvider } from './store';
 import { auth } from './api';
@@ -74,6 +75,7 @@ import { ColaboradoresPage } from './pages/colaboradores';
 import { LandingPage } from './pages/landing';
 import { LoginPage } from './pages/login';
 import { RemessasPage } from './pages/remessas/list';
+import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 
 export default function App() {
   return (
@@ -94,6 +96,10 @@ export default function App() {
         <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
         <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
         <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
+        <Route path='payables' element={<PayablesLayout />} />
+        <Route path='payables/novo' element={<NewPayablePage />} />
+        <Route path='payables/:id' element={<PayableDetailPage />} />
+        <Route path='payables/:id/editar' element={<EditPayablePage />} />
         <Route path='contas-a-receber' element={<ContasReceberPage />} />
         <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
         <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />
@@ -207,6 +213,10 @@ function Shell({ children }: { children: ReactNode }) {
     <>
       {t('nav.sections.registry')} <b>/ {t('nav.employees')}</b>
     </>
+  ) : at('payables') ? (
+    <>
+      {t('nav.sections.finance')} <b>/ {t('nav.payablesWorkflow')}</b>
+    </>
   ) : at('contas-a-pagar') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
@@ -292,6 +302,12 @@ function Shell({ children }: { children: ReactNode }) {
             label={t('nav.accountsPayable')}
             active={at('contas-a-pagar')}
             onClick={() => go('/app/contas-a-pagar')}
+          />
+          <NavItem
+            icon={<Layers />}
+            label={t('nav.payablesWorkflow')}
+            active={at('payables')}
+            onClick={() => go('/app/payables')}
           />
           <NavItem
             icon={<ArrowDownLeft />}
