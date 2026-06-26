@@ -16,6 +16,11 @@ services:
       timeout: 3s
       retries: 10
 
+  # Azurite (emulador do Azure Blob). Uploads multipart (anexos/comprovantes:
+  # navegador -> API -> storage) funcionam aqui. O fluxo fiscal é presigned (SAS):
+  # o navegador faz PUT direto na URL do storage, cujo host é "azurite" (só resolve
+  # dentro da rede docker) -> não funciona no navegador. Para o fluxo de upload
+  # completo (incl. fiscal/SAS) use o Aspire: dotnet run --project src/Ulbra.One.AppHost
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     container_name: ulbra-one-azurite
