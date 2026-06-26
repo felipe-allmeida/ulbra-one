@@ -724,6 +724,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/stage-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPayableStageSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/audit-trail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPayableAuditTrail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/aging": {
         parameters: {
             query?: never;
@@ -846,6 +878,38 @@ export interface paths {
         get: operations["DownloadReceiptProof"];
         put?: never;
         post: operations["UploadReceiptProof"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/stage-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetReceivableStageSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/{id}/audit-trail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetReceivableAuditTrail"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1503,6 +1567,16 @@ export interface components {
             total: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        AuditTrailEventResponse: {
+            type: string;
+            actorId: string | null;
+            actorName: string;
+            /** Format: date-time */
+            timestamp: string;
+            metadata: {
+                [key: string]: string;
+            };
         };
         BalanceSheetLineResponse: {
             /** @example ledgacct_3fa85f64571742199730000000000000 */
@@ -2339,6 +2413,13 @@ export interface components {
             installments: components["schemas"]["InstallmentResponse"][];
             attachments: components["schemas"]["PayableAttachmentResponse"][];
         };
+        PayableStageSummaryResponse: {
+            entry: components["schemas"]["StageBucket"];
+            classification: components["schemas"]["StageBucket"];
+            approval: components["schemas"]["StageBucket"];
+            payment: components["schemas"]["StageBucket"];
+            reconciled: components["schemas"]["StageBucket"];
+        };
         /** @enum {string} */
         PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
         /** @enum {string} */
@@ -2537,6 +2618,11 @@ export interface components {
             createdAt: string;
             installments: components["schemas"]["ReceivableInstallmentResponse"][];
         };
+        ReceivableStageSummaryResponse: {
+            entry: components["schemas"]["StageBucket"];
+            receipt: components["schemas"]["StageBucket"];
+            reconciled: components["schemas"]["StageBucket"];
+        };
         /** @enum {string} */
         ReceivableStatus: "AwaitingReceipt" | "Received" | "Cancelled" | "WrittenOff";
         RegisterPaymentRequest: {
@@ -2683,6 +2769,12 @@ export interface components {
             /** Format: uuid */
             installmentId: string;
             reason: string;
+        };
+        StageBucket: {
+            /** Format: int32 */
+            count: number;
+            /** Format: double */
+            totalAmount: number;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
@@ -5058,6 +5150,59 @@ export interface operations {
             };
         };
     };
+    GetPayableStageSummary: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableStageSummaryResponse"];
+                };
+            };
+        };
+    };
+    GetPayableAuditTrail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditTrailEventResponse"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetAgingReport: {
         parameters: {
             query: {
@@ -5454,6 +5599,59 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetReceivableStageSummary: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableStageSummaryResponse"];
+                };
+            };
+        };
+    };
+    GetReceivableAuditTrail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditTrailEventResponse"][];
                 };
             };
             /** @description Not Found */

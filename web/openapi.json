@@ -2925,6 +2925,79 @@
         }
       }
     },
+    "/api/payables/stage-summary": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableStageSummary",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableStageSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/audit-trail": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditTrailEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/aging": {
       "get": {
         "tags": [
@@ -3580,6 +3653,79 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/receivables/stage-summary": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivableStageSummary",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableStageSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/{id}/audit-trail": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivableAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditTrailEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -6260,6 +6406,39 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditTrailEventResponse": {
+        "required": [
+          "type",
+          "actorId",
+          "actorName",
+          "timestamp",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false
@@ -9175,6 +9354,34 @@
         },
         "additionalProperties": false
       },
+      "PayableStageSummaryResponse": {
+        "required": [
+          "entry",
+          "classification",
+          "approval",
+          "payment",
+          "reconciled"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "approval": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
+          }
+        },
+        "additionalProperties": false
+      },
       "PayableStatus": {
         "enum": [
           "Received",
@@ -9806,6 +10013,26 @@
         },
         "additionalProperties": false
       },
+      "ReceivableStageSummaryResponse": {
+        "required": [
+          "entry",
+          "receipt",
+          "reconciled"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReceivableStatus": {
         "enum": [
           "AwaitingReceipt",
@@ -10278,6 +10505,24 @@
           },
           "reason": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StageBucket": {
+        "required": [
+          "count",
+          "totalAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
