@@ -77,7 +77,7 @@ export function AReceberTab({ companyId }: { companyId: string }) {
                   <td>
                     {l.installmentStatus !== 'Received' && (
                       <Button icon={<HandCoins />} onClick={() => setBaixa(l)}>
-                        {t('payments.register')}
+                        {t('receivables.register')}
                       </Button>
                     )}
                   </td>
@@ -88,7 +88,7 @@ export function AReceberTab({ companyId }: { companyId: string }) {
         </Panel>
       ))}
 
-      <Drawer open={!!baixa} onClose={() => setBaixa(null)} title={t('payments.register')} sub={baixa?.payerName}>
+      <Drawer open={!!baixa} onClose={() => setBaixa(null)} title={t('receivables.register')} sub={baixa?.payerName}>
         {detail.data && installment && (
           <ReceiptForm
             receivable={detail.data}
