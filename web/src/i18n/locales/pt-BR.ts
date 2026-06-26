@@ -414,6 +414,7 @@ const ptBR = {
       financialAccount: 'Conta financeira',
       documentNumber: 'Nº do documento',
       issueDate: 'Emissão',
+      timeline: 'Linha do tempo',
     },
     paymentSource: {
       sectionTitle: 'Pagar de (opcional)',
