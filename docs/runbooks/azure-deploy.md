@@ -107,7 +107,7 @@ The application selects its storage backend, message broker, and secrets source 
 
 | Setting key | Local / dev default | Azure (prod) value | Notes |
 |---|---|---|---|
-| `ObjectStorage:Provider` | `Local` | `AzureBlob` | `Local` writes to disk; `S3` targets MinIO or any S3-compatible store; `AzureBlob` uses `DefaultAzureCredential` (Managed Identity in ACA) or falls back to `ObjectStorage:ConnectionString` |
+| `ObjectStorage:Provider` | `Local` | `AzureBlob` | `Local` writes to disk; `AzureBlob` uses `DefaultAzureCredential` (Managed Identity in ACA) or falls back to `ObjectStorage:ConnectionString` |
 | `MassTransit:Transport` | `RabbitMq` | `AzureServiceBus` | `RabbitMq` uses `RABBITMQ_URL`; `AzureServiceBus` uses MI (`DefaultAzureCredential`) — no connection string needed |
 | `KeyVault:Uri` | _(absent — no Key Vault)_ | `https://kv-ulbraone-prod.vault.azure.net/` | When present, Azure Key Vault is added as a configuration source in `Program.cs` (also via `DefaultAzureCredential`) |
 
