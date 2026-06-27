@@ -93,3 +93,7 @@ opensrc/
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Terraform var files may hold secrets — keep only the *.example templates
+infra/terraform/*.tfvars
+!infra/terraform/*.tfvars.example

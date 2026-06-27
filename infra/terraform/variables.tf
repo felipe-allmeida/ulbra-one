@@ -70,6 +70,12 @@ variable "jwt_secret" {
   description = "JWT signing secret. Stored in Key Vault as 'Authentication--JwtSecret'."
 }
 
+variable "ai_api_key" {
+  type        = string
+  sensitive   = true
+  description = "Anthropic API key for the payable AI classifier. Stored in Key Vault as 'Ai--ApiKey'. Supply via -var / TF_VAR_ai_api_key; never commit the value."
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}

@@ -74,4 +74,10 @@ resource "azurerm_container_app" "this" {
       latest_revision = true
     }
   }
+
+  # The image tag is owned by the CI/CD deploy pipeline (it pins a build SHA out-of-band),
+  # not by Terraform. Ignore it so `terraform apply` never reverts a deployed image to ":latest".
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
+  }
 }

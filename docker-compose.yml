@@ -35,7 +35,9 @@ services:
       retries: 10
 
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+    build:
+      context: .
+      dockerfile: rabbitmq.Dockerfile
     container_name: ulbra-one-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
@@ -75,6 +77,9 @@ services:
       MassTransit__Host: rabbitmq
       MassTransit__User: guest
       MassTransit__Password: guest
+      # AI payable classifier. Key comes from the gitignored .env (ANTHROPIC_API_KEY); never hardcode it here.
+      Ai__Provider: Anthropic
+      Ai__ApiKey: ${ANTHROPIC_API_KEY:-}
 
   web:
     image: node:23-alpine

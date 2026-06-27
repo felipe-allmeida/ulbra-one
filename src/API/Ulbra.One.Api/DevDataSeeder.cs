@@ -438,6 +438,19 @@ public static class DevDataSeeder
         logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
     }
 
+    /// <summary>
+    /// Seeds ONLY the chart of accounts (contábil + financeiro) — the reference data the payable
+    /// classifier needs. No mock business data (companies/vendors/payables). Idempotent.
+    /// </summary>
+    public static async Task SeedChartOfAccountsAsync(IServiceProvider services, CancellationToken ct = default)
+    {
+        using var scope = services.CreateScope();
+        var sp = scope.ServiceProvider;
+        var finance = sp.GetRequiredService<AppDbContext>();
+        var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
+        await SeedChartOfAccountsAsync(finance, logger, ct);
+    }
+
     private static async Task SeedChartOfAccountsAsync(AppDbContext finance, ILogger logger, CancellationToken ct)
     {
         if (await finance.ChartAccounts.AnyAsync(ct))

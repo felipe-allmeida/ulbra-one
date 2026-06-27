@@ -24,3 +24,7 @@ tags = {
 postgres_sku_name = "B_Standard_B1ms"
 
 # jwt_secret must be supplied via -var or TF_VAR_jwt_secret (never commit the value)
+
+# --- secrets (NÃO commitar; copie este arquivo para prod.tfvars e preencha) ---
+# jwt_secret = "<HS256 secret de prod>"
+# ai_api_key = "sk-ant-..."
