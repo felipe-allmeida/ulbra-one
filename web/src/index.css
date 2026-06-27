@@ -953,7 +953,7 @@ body {
   text-align: center;
   color: var(--muted-foreground);
 }
-.empty-state svg {
+.empty-state > svg {
   width: 28px;
   height: 28px;
   opacity: 0.4;
@@ -968,6 +968,32 @@ body {
 }
 .empty-state .s {
   font-size: 12.5px;
+}
+.empty-state .a {
+  margin-top: 18px;
+}
+.empty-action {
+  gap: 5px;
+  padding: 7px 15px 7px 12px;
+  border: 1px solid var(--brand-subtle);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px hsl(174 88% 24% / 0.04);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.empty-action svg {
+  width: 14px;
+  height: 14px;
+}
+.empty-action:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-foreground);
+  box-shadow: 0 2px 8px hsl(174 88% 24% / 0.18);
+  transform: translateY(-1px);
 }
 
 /* ===== TABLE (estrutura) ===== */
@@ -2929,7 +2955,7 @@ tbody tr:last-child td {
   border: 0;
   background: none;
   cursor: pointer;
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
   border-bottom: 2px solid transparent;
   font-weight: 500;
 }
@@ -2983,14 +3009,14 @@ tbody tr:last-child td {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
 }
 .pendency-card-count {
   font-size: 22px;
   font-weight: 700;
 }
 .pendency-card-amount {
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
   font-size: 13px;
 }
 .pendency-card-link {
@@ -3021,11 +3047,11 @@ tbody tr:last-child td {
 .audit-event-meta {
   display: flex;
   gap: 10px;
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
   font-size: 12px;
 }
 .audit-timeline-empty {
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
   padding: 12px 0;
 }
 
@@ -3094,7 +3120,7 @@ tbody tr:last-child td {
 }
 .forecast-bar-label {
   font-size: 11px;
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
 }
 
 /* workflow components — element hooks */
@@ -3129,5 +3155,5 @@ tbody tr:last-child td {
   opacity: 0.85;
 }
 .forecast-impact-label {
-  color: var(--muted, #6b7280);
+  color: var(--muted-foreground, #6b7280);
 }

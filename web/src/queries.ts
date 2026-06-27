@@ -38,6 +38,7 @@ import {
   type MatchStatus,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
+  type PayableStageItem,
   type UploadTarget,
   type Payable,
   type PayableAttachment,
@@ -48,6 +49,7 @@ import {
   type Receivable,
   type ReceivableInput,
   type ReceivableStageSummaryResponse,
+  type ReceivableStageItem,
   type ReceivableStatus,
   type RegisterPaymentInput,
   type RegisterReceiptInput,
@@ -81,10 +83,12 @@ export const queryKeys = {
   payables: (params: PayablesParams) => ['payables', params] as const,
   payable: (id: string) => ['payable', id] as const,
   payableStageSummary: (companyId: string) => ['payableStageSummary', companyId] as const,
+  payableStageItems: (params: PayableStageItemsParams) => ['payableStageItems', params] as const,
   payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
   receivableStageSummary: (companyId: string) => ['receivableStageSummary', companyId] as const,
+  receivableStageItems: (params: ReceivableStageItemsParams) => ['receivableStageItems', params] as const,
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
@@ -194,6 +198,20 @@ export interface ReceivablesParams {
   dueFrom?: string;
   dueTo?: string;
   received?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PayableStageItemsParams {
+  companyId: string;
+  status?: PayableStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ReceivableStageItemsParams {
+  companyId: string;
+  status?: ReceivableStatus;
   page?: number;
   pageSize?: number;
 }
@@ -324,6 +342,15 @@ export function usePayableStageSummary(companyId: string | undefined) {
   });
 }
 
+export function usePayableStageItems(params: PayableStageItemsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.payableStageItems(params),
+    queryFn: () => api.payableStageItems(params),
+    enabled: options?.enabled ?? !!params.companyId,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function usePayableAuditTrail(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payableAuditTrail(id ?? ''),
@@ -354,6 +381,15 @@ export function useReceivableStageSummary(companyId: string | undefined) {
     queryKey: queryKeys.receivableStageSummary(companyId ?? ''),
     queryFn: () => api.receivableStageSummary(companyId!),
     enabled: !!companyId,
+  });
+}
+
+export function useReceivableStageItems(params: ReceivableStageItemsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.receivableStageItems(params),
+    queryFn: () => api.receivableStageItems(params),
+    enabled: options?.enabled ?? !!params.companyId,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -1322,7 +1358,9 @@ export function useMarkRemittanceLineReturned(
 export type {
   AuditTrailEvent,
   PayableStageSummaryResponse,
+  PayableStageItem,
   ReceivableStageSummaryResponse,
+  ReceivableStageItem,
   Remittance,
   RemittanceListItem,
   RemittanceReturnOutcome,

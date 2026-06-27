@@ -1,8 +1,8 @@
 import { type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Wallet } from 'lucide-react';
-import { type PayableListItem } from '../../api';
+import { Plus, Wallet } from 'lucide-react';
+import { type PayableStageItem } from '../../api';
 import { brl } from '../../lib';
 import { Panel, Pager, EmptyState } from '../../ui';
 import { fmtDate } from '../../datetime';
@@ -21,12 +21,12 @@ export function PayableTable({
 }: {
   companyId: string;
   stageLabel: string;
-  items: PayableListItem[];
+  items: PayableStageItem[];
   total: number;
   page: number;
   totalPages: number;
   onPage: (p: number) => void;
-  extraColumn?: { header: string; cell: (item: PayableListItem) => ReactNode };
+  extraColumn?: { header: string; cell: (item: PayableStageItem) => ReactNode };
 }) {
   const { t } = useTranslation();
   const nav = useNavigate();
@@ -37,7 +37,11 @@ export function PayableTable({
       <EmptyState
         icon={<Wallet />}
         title={`${stageLabel} — ${t('payables.empty.noItemsTitle')}`}
-        sub={t('payables.empty.noItemsSub')}
+        action={
+          <button className='btn empty-action' onClick={() => nav(`/${companyId}/payables/novo`)}>
+            <Plus /> {t('payables.new')}
+          </button>
+        }
       />
     );
   }
@@ -51,6 +55,7 @@ export function PayableTable({
             <th>{t('payables.columns.description')}</th>
             <th>{t('payables.columns.vendor')}</th>
             <th>{t('payables.columns.costCenter')}</th>
+            <th style={{ textAlign: 'center' }}>{t('payables.columns.installments')}</th>
             <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
             <th>{t('payables.columns.status')}</th>
             {extraColumn && <th>{extraColumn.header}</th>}
@@ -58,16 +63,17 @@ export function PayableTable({
         </thead>
         <tbody>
           {items.map((l) => (
-            <tr key={l.installmentId} className='row-click' onClick={() => nav(`/app/payables/${l.payableId}`)}>
-              <td className='t-mono'>{fmtDate(l.dueDate)}</td>
+            <tr key={l.payableId} className='row-click' onClick={() => nav(`/app/payables/${l.payableId}`)}>
+              <td className='t-mono'>{fmtDate(l.firstDueDate)}</td>
               <td>{l.description}</td>
               <td>{l.counterpartyName || '—'}</td>
               <td>{centroNome[l.costCenterId] ?? '—'}</td>
+              <td style={{ textAlign: 'center' }}>{l.installmentCount}</td>
               <td className='amount-cell' style={{ textAlign: 'right' }}>
-                {brl(l.amount)}
+                {brl(l.totalAmount)}
               </td>
               <td onClick={(e) => e.stopPropagation()}>
-                <SlaChips stageLabel={stageLabel} dueDate={l.dueDate} />
+                <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
               </td>
               {extraColumn && <td onClick={(e) => e.stopPropagation()}>{extraColumn.cell(l)}</td>}
             </tr>

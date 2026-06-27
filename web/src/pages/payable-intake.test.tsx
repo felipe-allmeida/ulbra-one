@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../test/renderWithProviders';
 import '../i18n';
 
-// ---- mock react-router-dom (NovaContaPagarPage calls useNavigate, useParams) ----
+// ---- mock react-router-dom (NewPayablePage calls useNavigate, useParams) ----
 vi.mock('react-router-dom', async (orig) => {
   const actual = await orig<typeof import('react-router-dom')>();
   return { ...actual, useNavigate: () => vi.fn(), useParams: () => ({}) };
@@ -71,7 +71,7 @@ vi.mock('../queries', async (orig) => {
   };
 });
 
-import { NovaContaPagarPage } from './contas-a-pagar';
+import { NewPayablePage } from './payables';
 import { useRequestFiscalUploadUrl, useParseFiscalDocument, uploadToPresignedUrl } from '../queries';
 import type { ParsedFiscalDocument, UploadTarget } from '../api';
 
@@ -89,7 +89,7 @@ const minParsed: ParsedFiscalDocument = {
 };
 
 function renderPage() {
-  return renderWithProviders(<NovaContaPagarPage />);
+  return renderWithProviders(<NewPayablePage />);
 }
 
 describe('Payable intake (NF reader + manual)', () => {

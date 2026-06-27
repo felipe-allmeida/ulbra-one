@@ -48,6 +48,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
 using Ulbra.One.Finance.Application.Endpoints.Payables.StageSummary;
+using Ulbra.One.Finance.Application.Endpoints.Payables.StageItems;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CancelReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable;
@@ -59,6 +60,7 @@ using Ulbra.One.Finance.Application.Endpoints.Receivables.ReverseReceipt;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UpdateReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.AuditTrail;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.StageSummary;
+using Ulbra.One.Finance.Application.Endpoints.Receivables.StageItems;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.UploadReceiptProof;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.ApproveTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.CreateTransaction;
@@ -120,6 +122,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<ClassificationSuggestion>();
         payables.MapEndpoint<AiClassificationSuggestion>();
         payables.MapEndpoint<GetPayableStageSummary>();
+        payables.MapEndpoint<GetPayableStageItems>();
         payables.MapEndpoint<GetPayableAuditTrail>();
 
         var aging = builder.MapGroup("/payables/aging");
@@ -137,6 +140,7 @@ public static class FinanceEndpoints
         receivables.MapEndpoint<UploadReceiptProof>();
         receivables.MapEndpoint<DownloadReceiptProof>();
         receivables.MapEndpoint<GetReceivableStageSummary>();
+        receivables.MapEndpoint<GetReceivableStageItems>();
         receivables.MapEndpoint<GetReceivableAuditTrail>();
 
         var bankAccounts = builder.MapGroup("/bank-accounts");

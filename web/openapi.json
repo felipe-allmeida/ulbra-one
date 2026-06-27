@@ -3015,6 +3015,59 @@
         }
       }
     },
+    "/api/payables/stage-items": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableStageItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PayableStatus"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableStageItemResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/{id}/audit-trail": {
       "get": {
         "tags": [
@@ -3740,6 +3793,59 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReceivableStageSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receivables/stage-items": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetReceivableStageItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ReceivableStatus"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableStageItemResponsePaginatedResponse"
                 }
               }
             }
@@ -9694,6 +9800,92 @@
         },
         "additionalProperties": false
       },
+      "PayableStageItemResponse": {
+        "required": [
+          "payableId",
+          "counterpartyName",
+          "description",
+          "costCenterId",
+          "categoryId",
+          "firstDueDate",
+          "installmentCount",
+          "totalAmount",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "payableId": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "example": "expense_category_3fa85f64571742199730000000000000"
+          },
+          "firstDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PayableStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayableStageItemResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableStageItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "PayableStageSummaryResponse": {
         "required": [
           "entry",
@@ -10382,6 +10574,86 @@
             "items": {
               "$ref": "#/components/schemas/ReceivableInstallmentResponse"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableStageItemResponse": {
+        "required": [
+          "receivableId",
+          "payerName",
+          "description",
+          "costCenterId",
+          "firstDueDate",
+          "installmentCount",
+          "totalAmount",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "receivableId": {
+            "type": "string",
+            "example": "receivable_3fa85f64571742199730000000000000"
+          },
+          "payerName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "firstDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReceivableStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReceivableStageItemResponsePaginatedResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableStageItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

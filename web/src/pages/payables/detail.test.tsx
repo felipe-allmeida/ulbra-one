@@ -41,6 +41,9 @@ beforeEach(() => {
         { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, status: 'Open', paidAmount: 0, payments: [] },
       ],
       attachments: [],
+      withholdings: [],
+      totalWithheld: 0,
+      netTotal: 1000,
     },
   });
   mockUseAudit.mockReturnValue({

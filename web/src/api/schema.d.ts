@@ -756,6 +756,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/stage-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPayableStageItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/{id}/audit-trail": {
         parameters: {
             query?: never;
@@ -908,6 +924,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GetReceivableStageSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receivables/stage-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetReceivableStageItems"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2510,6 +2542,34 @@ export interface components {
             /** Format: double */
             netTotal: number;
         };
+        PayableStageItemResponse: {
+            /** @example payable_3fa85f64571742199730000000000000 */
+            payableId: string;
+            counterpartyName: string;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** @example expense_category_3fa85f64571742199730000000000000 */
+            categoryId: string | null;
+            /** Format: date */
+            firstDueDate: string;
+            /** Format: int32 */
+            installmentCount: number;
+            /** Format: double */
+            totalAmount: number;
+            status: components["schemas"]["PayableStatus"];
+        };
+        PayableStageItemResponsePaginatedResponse: {
+            items: components["schemas"]["PayableStageItemResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         PayableStageSummaryResponse: {
             entry: components["schemas"]["StageBucket"];
             classification: components["schemas"]["StageBucket"];
@@ -2725,6 +2785,32 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             installments: components["schemas"]["ReceivableInstallmentResponse"][];
+        };
+        ReceivableStageItemResponse: {
+            /** @example receivable_3fa85f64571742199730000000000000 */
+            receivableId: string;
+            payerName: string;
+            description: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** Format: date */
+            firstDueDate: string;
+            /** Format: int32 */
+            installmentCount: number;
+            /** Format: double */
+            totalAmount: number;
+            status: components["schemas"]["ReceivableStatus"];
+        };
+        ReceivableStageItemResponsePaginatedResponse: {
+            items: components["schemas"]["ReceivableStageItemResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
         };
         ReceivableStageSummaryResponse: {
             entry: components["schemas"]["StageBucket"];
@@ -5349,6 +5435,31 @@ export interface operations {
             };
         };
     };
+    GetPayableStageItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: components["schemas"]["PayableStatus"];
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableStageItemResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
     GetPayableAuditTrail: {
         parameters: {
             query?: never;
@@ -5807,6 +5918,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReceivableStageSummaryResponse"];
+                };
+            };
+        };
+    };
+    GetReceivableStageItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: components["schemas"]["ReceivableStatus"];
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableStageItemResponsePaginatedResponse"];
                 };
             };
         };

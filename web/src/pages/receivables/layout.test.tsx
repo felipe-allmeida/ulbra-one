@@ -3,9 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
-const { mockUseStageSummary, mockUseReceivables } = vi.hoisted(() => ({
+const { mockUseStageSummary, mockUseReceivables, mockUseReceivableStageItems } = vi.hoisted(() => ({
   mockUseStageSummary: vi.fn(),
   mockUseReceivables: vi.fn(),
+  mockUseReceivableStageItems: vi.fn(),
 }));
 vi.mock('../../store', () => ({
   useApp: () => ({ empresa: { id: 'company_1', legalName: 'ACME' }, empresaId: 'company_1' }),
@@ -14,6 +15,7 @@ vi.mock('../shared', () => ({ EmpresaPicker: () => <div data-testid='empresa-pic
 vi.mock('../../queries', () => ({
   useReceivableStageSummary: mockUseStageSummary,
   useReceivables: mockUseReceivables,
+  useReceivableStageItems: mockUseReceivableStageItems,
   useReceivable: vi.fn(),
 }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {} }) }));
@@ -29,6 +31,7 @@ beforeEach(() => {
     },
   });
   mockUseReceivables.mockReturnValue({ data: { items: [], total: 0, totalPages: 1 } });
+  mockUseReceivableStageItems.mockReturnValue({ data: { items: [], total: 0, totalPages: 1 } });
 });
 
 describe('ReceivablesLayout', () => {
@@ -50,6 +53,6 @@ describe('ReceivablesLayout', () => {
     );
     const links = screen.getAllByText('Ver pendências');
     fireEvent.click(links[links.length - 1]); // reconciled card
-    expect(mockUseReceivables).toHaveBeenCalled();
+    expect(mockUseReceivableStageItems).toHaveBeenCalled();
   });
 });

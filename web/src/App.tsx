@@ -3,8 +3,6 @@ import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
-  ArrowUpRight,
-  ArrowDownLeft,
   Activity,
   ClipboardCheck,
   Target,
@@ -45,18 +43,6 @@ import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
 import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
-import {
-  ContasPagarPage,
-  NovaContaPagarPage,
-  ContaPagarDetailPage,
-  EditarContaPagarPage,
-} from './pages/contas-a-pagar';
-import {
-  ContasReceberPage,
-  NovaContaReceberPage,
-  ContaReceberDetailPage,
-  EditarContaReceberPage,
-} from './pages/contas-a-receber';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { PlanoDeContasPage } from './pages/plano-de-contas';
@@ -94,18 +80,10 @@ export default function App() {
       >
         <Route index element={<Navigate to='inicio' replace />} />
         <Route path='inicio' element={<DashboardPage />} />
-        <Route path='contas-a-pagar' element={<ContasPagarPage />} />
-        <Route path='contas-a-pagar/novo' element={<NovaContaPagarPage />} />
-        <Route path='contas-a-pagar/:id' element={<ContaPagarDetailPage />} />
-        <Route path='contas-a-pagar/:id/editar' element={<EditarContaPagarPage />} />
         <Route path='payables' element={<PayablesLayout />} />
         <Route path='payables/novo' element={<NewPayablePage />} />
         <Route path='payables/:id' element={<PayableDetailPage />} />
         <Route path='payables/:id/editar' element={<EditPayablePage />} />
-        <Route path='contas-a-receber' element={<ContasReceberPage />} />
-        <Route path='contas-a-receber/novo' element={<NovaContaReceberPage />} />
-        <Route path='contas-a-receber/:id' element={<ContaReceberDetailPage />} />
-        <Route path='contas-a-receber/:id/editar' element={<EditarContaReceberPage />} />
         <Route path='receivables' element={<ReceivablesLayout />} />
         <Route path='receivables/novo' element={<NewReceivablePage />} />
         <Route path='receivables/:id' element={<ReceivableDetailPage />} />
@@ -221,15 +199,11 @@ function Shell({ children }: { children: ReactNode }) {
     </>
   ) : at('payables') ? (
     <>
-      {t('nav.sections.finance')} <b>/ {t('nav.payablesWorkflow')}</b>
+      {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
     </>
   ) : at('receivables') ? (
     <>
-      {t('nav.sections.finance')} <b>/ {t('nav.receivablesWorkflow')}</b>
-    </>
-  ) : at('contas-a-pagar') ? (
-    <>
-      {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
+      {t('nav.sections.finance')} <b>/ {t('nav.accountsReceivable')}</b>
     </>
   ) : at('categorias-despesa') ? (
     <>
@@ -262,14 +236,6 @@ function Shell({ children }: { children: ReactNode }) {
   ) : at('cash-flow') ? (
     <>
       {t('nav.sections.finance')} <b>/ {t('nav.cashFlow')}</b>
-    </>
-  ) : at('contas-pagar') ? (
-    <>
-      {t('nav.sections.finance')} <b>/ {t('nav.accountsPayable')}</b>
-    </>
-  ) : at('contas-a-receber') ? (
-    <>
-      {t('nav.sections.finance')} <b>/ {t('nav.accountsReceivable')}</b>
     </>
   ) : at('aprovacoes') ? (
     <>
@@ -308,26 +274,14 @@ function Shell({ children }: { children: ReactNode }) {
             onClick={() => go('/app/inicio')}
           />
           <NavItem
-            icon={<ArrowUpRight />}
-            label={t('nav.accountsPayable')}
-            active={at('contas-a-pagar')}
-            onClick={() => go('/app/contas-a-pagar')}
-          />
-          <NavItem
             icon={<Layers />}
-            label={t('nav.payablesWorkflow')}
+            label={t('nav.accountsPayable')}
             active={at('payables')}
             onClick={() => go('/app/payables')}
           />
           <NavItem
-            icon={<ArrowDownLeft />}
-            label={t('nav.accountsReceivable')}
-            active={at('contas-a-receber')}
-            onClick={() => go('/app/contas-a-receber')}
-          />
-          <NavItem
             icon={<HandCoins />}
-            label={t('nav.receivablesWorkflow')}
+            label={t('nav.accountsReceivable')}
             active={at('receivables')}
             onClick={() => go('/app/receivables')}
           />

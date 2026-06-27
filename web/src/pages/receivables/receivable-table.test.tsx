@@ -15,17 +15,13 @@ import { ReceivableTable } from './receivable-table';
 const items = [
   {
     receivableId: 'rcv_1',
-    installmentId: 'i1',
-    sequence: 1,
-    installmentCount: 1,
     payerName: 'Cliente A',
     description: 'Mensalidade',
     costCenterId: 'cc_1',
-    amount: 500,
-    dueDate: '2026-06-30',
-    receivableStatus: 'AwaitingReceipt',
-    installmentStatus: 'Open',
-    isOverdue: false,
+    firstDueDate: '2026-06-30',
+    installmentCount: 2,
+    totalAmount: 1000,
+    status: 'AwaitingReceipt',
   },
 ] as any;
 
@@ -46,6 +42,7 @@ describe('ReceivableTable', () => {
     );
     expect(screen.getByText('Mensalidade')).toBeInTheDocument();
     expect(screen.getByText('Cliente A')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Mensalidade'));
     expect(navigate).toHaveBeenCalledWith('/app/receivables/rcv_1');
   });

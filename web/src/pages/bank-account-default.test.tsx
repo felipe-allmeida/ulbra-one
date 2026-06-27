@@ -77,7 +77,7 @@ vi.mock('../queries', async (orig) => {
 });
 
 import { BankAccountsPage } from './bank-accounts';
-import { PaymentHistory } from './contas-a-pagar/payment-history';
+import { PaymentHistory } from './payables/payment-history';
 import type { Payable, Installment, Payment } from '../api';
 import { SYSTEM_ACTOR_ID } from '../lib';
 
