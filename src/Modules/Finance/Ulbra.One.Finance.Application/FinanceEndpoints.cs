@@ -75,6 +75,7 @@ using Ulbra.One.Finance.Application.Endpoints.Remittances.GetRemittance;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.ImportRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.ListRemittances;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.ReturnRemittanceLine;
+using Ulbra.One.Finance.Application.Endpoints.Remittances.RunSweep;
 using Ulbra.One.Finance.Application.Endpoints.Remittances.SimulateRemittanceReturn;
 using Ulbra.One.Finance.Application.Endpoints.Transactions.RejectTransaction;
 
@@ -185,6 +186,7 @@ public static class FinanceEndpoints
         remittances.MapEndpoint<ConfirmRemittanceLine>();
         remittances.MapEndpoint<ReturnRemittanceLine>();
         remittances.MapEndpoint<SimulateRemittanceReturn>();
+        remittances.MapEndpoint<RunRemittanceSweep>();
 
         return builder;
     }
