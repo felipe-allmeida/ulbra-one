@@ -24,6 +24,29 @@ public sealed record PayableResponse(
     IReadOnlyList<PayableAttachmentResponse> Attachments,
     IReadOnlyList<PayableWithholdingResponse> Withholdings, decimal TotalWithheld, decimal NetTotal)
 {
+    /// <summary>Builds a <see cref="PayableResponse"/> with pre-computed installment responses
+    /// (e.g. enriched with rail + remittance context from <see cref="GetPayable"/>).</summary>
+    public static PayableResponse FromWithInstallments(Payable p, IReadOnlyList<InstallmentResponse> installments) => new(
+        new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
+        p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),
+        p.CategoryId is { } c2 ? new ExpenseCategoryId(c2) : null, p.TotalAmount, p.Status, p.RejectionReason,
+        p.CancelReason, p.ApprovedBy, p.ApprovedAt, p.RejectedBy, p.RejectedAt,
+        p.AccountingAccountId is { } a2 ? new ChartAccountId(a2) : null,
+        p.FinancialAccountId is { } f2 ? new ChartAccountId(f2) : null,
+        p.IsClassified,
+        p.SuggestedAccountingAccountId is { } sa2 ? new ChartAccountId(sa2) : null,
+        p.SuggestedFinancialAccountId is { } sf2 ? new ChartAccountId(sf2) : null,
+        p.ClassificationConfidence,
+        p.ClassificationRationale,
+        p.PaymentBankAccountId is { } pb2 ? new BankAccountId(pb2) : null,
+        p.PaymentMethod,
+        p.CreatedAt,
+        installments,
+        p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList(),
+        p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
+        p.TotalWithheld,
+        p.NetTotal);
+
     public static PayableResponse From(Payable p) => new(
         new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
         p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),

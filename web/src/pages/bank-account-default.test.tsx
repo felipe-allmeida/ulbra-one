@@ -265,6 +265,13 @@ function makeInstallment(payments: Payment[]): Installment {
     status: 'Paid',
     payments,
     netAmount: 500,
+    scheduledPaymentDate: '2025-06-15',
+    isHeld: false,
+    holdReason: null,
+    rail: 'Manual',
+    manualReason: null,
+    remittanceId: null,
+    remittanceSequence: null,
   };
 }
 

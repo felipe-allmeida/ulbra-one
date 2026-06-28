@@ -336,6 +336,8 @@ export function VendorForm({
             }
           : null,
         taxRegime: v.taxRegime,
+        paymentScheduleMode: 'OnDueDate',
+        paymentScheduleDay: null,
       },
     });
   };

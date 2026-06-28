@@ -788,6 +788,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/{id}/installments/{installmentId}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["HoldInstallment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/installments/{installmentId}/release-hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReleaseInstallmentHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/aging": {
         parameters: {
             query?: never;
@@ -1310,6 +1342,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["SimulateRemittanceReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/remittances/sweep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RunRemittanceSweep"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2251,6 +2299,9 @@ export interface components {
         GoogleSignInRequest: {
             idToken: string;
         };
+        HoldInstallmentRequest: {
+            reason: string;
+        };
         /** @enum {string} */
         ImportStatus: "Completed" | "Failed";
         IncomeStatementLineResponse: {
@@ -2299,6 +2350,16 @@ export interface components {
             payments: components["schemas"]["PaymentResponse"][];
             /** Format: double */
             netAmount: number;
+            /** Format: date */
+            scheduledPaymentDate: string;
+            isHeld: boolean;
+            holdReason: string | null;
+            rail: string;
+            manualReason: string | null;
+            /** @example remittance_3fa85f64571742199730000000000000 */
+            remittanceId: string | null;
+            /** Format: int32 */
+            remittanceSequence: number | null;
         };
         /** @enum {string} */
         InstallmentStatus: "Open" | "PartiallyPaid" | "Paid" | "InRemittance";
@@ -2619,6 +2680,8 @@ export interface components {
             /** Format: uuid */
             createdById: string;
         };
+        /** @enum {string} */
+        PaymentScheduleMode: "OnDueDate" | "FixedDayOfMonth" | "FirstDayOfMonth";
         PendingAccountingPostingResponse: {
             /** @example pendpost_3fa85f64571742199730000000000000 */
             id: string;
@@ -2934,6 +2997,14 @@ export interface components {
             divergent: number;
             notes: string[];
         };
+        RemittanceSweepResult: {
+            /** Format: int32 */
+            companiesProcessed: number;
+            /** Format: int32 */
+            remittancesGenerated: number;
+            /** Format: int32 */
+            installmentsIncluded: number;
+        };
         RequestFiscalUploadUrlRequest: {
             fileName: string;
         };
@@ -2954,6 +3025,10 @@ export interface components {
         };
         ReverseReceiptReverseReceiptRequest: {
             reason: string | null;
+        };
+        RunRemittanceSweepRequest: {
+            /** Format: date */
+            asOf: string | null;
         };
         SeedLedgerAccountsRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -3229,6 +3304,9 @@ export interface components {
             paymentTerms: string | null;
             bankInfo: components["schemas"]["BankInfoRequest"];
             taxRegime: components["schemas"]["TaxRegime"];
+            paymentScheduleMode: components["schemas"]["PaymentScheduleMode"];
+            /** Format: int32 */
+            paymentScheduleDay: number | null;
         };
         VendorResponse: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -3245,6 +3323,9 @@ export interface components {
             paymentTerms: string | null;
             bankInfo: components["schemas"]["BankInfoResponse"];
             taxRegime: components["schemas"]["TaxRegime"];
+            paymentScheduleMode: components["schemas"]["PaymentScheduleMode"];
+            /** Format: int32 */
+            paymentScheduleDay: number | null;
             active: boolean;
         };
         VendorResponsePaginatedResponse: {
@@ -5491,6 +5572,79 @@ export interface operations {
             };
         };
     };
+    HoldInstallment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                installmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldInstallmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReleaseInstallmentHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                installmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetAgingReport: {
         parameters: {
             query: {
@@ -6994,6 +7148,30 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RunRemittanceSweep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunRemittanceSweepRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemittanceSweepResult"];
                 };
             };
         };

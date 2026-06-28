@@ -3111,6 +3111,108 @@
         }
       }
     },
+    "/api/payables/{id}/installments/{installmentId}/hold": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "HoldInstallment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "installmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldInstallmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/installments/{installmentId}/release-hold": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "ReleaseInstallmentHold",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "installmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/aging": {
       "get": {
         "tags": [
@@ -5367,6 +5469,36 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittances/sweep": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "RunRemittanceSweep",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRemittanceSweepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceSweepResult"
                 }
               }
             }
@@ -8796,6 +8928,18 @@
         },
         "additionalProperties": false
       },
+      "HoldInstallmentRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ImportStatus": {
         "enum": [
           "Completed",
@@ -8913,7 +9057,14 @@
           "status",
           "paidAmount",
           "payments",
-          "netAmount"
+          "netAmount",
+          "scheduledPaymentDate",
+          "isHeld",
+          "holdReason",
+          "rail",
+          "manualReason",
+          "remittanceId",
+          "remittanceSequence"
         ],
         "type": "object",
         "properties": {
@@ -8949,6 +9100,34 @@
           "netAmount": {
             "type": "number",
             "format": "double"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "isHeld": {
+            "type": "boolean"
+          },
+          "holdReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "rail": {
+            "type": "string"
+          },
+          "manualReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "remittanceId": {
+            "type": "string",
+            "nullable": true,
+            "example": "remittance_3fa85f64571742199730000000000000"
+          },
+          "remittanceSequence": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10050,6 +10229,14 @@
         },
         "additionalProperties": false
       },
+      "PaymentScheduleMode": {
+        "enum": [
+          "OnDueDate",
+          "FixedDayOfMonth",
+          "FirstDayOfMonth"
+        ],
+        "type": "string"
+      },
       "PendingAccountingPostingResponse": {
         "required": [
           "id",
@@ -11051,6 +11238,29 @@
         },
         "additionalProperties": false
       },
+      "RemittanceSweepResult": {
+        "required": [
+          "companiesProcessed",
+          "remittancesGenerated",
+          "installmentsIncluded"
+        ],
+        "type": "object",
+        "properties": {
+          "companiesProcessed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remittancesGenerated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "installmentsIncluded": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "RequestFiscalUploadUrlRequest": {
         "required": [
           "fileName"
@@ -11127,6 +11337,20 @@
         "properties": {
           "reason": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RunRemittanceSweepRequest": {
+        "required": [
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date",
             "nullable": true
           }
         },
@@ -12043,7 +12267,9 @@
           "address",
           "paymentTerms",
           "bankInfo",
-          "taxRegime"
+          "taxRegime",
+          "paymentScheduleMode",
+          "paymentScheduleDay"
         ],
         "type": "object",
         "properties": {
@@ -12084,6 +12310,14 @@
           },
           "taxRegime": {
             "$ref": "#/components/schemas/TaxRegime"
+          },
+          "paymentScheduleMode": {
+            "$ref": "#/components/schemas/PaymentScheduleMode"
+          },
+          "paymentScheduleDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12102,6 +12336,8 @@
           "paymentTerms",
           "bankInfo",
           "taxRegime",
+          "paymentScheduleMode",
+          "paymentScheduleDay",
           "active"
         ],
         "type": "object",
@@ -12147,6 +12383,14 @@
           },
           "taxRegime": {
             "$ref": "#/components/schemas/TaxRegime"
+          },
+          "paymentScheduleMode": {
+            "$ref": "#/components/schemas/PaymentScheduleMode"
+          },
+          "paymentScheduleDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "active": {
             "type": "boolean"

@@ -37,7 +37,9 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadPaymentProof;
 using Ulbra.One.Finance.Application.Endpoints.Payables.AuditTrail;
 using Ulbra.One.Finance.Application.Endpoints.Payables.GetPayable;
+using Ulbra.One.Finance.Application.Endpoints.Payables.HoldInstallment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ListPayables;
+using Ulbra.One.Finance.Application.Endpoints.Payables.ReleaseInstallment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ParseFiscalDocument;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RegisterPayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RequestFiscalUploadUrl;
@@ -125,6 +127,8 @@ public static class FinanceEndpoints
         payables.MapEndpoint<GetPayableStageSummary>();
         payables.MapEndpoint<GetPayableStageItems>();
         payables.MapEndpoint<GetPayableAuditTrail>();
+        payables.MapEndpoint<HoldInstallment>();
+        payables.MapEndpoint<ReleaseInstallmentHold>();
 
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();
