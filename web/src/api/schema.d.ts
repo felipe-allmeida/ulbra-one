@@ -2536,6 +2536,25 @@ export interface components {
             amount: number;
             installmentStatus: components["schemas"]["InstallmentStatus"];
             payableStatus: components["schemas"]["PayableStatus"];
+            /**
+             * Format: date
+             * @description Date the daily sweep will process this installment (defaults to DueDate at creation).
+             */
+            scheduledPaymentDate: string;
+            /** @description True when this installment has been manually paused from the remittance sweep. */
+            isHeld: boolean;
+            /** @description The reason provided when holding this installment, or null if not held. */
+            holdReason: string | null;
+            /**
+             * @description Id of the remittance this installment belongs to, or null if not in a remittance.
+             * @example remittance_3fa85f64571742199730000000000000
+             */
+            remittanceId: string | null;
+            /**
+             * Format: int32
+             * @description 1-based sequence number of this installment within its remittance, or null if not in a remittance.
+             */
+            remittanceSequence: number | null;
         };
         PayableListItemResponsePaginatedResponse: {
             items: components["schemas"]["PayableListItemResponse"][];

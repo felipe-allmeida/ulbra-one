@@ -49,21 +49,54 @@ public sealed class ListPayables : IEndpoint
 
         // One row per installment (the operational Contas a Pagar list). Project to primitive fields
         // FIRST so the query and pagination translate to SQL, then wrap Guids into typed IDs in memory.
-        var rows = payables.SelectMany(p => p.Installments, (p, i) => new
-        {
-            PayableId = p.Id,
-            InstallmentId = i.Id,
-            i.Sequence,
-            InstallmentCount = p.Installments.Count,
-            p.CounterpartyName,
-            p.Description,
-            p.CostCenterId,
-            p.CategoryId,
-            i.DueDate,
-            i.Amount,
-            InstallmentStatus = i.Status,
-            PayableStatus = p.Status,
-        });
+        // LEFT JOIN on RemittanceLine to surface remittance id/sequence for InRemittance installments.
+        var remittanceLines = uow.ReadSet<RemittanceLine>();
+        var rows = payables
+            .SelectMany(p => p.Installments, (p, i) => new
+            {
+                PayableId = p.Id,
+                InstallmentId = i.Id,
+                i.Sequence,
+                InstallmentCount = p.Installments.Count,
+                p.CounterpartyName,
+                p.Description,
+                p.CostCenterId,
+                p.CategoryId,
+                i.DueDate,
+                i.Amount,
+                InstallmentStatus = i.Status,
+                PayableStatus = p.Status,
+                i.ScheduledPaymentDate,
+                i.IsHeld,
+                i.HoldReason,
+            })
+            .GroupJoin(
+                remittanceLines,
+                x => x.InstallmentId,
+                rl => rl.InstallmentId,
+                (x, rls) => new { Row = x, Lines = rls })
+            .SelectMany(
+                g => g.Lines.DefaultIfEmpty(),
+                (g, rl) => new
+                {
+                    g.Row.PayableId,
+                    g.Row.InstallmentId,
+                    g.Row.Sequence,
+                    g.Row.InstallmentCount,
+                    g.Row.CounterpartyName,
+                    g.Row.Description,
+                    g.Row.CostCenterId,
+                    g.Row.CategoryId,
+                    g.Row.DueDate,
+                    g.Row.Amount,
+                    g.Row.InstallmentStatus,
+                    g.Row.PayableStatus,
+                    g.Row.ScheduledPaymentDate,
+                    g.Row.IsHeld,
+                    g.Row.HoldReason,
+                    RemittanceId = rl == null ? (Guid?)null : rl.RemittanceId,
+                    RemittanceSequence = rl == null ? (int?)null : rl.Sequence,
+                });
         if (req.DueFrom is { } from) rows = rows.Where(x => x.DueDate >= from);
         if (req.DueTo is { } to) rows = rows.Where(x => x.DueDate <= to);
         if (req.Paid is true) rows = rows.Where(x => x.InstallmentStatus == InstallmentStatus.Paid);
@@ -74,6 +107,9 @@ public sealed class ListPayables : IEndpoint
             new PayableId(x.PayableId), new InstallmentId(x.InstallmentId), x.Sequence, x.InstallmentCount,
             x.CounterpartyName, x.Description, new CostCenterId(x.CostCenterId),
             x.CategoryId == null ? null : new ExpenseCategoryId(x.CategoryId.Value),
-            x.DueDate, x.Amount, x.InstallmentStatus, x.PayableStatus)));
+            x.DueDate, x.Amount, x.InstallmentStatus, x.PayableStatus,
+            x.ScheduledPaymentDate, x.IsHeld, x.HoldReason,
+            x.RemittanceId == null ? null : new RemittanceId(x.RemittanceId.Value),
+            x.RemittanceSequence)));
     }
 }
