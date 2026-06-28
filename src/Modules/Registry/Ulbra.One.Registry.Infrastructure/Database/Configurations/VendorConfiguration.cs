@@ -23,7 +23,7 @@ public sealed class VendorConfiguration : BaseEntityConfiguration<VendorEntity>
         e.OwnsOne(x => x.BankInfo, BankInfoConfiguration.Configure);
         e.OwnsOne(x => x.PaymentSchedule, ps =>
         {
-            ps.Property(p => p.Mode).HasConversion<string>();
+            ps.Property(p => p.Mode).HasConversion<string>().HasMaxLength(20);
             ps.Property(p => p.DayOfMonth);
         });
         // Partial unique index: uniqueness applies only to live (non-soft-deleted) rows,
