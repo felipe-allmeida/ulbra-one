@@ -18,6 +18,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public Address Address { get; private set; } = Address.Empty;
     public string? PaymentTerms { get; private set; }
     public BankInfo BankInfo { get; private set; } = BankInfo.Empty;
+    public PaymentSchedule PaymentSchedule { get; private set; } = PaymentSchedule.Default;
     public TaxRegime TaxRegime { get; private set; } = TaxRegime.Unknown;
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -31,20 +32,20 @@ public class VendorEntity : IAuditable, ISoftDeletable
 
     public VendorEntity(Guid companyId, PersonType personType, string name, string? tradeName,
         string document, string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime)
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule)
     {
         CompanyId = companyId;
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime);
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime, paymentSchedule);
     }
 
     public void Update(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime) =>
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime);
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule) =>
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime, paymentSchedule);
 
     private void Apply(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime)
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule)
     {
         PersonType = personType;
         Name = name;
@@ -55,6 +56,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
         Address = address;
         PaymentTerms = paymentTerms;
         BankInfo = bankInfo;
+        PaymentSchedule = paymentSchedule;
         TaxRegime = taxRegime;
     }
 

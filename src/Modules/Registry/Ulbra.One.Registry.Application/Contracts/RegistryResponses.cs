@@ -45,11 +45,14 @@ public sealed record VendorResponse(
     string? PaymentTerms,
     BankInfoResponse? BankInfo,
     TaxRegime TaxRegime,
+    PaymentScheduleMode PaymentScheduleMode,
+    int? PaymentScheduleDay,
     bool Active)
 {
     public static VendorResponse From(VendorEntity v) => new(
         new VendorId(v.Id), new CompanyId(v.CompanyId), v.PersonType, v.Name, v.TradeName, v.Document, v.Email, v.Phone,
-        AddressResponse.From(v.Address), v.PaymentTerms, BankInfoResponse.From(v.BankInfo), v.TaxRegime, v.Active);
+        AddressResponse.From(v.Address), v.PaymentTerms, BankInfoResponse.From(v.BankInfo), v.TaxRegime,
+        v.PaymentSchedule.Mode, v.PaymentSchedule.DayOfMonth, v.Active);
 }
 
 /// <summary>Customer response shape. Matches the frontend <c>Customer</c> type.</summary>
