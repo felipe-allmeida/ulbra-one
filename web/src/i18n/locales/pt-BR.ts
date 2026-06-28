@@ -264,6 +264,13 @@ const ptBR = {
       groupThisWeek: 'Esta semana',
       groupNextWeek: 'Próxima semana',
       groupFuture: 'Futuro',
+      railRemittance: 'Remessas',
+      railManual: 'Manuais',
+      nextRemittance: 'Próxima remessa: {{date}} · {{count}} parcelas · {{amount}}',
+      hold: 'Segurar',
+      release: 'Liberar',
+      heldGroup: 'Em espera',
+      holdReasonPrompt: 'Motivo',
     },
   },
 
@@ -514,6 +521,18 @@ const ptBR = {
       PartiallyPaid: 'Parcial',
       Paid: 'Paga',
       InRemittance: 'Em remessa',
+    },
+    rail: {
+      scheduled: 'Agendada',
+      nextSweep: 'Na próxima remessa',
+      inRemittance: 'Remessa #{{seq}}',
+      payManual: 'Pagar manual',
+    },
+    manualReason: {
+      BankNotSupported: 'Banco do fornecedor não suportado para remessa CNAB',
+      MissingAgreementCode: 'Código de convênio não configurado na conta bancária',
+      MethodNotSupported: 'Forma de pagamento não suportada para remessa automática',
+      VendorBankInfoMissing: 'Fornecedor sem dados bancários',
     },
   },
 

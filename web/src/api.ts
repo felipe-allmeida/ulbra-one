@@ -597,6 +597,15 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  // ---------- Installment hold / release ----------
+  holdInstallment: (id: string, installmentId: string, reason: string) =>
+    request<void>(`/payables/${id}/installments/${installmentId}/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  releaseInstallmentHold: (id: string, installmentId: string) =>
+    request<void>(`/payables/${id}/installments/${installmentId}/release-hold`, { method: 'POST' }),
+
   // ---------- Payments (baixa) ----------
   registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>
     request<Payable>(`/payables/${payableId}/installments/${installmentId}/payments`, {

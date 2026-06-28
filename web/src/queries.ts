@@ -724,6 +724,32 @@ export function useSetPayableWithholdings(
   );
 }
 
+export function useHoldInstallment(
+  options?: UseMutationOptions<void, unknown, { id: string; installmentId: string; reason: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, installmentId, reason }) => api.holdInstallment(id, installmentId, reason),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
+export function useReleaseInstallmentHold(
+  options?: UseMutationOptions<void, unknown, { id: string; installmentId: string }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, installmentId }) => api.releaseInstallmentHold(id, installmentId),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+    },
+    options,
+  );
+}
+
 /** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */
 export function useRequestFiscalUploadUrl(options?: UseMutationOptions<UploadTarget, unknown, { fileName: string }>) {
   return useMutation<UploadTarget, unknown, { fileName: string }>({
