@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
@@ -94,45 +98,25 @@ public class InstallmentHoldEndpointTests(PostgresFixture fixture)
         var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(
             client, companyId, vendorId, costCenterId, new DateOnly(2026, 8, 1), 500m, approve: true);
 
-        // Create a bank account and generate a remittance to put the installment InRemittance
-        var bankAccountId = await FinanceSeed.CreateBankAccountAsync(client, companyId, "99001");
+        // Parse raw GUIDs from the prefixed ids (wire form: "<prefix>_<guidN>")
+        var payableGuid = Guid.ParseExact(payableId.Split('_')[1], "N");
+        var installmentGuid = Guid.ParseExact(installmentId.Split('_')[1], "N");
 
-        // Configure the bank account as default with agreement code
-        var updateRes = await client.PutAsJsonAsync($"/api/bank-accounts/{bankAccountId}", new
-        {
-            bankCode = "033",
-            bankName = "Banco Santander",
-            agency = "1234",
-            accountNumber = "99001",
-            accountDigit = "6",
-            accountType = "Checking",
-            alias = "Conta Remessa",
-            openingBalance = 1_000_000m,
-            cnabAgreementCode = "123456",
-        });
-        updateRes.EnsureSuccessStatusCode();
+        // Force the installment into InRemittance directly via the domain — no remittance endpoint needed.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        // classify and generate remittance to put installment InRemittance
-        var (accountingId, financialId) = await FinanceSeed.CreateChartAccountPairAsync(client);
-        var classRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = accountingId, financialAccountId = financialId });
-        classRes.EnsureSuccessStatusCode();
+        var payable = await uow.Set<Payable>()
+            .Include(p => p.Installments)
+            .SingleAsync(p => p.Id == payableGuid);
 
-        var remittanceRes = await client.PostAsJsonAsync("/api/remittances", new
-        {
-            companyId,
-            payingBankAccountId = bankAccountId,
-            payableIds = new[] { payableId },
-        });
-        if (remittanceRes.StatusCode != HttpStatusCode.Created)
-        {
-            // If remittance creation fails (e.g. vendor has no bank info), skip this test
-            // by marking the installment InRemittance via direct DB (not available in IT without docker).
-            // We test the 409 path via unit tests or accept skipping when vendor lacks bank info.
-            return;
-        }
+        var installment = payable.FindInstallment(installmentGuid);
+        Assert.NotNull(installment);
 
-        // Act: try to hold the InRemittance installment
+        installment.MarkInRemittance();
+        await uow.SaveChangesAsync(CancellationToken.None);
+
+        // Act: try to hold the InRemittance installment — must return 409 Conflict.
         var holdRes = await client.PostAsJsonAsync(
             $"/api/payables/{payableId}/installments/{installmentId}/hold",
             new { reason = "Test" });
