@@ -48,6 +48,25 @@ public sealed class ObjectStorageRegistrationTests
     }
 
     [Fact]
+    public void AzureBlobConfig_WithAccountUrl_ResolvesAzureBlobStorageService()
+    {
+        // Production path: no ConnectionString, only AccountUrl → BlobServiceClient is built with
+        // DefaultAzureCredential (Managed Identity). DefaultAzureCredential is lazy, so DI resolution
+        // does no network I/O; this asserts the MI wiring resolves without an account key.
+        var provider = BuildProvider(new Dictionary<string, string?>
+        {
+            ["ObjectStorage:Provider"] = "AzureBlob",
+            ["ObjectStorage:AccountUrl"] = "https://stulbraonedev.blob.core.windows.net",
+            ["ObjectStorage:Bucket"] = "attachments",
+        });
+
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+
+        Assert.IsType<AzureBlobStorageService>(service);
+    }
+
+    [Fact]
     public void AzureBlobConfig_MissingBothConnectionStringAndAccountUrl_ThrowsInvalidOperationException()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
