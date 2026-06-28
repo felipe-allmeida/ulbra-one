@@ -116,26 +116,14 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
 
             var bankInfo = vendor.BankInfo;
 
-            // Validate bank info per method.
-            if (method == PaymentMethod.Ted)
+            // Validate bank info per method via shared eligibility helper.
+            var bankInfoReason = RemittanceEligibility.Evaluate(payingAccount, method, bankInfo);
+            if (bankInfoReason == RemittanceManualReason.VendorBankInfoMissing)
             {
-                if (string.IsNullOrEmpty(bankInfo.BankCode)
-                    || string.IsNullOrEmpty(bankInfo.Branch)
-                    || string.IsNullOrEmpty(bankInfo.Account))
-                {
-                    foreach (var inst in dueInstallments)
-                        skipped.Add(new SkippedInstallment(payable.Id, inst.Id, "missing vendor bank account"));
-                    continue;
-                }
-            }
-            else // Pix
-            {
-                if (string.IsNullOrEmpty(bankInfo.PixKey))
-                {
-                    foreach (var inst in dueInstallments)
-                        skipped.Add(new SkippedInstallment(payable.Id, inst.Id, "missing vendor PIX key"));
-                    continue;
-                }
+                var skipReason = method == PaymentMethod.Ted ? "missing vendor bank account" : "missing vendor PIX key";
+                foreach (var inst in dueInstallments)
+                    skipped.Add(new SkippedInstallment(payable.Id, inst.Id, skipReason));
+                continue;
             }
 
             // All checks passed — stage each installment (not yet marked or saved).
