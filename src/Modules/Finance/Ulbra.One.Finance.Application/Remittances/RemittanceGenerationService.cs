@@ -80,7 +80,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
         foreach (var payable in payables)
         {
             var dueInstallments = payable.Installments
-                .Where(i => i.Status == InstallmentStatus.Open && i.DueDate <= dueCutoff)
+                .Where(i => i.Status == InstallmentStatus.Open && !i.IsHeld && i.ScheduledPaymentDate <= dueCutoff)
                 .ToList();
 
             if (dueInstallments.Count == 0)

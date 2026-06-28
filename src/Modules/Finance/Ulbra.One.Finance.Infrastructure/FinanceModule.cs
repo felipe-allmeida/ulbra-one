@@ -31,6 +31,7 @@ public static class FinanceModule
         // Remittance generation + return conciliation use-cases.
         services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();
         services.AddScoped<IRemittanceReturnService, RemittanceReturnService>();
+        services.AddScoped<IRemittanceSweepService, RemittanceSweepService>();
 
         // Development-only: synthetic return file simulator.
         services.AddScoped<IRemittanceReturnSimulator, CnabReturnSimulator>();
