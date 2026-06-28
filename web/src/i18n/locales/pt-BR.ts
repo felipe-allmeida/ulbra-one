@@ -525,6 +525,7 @@ const ptBR = {
     rail: {
       scheduled: 'Agendada',
       nextSweep: 'Na próxima remessa',
+      held: 'Em espera',
       inRemittance: 'Remessa #{{seq}}',
       payManual: 'Pagar manual',
     },

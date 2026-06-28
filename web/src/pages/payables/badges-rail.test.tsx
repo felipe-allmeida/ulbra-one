@@ -38,9 +38,9 @@ describe('InstallmentRailChip', () => {
     expect(el).toBeTruthy();
   });
 
-  it('held → renders "Na próxima remessa" label', () => {
+  it('held → renders "Em espera" label', () => {
     renderWithProviders(<InstallmentRailChip line={{ ...base, isHeld: true }} today={today} />);
-    expect(screen.getByText('Na próxima remessa')).toBeTruthy();
+    expect(screen.getByText('Em espera')).toBeTruthy();
   });
 
   it('scheduled future → renders "Agendada" label with date', () => {

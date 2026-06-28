@@ -60,7 +60,10 @@ export function InstallmentRailChip({ line, today }: { line: RailLine; today: st
       </span>
     );
   }
-  if (bucket === 'held' || bucket === 'nextSweep') {
+  if (bucket === 'held') {
+    return <span className={`badge-status ${cls}`}>{t('installments.rail.held')}</span>;
+  }
+  if (bucket === 'nextSweep') {
     return <span className={`badge-status ${cls}`}>{t('installments.rail.nextSweep')}</span>;
   }
   // scheduled
