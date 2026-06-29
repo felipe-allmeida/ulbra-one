@@ -38,7 +38,7 @@ export function PayableTable({
         icon={<Wallet />}
         title={`${stageLabel} — ${t('payables.empty.noItemsTitle')}`}
         action={
-          <button className='btn empty-action' onClick={() => nav(`/${companyId}/payables/novo`)}>
+          <button className='btn empty-action' onClick={() => nav(`/${companyId}/payables/new`)}>
             <Plus /> {t('payables.new')}
           </button>
         }

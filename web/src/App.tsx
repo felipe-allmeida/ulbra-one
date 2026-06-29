@@ -45,43 +45,43 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to='inicio' replace />} />
-        <Route path='inicio' element={<DashboardPage />} />
+        <Route index element={<Navigate to='home' replace />} />
+        <Route path='home' element={<DashboardPage />} />
         <Route path='payables' element={<PayablesLayout />} />
-        <Route path='payables/novo' element={<NewPayablePage />} />
+        <Route path='payables/new' element={<NewPayablePage />} />
         <Route path='payables/:id' element={<PayableDetailPage />} />
-        <Route path='payables/:id/editar' element={<EditPayablePage />} />
+        <Route path='payables/:id/edit' element={<EditPayablePage />} />
         <Route path='receivables' element={<ReceivablesLayout />} />
-        <Route path='receivables/novo' element={<NewReceivablePage />} />
+        <Route path='receivables/new' element={<NewReceivablePage />} />
         <Route path='receivables/:id' element={<ReceivableDetailPage />} />
-        <Route path='receivables/:id/editar' element={<EditReceivablePage />} />
-        <Route path='categorias-despesa' element={<ExpenseCategoriesPage />} />
-        <Route path='contas-bancarias' element={<BankAccountsPage />} />
-        <Route path='remessas' element={<RemessasPage />} />
-        <Route path='plano-de-contas' element={<PlanoDeContasPage />} />
-        <Route path='contabil/plano-de-contas' element={<ContabilPlanoPage />} />
-        <Route path='contabil/lancamentos' element={<ContabilLancamentosPage />} />
-        <Route path='contabil/balancete' element={<ContabilBalancetePage />} />
-        <Route path='contabil/dre' element={<ContabilDrePage />} />
-        <Route path='contabil/balanco' element={<ContabilBalancoPage />} />
-        <Route path='contabil/pendentes' element={<ContabilPendentesPage />} />
-        <Route path='classificacao' element={<ClassificacaoPage />} />
-        <Route path='conciliacao' element={<ConciliacaoPage />} />
+        <Route path='receivables/:id/edit' element={<EditReceivablePage />} />
+        <Route path='expense-categories' element={<ExpenseCategoriesPage />} />
+        <Route path='bank-accounts' element={<BankAccountsPage />} />
+        <Route path='remittances' element={<RemessasPage />} />
+        <Route path='chart-of-accounts' element={<PlanoDeContasPage />} />
+        <Route path='accounting/chart-of-accounts' element={<ContabilPlanoPage />} />
+        <Route path='accounting/journal-entries' element={<ContabilLancamentosPage />} />
+        <Route path='accounting/trial-balance' element={<ContabilBalancetePage />} />
+        <Route path='accounting/income-statement' element={<ContabilDrePage />} />
+        <Route path='accounting/balance-sheet' element={<ContabilBalancoPage />} />
+        <Route path='accounting/pending' element={<ContabilPendentesPage />} />
+        <Route path='classification' element={<ClassificacaoPage />} />
+        <Route path='reconciliation' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
         <Route path='cash-flow' element={<CashFlowPage />} />
-        <Route path='contas-pagar' element={<LancamentosPage tipo='Payable' />} />
-        <Route path='contas-receber' element={<LancamentosPage tipo='Receivable' />} />
-        <Route path='aprovacoes' element={<AprovacoesPage />} />
-        <Route path='lancamentos/novo' element={<NovoLancamentoPage />} />
-        <Route path='lancamentos/:id' element={<LancamentoDetailPage />} />
-        <Route path='centros' element={<CentrosListPage />} />
-        <Route path='centros/novo' element={<CentroDetailPage modo='novo' />} />
-        <Route path='centros/:id' element={<CentroDetailPage modo='detalhe' />} />
-        <Route path='estrutura' element={<EstruturaPage />} />
-        <Route path='fornecedores' element={<FornecedoresPage />} />
-        <Route path='clientes' element={<ClientesPage />} />
-        <Route path='colaboradores' element={<ColaboradoresPage />} />
-        <Route path='*' element={<Navigate to='inicio' replace />} />
+        <Route path='accounts-payable' element={<LancamentosPage tipo='Payable' />} />
+        <Route path='accounts-receivable' element={<LancamentosPage tipo='Receivable' />} />
+        <Route path='approvals' element={<AprovacoesPage />} />
+        <Route path='entries/new' element={<NovoLancamentoPage />} />
+        <Route path='entries/:id' element={<LancamentoDetailPage />} />
+        <Route path='cost-centers' element={<CentrosListPage />} />
+        <Route path='cost-centers/new' element={<CentroDetailPage modo='novo' />} />
+        <Route path='cost-centers/:id' element={<CentroDetailPage modo='detalhe' />} />
+        <Route path='structure' element={<EstruturaPage />} />
+        <Route path='vendors' element={<FornecedoresPage />} />
+        <Route path='customers' element={<ClientesPage />} />
+        <Route path='employees' element={<ColaboradoresPage />} />
+        <Route path='*' element={<Navigate to='/app/home' replace />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>

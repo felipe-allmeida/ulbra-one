@@ -50,7 +50,7 @@ export function ReceivablesLayout() {
           disabled={!empresa}
           style={{ alignSelf: 'flex-end' }}
           onClick={() => {
-            void nav('/app/receivables/novo');
+            void nav('/app/receivables/new');
           }}
         >
           {t('receivables.new')}

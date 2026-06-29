@@ -101,7 +101,7 @@ export function PayableDetailPage() {
             </Button>
           )}
           {editable && (
-            <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/editar`)}>
+            <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/edit`)}>
               {t('payables.actions.edit')}
             </Button>
           )}

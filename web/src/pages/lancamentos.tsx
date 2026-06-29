@@ -77,7 +77,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
           variant='brand'
           icon={<Plus />}
           disabled={!empresa}
-          onClick={() => nav(`/app/lancamentos/novo?tipo=${tipo}`)}
+          onClick={() => nav(`/app/entries/new?tipo=${tipo}`)}
         >
           Novo lançamento
         </Button>
@@ -107,7 +107,7 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
             </thead>
             <tbody>
               {itens.map((l) => (
-                <tr key={l.id} className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
+                <tr key={l.id} className='row-click' onClick={() => nav(`/app/entries/${l.id}`)}>
                   <td className='t-mono'>{fmtDate(l.dueDate)}</td>
                   <td>{l.description}</td>
                   <td>{l.counterpartyName || '—'}</td>
@@ -165,7 +165,7 @@ export function AprovacoesPage() {
               {itens.map((l) => (
                 <tr key={l.id}>
                   <td className='t-mono'>{fmtDate(l.dueDate)}</td>
-                  <td className='row-click' onClick={() => nav(`/app/lancamentos/${l.id}`)}>
+                  <td className='row-click' onClick={() => nav(`/app/entries/${l.id}`)}>
                     {l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterpartyName}</span>
                   </td>
                   <td>
@@ -315,7 +315,7 @@ export function NovoLancamentoPage() {
   });
   const tipo = watch('type');
 
-  const create = useCreateTransaction({ onSuccess: (l) => nav(`/app/lancamentos/${l.id}`) });
+  const create = useCreateTransaction({ onSuccess: (l) => nav(`/app/entries/${l.id}`) });
   const salvando = create.isPending;
   const erro = create.error ? getErrorMessage(create.error) : null;
   const onValid = (v: TransactionValues) =>
@@ -335,7 +335,7 @@ export function NovoLancamentoPage() {
     <>
       <button
         className='backlink'
-        onClick={() => nav(tipo === 'Payable' ? '/app/contas-pagar' : '/app/contas-receber')}
+        onClick={() => nav(tipo === 'Payable' ? '/app/accounts-payable' : '/app/accounts-receivable')}
       >
         <ChevronLeft /> Voltar
       </button>
@@ -509,7 +509,7 @@ export function LancamentoDetailPage() {
     <>
       <button
         className='backlink'
-        onClick={() => nav(l.type === 'Payable' ? '/app/contas-pagar' : '/app/contas-receber')}
+        onClick={() => nav(l.type === 'Payable' ? '/app/accounts-payable' : '/app/accounts-receivable')}
       >
         <ChevronLeft /> {l.type === 'Payable' ? 'Contas a pagar' : 'Contas a receber'}
       </button>

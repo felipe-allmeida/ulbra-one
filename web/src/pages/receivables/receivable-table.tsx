@@ -38,7 +38,7 @@ export function ReceivableTable({
         icon={<HandCoins />}
         title={`${stageLabel} — ${t('receivables.empty.noItemsTitle')}`}
         action={
-          <button className='btn empty-action' onClick={() => nav(`/${companyId}/receivables/novo`)}>
+          <button className='btn empty-action' onClick={() => nav(`/${companyId}/receivables/new`)}>
             <Plus /> {t('receivables.new')}
           </button>
         }

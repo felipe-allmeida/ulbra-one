@@ -60,7 +60,7 @@ export function ReceivableDetailPage() {
             <SlaChips stageLabel={t('receivables.status.' + r.status)} dueDate={r.installments[0].dueDate} />
           )}
           {editable && (
-            <Button icon={<Pencil />} onClick={() => nav(`/app/receivables/${r.id}/editar`)}>
+            <Button icon={<Pencil />} onClick={() => nav(`/app/receivables/${r.id}/edit`)}>
               {t('receivables.actions.edit')}
             </Button>
           )}

@@ -58,12 +58,12 @@ test('full-flow A: payable created -> approved -> paid via simulated bank (OFX) 
   // The new-payable FORM has no EmpresaPicker — it scopes to the globally-selected company, which
   // lives in in-memory React state (auto-defaults to the first company, CELSP). So scope to ULBRA
   // on the LIST first, then open the form via the in-app "Nova conta" button (client-side nav, no
-  // reload) — a full page.goto('/novo') would reset the selection back to CELSP.
-  await page.goto('/app/contas-a-pagar');
+  // reload) — a full page.goto('/new') would reset the selection back to CELSP.
+  await page.goto('/app/accounts-payable');
   await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
   await page.getByRole('button', { name: 'Nova conta' }).click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/novo$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/new$/);
   await expect(page.getByRole('heading', { name: 'Nova conta a pagar' })).toBeVisible();
 
   // Vendor: Radix combobox (aria-haspopup=listbox). Open it, then pick the first seeded option.
@@ -119,7 +119,7 @@ test('full-flow A: payable created -> approved -> paid via simulated bank (OFX) 
   const submit = page.getByRole('button', { name: 'Lançar', exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/[^/]+$/);
   await expect(page.getByRole('heading', { name: description })).toBeVisible();
 
   // ---------- 3. Ensure Approved ----------
@@ -196,7 +196,7 @@ test('full-flow A: payable created -> approved -> paid via simulated bank (OFX) 
   const ofxPath = writeOfxFile(ofx);
 
   // ---------- 5. Conciliação: import the OFX on the SAME bank account ----------
-  await page.goto('/app/conciliacao');
+  await page.goto('/app/reconciliation');
   await expect(page.getByRole('heading', { name: 'Conciliação bancária' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
 

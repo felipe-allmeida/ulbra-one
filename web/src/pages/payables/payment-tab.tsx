@@ -338,7 +338,7 @@ export function PaymentTab({ companyId }: { companyId: string }) {
           <Button
             icon={<FileOutput />}
             onClick={() => {
-              void nav('/app/remessas');
+              void nav('/app/remittances');
             }}
           >
             {t('payables.payment.generateRemittance')}
@@ -353,7 +353,7 @@ export function PaymentTab({ companyId }: { companyId: string }) {
           <RemessasRail
             items={remessasItems}
             onNavigateRemessa={(remittanceId) => {
-              void nav(`/app/remessas?remittance=${remittanceId}`);
+              void nav(`/app/remittances?remittance=${remittanceId}`);
             }}
           />
         ) : (
