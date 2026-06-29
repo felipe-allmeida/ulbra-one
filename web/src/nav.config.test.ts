@@ -3,11 +3,11 @@ import { domainForPath, itemForPath } from './nav.config';
 
 describe('itemForPath', () => {
   it('matches an exact route', () => {
-    expect(itemForPath('/app/accounts-payable')?.labelKey).toBe('nav.accountsPayable');
+    expect(itemForPath('/app/payables')?.labelKey).toBe('nav.accountsPayable');
   });
 
   it('matches a detail route via the longest prefix', () => {
-    expect(itemForPath('/app/accounts-payable/123/edit')?.labelKey).toBe('nav.accountsPayable');
+    expect(itemForPath('/app/payables/123/edit')?.labelKey).toBe('nav.accountsPayable');
   });
 
   it('disambiguates finance vs accounting "chart of accounts"', () => {
@@ -22,7 +22,7 @@ describe('itemForPath', () => {
 
 describe('domainForPath', () => {
   it('resolves the owning domain', () => {
-    expect(domainForPath('/app/accounts-payable').key).toBe('finance');
+    expect(domainForPath('/app/payables').key).toBe('finance');
     expect(domainForPath('/app/accounting/income-statement').key).toBe('accounting');
     expect(domainForPath('/app/structure').key).toBe('structure');
     expect(domainForPath('/app/vendors').key).toBe('registry');
