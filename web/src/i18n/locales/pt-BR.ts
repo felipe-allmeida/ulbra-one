@@ -271,6 +271,8 @@ const ptBR = {
       release: 'Liberar',
       heldGroup: 'Em espera',
       holdReasonPrompt: 'Motivo',
+      confirm: 'Confirmar',
+      cancel: 'Cancelar',
     },
   },
 

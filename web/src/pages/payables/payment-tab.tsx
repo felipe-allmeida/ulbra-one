@@ -74,10 +74,10 @@ function HoldPrompt({ onConfirm, onCancel }: { onConfirm: (reason: string) => vo
         }}
         disabled={!reason.trim()}
       >
-        Confirmar
+        {t('workflow.payment.confirm')}
       </Button>
       <Button variant='ghost' onClick={onCancel}>
-        {t('payables.cancel') || 'Cancelar'}
+        {t('workflow.payment.cancel')}
       </Button>
     </div>
   );
@@ -207,7 +207,7 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
   return (
     <>
       {manualItems.length > 0 && (
-        <Panel title={`${t('payables.columns.status')} · ${brl(manualItems.reduce((s, i) => s + i.amount, 0))}`}>
+        <Panel title={`${t('installments.rail.payManual')} · ${brl(manualItems.reduce((s, i) => s + i.amount, 0))}`}>
           <table>
             <thead>
               <tr>
