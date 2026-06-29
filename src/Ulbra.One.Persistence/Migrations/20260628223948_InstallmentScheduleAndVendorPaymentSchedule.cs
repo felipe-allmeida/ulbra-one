@@ -25,7 +25,7 @@ namespace Ulbra.One.Persistence.Migrations
                 type: "character varying(20)",
                 maxLength: 20,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "OnDueDate");
 
             migrationBuilder.AddColumn<string>(
                 name: "hold_reason",
@@ -54,6 +54,11 @@ namespace Ulbra.One.Persistence.Migrations
             // and is_held is already defaulted to false by the column default above.
             migrationBuilder.Sql(
                 "UPDATE finance.installments SET scheduled_payment_date = due_date WHERE scheduled_payment_date = '0001-01-01';");
+
+            // Belt-and-suspenders: any vendor row that somehow has a null or empty payment_schedule_mode
+            // (e.g. from a partial earlier migration on a pre-existing DB) is reset to the safe default.
+            migrationBuilder.Sql(
+                "UPDATE registry.vendors SET payment_schedule_mode = 'OnDueDate' WHERE payment_schedule_mode IS NULL OR payment_schedule_mode = '';");
         }
 
         /// <inheritdoc />

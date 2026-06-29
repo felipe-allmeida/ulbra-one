@@ -117,6 +117,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
             var bankInfo = vendor.BankInfo;
 
             // Validate bank info per method via shared eligibility helper.
+            // Bank/agreement/method were already pre-screened above (and by the candidate-account query), so only VendorBankInfoMissing can surface here.
             var bankInfoReason = RemittanceEligibility.Evaluate(payingAccount, method, bankInfo);
             if (bankInfoReason == RemittanceManualReason.VendorBankInfoMissing)
             {
