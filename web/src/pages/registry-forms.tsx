@@ -24,6 +24,7 @@ import {
   resolver,
   fieldError,
   TAX_REGIMES,
+  PAYMENT_SCHEDULE_MODES,
   type VendorValues,
   type CustomerValues,
   type EmployeeValues,
@@ -225,6 +226,8 @@ const VENDOR_FIELDS = [
   'paymentTerms',
   'bankInfo',
   'taxRegime',
+  'paymentScheduleMode',
+  'paymentScheduleDay',
 ] as const;
 
 export function VendorForm({
@@ -267,6 +270,8 @@ export function VendorForm({
         pixKey: initial?.bankInfo?.pixKey ?? prefill?.bankInfo?.pixKey ?? '',
       },
       taxRegime: initial?.taxRegime ?? prefill?.taxRegime ?? 'Unknown',
+      paymentScheduleMode: initial?.paymentScheduleMode ?? prefill?.paymentScheduleMode ?? 'OnDueDate',
+      paymentScheduleDay: initial?.paymentScheduleDay ?? prefill?.paymentScheduleDay ?? null,
       address: initial ? fromAddress(initial.address ?? null) : (prefill?.address ?? { ...emptyAddress }),
     },
   });
@@ -284,6 +289,7 @@ export function VendorForm({
   const saving = mutation.isPending;
   const personType = watch('personType');
   const isPj = personType === PersonType.Company;
+  const paymentScheduleMode = watch('paymentScheduleMode');
 
   const onCnpjBlur = async () => {
     const document = getValues('document');
@@ -336,8 +342,8 @@ export function VendorForm({
             }
           : null,
         taxRegime: v.taxRegime,
-        paymentScheduleMode: 'OnDueDate',
-        paymentScheduleDay: null,
+        paymentScheduleMode: v.paymentScheduleMode,
+        paymentScheduleDay: v.paymentScheduleMode === 'FixedDayOfMonth' ? v.paymentScheduleDay : null,
       },
     });
   };
@@ -524,6 +530,44 @@ export function VendorForm({
             />
           </Field>
         </div>
+      </div>
+
+      <div className='form-section'>{t('vendors.paymentSchedule.label')}</div>
+      <div className='form-grid'>
+        <Field label={t('vendors.paymentSchedule.label')}>
+          <Controller
+            control={control}
+            name='paymentScheduleMode'
+            render={({ field }) => (
+              <Select {...field}>
+                {PAYMENT_SCHEDULE_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {t(`vendors.paymentSchedule.mode${m}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+        </Field>
+        {paymentScheduleMode === 'FixedDayOfMonth' && (
+          <Field label={t('vendors.paymentSchedule.day')}>
+            <Controller
+              control={control}
+              name='paymentScheduleDay'
+              render={({ field }) => (
+                <Input
+                  type='number'
+                  min={1}
+                  max={28}
+                  inputMode='numeric'
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                />
+              )}
+            />
+            <ErrMsg message={formState.errors.paymentScheduleDay?.message} />
+          </Field>
+        )}
       </div>
 
       <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />

@@ -159,4 +159,173 @@ describe('VendorForm', () => {
       },
     });
   });
+
+  describe('payment schedule', () => {
+    it('renders the Política de pagamento select with default OnDueDate', () => {
+      renderForm();
+      // The select is rendered with the default value
+      const select = screen.getByDisplayValue('No vencimento');
+      expect(select).toBeInTheDocument();
+      // All three options are present
+      expect(screen.getByRole('option', { name: 'No vencimento' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Dia fixo do mês' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Primeiro dia do mês' })).toBeInTheDocument();
+    });
+
+    it('hides day input when mode is OnDueDate (default)', () => {
+      renderForm();
+      // No number input for day shown in default mode
+      expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+    });
+
+    it('reveals day input when mode is FixedDayOfMonth', async () => {
+      renderForm();
+      const select = screen.getByDisplayValue('No vencimento');
+      fireEvent.change(select, { target: { value: 'FixedDayOfMonth' } });
+      await waitFor(() => expect(screen.getByRole('spinbutton')).toBeInTheDocument());
+    });
+
+    it('hides day input again when mode changes back from FixedDayOfMonth', async () => {
+      renderForm();
+      const select = screen.getByDisplayValue('No vencimento');
+      fireEvent.change(select, { target: { value: 'FixedDayOfMonth' } });
+      await waitFor(() => expect(screen.getByRole('spinbutton')).toBeInTheDocument());
+      fireEvent.change(select, { target: { value: 'FirstDayOfMonth' } });
+      await waitFor(() => expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument());
+    });
+
+    it('submits paymentScheduleMode=OnDueDate and paymentScheduleDay=null by default', async () => {
+      (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
+        razaoSocial: 'SCHED LTDA',
+        nomeFantasia: null,
+        address: null,
+      });
+      (api.createVendor as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'v3', companyId: 'c1' });
+      renderForm();
+
+      const docInput = screen.getByPlaceholderText('00.000.000/0000-00');
+      fireEvent.change(docInput, { target: { value: '11222333000181' } });
+      fireEvent.blur(docInput);
+      await waitFor(() => expect(screen.getByDisplayValue('SCHED LTDA')).toBeInTheDocument());
+
+      fireEvent.submit(screen.getByRole('button', { name: 'Criar' }).closest('form')!);
+      await waitFor(() => expect(api.createVendor).toHaveBeenCalledTimes(1));
+
+      const body = (api.createVendor as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(body).toMatchObject({
+        paymentScheduleMode: 'OnDueDate',
+        paymentScheduleDay: null,
+      });
+    });
+
+    it('submits paymentScheduleMode=FixedDayOfMonth with paymentScheduleDay in payload', async () => {
+      (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
+        razaoSocial: 'FIXDAY LTDA',
+        nomeFantasia: null,
+        address: null,
+      });
+      (api.createVendor as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'v4', companyId: 'c1' });
+      renderForm();
+
+      const docInput = screen.getByPlaceholderText('00.000.000/0000-00');
+      fireEvent.change(docInput, { target: { value: '11222333000181' } });
+      fireEvent.blur(docInput);
+      await waitFor(() => expect(screen.getByDisplayValue('FIXDAY LTDA')).toBeInTheDocument());
+
+      // Change to FixedDayOfMonth
+      const select = screen.getByDisplayValue('No vencimento');
+      fireEvent.change(select, { target: { value: 'FixedDayOfMonth' } });
+      await waitFor(() => expect(screen.getByRole('spinbutton')).toBeInTheDocument());
+
+      // Fill the day input
+      const dayInput = screen.getByRole('spinbutton');
+      fireEvent.change(dayInput, { target: { value: '15' } });
+
+      fireEvent.submit(screen.getByRole('button', { name: 'Criar' }).closest('form')!);
+      await waitFor(() => expect(api.createVendor).toHaveBeenCalledTimes(1));
+
+      const body = (api.createVendor as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(body).toMatchObject({
+        paymentScheduleMode: 'FixedDayOfMonth',
+        paymentScheduleDay: 15,
+      });
+    });
+
+    it('blocks submit when FixedDayOfMonth and day is missing', async () => {
+      (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
+        razaoSocial: 'NODAY LTDA',
+        nomeFantasia: null,
+        address: null,
+      });
+      (api.createVendor as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'v5', companyId: 'c1' });
+      renderForm();
+
+      const docInput = screen.getByPlaceholderText('00.000.000/0000-00');
+      fireEvent.change(docInput, { target: { value: '11222333000181' } });
+      fireEvent.blur(docInput);
+      await waitFor(() => expect(screen.getByDisplayValue('NODAY LTDA')).toBeInTheDocument());
+
+      // Change to FixedDayOfMonth but don't fill day
+      const select = screen.getByDisplayValue('No vencimento');
+      fireEvent.change(select, { target: { value: 'FixedDayOfMonth' } });
+      await waitFor(() => expect(screen.getByRole('spinbutton')).toBeInTheDocument());
+
+      // Submit button should be disabled (form invalid due to missing day)
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Criar' })).toBeDisabled());
+      expect(api.createVendor).not.toHaveBeenCalled();
+    });
+
+    it('blocks submit when FixedDayOfMonth and day is out of range', async () => {
+      (api.lookupCnpj as ReturnType<typeof vi.fn>).mockResolvedValue({
+        razaoSocial: 'RANGE LTDA',
+        nomeFantasia: null,
+        address: null,
+      });
+      renderForm();
+
+      const docInput = screen.getByPlaceholderText('00.000.000/0000-00');
+      fireEvent.change(docInput, { target: { value: '11222333000181' } });
+      fireEvent.blur(docInput);
+      await waitFor(() => expect(screen.getByDisplayValue('RANGE LTDA')).toBeInTheDocument());
+
+      const select = screen.getByDisplayValue('No vencimento');
+      fireEvent.change(select, { target: { value: 'FixedDayOfMonth' } });
+      await waitFor(() => expect(screen.getByRole('spinbutton')).toBeInTheDocument());
+
+      const dayInput = screen.getByRole('spinbutton');
+      fireEvent.change(dayInput, { target: { value: '31' } });
+
+      await waitFor(() => expect(screen.getByText('O dia deve ser entre 1 e 28.')).toBeInTheDocument());
+      expect(screen.getByRole('button', { name: 'Criar' })).toBeDisabled();
+    });
+
+    it('hydrates paymentScheduleMode and paymentScheduleDay from an existing vendor (edit mode)', () => {
+      const existingVendor = {
+        id: 'v10',
+        companyId: 'c1',
+        personType: 'Company' as const,
+        name: 'EDIT VENDOR LTDA',
+        tradeName: null,
+        document: '11222333000181',
+        email: null,
+        phone: null,
+        address: null,
+        paymentTerms: null,
+        bankInfo: { bankCode: '', branch: '', account: '', accountDigit: '', pixKey: '' },
+        taxRegime: 'Unknown' as const,
+        paymentScheduleMode: 'FixedDayOfMonth' as const,
+        paymentScheduleDay: 20,
+        active: true,
+      };
+      renderWithProviders(
+        <VendorForm companyId='c1' initial={existingVendor} onSaved={() => {}} onCancel={() => {}} />,
+      );
+
+      // Mode should be hydrated
+      expect(screen.getByDisplayValue('Dia fixo do mês')).toBeInTheDocument();
+      // Day input should appear and be hydrated
+      const dayInput = screen.getByRole('spinbutton');
+      expect(dayInput.value).toBe('20');
+    });
+  });
 });

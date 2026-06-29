@@ -195,6 +195,8 @@ const ptBR = {
     ledgerAccountRequired: 'Selecione a conta contábil.',
     atLeastTwoLines: 'O lançamento precisa de ao menos duas linhas.',
     unbalancedEntry: 'O total de débitos deve ser igual ao total de créditos.',
+    paymentScheduleDayRequired: 'Informe o dia do pagamento.',
+    paymentScheduleDayRange: 'O dia deve ser entre 1 e 28.',
   },
 
   combobox: {
@@ -1562,6 +1564,16 @@ const ptBR = {
       accountDigit: 'Dígito',
       pixKey: 'Chave PIX',
       taxRegime: 'Regime tributário',
+    },
+  },
+
+  vendors: {
+    paymentSchedule: {
+      label: 'Política de pagamento',
+      modeOnDueDate: 'No vencimento',
+      modeFixedDayOfMonth: 'Dia fixo do mês',
+      modeFirstDayOfMonth: 'Primeiro dia do mês',
+      day: 'Dia do pagamento',
     },
   },
 
