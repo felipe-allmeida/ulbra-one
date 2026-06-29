@@ -59,6 +59,11 @@ module "storage" {
   resource_group_name = module.resource_group.name
   location            = module.resource_group.location
   tags                = local.common_tags
+
+  # Allow the web app origin to PUT/GET blobs directly from the browser (fiscal SAS upload).
+  # The web FQDN is <web-app-name>.<container-apps-env-default-domain>; deriving it from the env
+  # (not the web module, which depends on storage via identity) keeps the dependency graph acyclic.
+  cors_allowed_origins = ["https://${local.ca_web_name}.${module.container_app_env.default_domain}"]
 }
 
 module "postgres" {

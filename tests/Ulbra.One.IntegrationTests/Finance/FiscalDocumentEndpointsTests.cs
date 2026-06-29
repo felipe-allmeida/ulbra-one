@@ -263,7 +263,7 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
     [Fact]
     public async Task UploadUrl_Returns_400_PresignNotSupported_On_Local_Storage()
     {
-        // In the test environment, LocalFileStorageService is used (no S3 endpoint configured),
+        // In the test environment, LocalFileStorageService is used (no AzureBlob provider configured),
         // which throws NotSupportedException. The endpoint catches this and returns a 400 with
         // Storage.PresignNotSupported so the frontend can fall back to direct multipart upload.
         await using var factory = new ApiFactory(fixture.ConnectionString);

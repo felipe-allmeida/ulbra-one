@@ -679,7 +679,7 @@ export function useRequestFiscalUploadUrl(options?: UseMutationOptions<UploadTar
 
 /**
  * PUTs the file directly to the presigned/SAS upload URL returned by `useRequestFiscalUploadUrl`.
- * The `x-ms-blob-type` header is required by Azure Blob SAS and is harmless for S3/MinIO.
+ * The `x-ms-blob-type` header is required by Azure Blob SAS.
  */
 export async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
   const res = await fetch(uploadUrl, {

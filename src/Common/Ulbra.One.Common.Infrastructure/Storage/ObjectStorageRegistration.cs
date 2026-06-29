@@ -1,5 +1,3 @@
-using Amazon.Runtime;
-using Amazon.S3;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +14,7 @@ public static class ObjectStorageRegistration
         services.Configure<ObjectStorageOptions>(section);
         var opts = section.Get<ObjectStorageOptions>();
 
-        var provider = opts?.Provider ?? (!string.IsNullOrWhiteSpace(opts?.Endpoint) ? StorageProvider.S3 : StorageProvider.Local);
+        var provider = opts?.Provider ?? StorageProvider.Local;
 
         switch (provider)
         {
@@ -32,16 +30,6 @@ public static class ObjectStorageRegistration
                     sp.GetRequiredService<BlobServiceClient>().GetBlobContainerClient(opts!.Bucket));
                 services.AddScoped<IFileStorageService, AzureBlobStorageService>();
                 services.AddHostedService<BlobContainerInitializer>();
-                break;
-
-            case StorageProvider.S3:
-                if (string.IsNullOrWhiteSpace(opts?.AccessKey) || string.IsNullOrWhiteSpace(opts.SecretKey))
-                    throw new InvalidOperationException("ObjectStorage:AccessKey and :SecretKey are required when :Endpoint is set.");
-                services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
-                    new BasicAWSCredentials(opts.AccessKey, opts.SecretKey),
-                    new AmazonS3Config { ServiceURL = opts!.Endpoint, ForcePathStyle = true }));
-                services.AddScoped<IFileStorageService, S3FileStorageService>();
-                services.AddHostedService<BucketInitializer>();
                 break;
 
             default:

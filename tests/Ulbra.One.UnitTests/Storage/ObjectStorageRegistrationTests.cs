@@ -14,7 +14,7 @@ public sealed class ObjectStorageRegistrationTests
             .Build();
 
         var services = new ServiceCollection();
-        // AddLogging is needed by hosted services (BucketInitializer, BlobContainerInitializer)
+        // AddLogging is needed by the BlobContainerInitializer hosted service
         services.AddLogging();
         services.AddObjectStorage(configuration);
         return services.BuildServiceProvider();
@@ -32,28 +32,31 @@ public sealed class ObjectStorageRegistrationTests
     }
 
     [Fact]
-    public void S3Config_ResolvesS3FileStorageService()
-    {
-        var provider = BuildProvider(new Dictionary<string, string?>
-        {
-            ["ObjectStorage:Endpoint"] = "http://minio:9000",
-            ["ObjectStorage:AccessKey"] = "minioadmin",
-            ["ObjectStorage:SecretKey"] = "minioadmin",
-        });
-
-        using var scope = provider.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
-
-        Assert.IsType<S3FileStorageService>(service);
-    }
-
-    [Fact]
     public void AzureBlobConfig_ResolvesAzureBlobStorageService()
     {
         var provider = BuildProvider(new Dictionary<string, string?>
         {
             ["ObjectStorage:Provider"] = "AzureBlob",
             ["ObjectStorage:ConnectionString"] = "UseDevelopmentStorage=true",
+            ["ObjectStorage:Bucket"] = "attachments",
+        });
+
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+
+        Assert.IsType<AzureBlobStorageService>(service);
+    }
+
+    [Fact]
+    public void AzureBlobConfig_WithAccountUrl_ResolvesAzureBlobStorageService()
+    {
+        // Production path: no ConnectionString, only AccountUrl → BlobServiceClient is built with
+        // DefaultAzureCredential (Managed Identity). DefaultAzureCredential is lazy, so DI resolution
+        // does no network I/O; this asserts the MI wiring resolves without an account key.
+        var provider = BuildProvider(new Dictionary<string, string?>
+        {
+            ["ObjectStorage:Provider"] = "AzureBlob",
+            ["ObjectStorage:AccountUrl"] = "https://stulbraonedev.blob.core.windows.net",
             ["ObjectStorage:Bucket"] = "attachments",
         });
 
