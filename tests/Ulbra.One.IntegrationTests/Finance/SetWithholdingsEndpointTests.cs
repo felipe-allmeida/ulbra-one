@@ -187,4 +187,31 @@ public class SetWithholdingsEndpointTests(PostgresFixture fixture)
     // InvalidOperationException when non-reversed payments exist (Task 1 unit tests cover this).
     // The endpoint maps it → 400 "Payable.HasPayments" before delegating to the domain,
     // mirroring the UpdatePayable guard; this path is NOT duplicated here.
+
+    // ── Case 6: Scheduled payable → withholdings locked (AEL-631 hardening) ───────
+
+    [Fact]
+    public async Task SetWithholdings_OnScheduledPayable_Returns400_WithholdingsLocked()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var payableId = await CreatePayableAsync(client, seed, 1000m);
+
+        // Approve → Scheduled (the accounting incurral fires at this point).
+        var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        approveRes.EnsureSuccessStatusCode();
+
+        // Changing withholdings after scheduling is rejected — defense-in-depth; the UI already
+        // renders the retenções section read-only once the payable leaves the pre-approval states.
+        var putRes = await client.PutAsJsonAsync($"/api/payables/{payableId}/withholdings", new
+        {
+            items = new[]
+            {
+                new { taxType = "Irrf", baseAmount = 1000m, rate = 0.015m, amount = 150m }
+            }
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, putRes.StatusCode);
+        Assert.Equal("Payable.WithholdingsInvalid", (await ReadJson(putRes)).GetProperty("title").GetString());
+    }
 }

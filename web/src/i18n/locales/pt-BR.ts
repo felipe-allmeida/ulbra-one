@@ -20,7 +20,9 @@ const ptBR = {
     },
     home: 'Início',
     accountsPayable: 'Contas a pagar',
+    payablesWorkflow: 'Contas a pagar (esteira)',
     accountsReceivable: 'Contas a receber',
+    receivablesWorkflow: 'Contas a receber (esteira)',
     cashFlow: 'Fluxo de caixa',
     approvals: 'Aprovações',
     costCenters: 'Centros de custo',
@@ -52,6 +54,22 @@ const ptBR = {
     supplies: 'Suprimentos',
     search: 'Buscar…',
     logout: 'Sair',
+    noResults: 'Nenhuma tela encontrada',
+    domains: {
+      home: 'Início',
+      finance: 'Financeiro',
+      accounting: 'Contábil',
+      registry: 'Cadastros',
+      structure: 'Estrutura',
+      settings: 'Config',
+    },
+    subgroups: {
+      operation: 'Operação',
+      analysis: 'Análise',
+      configuration: 'Configuração',
+      movement: 'Movimento',
+      statements: 'Demonstrações',
+    },
   },
 
   landing: {
