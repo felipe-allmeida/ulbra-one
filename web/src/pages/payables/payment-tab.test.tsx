@@ -18,7 +18,7 @@ vi.mock('../../queries', () => ({
 
 import { PaymentTab } from './payment-tab';
 
-/** Base list item fields (matches PayableListItemResponse including Task-9 rail fields). */
+/** Base list item fields (matches PayableListItemResponse with rail fields from ListPayables). */
 const baseItem = {
   payableId: 'payable_1',
   installmentId: 'i1',
@@ -37,15 +37,19 @@ const baseItem = {
   holdReason: null,
   remittanceId: null,
   remittanceSequence: null,
+  rail: 'Remittance',
+  manualReason: null,
 };
 
-/** A remittance-rail item (future scheduledPaymentDate, not held). */
+/** A remittance-rail item (future scheduledPaymentDate, not held, rail='Remittance'). */
 const remittanceItem = {
   ...baseItem,
   installmentId: 'i_rem',
   counterpartyName: 'ACME Remessa',
   scheduledPaymentDate: '2099-12-31', // far future → 'scheduled' bucket
   isHeld: false,
+  rail: 'Remittance',
+  manualReason: null,
 };
 
 /** A held item (isHeld=true → 'held' bucket → Manuais rail). */
@@ -56,6 +60,8 @@ const heldItem = {
   isHeld: true,
   holdReason: 'Disputa fiscal',
   scheduledPaymentDate: '2026-06-20',
+  rail: 'Remittance',
+  manualReason: null,
 };
 
 /** An InRemittance item. */
@@ -66,6 +72,18 @@ const inRemittanceItem = {
   installmentStatus: 'InRemittance',
   remittanceId: 'remittance_abc123',
   remittanceSequence: 3,
+  rail: 'Remittance',
+  manualReason: null,
+};
+
+/** A manual item (vendor has no bank info → rail='Manual', manualReason='VendorBankInfoMissing'). */
+const manualItem = {
+  ...baseItem,
+  installmentId: 'i_manual',
+  counterpartyName: 'Manual Vendor',
+  isHeld: false,
+  rail: 'Manual',
+  manualReason: 'VendorBankInfoMissing',
 };
 
 beforeEach(() => {
@@ -150,8 +168,8 @@ describe('PaymentTab', () => {
     // Switch to Manuais tab
     fireEvent.click(screen.getByRole('tab', { name: /Manuais/ }));
     expect(screen.getByText('Held Vendor')).toBeInTheDocument();
-    // Em espera group
-    expect(screen.getByText(/Em espera/)).toBeInTheDocument();
+    // Em espera appears as panel title and as the status chip — both use the same i18n key
+    expect(screen.getAllByText(/Em espera/).length).toBeGreaterThanOrEqual(1);
     // Liberar button
     expect(screen.getByRole('button', { name: /Liberar/ })).toBeInTheDocument();
   });
@@ -186,20 +204,32 @@ describe('PaymentTab', () => {
     expect(screen.getByText(/Remessa #3/)).toBeInTheDocument();
   });
 
-  it('a non-held Open item on Manuais tab shows Dar baixa button when clicked to that tab', () => {
-    // An item where rail would be 'Manual' (e.g. vendor lacks bank info) — in the current simplified
-    // implementation, manual items without isHeld appear in Remessas. This test documents a known gap.
-    // Items that ARE in Manuais (held=false but with Dar baixa available) are baseItem defaults in Remessas.
-    mockUsePayables.mockReturnValue({ data: { items: [baseItem], total: 1, totalPages: 1 } });
+  it('a rail=Manual item (vendor lacking bank info) appears under Manuais with Dar baixa button', () => {
+    // manualItem has rail='Manual' (VendorBankInfoMissing) — must appear in Manuais, not Remessas.
+    mockUsePayables.mockReturnValue({ data: { items: [manualItem], total: 1, totalPages: 1 } });
     render(
       <MemoryRouter>
         <PaymentTab companyId='company_1' />
       </MemoryRouter>,
     );
-    // baseItem appears in Remessas (default rail), Dar baixa not shown for Remessas (Segurar is shown)
-    // Switch to Manuais — no items there for baseItem
+    // Switch to Manuais tab — manualItem must be there
     fireEvent.click(screen.getByRole('tab', { name: /Manuais/ }));
-    // Empty state expected since baseItem is classified as Remessas in heuristic
-    expect(screen.queryByText('ACME')).not.toBeInTheDocument();
+    expect(screen.getByText('Manual Vendor')).toBeInTheDocument();
+    // Dar baixa button available for non-held manual items
+    expect(screen.getByRole('button', { name: /Baixa|baixa|Registrar|registrar/i })).toBeInTheDocument();
+  });
+
+  it('rail=Remittance item appears under Remessas, not under Manuais', () => {
+    mockUsePayables.mockReturnValue({ data: { items: [remittanceItem], total: 1, totalPages: 1 } });
+    render(
+      <MemoryRouter>
+        <PaymentTab companyId='company_1' />
+      </MemoryRouter>,
+    );
+    // Remessas tab is default — item must be there
+    expect(screen.getByText('ACME Remessa')).toBeInTheDocument();
+    // Switch to Manuais — item must NOT be there
+    fireEvent.click(screen.getByRole('tab', { name: /Manuais/ }));
+    expect(screen.queryByText('ACME Remessa')).not.toBeInTheDocument();
   });
 });

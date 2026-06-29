@@ -17,4 +17,8 @@ public sealed record PayableListItemResponse(
     /// <summary>Id of the remittance this installment belongs to, or null if not in a remittance.</summary>
     RemittanceId? RemittanceId,
     /// <summary>1-based sequence number of this installment within its remittance, or null if not in a remittance.</summary>
-    int? RemittanceSequence);
+    int? RemittanceSequence,
+    /// <summary>"Remittance" when the installment can ride the automatic CNAB rail; "Manual" otherwise.</summary>
+    string Rail,
+    /// <summary>The reason the installment cannot use the remittance rail, or null when Rail is "Remittance".</summary>
+    string? ManualReason);

@@ -19,26 +19,15 @@ type RailKey = 'remittance' | 'manual';
 
 /**
  * Converts a PayableListItem into a RailLine-compatible shape.
- *
- * NOTE: The list endpoint does not expose the `rail` field (it requires per-vendor
- * bank-eligibility computation not available in a paginated list query). We use
- * a simplified heuristic:
- *   - `isHeld=true`  → treat as rail='Manual' (held bucket)
- *   - `installmentStatus='InRemittance'` or `'Paid'` → rail='Remittance'
- *   - otherwise → rail='Remittance' (defaulting to Remessas)
- *
- * Items that should be 'Manual' due to bank ineligibility (no vendor bank info,
- * wrong payment method, etc.) are currently misclassified as 'Remittance' by this
- * heuristic. This is a known data gap — the list endpoint must expose `rail` for
- * accurate partitioning (tracked concern).
+ * The `rail` and `manualReason` fields are computed by the list endpoint (batched,
+ * via RemittanceEligibility.Evaluate) — no client-side heuristic needed.
  */
 function toRailLine(item: PayableListItem): RailLine {
-  const rail = item.isHeld ? 'Manual' : 'Remittance';
   return {
     installmentStatus: item.installmentStatus,
     isHeld: item.isHeld ?? false,
-    rail,
-    manualReason: null,
+    rail: (item.rail as 'Remittance' | 'Manual') ?? 'Manual',
+    manualReason: item.manualReason ?? null,
     scheduledPaymentDate: item.scheduledPaymentDate ?? item.dueDate,
     remittanceSequence: item.remittanceSequence ?? null,
   };

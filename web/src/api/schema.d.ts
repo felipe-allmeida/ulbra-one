@@ -2555,6 +2555,10 @@ export interface components {
              * @description 1-based sequence number of this installment within its remittance, or null if not in a remittance.
              */
             remittanceSequence: number | null;
+            /** @description "Remittance" when the installment can ride the automatic CNAB rail; "Manual" otherwise. */
+            rail: string;
+            /** @description The reason the installment cannot use the remittance rail, or null when Rail is "Remittance". */
+            manualReason: string | null;
         };
         PayableListItemResponsePaginatedResponse: {
             items: components["schemas"]["PayableListItemResponse"][];
