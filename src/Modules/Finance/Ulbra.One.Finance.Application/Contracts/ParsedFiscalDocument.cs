@@ -28,7 +28,7 @@ public sealed record ParsedFiscalDocument(
     IReadOnlyList<ParsedInstallment> Installments,
     VendorId? MatchedVendorId = null,
     string? MatchedVendorName = null,
-    // NFS-e (serviço) — informativos, exibidos no preview; null para NF-e/PDF.
+    // NFS-e (service) — informational, shown in the preview; null for NF-e/PDF.
     string? RpsNumber = null,
     string? RpsSeries = null,
     string? ServiceDescription = null,
@@ -37,11 +37,7 @@ public sealed record ParsedFiscalDocument(
     string? IssuerPhone = null,
     ParsedAddress? IssuerAddress = null,
     // Fiscal signals (NF-e): distinct CFOPs/NCMs across items + ICMSTot tax totals; null for NFS-e/PDF.
-    FiscalSummary? Fiscal = null,
-    // Tax withholdings declared in the document (retenções na fonte). TotalAmount stays gross;
-    // the net is gross − Σ withholdings. Empty when nothing is withheld. Consumed downstream to
-    // pre-fill the payable's withholdings (Payable.SetWithholdings) — not wired in this layer.
-    IReadOnlyList<ParsedWithholding>? Withholdings = null);
+    FiscalSummary? Fiscal = null);
 
 /// <summary>Document-level fiscal signals (NF-e). Distinct CFOPs/NCMs across items + ICMSTot tax totals.</summary>
 public sealed record FiscalSummary(
@@ -52,10 +48,3 @@ public sealed record FiscalSummary(
     decimal? Pis,
     decimal? Cofins,
     decimal? TotalTaxes);
-
-/// <summary>
-/// A single tax withholding read from the fiscal document (retenção na fonte, retida pelo tomador).
-/// Mirrors the tuple accepted by <c>Payable.SetWithholdings</c> so the consumer can map it 1:1.
-/// </summary>
-public sealed record ParsedWithholding(
-    WithholdingTaxType TaxType, decimal BaseAmount, decimal? Rate, decimal Amount);

@@ -16,9 +16,9 @@ namespace Ulbra.One.Finance.Infrastructure.FiscalDocuments;
 /// the namespace). The 50-digit access key sits in <c>infNFSe/@Id</c> with an <c>NFS</c> prefix.
 /// </summary>
 /// <remarks>
-/// The layout repeats element local-names across branches (<c>valores</c> under infNFSe, infDPS AND
-/// IBSCBS; <c>vBC</c> ×3; <c>CST</c> ×2), so every field is reached by an explicit parent chain —
-/// never <c>Descendants(Ns + "valores")</c>, which would grab the wrong block.
+/// The layout repeats <c>valores</c> across branches (under infNFSe, infDPS AND IBSCBS), so it is
+/// reached by an explicit parent chain — never <c>Descendants(Ns + "valores")</c>, which would grab
+/// the wrong block.
 /// </remarks>
 public sealed class NfseNacionalXmlParser : IFiscalXmlParser
 {
@@ -47,8 +47,7 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
         var issueDate = FiscalXml.ParseDate(
             infDPS?.Element(Ns + "dhEmi")?.Value ?? infNFSe?.Element(Ns + "dhProc")?.Value);
 
-        // TotalAmount = gross service value (vServ). The net is gross − Σ withholdings, derived
-        // downstream from Withholdings; vLiq is only a fallback (it is not a reliable net field).
+        // TotalAmount = gross service value (vServ); vLiq is only a fallback (it is not a reliable net field).
         var serviceAmount = FiscalXml.ParseDecimal(
             dpsValores?.Element(Ns + "vServPrest")?.Element(Ns + "vServ")?.Value);
         var totalAmount = serviceAmount ?? FiscalXml.ParseDecimal(nfseValores?.Element(Ns + "vLiq")?.Value);
@@ -62,7 +61,7 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
         var recipientDocument = FiscalXml.NullIfEmpty(DocumentValidator.Normalize(
             toma?.Element(Ns + "CNPJ")?.Value ?? toma?.Element(Ns + "CPF")?.Value));
 
-        // DPS is the national analog of the RPS (série + número da declaração).
+        // DPS is the national analog of the RPS (series + declaration number).
         var rpsNumber = infDPS?.Element(Ns + "nDPS")?.Value;
         var rpsSeries = infDPS?.Element(Ns + "serie")?.Value;
         var serviceDescription = cServ?.Element(Ns + "xDescServ")?.Value;
@@ -73,8 +72,6 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
         var idAttribute = infNFSe?.Attribute("Id")?.Value ?? string.Empty;
         var accessKey = FiscalXml.NullIfEmpty(
             idAttribute.StartsWith("NFS", StringComparison.OrdinalIgnoreCase) ? idAttribute[3..] : idAttribute);
-
-        var withholdings = ExtractWithholdings(infDPS, nfseValores, totalAmount, out var withholdingNotes);
 
         var rawExtraction = JsonSerializer.Serialize(new Dictionary<string, string?>
         {
@@ -89,68 +86,13 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
             ["serviceDescription"] = serviceDescription,
             ["cTribNac"] = tribNacCode,
             ["cNBS"] = nbsCode,
-            ["withholdingNotes"] = withholdingNotes,
         });
 
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfseXml, accessKey, documentNumber,
             issueDate, totalAmount, issuerDocument, issuerName, recipientDocument, rawExtraction, [],
             RpsNumber: FiscalXml.NullIfEmpty(rpsNumber), RpsSeries: FiscalXml.NullIfEmpty(rpsSeries),
             ServiceDescription: FiscalXml.NullIfEmpty(serviceDescription),
-            IssuerPhone: issuerPhone, IssuerAddress: issuerAddress, Withholdings: withholdings);
-    }
-
-    // Reads the retention indicators declared in infDPS/valores/trib. ISS amount/base/rate live in
-    // infNFSe/valores (SEFIN-computed); the retention type flag lives in infDPS/.../tribMun.
-    private static IReadOnlyList<ParsedWithholding> ExtractWithholdings(
-        XElement? infDPS, XElement? nfseValores, decimal? grossAmount, out string? notes)
-    {
-        notes = null;
-        var trib = infDPS?.Element(Ns + "valores")?.Element(Ns + "trib");
-        if (trib is null) return [];
-
-        var fallbackBase = grossAmount ?? 0m;
-        var result = new List<ParsedWithholding>();
-
-        // ISS — withheld only when tpRetISSQN is 2 (tomador) or 3 (intermediário); 1 = não retido.
-        var tribMun = trib.Element(Ns + "tribMun");
-        var tpRetIss = tribMun?.Element(Ns + "tpRetISSQN")?.Value;
-        if (tpRetIss is "2" or "3")
-        {
-            var issAmount = FiscalXml.ParseDecimal(
-                nfseValores?.Element(Ns + "vISSQN")?.Value ?? tribMun?.Element(Ns + "vISSQN")?.Value);
-            if (issAmount is > 0)
-            {
-                var issBase = FiscalXml.ParseDecimal(nfseValores?.Element(Ns + "vBC")?.Value) ?? fallbackBase;
-                var issRate = FiscalXml.ParseDecimal(nfseValores?.Element(Ns + "pAliqAplic")?.Value);
-                result.Add(new ParsedWithholding(WithholdingTaxType.Iss, issBase, issRate, issAmount.Value));
-            }
-            if (tpRetIss == "3")
-                notes = "ISS retido pelo intermediário (tpRetISSQN=3), não pelo tomador.";
-        }
-
-        // Federal standalone retentions (retidos pelo tomador). vPis/vCofins under piscofins are the
-        // provider's own assessment (NOT retention) and are deliberately ignored.
-        var tribFed = trib.Element(Ns + "tribFed");
-        AddIfPositive(result, tribFed?.Element(Ns + "vRetIRRF")?.Value, WithholdingTaxType.Irrf, fallbackBase);
-        AddIfPositive(result, tribFed?.Element(Ns + "vRetCP")?.Value, WithholdingTaxType.Inss, fallbackBase);
-        var csll = FiscalXml.ParseDecimal(tribFed?.Element(Ns + "vRetCSLL")?.Value);
-        if (csll is > 0)
-        {
-            result.Add(new ParsedWithholding(WithholdingTaxType.Csll, fallbackBase, null, csll.Value));
-            // Post-NT007 vRetCSLL is consolidated (PIS+COFINS+CSLL); recorded whole under Csll here.
-            notes = string.Join(" ", new[] { notes, "vRetCSLL pós-NT007 é consolidado (PIS+COFINS+CSLL)." }
-                .Where(s => !string.IsNullOrEmpty(s)));
-        }
-
-        return result;
-    }
-
-    private static void AddIfPositive(
-        List<ParsedWithholding> list, string? rawValue, WithholdingTaxType type, decimal baseAmount)
-    {
-        var amount = FiscalXml.ParseDecimal(rawValue);
-        if (amount is > 0)
-            list.Add(new ParsedWithholding(type, baseAmount, null, amount.Value));
+            IssuerPhone: issuerPhone, IssuerAddress: issuerAddress);
     }
 
     // Maps the national enderNac to ParsedAddress. UF is present; the city comes only as an IBGE code

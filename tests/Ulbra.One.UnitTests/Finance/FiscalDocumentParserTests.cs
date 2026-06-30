@@ -42,7 +42,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e parcelada: <cobr> com fatura + 3 duplicatas (dVenc/vDup) e <pag> com um detPag por parcela.
+    // NF-e in installments: <cobr> with invoice + 3 duplicatas (dVenc/vDup) and <pag> with one detPag per installment.
     private const string NfeWithCobrXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -68,7 +68,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e à vista: sem <cobr>, <pag> com um único detPag somando vNF.
+    // NF-e paid upfront: no <cobr>, a single <pag>/detPag summing to vNF.
     private const string NfeAVistaXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -84,7 +84,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e com 2 itens (det/prod/xProd) → descrição combinada para preencher a conta a pagar.
+    // NF-e with 2 items (det/prod/xProd) → combined description to pre-fill the payable.
     private const string NfeMultiItemXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -101,7 +101,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e com itens + totais fiscais (ICMSTot com vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — usado no teste de FiscalSummary.
+    // NF-e with items + fiscal totals (ICMSTot with vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — used by the FiscalSummary test.
     private const string NfeWithFiscalXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -163,8 +163,8 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
-    // NFS-e Padrão Nacional (SEFIN) com retenção: ISS retido pelo tomador (tpRetISSQN=2) + IRRF (vRetIRRF).
-    // vPis/vCofins sob piscofins são apuração própria do prestador — NÃO retenção.
+    // NFS-e national standard (SEFIN): NFSe → infNFSe (emit) → DPS → infDPS. vLiq (17370.00) differs from
+    // vServ (18000.00) on purpose, to prove TotalAmount takes the gross vServ.
     private const string NfseNacionalXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
@@ -188,13 +188,6 @@ public class FiscalDocumentParserTests
         <serv><cServ><cTribNac>010701</cTribNac><xDescServ>Servicos digitais e suporte</xDescServ><cNBS>115013000</cNBS></cServ></serv>
         <valores>
           <vServPrest><vServ>18000.00</vServ></vServPrest>
-          <trib>
-            <tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>2</tpRetISSQN></tribMun>
-            <tribFed>
-              <piscofins><CST>01</CST><vPis>117.00</vPis><vCofins>540.00</vCofins><tpRetPisCofins>1</tpRetPisCofins></piscofins>
-              <vRetIRRF>270.00</vRetIRRF>
-            </tribFed>
-          </trib>
         </valores>
       </infDPS>
     </DPS>
@@ -202,33 +195,7 @@ public class FiscalDocumentParserTests
 </NFSe>
 """;
 
-    // NFS-e Nacional sem retenção: tpRetISSQN=1 (não retido) → vLiq == vServ, Withholdings vazio.
-    private const string NfseNacionalNoRetentionXml = $"""
-<?xml version="1.0" encoding="UTF-8"?>
-<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
-  <infNFSe Id="NFS{Key50}">
-    <nNFSe>60063</nNFSe>
-    <dhProc>2026-06-15T18:50:53-03:00</dhProc>
-    <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
-    <valores><vBC>4402.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>88.04</vISSQN><vLiq>4402.00</vLiq></valores>
-    <DPS versao="1.01">
-      <infDPS Id="DPS00000000000000000000000000000000000000002">
-        <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
-        <serie>001</serie>
-        <nDPS>8360128</nDPS>
-        <toma><CNPJ>11444777000161</CNPJ></toma>
-        <serv><cServ><xDescServ>Suporte</xDescServ></cServ></serv>
-        <valores>
-          <vServPrest><vServ>4402.00</vServ></vServPrest>
-          <trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun></trib>
-        </valores>
-      </infDPS>
-    </DPS>
-  </infNFSe>
-</NFSe>
-""";
-
-    // Arquivo só com <DPS> (sem infNFSe/emit): parse leniente, ancorado em infDPS.
+    // File with only <DPS> (no infNFSe/emit): lenient parse, anchored on infDPS.
     private const string DpsOnlyXml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
@@ -243,8 +210,8 @@ public class FiscalDocumentParserTests
 </DPS>
 """;
 
-    // NFS-e ABRASF com retenções (IssRetido=1 + PIS/COFINS/CSLL/IR/INSS) — total = ValorServicos (bruto).
-    private const string NfseAbrasfWithRetentionXml = """
+    // NFS-e ABRASF with both ValorServicos and ValorLiquidoNfse (differing) — proves TotalAmount = gross.
+    private const string NfseAbrasfGrossXml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
   <Nfse versao="2.04">
@@ -254,16 +221,9 @@ public class FiscalDocumentParserTests
       <Servico>
         <Valores>
           <ValorServicos>10000.00</ValorServicos>
-          <ValorPis>65.00</ValorPis>
-          <ValorCofins>300.00</ValorCofins>
-          <ValorInss>1100.00</ValorInss>
-          <ValorIr>150.00</ValorIr>
-          <ValorCsll>100.00</ValorCsll>
-          <IssRetido>1</IssRetido>
-          <ValorIss>500.00</ValorIss>
-          <ValorLiquidoNfse>7785.00</ValorLiquidoNfse>
+          <ValorLiquidoNfse>9000.00</ValorLiquidoNfse>
         </Valores>
-        <Discriminacao>Servico com retencoes.</Discriminacao>
+        <Discriminacao>Servico.</Discriminacao>
       </Servico>
       <PrestadorServico>
         <IdentificacaoPrestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></IdentificacaoPrestador>
@@ -275,32 +235,6 @@ public class FiscalDocumentParserTests
     </InfNfse>
   </Nfse>
 </CompNfse>
-""";
-
-    // NF-e com bloco total/retTrib (retenções federais na fonte).
-    private const string NfeWithRetTribXml = $"""
-<?xml version="1.0" encoding="UTF-8"?>
-<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
-  <NFe>
-    <infNFe Id="NFe{Key44}" versao="4.00">
-      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
-      <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
-      <dest><CNPJ>11444777000161</CNPJ><xNome>Industria</xNome></dest>
-      <total>
-        <ICMSTot><vNF>10000.00</vNF></ICMSTot>
-        <retTrib>
-          <vRetPIS>65.00</vRetPIS>
-          <vRetCOFINS>300.00</vRetCOFINS>
-          <vRetCSLL>100.00</vRetCSLL>
-          <vBCIRRF>10000.00</vBCIRRF>
-          <vIRRF>150.00</vIRRF>
-          <vBCRetPrev>10000.00</vBCRetPrev>
-          <vRetPrev>1100.00</vRetPrev>
-        </retTrib>
-      </total>
-    </infNFe>
-  </NFe>
-</nfeProc>
 """;
 
     private sealed class DisabledAi : IAiCompletion
@@ -332,7 +266,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("11222333000181", p.IssuerDocument);
         Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
         Assert.Equal("11444777000161", p.RecipientDocument);
-        Assert.Empty(p.Installments); // sem <cobr> → à vista
+        Assert.Empty(p.Installments); // no <cobr> → paid upfront
     }
 
     [Fact]
@@ -378,11 +312,18 @@ public class FiscalDocumentParserTests
         Assert.Equal("11222333000181", p.IssuerDocument);
         Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
         Assert.Equal("11444777000161", p.RecipientDocument);
-        Assert.Empty(p.Installments); // NFS-e ABRASF não traz duplicatas
+        Assert.Empty(p.Installments); // ABRASF NFS-e carries no installments
         Assert.Equal("1234", p.RpsNumber);
         Assert.Equal("RPS", p.RpsSeries);
         Assert.Equal("6201501", p.CnaeCode);
         Assert.Contains("CT-2026-014", p.ServiceDescription);
+    }
+
+    [Fact]
+    public void Nfse_abrasf_uses_gross_total()
+    {
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseAbrasfGrossXml));
+        Assert.Equal(10000.00m, p.TotalAmount); // ValorServicos (gross), not ValorLiquidoNfse (9000.00)
     }
 
     [Fact]
@@ -400,7 +341,7 @@ public class FiscalDocumentParserTests
     }
 
     [Fact]
-    public void Nfse_nacional_parser_extracts_service_fields_and_withholdings()
+    public void Nfse_nacional_parser_extracts_service_fields()
     {
         var parser = new NfseNacionalXmlParser();
         var doc = XDocument.Parse(NfseNacionalXml);
@@ -412,7 +353,7 @@ public class FiscalDocumentParserTests
         Assert.Equal(50, p.AccessKey!.Length);
         Assert.Equal("60063", p.DocumentNumber);
         Assert.Equal(new DateOnly(2026, 6, 15), p.IssueDate);
-        Assert.Equal(18000.00m, p.TotalAmount);    // gross (vServ), not vLiq
+        Assert.Equal(18000.00m, p.TotalAmount);    // gross (vServ), not vLiq (17370.00)
         Assert.Equal("11222333000181", p.IssuerDocument);
         Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
         Assert.Equal("11444777000161", p.RecipientDocument);
@@ -422,26 +363,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("5133785980", p.IssuerPhone);
         Assert.NotNull(p.IssuerAddress);
         Assert.Equal("RS", p.IssuerAddress!.State);
-        Assert.Null(p.IssuerAddress.City);         // only IBGE code in the XML, no city name
-
-        // ISS retido (tpRetISSQN=2) + IRRF; vPis/vCofins are NOT withholdings.
-        Assert.NotNull(p.Withholdings);
-        Assert.Equal(2, p.Withholdings!.Count);
-        var iss = Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Iss);
-        Assert.Equal(360.00m, iss.Amount);
-        Assert.Equal(18000.00m, iss.BaseAmount);
-        Assert.Equal(2.00m, iss.Rate);
-        var irrf = Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf);
-        Assert.Equal(270.00m, irrf.Amount);
-        Assert.DoesNotContain(p.Withholdings, w => w.TaxType is WithholdingTaxType.Pis or WithholdingTaxType.Cofins);
-    }
-
-    [Fact]
-    public void Nfse_nacional_without_retention_has_no_withholdings()
-    {
-        var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(NfseNacionalNoRetentionXml));
-        Assert.Equal(4402.00m, p.TotalAmount);     // gross == vServ == vLiq (nada retido)
-        Assert.Empty(p.Withholdings!);             // tpRetISSQN=1 → não retido
+        Assert.Null(p.IssuerAddress.City);         // only the IBGE code is in the XML, no city name
     }
 
     [Fact]
@@ -449,32 +371,9 @@ public class FiscalDocumentParserTests
     {
         var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(DpsOnlyXml));
         Assert.Equal(FiscalDocumentFormat.NfseXml, p.Format);
-        Assert.Null(p.DocumentNumber);             // sem infNFSe/nNFSe
-        Assert.Equal(4402.00m, p.TotalAmount);     // vServ do infDPS
+        Assert.Null(p.DocumentNumber);             // no infNFSe/nNFSe
+        Assert.Equal(4402.00m, p.TotalAmount);     // vServ from infDPS
         Assert.Equal("11444777000161", p.RecipientDocument);
-    }
-
-    [Fact]
-    public void Nfse_abrasf_uses_gross_total_and_extracts_withholdings()
-    {
-        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseAbrasfWithRetentionXml));
-        Assert.Equal(10000.00m, p.TotalAmount);    // ValorServicos (bruto), não ValorLiquidoNfse
-        Assert.NotNull(p.Withholdings);
-        Assert.Equal(6, p.Withholdings!.Count);    // ISS + PIS + COFINS + INSS + IR + CSLL
-        Assert.Equal(500.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Iss).Amount);
-        Assert.Equal(1100.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Inss).Amount);
-        Assert.Equal(150.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf).Amount);
-    }
-
-    [Fact]
-    public void Nfe_extracts_withholdings_from_rettrib()
-    {
-        var p = new NfeM55XmlParser().Parse(XDocument.Parse(NfeWithRetTribXml));
-        Assert.Equal(10000.00m, p.TotalAmount);    // vNF mantido
-        Assert.NotNull(p.Withholdings);
-        Assert.Equal(5, p.Withholdings!.Count);    // PIS + COFINS + CSLL + IRRF + INSS(vRetPrev)
-        Assert.Equal(150.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf).Amount);
-        Assert.Equal(1100.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Inss).Amount);
     }
 
     [Fact]

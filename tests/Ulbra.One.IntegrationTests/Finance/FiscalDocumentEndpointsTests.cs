@@ -46,8 +46,8 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
 </CompNfse>
 """;
 
-    // NFS-e Padrão Nacional (SEFIN). Chave de 50 dígitos no infNFSe/@Id (prefixo NFS); emit = prestador
-    // com o mesmo CNPJ do vendor semeado; sem retenção (tpRetISSQN=1) → total bruto == vServ.
+    // NFS-e national standard (SEFIN). 50-digit key in infNFSe/@Id ("NFS" prefix); emit = provider
+    // with the same CNPJ as the seeded vendor; TotalAmount = gross vServ.
     private const string NfseNacionalAccessKey = "12345678901234567890123456789012345678901234567890";
     private const string NfseNacionalXml = """
 <?xml version="1.0" encoding="UTF-8"?>

@@ -65,7 +65,7 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
         }
 
         // Item descriptions (det/prod/xProd) joined into one free-text description — the NF-e analog of the
-        // NFS-e "discriminação"; used to pre-fill the payable description (à NFS-e já preenche por serviceDescription).
+        // NFS-e "Discriminacao" field; used to pre-fill the payable description (NFS-e already fills it via ServiceDescription).
         var productDescriptions = nfeInfo.Elements(Ns + "det")
             .Select(item => item.Element(Ns + "prod")?.Element(Ns + "xProd")?.Value?.Trim())
             .Where(text => !string.IsNullOrEmpty(text))
@@ -87,27 +87,8 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
             FiscalXml.ParseDecimal(totals?.Element(Ns + "vCOFINS")?.Value),
             FiscalXml.ParseDecimal(totals?.Element(Ns + "vTotTrib")?.Value));
 
-        // Withholdings (total/retTrib): federal taxes withheld at source. NF-e modelo 55 is goods, so
-        // these are usually absent, but extracting keeps the gross-total + withholdings concept
-        // consistent across parsers. TotalAmount stays vNF (the note's total).
-        var retTrib = nfeInfo.Element(Ns + "total")?.Element(Ns + "retTrib");
-        var withholdings = new List<ParsedWithholding>();
-        void AddRet(string valueTag, string? baseTag, WithholdingTaxType type)
-        {
-            var amount = FiscalXml.ParseDecimal(retTrib?.Element(Ns + valueTag)?.Value);
-            if (amount is not > 0) return;
-            var baseAmount = (baseTag is null ? null : FiscalXml.ParseDecimal(retTrib?.Element(Ns + baseTag)?.Value))
-                ?? totalAmount ?? 0m;
-            withholdings.Add(new ParsedWithholding(type, baseAmount, null, amount.Value));
-        }
-        AddRet("vIRRF", "vBCIRRF", WithholdingTaxType.Irrf);
-        AddRet("vRetPrev", "vBCRetPrev", WithholdingTaxType.Inss);
-        AddRet("vRetPIS", null, WithholdingTaxType.Pis);
-        AddRet("vRetCOFINS", null, WithholdingTaxType.Cofins);
-        AddRet("vRetCSLL", null, WithholdingTaxType.Csll);
-
-        var invoice = billing?.Element(Ns + "fat"); // fatura-mãe (sintética)
-        var payment = nfeInfo.Element(Ns + "pag"); // <pag>/<detPag>: forma + valor (parcelado ou único somando vNF)
+        var invoice = billing?.Element(Ns + "fat"); // synthetic parent invoice (fatura-mãe)
+        var payment = nfeInfo.Element(Ns + "pag"); // <pag>/<detPag>: method + amount (installments or a single sum of vNF)
         var rawExtraction = JsonSerializer.Serialize(new
         {
             accessKey,
@@ -139,7 +120,7 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfeXml, accessKey, documentNumber,
             issueDate, totalAmount, issuerDocument, issuerName, recipientDocument, rawExtraction, installments,
             ServiceDescription: description, IssuerPhone: issuerPhone, IssuerAddress: issuerAddress,
-            Fiscal: fiscal, Withholdings: withholdings);
+            Fiscal: fiscal);
     }
 
     // Maps NF-e enderEmit to ParsedAddress; null when the address block is absent or fully empty.
