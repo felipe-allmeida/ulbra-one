@@ -46,6 +46,34 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
 </CompNfse>
 """;
 
+    // NFS-e Padrão Nacional (SEFIN). Chave de 50 dígitos no infNFSe/@Id (prefixo NFS); emit = prestador
+    // com o mesmo CNPJ do vendor semeado; sem retenção (tpRetISSQN=1) → total bruto == vServ.
+    private const string NfseNacionalAccessKey = "12345678901234567890123456789012345678901234567890";
+    private const string NfseNacionalXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infNFSe Id="NFS12345678901234567890123456789012345678901234567890">
+    <nNFSe>60063</nNFSe>
+    <dhProc>2026-06-15T18:50:53-03:00</dhProc>
+    <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge Desenvolvimento de Software LTDA</xNome></emit>
+    <valores><vBC>18000.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>360.00</vISSQN><vLiq>18000.00</vLiq></valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS00000000000000000000000000000000000000001">
+        <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+        <serie>001</serie>
+        <nDPS>8360128</nDPS>
+        <toma><CNPJ>11444777000161</CNPJ></toma>
+        <serv><cServ><xDescServ>Servicos digitais e suporte</xDescServ></cServ></serv>
+        <valores>
+          <vServPrest><vServ>18000.00</vServ></vServPrest>
+          <trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun></trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>
+""";
+
     private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
         JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
 
@@ -152,6 +180,48 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(seed.VendorId, body.GetProperty("matchedVendorId").GetString());
         // NF-e should have fiscal summary (even if empty lists for this minimal XML)
         Assert.True(body.TryGetProperty("fiscal", out _), "NF-e should include fiscal summary");
+    }
+
+    [Fact]
+    public async Task Parse_NfseNacional_Returns_Service_Fields_And_Matches_Vendor()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var key = await SeedBlobAsync(factory, NfseNacionalXml, "nfse-nacional.xml");
+
+        var res = await client.PostAsJsonAsync(
+            $"/api/payables/fiscal-document/parse?companyId={seed.CompanyId}",
+            new { key, fileName = "nfse-nacional.xml" });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+
+        var body = await ReadJson(res);
+        Assert.Equal("NfseXml", body.GetProperty("format").GetString());
+        Assert.Equal("60063", body.GetProperty("documentNumber").GetString());
+        Assert.Equal(18000.00m, body.GetProperty("totalAmount").GetDecimal());   // bruto (vServ)
+        Assert.Equal(IssuerCnpjDigits, body.GetProperty("issuerDocument").GetString());
+        Assert.Equal(seed.VendorId, body.GetProperty("matchedVendorId").GetString());
+    }
+
+    [Fact]
+    public async Task Upload_NfseNacional_Persists_50Digit_AccessKey()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var payableId = await CreatePayableAsync(client, seed);
+
+        var bytes = Encoding.UTF8.GetBytes(NfseNacionalXml);
+        var key = await SeedBlobAsync(factory, NfseNacionalXml, "nfse-nacional.xml");
+        var res = await client.PostAsJsonAsync(
+            $"/api/payables/{payableId}/fiscal-document",
+            new { key, fileName = "nfse-nacional.xml", contentType = "application/xml", sizeBytes = bytes.Length });
+
+        // 50-digit national access key persists without truncation (access_key widened 44->50, no 22001).
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        var body = await ReadJson(res);
+        Assert.Equal("NfseXml", body.GetProperty("format").GetString());
+        Assert.Equal(NfseNacionalAccessKey, body.GetProperty("accessKey").GetString());
     }
 
     [Fact]
