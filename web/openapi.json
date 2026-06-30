@@ -9528,8 +9528,10 @@
           "rejectionReason",
           "cancelReason",
           "approvedBy",
+          "approvedByName",
           "approvedAt",
           "rejectedBy",
+          "rejectedByName",
           "rejectedAt",
           "accountingAccountId",
           "financialAccountId",
@@ -9607,12 +9609,20 @@
             "type": "string",
             "nullable": true
           },
+          "approvedByName": {
+            "type": "string",
+            "nullable": true
+          },
           "approvedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
           "rejectedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectedByName": {
             "type": "string",
             "nullable": true
           },

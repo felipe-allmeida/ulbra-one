@@ -15,8 +15,10 @@ public sealed record PayableResponse(
     PayableId Id, CompanyId CompanyId, PayableOrigin Origin, VendorId VendorId, string CounterpartyName,
     string? DocumentNumber, DateOnly? IssueDate, string Description, CostCenterId CostCenterId,
     ExpenseCategoryId? CategoryId, decimal TotalAmount, PayableStatus Status,
-    string? RejectionReason, string? CancelReason, string? ApprovedBy, DateTimeOffset? ApprovedAt, string? RejectedBy,
-    DateTimeOffset? RejectedAt, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
+    string? RejectionReason, string? CancelReason,
+    string? ApprovedBy, string? ApprovedByName, DateTimeOffset? ApprovedAt,
+    string? RejectedBy, string? RejectedByName, DateTimeOffset? RejectedAt,
+    ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
     bool IsClassified, ChartAccountId? SuggestedAccountingAccountId, ChartAccountId? SuggestedFinancialAccountId,
     double? ClassificationConfidence, string? ClassificationRationale,
     BankAccountId? PaymentBankAccountId, PaymentMethod? PaymentMethod,
@@ -24,11 +26,18 @@ public sealed record PayableResponse(
     IReadOnlyList<PayableAttachmentResponse> Attachments,
     IReadOnlyList<PayableWithholdingResponse> Withholdings, decimal TotalWithheld, decimal NetTotal)
 {
-    public static PayableResponse From(Payable p) => new(
+    public static PayableResponse From(Payable p, IReadOnlyDictionary<Guid, string>? actorNames = null)
+    {
+        string? Name(string? id) =>
+            id is not null && Guid.TryParse(id, out var g) && actorNames is not null && actorNames.TryGetValue(g, out var n)
+                ? n
+                : null;
+
+        return new(
         new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
         p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),
         p.CategoryId is { } c ? new ExpenseCategoryId(c) : null, p.TotalAmount, p.Status, p.RejectionReason,
-        p.CancelReason, p.ApprovedBy, p.ApprovedAt, p.RejectedBy, p.RejectedAt,
+        p.CancelReason, p.ApprovedBy, Name(p.ApprovedBy), p.ApprovedAt, p.RejectedBy, Name(p.RejectedBy), p.RejectedAt,
         p.AccountingAccountId is { } a ? new ChartAccountId(a) : null,
         p.FinancialAccountId is { } f ? new ChartAccountId(f) : null,
         p.IsClassified,
@@ -44,4 +53,5 @@ public sealed record PayableResponse(
         p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
         p.TotalWithheld,
         p.NetTotal);
+    }
 }

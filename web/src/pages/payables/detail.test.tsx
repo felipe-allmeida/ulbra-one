@@ -59,4 +59,31 @@ describe('PayableDetailPage', () => {
     expect(screen.getByText('Título criado')).toBeInTheDocument();
     expect(screen.getByText('Aprovado')).toBeInTheDocument();
   });
+
+  it('shows the resolved approver name, not the raw user id, in the approved-by label', () => {
+    mockUsePayable.mockReturnValue({
+      data: {
+        id: 'payable_1',
+        companyId: 'company_1',
+        counterpartyName: 'ACME',
+        description: 'NF 1',
+        status: 'Scheduled',
+        totalAmount: 1000,
+        costCenterId: 'cc_1',
+        categoryId: null,
+        accountingAccountId: null,
+        financialAccountId: null,
+        documentNumber: 'NF-1',
+        issueDate: '2026-06-01',
+        approvedBy: '3fa85f64-5714-4219-9730-000000000000',
+        approvedByName: 'Carlos Silva',
+        approvedAt: '2026-06-02T10:00:00Z',
+        installments: [],
+        attachments: [],
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.getByText(/Aprovado por Carlos Silva/)).toBeInTheDocument();
+    expect(screen.queryByText(/3fa85f64/)).not.toBeInTheDocument();
+  });
 });
