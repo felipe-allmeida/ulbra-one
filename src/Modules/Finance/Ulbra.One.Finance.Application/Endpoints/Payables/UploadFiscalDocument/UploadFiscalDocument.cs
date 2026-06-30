@@ -10,6 +10,7 @@ using Ulbra.One.Common.Application.Results;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Application.FiscalDocuments;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
@@ -37,6 +38,7 @@ public sealed class UploadFiscalDocument : IEndpoint
         IFiscalDocumentReader reader,
         IFileStorageService storage,
         IUnitOfWork uow,
+        IAutoWithholdingService autoWithholding,
         TimeProvider timeProvider,
         CancellationToken ct)
     {
@@ -105,6 +107,12 @@ public sealed class UploadFiscalDocument : IEndpoint
             notaIssRate: parsed.NotaIssRate,
             issRetidoNaNota: parsed.IssRetidoNaNota);
         await uow.AddAsync(doc, ct);
+        await uow.SaveChangesAsync(ct);
+
+        // Recompute withholdings now that the NFS-e service signals (LC116/município) are persisted — the
+        // auto-calc at classification time may have run before this document was linked. No-op when the payable
+        // is already Scheduled/Paid (locked) or when the document has no LC116 subitem (NF-e product).
+        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
         await uow.SaveChangesAsync(ct);
 
         return TypedResults.Created(
