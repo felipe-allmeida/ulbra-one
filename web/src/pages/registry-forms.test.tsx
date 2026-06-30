@@ -324,7 +324,7 @@ describe('VendorForm', () => {
       // Mode should be hydrated
       expect(screen.getByDisplayValue('Dia fixo do mês')).toBeInTheDocument();
       // Day input should appear and be hydrated
-      const dayInput = screen.getByRole('spinbutton');
+      const dayInput = screen.getByRole<HTMLInputElement>('spinbutton');
       expect(dayInput.value).toBe('20');
     });
   });
