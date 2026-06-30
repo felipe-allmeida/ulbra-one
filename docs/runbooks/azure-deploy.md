@@ -47,7 +47,7 @@ Optional:
 
 | Secret / variable | Notes |
 |---|---|
-| `google_client_id` | Google OAuth client ID — not yet passed via pipeline `-var`; add `-var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}"` to the Terraform apply steps in `.github/workflows/azure-deploy.yml` if needed |
+| `google_client_id` | Google OAuth client ID (public). Passed by the pipeline via `-var="google_client_id=..."` (defaults to the dev client; override per-env with a `GOOGLE_CLIENT_ID` repo/environment variable) |
 
 ---
 
@@ -71,14 +71,18 @@ git push origin main
 
 Pipeline (`.github/workflows/azure-deploy.yml`):
 
+Mirrors the ulbra-sau deploy ergonomics (dev auto on push, prod by promoting a built tag):
+
 ```
-verify  →  build-images (ACR)  →  deploy-dev  →  [approval]  →  deploy-prod
+push to main        →  build (ACR)  →  deploy → dev
+workflow_dispatch   →  deploy → prod (promotes an existing image_tag, no rebuild)
 ```
 
-1. **verify** — `dotnet build` + unit tests + vuln audit.
-2. **build-images** — Docker build for `src/API/Ulbra.One.Api/Dockerfile` and `web/Dockerfile`; pushed to `crulbraone.azurecr.io` tagged with the 7-char commit SHA.
-3. **deploy-dev** — `terraform init` (key `dev.tfstate`) + `terraform apply -var-file=dev.tfvars` with the SHA-tagged images.
-4. **deploy-prod** — same for `prod.tfvars` / `prod.tfstate`; gated by GitHub environment approval if configured.
+1. **build** (push only) — Docker build for `src/API/Ulbra.One.Api/Dockerfile` and `web/Dockerfile`; pushed to `crulbraone.azurecr.io` tagged with the 7-char commit SHA.
+2. **deploy** — `terraform init` (key `<env>.tfstate`) + `terraform apply`. The `*.tfvars` files are **gitignored** (they hold local secrets), so CI passes config **inline**: `-var="environment=<env>"`, `-var="google_client_id=..."`, and the SHA-tagged images. Secrets come from GitHub Secrets via `TF_VAR_jwt_secret` / `TF_VAR_ai_api_key` / `TF_VAR_postgres_admin_login`. All other vars use their `variables.tf` defaults.
+3. **prod** is manual-only: `gh workflow run azure-deploy.yml -f promote_to=prod -f image_tag=<sha>` promotes a tag already built+tested in dev (no rebuild), gated by the GitHub `prod` environment approval if configured.
+
+> Local `terraform apply` (below) still uses `-var-file=dev.tfvars` because the file exists on your machine — only CI avoids it.
 
 ### Manual Terraform apply (outside CI)
 
@@ -149,5 +153,5 @@ Container Apps performs a zero-downtime revision swap.
 ## Notes
 
 - `terraform validate` and the actual `terraform apply` run in the team's Azure environment (CI or a workstation with `az login`). There are no `terraform` or `az` binaries in the local dev container used by agents.
-- The `google_client_id` variable is not yet threaded through the pipeline `TF_VAR_*` env block. Add `-var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}"` to both `terraform apply` steps in `.github/workflows/azure-deploy.yml` when Google OAuth is activated in prod.
+- The `google_client_id` is passed by the pipeline as a `-var` (public, defaults to the dev OAuth client). For a dedicated **prod** client, set a `GOOGLE_CLIENT_ID` repo/environment variable — the workflow uses `${{ vars.GOOGLE_CLIENT_ID || <dev default> }}`.
 - ACR is **not** managed by the per-environment Terraform workspace — it is created by bootstrap and consumed as a `data` source. Deleting either env workspace will not affect the registry.
