@@ -1,86 +1,57 @@
-name: Azure Deploy
+name: Deploy
+run-name: "deploy(${{ inputs.promote_to && format('{0} ← {1}', inputs.promote_to, inputs.image_tag) || 'dev' }})"
 
-# Builds API + web images to ACR, then applies Terraform for a single environment.
-# - push to main        → auto-deploy DEV (mirrors the SAU deploy.yml)
-# - workflow_dispatch    → manual deploy to the chosen environment (dev | prod)
-# PROD is therefore manual-only: trigger this workflow by hand and pick "prod".
-# OIDC authentication — no stored client secrets. Requires the one-time
-# infra/bootstrap/bootstrap.sh before the first run.
+# Azure Container Apps deploy via Terraform + OIDC (no stored client secrets).
+# Mirrors the ulbra-sau deploy ergonomics, but targets Azure instead of Swarm:
+#   - push to main           → build images to ACR + deploy DEV automatically
+#   - workflow_dispatch       → promote an ALREADY-built image_tag to PROD (no rebuild)
+# Requires the one-time infra/bootstrap/bootstrap.sh before the first run.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
-      environment:
-        description: Target environment
+      promote_to:
+        description: "Ambiente destino"
+        required: true
         type: choice
-        options: [dev, prod]
-        default: dev
+        options: [prod]
+      image_tag:
+        description: "SHA curto da build (ex.: abc1234). Pega na aba Actions → último deploy dev."
+        required: true
+        type: string
 
 permissions:
   id-token: write   # required for OIDC token request
   contents: read
 
 concurrency:
-  group: azure-deploy-${{ github.event.inputs.environment || 'dev' }}
+  group: deploy-${{ inputs.promote_to || 'dev' }}
   cancel-in-progress: false
 
 env:
+  ACR_NAME: crulbraone
   ACR_LOGIN_SERVER: crulbraone.azurecr.io
   TF_WORKING_DIR: infra/terraform
   TF_BACKEND_RG: rg-ulbraone-tfstate
   TF_BACKEND_SA: stulbraonetfstate
   TF_BACKEND_CONTAINER: tfstate
-  # push → dev; manual dispatch → the chosen environment
-  TARGET_ENV: ${{ github.event.inputs.environment || 'dev' }}
+  # Public Google OAuth client id (frontend + backend audience). Set a GOOGLE_CLIENT_ID
+  # repo/environment variable to override per-env (e.g. a dedicated prod client).
+  GOOGLE_CLIENT_ID_DEFAULT: 867854924898-uvv5b8h238cb2ctg3te66vri829dckla.apps.googleusercontent.com
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # 1. Verify — mirrors existing deploy.yml structure
-  # ---------------------------------------------------------------------------
-  verify:
-    name: Verify (build + unit tests + vuln audit)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-
-      - name: Restore
-        run: dotnet restore Ulbra.One.slnx
-
-      - name: Audit shipped dependencies for vulnerabilities
-        run: |
-          dotnet list src/API/Ulbra.One.Api/Ulbra.One.Api.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
-          if grep -q "has the following vulnerable" vuln.txt; then
-            echo "::error::Vulnerable package(s) detected in the shipped API project"; exit 1
-          fi
-
-      - name: Build (Release)
-        run: dotnet build Ulbra.One.slnx -c Release --no-restore
-
-      - name: Run unit tests
-        run: dotnet test tests/Ulbra.One.UnitTests -c Release --no-build
-
-  # ---------------------------------------------------------------------------
-  # 2. Build & push images to ACR
-  # ---------------------------------------------------------------------------
-  build-images:
+  # ── Automático: push na main → build + push das imagens pro ACR ─────
+  build:
     name: Build & push images to ACR
-    needs: verify
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
-      image_sha: ${{ steps.sha.outputs.tag }}
+      image_tag: ${{ steps.sha.outputs.tag }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -89,14 +60,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Compute short SHA
+      - name: Definir tag
         id: sha
         run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to ACR
-        run: az acr login --name crulbraone
+        run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Build & push API image
+      - name: Build & push API
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -105,7 +76,7 @@ jobs:
           push: true
           tags: ${{ env.ACR_LOGIN_SERVER }}/api:${{ steps.sha.outputs.tag }}
 
-      - name: Build & push web image
+      - name: Build & push Web
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -114,18 +85,21 @@ jobs:
           push: true
           tags: ${{ env.ACR_LOGIN_SERVER }}/web:${{ steps.sha.outputs.tag }}
 
-  # ---------------------------------------------------------------------------
-  # 3. Deploy (single environment — dev on push, dev|prod on manual dispatch)
-  # ---------------------------------------------------------------------------
+  # ── Deploy: DEV no push; PROD por dispatch promovendo um tag existente ──
   deploy:
-    name: Deploy (${{ github.event.inputs.environment || 'dev' }})
-    needs: build-images
+    name: Deploy → ${{ github.event_name == 'push' && 'dev' || inputs.promote_to }}
+    needs: build
+    # push: espera o build. dispatch (promote): build é pulado, então roda mesmo assim.
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.build.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event_name == 'push' && 'dev' || inputs.promote_to }}
+    env:
+      TARGET_ENV: ${{ github.event_name == 'push' && 'dev' || inputs.promote_to }}
+      IMAGE_TAG: ${{ github.event_name == 'push' && needs.build.outputs.image_tag || inputs.image_tag }}
+      RESOURCE_GROUP: rg-ulbraone-${{ github.event_name == 'push' && 'dev' || inputs.promote_to }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -151,9 +125,27 @@ jobs:
         env:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_ai_api_key: ${{ secrets.AI_API_KEY }}
           TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
         run: |
+          # *.tfvars are gitignored (they hold local secrets), so non-secret config is passed
+          # inline; secrets come from GitHub Secrets via TF_VAR_* above. Other vars
+          # (location, replicas, sku, tags) use their defaults in variables.tf.
           terraform apply -auto-approve \
-            -var-file=${{ env.TARGET_ENV }}.tfvars \
-            -var="api_image=${{ env.ACR_LOGIN_SERVER }}/api:${{ needs.build-images.outputs.image_sha }}" \
-            -var="web_image=${{ env.ACR_LOGIN_SERVER }}/web:${{ needs.build-images.outputs.image_sha }}"
+            -var="environment=${{ env.TARGET_ENV }}" \
+            -var="google_client_id=${{ vars.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID_DEFAULT }}" \
+            -var="api_image=${{ env.ACR_LOGIN_SERVER }}/api:${{ env.IMAGE_TAG }}" \
+            -var="web_image=${{ env.ACR_LOGIN_SERVER }}/web:${{ env.IMAGE_TAG }}"
+          echo "✅ Deploy ${{ env.TARGET_ENV }} concluído. Tag: ${{ env.IMAGE_TAG }}"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          for app in ca-ulbraone-api-${{ env.TARGET_ENV }} ca-ulbraone-web-${{ env.TARGET_ENV }}; do
+            echo "::group::revisions $app"
+            az containerapp revision list -n "$app" -g "${{ env.RESOURCE_GROUP }}" -o table || true
+            echo "::endgroup::"
+            echo "::group::logs $app"
+            az containerapp logs show -n "$app" -g "${{ env.RESOURCE_GROUP }}" --tail 100 --type console || true
+            echo "::endgroup::"
+          done
