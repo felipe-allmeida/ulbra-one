@@ -12,6 +12,7 @@ namespace Ulbra.One.UnitTests.Finance;
 public class FiscalDocumentParserTests
 {
     private const string Key44 = "12345678901234567890123456789012345678901234";
+    private const string Key50 = "12345678901234567890123456789012345678901234567890";
 
     private const string NfeXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
@@ -162,6 +163,146 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    // NFS-e Padrão Nacional (SEFIN) com retenção: ISS retido pelo tomador (tpRetISSQN=2) + IRRF (vRetIRRF).
+    // vPis/vCofins sob piscofins são apuração própria do prestador — NÃO retenção.
+    private const string NfseNacionalXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infNFSe Id="NFS{Key50}">
+    <nNFSe>60063</nNFSe>
+    <dhProc>2026-06-15T18:50:53-03:00</dhProc>
+    <emit>
+      <CNPJ>11222333000181</CNPJ>
+      <xNome>Codeforge Desenvolvimento de Software LTDA</xNome>
+      <enderNac><xLgr>Rua Guilherme Kurtz</xLgr><nro>3210</nro><xBairro>Centro</xBairro><cMun>4310538</cMun><UF>RS</UF><CEP>97185000</CEP></enderNac>
+      <fone>5133785980</fone>
+    </emit>
+    <valores><vBC>18000.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>360.00</vISSQN><vLiq>17370.00</vLiq></valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS00000000000000000000000000000000000000001">
+        <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+        <serie>001</serie>
+        <nDPS>8360128</nDPS>
+        <prest><CNPJ>11222333000181</CNPJ></prest>
+        <toma><CNPJ>11444777000161</CNPJ><xNome>Industria Mecanica Sul-Brasileira LTDA</xNome></toma>
+        <serv><cServ><cTribNac>010701</cTribNac><xDescServ>Servicos digitais e suporte</xDescServ><cNBS>115013000</cNBS></cServ></serv>
+        <valores>
+          <vServPrest><vServ>18000.00</vServ></vServPrest>
+          <trib>
+            <tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>2</tpRetISSQN></tribMun>
+            <tribFed>
+              <piscofins><CST>01</CST><vPis>117.00</vPis><vCofins>540.00</vCofins><tpRetPisCofins>1</tpRetPisCofins></piscofins>
+              <vRetIRRF>270.00</vRetIRRF>
+            </tribFed>
+          </trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>
+""";
+
+    // NFS-e Nacional sem retenção: tpRetISSQN=1 (não retido) → vLiq == vServ, Withholdings vazio.
+    private const string NfseNacionalNoRetentionXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infNFSe Id="NFS{Key50}">
+    <nNFSe>60063</nNFSe>
+    <dhProc>2026-06-15T18:50:53-03:00</dhProc>
+    <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
+    <valores><vBC>4402.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>88.04</vISSQN><vLiq>4402.00</vLiq></valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS00000000000000000000000000000000000000002">
+        <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+        <serie>001</serie>
+        <nDPS>8360128</nDPS>
+        <toma><CNPJ>11444777000161</CNPJ></toma>
+        <serv><cServ><xDescServ>Suporte</xDescServ></cServ></serv>
+        <valores>
+          <vServPrest><vServ>4402.00</vServ></vServPrest>
+          <trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun></trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>
+""";
+
+    // Arquivo só com <DPS> (sem infNFSe/emit): parse leniente, ancorado em infDPS.
+    private const string DpsOnlyXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infDPS Id="DPS00000000000000000000000000000000000000003">
+    <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+    <serie>001</serie>
+    <nDPS>8360128</nDPS>
+    <toma><CNPJ>11444777000161</CNPJ></toma>
+    <serv><cServ><xDescServ>Suporte</xDescServ></cServ></serv>
+    <valores><vServPrest><vServ>4402.00</vServ></vServPrest></valores>
+  </infDPS>
+</DPS>
+""";
+
+    // NFS-e ABRASF com retenções (IssRetido=1 + PIS/COFINS/CSLL/IR/INSS) — total = ValorServicos (bruto).
+    private const string NfseAbrasfWithRetentionXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.04">
+    <InfNfse Id="NFSE00000005678">
+      <Numero>00000005678</Numero>
+      <DataEmissao>2026-06-16T14:32:18</DataEmissao>
+      <Servico>
+        <Valores>
+          <ValorServicos>10000.00</ValorServicos>
+          <ValorPis>65.00</ValorPis>
+          <ValorCofins>300.00</ValorCofins>
+          <ValorInss>1100.00</ValorInss>
+          <ValorIr>150.00</ValorIr>
+          <ValorCsll>100.00</ValorCsll>
+          <IssRetido>1</IssRetido>
+          <ValorIss>500.00</ValorIss>
+          <ValorLiquidoNfse>7785.00</ValorLiquidoNfse>
+        </Valores>
+        <Discriminacao>Servico com retencoes.</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></IdentificacaoPrestador>
+        <RazaoSocial>Codeforge</RazaoSocial>
+      </PrestadorServico>
+      <TomadorServico>
+        <IdentificacaoTomador><CpfCnpj><Cnpj>11444777000161</Cnpj></CpfCnpj></IdentificacaoTomador>
+      </TomadorServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
+""";
+
+    // NF-e com bloco total/retTrib (retenções federais na fonte).
+    private const string NfeWithRetTribXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe{Key44}" versao="4.00">
+      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
+      <emit><CNPJ>11222333000181</CNPJ><xNome>Codeforge</xNome></emit>
+      <dest><CNPJ>11444777000161</CNPJ><xNome>Industria</xNome></dest>
+      <total>
+        <ICMSTot><vNF>10000.00</vNF></ICMSTot>
+        <retTrib>
+          <vRetPIS>65.00</vRetPIS>
+          <vRetCOFINS>300.00</vRetCOFINS>
+          <vRetCSLL>100.00</vRetCSLL>
+          <vBCIRRF>10000.00</vBCIRRF>
+          <vIRRF>150.00</vIRRF>
+          <vBCRetPrev>10000.00</vBCRetPrev>
+          <vRetPrev>1100.00</vRetPrev>
+        </retTrib>
+      </total>
+    </infNFe>
+  </NFe>
+</nfeProc>
+""";
+
     private sealed class DisabledAi : IAiCompletion
     {
         public Task<Result<T>> CompleteAsync<T>(AiPrompt p, AiOptions? o = null, CancellationToken ct = default) where T : class =>
@@ -169,7 +310,9 @@ public class FiscalDocumentParserTests
     }
 
     private static IFiscalDocumentReader NewReader() =>
-        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new AiFiscalExtractor(new DisabledAi()));
+        new FiscalDocumentReader(
+            [new NfeM55XmlParser(), new NfseAbrasfXmlParser(), new NfseNacionalXmlParser()],
+            new AiFiscalExtractor(new DisabledAi()));
 
     private static Stream StreamOf(string xml) => new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
@@ -245,8 +388,102 @@ public class FiscalDocumentParserTests
     [Fact]
     public void Parsers_reject_the_other_standard()
     {
+        // NF-e parser rejects both NFS-e standards.
         Assert.False(new NfeM55XmlParser().CanParse(XDocument.Parse(NfseXml)));
+        Assert.False(new NfeM55XmlParser().CanParse(XDocument.Parse(NfseNacionalXml)));
+        // ABRASF parser rejects NF-e and the national NFS-e.
         Assert.False(new NfseAbrasfXmlParser().CanParse(XDocument.Parse(NfeXml)));
+        Assert.False(new NfseAbrasfXmlParser().CanParse(XDocument.Parse(NfseNacionalXml)));
+        // National parser rejects NF-e and ABRASF NFS-e.
+        Assert.False(new NfseNacionalXmlParser().CanParse(XDocument.Parse(NfeXml)));
+        Assert.False(new NfseNacionalXmlParser().CanParse(XDocument.Parse(NfseXml)));
+    }
+
+    [Fact]
+    public void Nfse_nacional_parser_extracts_service_fields_and_withholdings()
+    {
+        var parser = new NfseNacionalXmlParser();
+        var doc = XDocument.Parse(NfseNacionalXml);
+        Assert.True(parser.CanParse(doc));
+
+        var p = parser.Parse(doc);
+        Assert.Equal(FiscalDocumentFormat.NfseXml, p.Format);
+        Assert.Equal(Key50, p.AccessKey);          // 50-digit national key, "NFS" prefix stripped
+        Assert.Equal(50, p.AccessKey!.Length);
+        Assert.Equal("60063", p.DocumentNumber);
+        Assert.Equal(new DateOnly(2026, 6, 15), p.IssueDate);
+        Assert.Equal(18000.00m, p.TotalAmount);    // gross (vServ), not vLiq
+        Assert.Equal("11222333000181", p.IssuerDocument);
+        Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
+        Assert.Equal("11444777000161", p.RecipientDocument);
+        Assert.Equal("8360128", p.RpsNumber);
+        Assert.Equal("001", p.RpsSeries);
+        Assert.Null(p.CnaeCode);                   // national has no CNAE
+        Assert.Equal("5133785980", p.IssuerPhone);
+        Assert.NotNull(p.IssuerAddress);
+        Assert.Equal("RS", p.IssuerAddress!.State);
+        Assert.Null(p.IssuerAddress.City);         // only IBGE code in the XML, no city name
+
+        // ISS retido (tpRetISSQN=2) + IRRF; vPis/vCofins are NOT withholdings.
+        Assert.NotNull(p.Withholdings);
+        Assert.Equal(2, p.Withholdings!.Count);
+        var iss = Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Iss);
+        Assert.Equal(360.00m, iss.Amount);
+        Assert.Equal(18000.00m, iss.BaseAmount);
+        Assert.Equal(2.00m, iss.Rate);
+        var irrf = Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf);
+        Assert.Equal(270.00m, irrf.Amount);
+        Assert.DoesNotContain(p.Withholdings, w => w.TaxType is WithholdingTaxType.Pis or WithholdingTaxType.Cofins);
+    }
+
+    [Fact]
+    public void Nfse_nacional_without_retention_has_no_withholdings()
+    {
+        var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(NfseNacionalNoRetentionXml));
+        Assert.Equal(4402.00m, p.TotalAmount);     // gross == vServ == vLiq (nada retido)
+        Assert.Empty(p.Withholdings!);             // tpRetISSQN=1 → não retido
+    }
+
+    [Fact]
+    public void Nfse_nacional_parses_bare_dps_without_throwing()
+    {
+        var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(DpsOnlyXml));
+        Assert.Equal(FiscalDocumentFormat.NfseXml, p.Format);
+        Assert.Null(p.DocumentNumber);             // sem infNFSe/nNFSe
+        Assert.Equal(4402.00m, p.TotalAmount);     // vServ do infDPS
+        Assert.Equal("11444777000161", p.RecipientDocument);
+    }
+
+    [Fact]
+    public void Nfse_abrasf_uses_gross_total_and_extracts_withholdings()
+    {
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseAbrasfWithRetentionXml));
+        Assert.Equal(10000.00m, p.TotalAmount);    // ValorServicos (bruto), não ValorLiquidoNfse
+        Assert.NotNull(p.Withholdings);
+        Assert.Equal(6, p.Withholdings!.Count);    // ISS + PIS + COFINS + INSS + IR + CSLL
+        Assert.Equal(500.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Iss).Amount);
+        Assert.Equal(1100.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Inss).Amount);
+        Assert.Equal(150.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf).Amount);
+    }
+
+    [Fact]
+    public void Nfe_extracts_withholdings_from_rettrib()
+    {
+        var p = new NfeM55XmlParser().Parse(XDocument.Parse(NfeWithRetTribXml));
+        Assert.Equal(10000.00m, p.TotalAmount);    // vNF mantido
+        Assert.NotNull(p.Withholdings);
+        Assert.Equal(5, p.Withholdings!.Count);    // PIS + COFINS + CSLL + IRRF + INSS(vRetPrev)
+        Assert.Equal(150.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Irrf).Amount);
+        Assert.Equal(1100.00m, Assert.Single(p.Withholdings, w => w.TaxType == WithholdingTaxType.Inss).Amount);
+    }
+
+    [Fact]
+    public async Task Reader_detects_nfse_nacional_by_namespace()
+    {
+        var parsed = await NewReader().ReadAsync("nota.xml", StreamOf(NfseNacionalXml), default);
+        Assert.NotNull(parsed);
+        Assert.Equal(FiscalDocumentFormat.NfseXml, parsed!.Format);
+        Assert.Equal("60063", parsed.DocumentNumber);
     }
 
     [Fact]
