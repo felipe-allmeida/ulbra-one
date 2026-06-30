@@ -97,7 +97,13 @@ public sealed class UploadFiscalDocument : IEndpoint
             ipiAmount: parsed.Fiscal?.Ipi,
             pisAmount: parsed.Fiscal?.Pis,
             cofinsAmount: parsed.Fiscal?.Cofins,
-            totalTaxesAmount: parsed.Fiscal?.TotalTaxes);
+            totalTaxesAmount: parsed.Fiscal?.TotalTaxes,
+            lc116Subitem: parsed.Lc116Subitem,
+            municipalServiceCode: parsed.MunicipalServiceCode,
+            serviceMunicipalityIbge: parsed.ServiceMunicipalityIbge,
+            cnae: parsed.CnaeCode,
+            notaIssRate: parsed.NotaIssRate,
+            issRetidoNaNota: parsed.IssRetidoNaNota);
         await uow.AddAsync(doc, ct);
         await uow.SaveChangesAsync(ct);
 
