@@ -33,6 +33,11 @@
     <Project Path="src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <Project Path="src/Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Fiscal/">
+    <Project Path="src/Modules/Fiscal/Ulbra.One.Fiscal.Application/Ulbra.One.Fiscal.Application.csproj" />
+    <Project Path="src/Modules/Fiscal/Ulbra.One.Fiscal.Domain/Ulbra.One.Fiscal.Domain.csproj" />
+    <Project Path="src/Modules/Fiscal/Ulbra.One.Fiscal.Infrastructure/Ulbra.One.Fiscal.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Registry/">
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
     <Project Path="src/Modules/Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />

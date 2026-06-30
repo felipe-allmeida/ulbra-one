@@ -9,4 +9,5 @@ public static class Schemas
     public const string Registry = "registry";
     public const string Audit = "audit";
     public const string Accounting = "accounting";
+    public const string Fiscal = "fiscal";
 }

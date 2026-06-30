@@ -17,6 +17,8 @@ using Ulbra.One.Audit.Application;
 using Ulbra.One.Audit.Infrastructure;
 using Ulbra.One.Accounting.Application;
 using Ulbra.One.Accounting.Infrastructure;
+using Ulbra.One.Fiscal.Application;
+using Ulbra.One.Fiscal.Infrastructure;
 using Ulbra.One.Common.Infrastructure.Ai;
 using Ulbra.One.Common.Infrastructure.ErrorHandling;
 using Ulbra.One.Common.Infrastructure.Observability;
@@ -189,6 +191,7 @@ builder.Services.AddRegistryModule(builder.Configuration);
 builder.Services.AddRegistryValidators();
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddAccountingModule(builder.Configuration);
+builder.Services.AddFiscalModule(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddObjectStorage(builder.Configuration);
@@ -283,6 +286,7 @@ apiGroup.MapFinanceEndpoints();
 apiGroup.MapRegistryEndpoints();
 apiGroup.MapAuditEndpoints();
 apiGroup.MapAccountingEndpoints();
+apiGroup.MapFiscalEndpoints();
 
 app.Run();
 
