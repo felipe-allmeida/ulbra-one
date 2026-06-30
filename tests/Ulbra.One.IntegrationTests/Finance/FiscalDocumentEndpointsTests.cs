@@ -66,7 +66,6 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         <serv><cServ><xDescServ>Servicos digitais e suporte</xDescServ></cServ></serv>
         <valores>
           <vServPrest><vServ>18000.00</vServ></vServPrest>
-          <trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun></trib>
         </valores>
       </infDPS>
     </DPS>
