@@ -5,7 +5,7 @@ namespace Ulbra.One.Common.Application;
 /// <param name="Key">Storage key to persist and pass back when confirming the upload.</param>
 public sealed record UploadTarget(string UploadUrl, string Key);
 
-/// <summary>Object storage abstraction (MinIO/S3 in prod, local disk in dev). Returns/accepts a storage key.</summary>
+/// <summary>Object storage abstraction (Azure Blob in prod, local disk in dev). Returns/accepts a storage key.</summary>
 public interface IFileStorageService
 {
     Task<string> SaveAsync(string fileName, Stream content, CancellationToken ct = default);

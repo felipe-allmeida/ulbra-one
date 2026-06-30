@@ -169,12 +169,12 @@ export function PayableDetailPage() {
 
       {(p.status === 'Scheduled' || p.status === 'Paid') && p.approvedBy && p.approvedAt && (
         <p className='detail-sub'>
-          {t('payables.approvedBy', { user: p.approvedBy, date: fmtDateTime(p.approvedAt) })}
+          {t('payables.approvedBy', { user: p.approvedByName ?? p.approvedBy, date: fmtDateTime(p.approvedAt) })}
         </p>
       )}
       {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
         <p className='detail-sub'>
-          {t('payables.rejectedBy', { user: p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
+          {t('payables.rejectedBy', { user: p.rejectedByName ?? p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
         </p>
       )}
 

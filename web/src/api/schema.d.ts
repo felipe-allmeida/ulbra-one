@@ -2596,9 +2596,11 @@ export interface components {
             rejectionReason: string | null;
             cancelReason: string | null;
             approvedBy: string | null;
+            approvedByName: string | null;
             /** Format: date-time */
             approvedAt: string | null;
             rejectedBy: string | null;
+            rejectedByName: string | null;
             /** Format: date-time */
             rejectedAt: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */

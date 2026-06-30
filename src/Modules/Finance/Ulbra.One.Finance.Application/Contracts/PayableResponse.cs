@@ -15,8 +15,10 @@ public sealed record PayableResponse(
     PayableId Id, CompanyId CompanyId, PayableOrigin Origin, VendorId VendorId, string CounterpartyName,
     string? DocumentNumber, DateOnly? IssueDate, string Description, CostCenterId CostCenterId,
     ExpenseCategoryId? CategoryId, decimal TotalAmount, PayableStatus Status,
-    string? RejectionReason, string? CancelReason, string? ApprovedBy, DateTimeOffset? ApprovedAt, string? RejectedBy,
-    DateTimeOffset? RejectedAt, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
+    string? RejectionReason, string? CancelReason,
+    string? ApprovedBy, string? ApprovedByName, DateTimeOffset? ApprovedAt,
+    string? RejectedBy, string? RejectedByName, DateTimeOffset? RejectedAt,
+    ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId,
     bool IsClassified, ChartAccountId? SuggestedAccountingAccountId, ChartAccountId? SuggestedFinancialAccountId,
     double? ClassificationConfidence, string? ClassificationRationale,
     BankAccountId? PaymentBankAccountId, PaymentMethod? PaymentMethod,
@@ -24,47 +26,39 @@ public sealed record PayableResponse(
     IReadOnlyList<PayableAttachmentResponse> Attachments,
     IReadOnlyList<PayableWithholdingResponse> Withholdings, decimal TotalWithheld, decimal NetTotal)
 {
-    /// <summary>Builds a <see cref="PayableResponse"/> with pre-computed installment responses
-    /// (e.g. enriched with rail + remittance context from <see cref="GetPayable"/>).</summary>
-    public static PayableResponse FromWithInstallments(Payable p, IReadOnlyList<InstallmentResponse> installments) => new(
-        new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
-        p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),
-        p.CategoryId is { } c2 ? new ExpenseCategoryId(c2) : null, p.TotalAmount, p.Status, p.RejectionReason,
-        p.CancelReason, p.ApprovedBy, p.ApprovedAt, p.RejectedBy, p.RejectedAt,
-        p.AccountingAccountId is { } a2 ? new ChartAccountId(a2) : null,
-        p.FinancialAccountId is { } f2 ? new ChartAccountId(f2) : null,
-        p.IsClassified,
-        p.SuggestedAccountingAccountId is { } sa2 ? new ChartAccountId(sa2) : null,
-        p.SuggestedFinancialAccountId is { } sf2 ? new ChartAccountId(sf2) : null,
-        p.ClassificationConfidence,
-        p.ClassificationRationale,
-        p.PaymentBankAccountId is { } pb2 ? new BankAccountId(pb2) : null,
-        p.PaymentMethod,
-        p.CreatedAt,
-        installments,
-        p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList(),
-        p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
-        p.TotalWithheld,
-        p.NetTotal);
+    /// <summary>Builds a <see cref="PayableResponse"/> from pre-computed installment responses
+    /// (e.g. enriched with rail + remittance context by <see cref="Endpoints.Payables.GetPayable.GetPayable"/>).
+    /// Approver/rejecter display names are resolved from <paramref name="actorNames"/> when provided.</summary>
+    public static PayableResponse FromWithInstallments(
+        Payable p, IReadOnlyList<InstallmentResponse> installments, IReadOnlyDictionary<Guid, string>? actorNames = null)
+    {
+        string? Name(string? id) =>
+            id is not null && Guid.TryParse(id, out var g) && actorNames is not null && actorNames.TryGetValue(g, out var n)
+                ? n
+                : null;
 
-    public static PayableResponse From(Payable p) => new(
-        new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
-        p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),
-        p.CategoryId is { } c ? new ExpenseCategoryId(c) : null, p.TotalAmount, p.Status, p.RejectionReason,
-        p.CancelReason, p.ApprovedBy, p.ApprovedAt, p.RejectedBy, p.RejectedAt,
-        p.AccountingAccountId is { } a ? new ChartAccountId(a) : null,
-        p.FinancialAccountId is { } f ? new ChartAccountId(f) : null,
-        p.IsClassified,
-        p.SuggestedAccountingAccountId is { } sa ? new ChartAccountId(sa) : null,
-        p.SuggestedFinancialAccountId is { } sf ? new ChartAccountId(sf) : null,
-        p.ClassificationConfidence,
-        p.ClassificationRationale,
-        p.PaymentBankAccountId is { } pb ? new BankAccountId(pb) : null,
-        p.PaymentMethod,
-        p.CreatedAt,
-        p.Installments.OrderBy(i => i.Sequence).Select(InstallmentResponse.From).ToList(),
-        p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList(),
-        p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
-        p.TotalWithheld,
-        p.NetTotal);
+        return new(
+            new PayableId(p.Id), new CompanyId(p.CompanyId), p.Origin, new VendorId(p.VendorId), p.CounterpartyName,
+            p.DocumentNumber, p.IssueDate, p.Description, new CostCenterId(p.CostCenterId),
+            p.CategoryId is { } c ? new ExpenseCategoryId(c) : null, p.TotalAmount, p.Status, p.RejectionReason,
+            p.CancelReason, p.ApprovedBy, Name(p.ApprovedBy), p.ApprovedAt, p.RejectedBy, Name(p.RejectedBy), p.RejectedAt,
+            p.AccountingAccountId is { } a ? new ChartAccountId(a) : null,
+            p.FinancialAccountId is { } f ? new ChartAccountId(f) : null,
+            p.IsClassified,
+            p.SuggestedAccountingAccountId is { } sa ? new ChartAccountId(sa) : null,
+            p.SuggestedFinancialAccountId is { } sf ? new ChartAccountId(sf) : null,
+            p.ClassificationConfidence,
+            p.ClassificationRationale,
+            p.PaymentBankAccountId is { } pb ? new BankAccountId(pb) : null,
+            p.PaymentMethod,
+            p.CreatedAt,
+            installments,
+            p.Attachments.OrderBy(a => a.CreatedAt).Select(PayableAttachmentResponse.From).ToList(),
+            p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
+            p.TotalWithheld,
+            p.NetTotal);
+    }
+
+    public static PayableResponse From(Payable p, IReadOnlyDictionary<Guid, string>? actorNames = null) =>
+        FromWithInstallments(p, p.Installments.OrderBy(i => i.Sequence).Select(InstallmentResponse.From).ToList(), actorNames);
 }
