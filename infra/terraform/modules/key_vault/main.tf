@@ -11,20 +11,10 @@ resource "azurerm_key_vault" "this" {
   tags                       = var.tags
 }
 
-# RBAC-mode vault: the deployer needs a data-plane role to write secrets.
-# Owner/Contributor only grant management-plane access — not secret writes.
-resource "azurerm_role_assignment" "deployer_secrets_officer" {
-  scope                = azurerm_key_vault.this.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = var.deployer_object_id
-}
-
-# RBAC propagation is eventually-consistent; give it time before the first write.
-resource "time_sleep" "wait_role_propagation" {
-  depends_on      = [azurerm_role_assignment.deployer_secrets_officer]
-  create_duration = "60s"
-}
-
+# RBAC-mode vault: the deployer needs a data-plane role ("Key Vault Secrets Officer") to
+# read/write secrets. That role is granted OUTSIDE Terraform by infra/bootstrap/bootstrap.sh,
+# so Terraform never has to bootstrap its own access — self-granting broke deploys whenever the
+# GitHub OIDC identity changed (Terraform 403'd reading the secrets before its role applied).
 resource "azurerm_key_vault_secret" "secrets" {
   # Secret *names* are not sensitive — only their values are. Declassify the keys
   # so they can drive for_each; values stay sensitive via the map lookup below.
@@ -32,6 +22,4 @@ resource "azurerm_key_vault_secret" "secrets" {
   name         = each.key
   value        = var.secrets[each.key]
   key_vault_id = azurerm_key_vault.this.id
-
-  depends_on = [time_sleep.wait_role_propagation]
 }

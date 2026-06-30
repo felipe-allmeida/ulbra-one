@@ -85,7 +85,6 @@ module "key_vault" {
   resource_group_name = module.resource_group.name
   location            = module.resource_group.location
   tenant_id           = data.azurerm_client_config.current.tenant_id
-  deployer_object_id  = data.azurerm_client_config.current.object_id
 
   secrets = {
     # Secret name follows ASP.NET Core config hierarchy separator "--"
