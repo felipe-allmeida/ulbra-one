@@ -4,6 +4,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Classification;
 using Ulbra.One.Finance.Application.Messaging;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -13,7 +14,8 @@ public sealed class PayableReceivedConsumer(
     IUnitOfWork uow,
     IPayableClassifier classifier,
     TimeProvider clock,
-    IPublishEndpoint publish)
+    IPublishEndpoint publish,
+    IAutoWithholdingService autoWithholding)
     : IConsumer<PayableReceived>
 {
     internal const double AutoApplyThreshold = 0.8;
@@ -36,6 +38,10 @@ public sealed class PayableReceivedConsumer(
 
         var result = await classifier.ClassifyAsync(payable, ct);
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
+
+        // Compute + apply withholdings before Apply() (which may auto-approve → schedule and lock them).
+        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
+
         Apply(payable, result, cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
 
         if (payable.Status == PayableStatus.Scheduled)
