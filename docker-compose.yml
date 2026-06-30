@@ -91,6 +91,8 @@ services:
       - "5173:5173"
     environment:
       VITE_API_BASE_URL: http://localhost:5001/api
+      # Google OAuth client ID (public, not a secret). The client must have http://localhost:5173 as an authorized JS origin.
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-867854924898-uvv5b8h238cb2ctg3te66vri829dckla.apps.googleusercontent.com}
     volumes:
       - ./web:/app
       - web_node_modules:/app/node_modules

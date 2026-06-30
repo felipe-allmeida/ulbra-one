@@ -421,6 +421,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, name }),
     }),
+  googleSignIn: (idToken: string) =>
+    request<Schemas['LoginResponse']>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
   me: () => request<Schemas['MeResponse']>('/auth/me'),
 
   listCompanies: () => request<Company[]>('/companies'),
