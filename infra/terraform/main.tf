@@ -60,10 +60,9 @@ module "storage" {
   location            = module.resource_group.location
   tags                = local.common_tags
 
-  # Allow the web app origin to PUT/GET blobs directly from the browser (fiscal SAS upload).
-  # The web FQDN is <web-app-name>.<container-apps-env-default-domain>; deriving it from the env
-  # (not the web module, which depends on storage via identity) keeps the dependency graph acyclic.
-  cors_allowed_origins = ["https://${local.ca_web_name}.${module.container_app_env.default_domain}"]
+  # Allow the web app origins to PUT/GET blobs directly from the browser (fiscal SAS upload):
+  # the default *.azurecontainerapps.io FQDN plus any custom domain (see local.web_origins).
+  cors_allowed_origins = local.web_origins
 }
 
 module "postgres" {
@@ -151,7 +150,9 @@ module "container_app_api" {
 
   # Plain-text env vars. Keys use the ASP.NET Core "__" hierarchy separator so they
   # bind to the same config sections the app reads (MassTransit:*, ObjectStorage:*).
-  env_vars = {
+  # cors_env_vars adds AllowedOrigins__0/__1/… (web FQDN + custom domain) so the API
+  # accepts cross-origin requests from the SPA in every environment.
+  env_vars = merge({
     ASPNETCORE_ENVIRONMENT                = var.environment == "prod" ? "Production" : "Development"
     APPLICATIONINSIGHTS_CONNECTION_STRING = module.observability.application_insights_connection_string
 
@@ -172,7 +173,7 @@ module "container_app_api" {
 
     # Payable AI classifier → real Anthropic provider (key injected via secret_env_vars below).
     Ai__Provider = "Anthropic"
-  }
+  }, local.cors_env_vars)
 
   # Key Vault–backed secrets injected as env vars (names match app config keys).
   secret_env_vars = {

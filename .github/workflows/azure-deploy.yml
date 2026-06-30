@@ -134,6 +134,7 @@ jobs:
           terraform apply -auto-approve \
             -var="environment=${{ env.TARGET_ENV }}" \
             -var="google_client_id=${{ vars.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID_DEFAULT }}" \
+            -var="web_custom_domain=${{ vars.WEB_CUSTOM_DOMAIN }}" \
             -var="api_image=${{ env.ACR_LOGIN_SERVER }}/api:${{ env.IMAGE_TAG }}" \
             -var="web_image=${{ env.ACR_LOGIN_SERVER }}/web:${{ env.IMAGE_TAG }}"
           echo "✅ Deploy ${{ env.TARGET_ENV }} concluído. Tag: ${{ env.IMAGE_TAG }}"
