@@ -14,6 +14,7 @@ using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Registry.Domain.Entities;
+using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 
@@ -96,6 +97,11 @@ public sealed class CreatePayable : IEndpoint
         }
 
         payable.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);
+
+        // Apply vendor payment schedule to each installment's scheduled payment date.
+        var schedule = vendor.PaymentSchedule ?? PaymentSchedule.Default;
+        foreach (var inst in payable.Installments)
+            inst.SetScheduledPaymentDate(schedule.Resolve(inst.DueDate));
 
         // Payable stays at Received; the consumer (PayableReceivedConsumer) handles auto-approval.
         await uow.AddAsync(payable, ct);

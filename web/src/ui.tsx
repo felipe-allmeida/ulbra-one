@@ -94,12 +94,13 @@ export function Kpi({ label, value, foot }: { label: string; value: string; foot
 }
 
 /* ---------- Empty state ---------- */
-export function EmptyState({ icon, title, sub }: { icon: ReactNode; title: string; sub: string }) {
+export function EmptyState({ icon, title, sub, action }: { icon: ReactNode; title: string; sub?: string; action?: ReactNode }) {
   return (
     <div className='empty-state'>
       {icon}
       <div className='t'>{title}</div>
-      <div className='s'>{sub}</div>
+      {sub && <div className='s'>{sub}</div>}
+      {action && <div className='a'>{action}</div>}
     </div>
   );
 }

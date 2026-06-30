@@ -6,7 +6,6 @@ import {
   Contact,
   Building2,
   Settings,
-  Layers,
   ArrowUpRight,
   ArrowDownLeft,
   ClipboardCheck,
@@ -68,10 +67,10 @@ export interface NavDomain {
 
 export const NAV_DOMAINS: NavDomain[] = [
   {
-    key: 'inicio',
+    key: 'home',
     icon: <LayoutDashboard />,
     labelKey: 'nav.domains.home',
-    groups: [{ items: [{ labelKey: 'nav.home', to: '/app/inicio', icon: <LayoutDashboard /> }] }],
+    groups: [{ items: [{ labelKey: 'nav.home', to: '/app/home', icon: <LayoutDashboard /> }] }],
   },
   {
     key: 'finance',
@@ -81,12 +80,11 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.operation',
         items: [
-          { labelKey: 'nav.accountsPayable', to: '/app/contas-a-pagar', icon: <ArrowUpRight /> },
-          { labelKey: 'nav.payablesWorkflow', to: '/app/payables', icon: <Layers /> },
-          { labelKey: 'nav.accountsReceivable', to: '/app/contas-a-receber', icon: <ArrowDownLeft /> },
-          { labelKey: 'nav.approvals', to: '/app/aprovacoes', icon: <ClipboardCheck /> },
-          { labelKey: 'nav.conciliacao', to: '/app/conciliacao', icon: <ArrowLeftRight /> },
-          { labelKey: 'nav.remittances', to: '/app/remessas', icon: <SendHorizonal /> },
+          { labelKey: 'nav.accountsPayable', to: '/app/payables', icon: <ArrowUpRight /> },
+          { labelKey: 'nav.accountsReceivable', to: '/app/receivables', icon: <ArrowDownLeft /> },
+          { labelKey: 'nav.approvals', to: '/app/approvals', icon: <ClipboardCheck /> },
+          { labelKey: 'nav.conciliacao', to: '/app/reconciliation', icon: <ArrowLeftRight /> },
+          { labelKey: 'nav.remittances', to: '/app/remittances', icon: <SendHorizonal /> },
         ],
       },
       {
@@ -102,9 +100,9 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.configuration',
         items: [
-          { labelKey: 'nav.costCenters', to: '/app/centros', icon: <Target /> },
-          { labelKey: 'nav.chartAccounts', to: '/app/plano-de-contas', icon: <ListTree /> },
-          { labelKey: 'nav.classification', to: '/app/classificacao', icon: <Tags /> },
+          { labelKey: 'nav.costCenters', to: '/app/cost-centers', icon: <Target /> },
+          { labelKey: 'nav.chartAccounts', to: '/app/chart-of-accounts', icon: <ListTree /> },
+          { labelKey: 'nav.classification', to: '/app/classification', icon: <Tags /> },
         ],
       },
     ],
@@ -117,21 +115,21 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.movement',
         items: [
-          { labelKey: 'nav.journalEntries', to: '/app/contabil/lancamentos', icon: <BookOpen /> },
-          { labelKey: 'nav.pendingPostings', to: '/app/contabil/pendentes', icon: <ClipboardCheck /> },
+          { labelKey: 'nav.journalEntries', to: '/app/accounting/journal-entries', icon: <BookOpen /> },
+          { labelKey: 'nav.pendingPostings', to: '/app/accounting/pending', icon: <ClipboardCheck /> },
         ],
       },
       {
         labelKey: 'nav.subgroups.statements',
         items: [
-          { labelKey: 'nav.trialBalance', to: '/app/contabil/balancete', icon: <Scale /> },
-          { labelKey: 'nav.incomeStatement', to: '/app/contabil/dre', icon: <LineChart /> },
-          { labelKey: 'nav.balanceSheet', to: '/app/contabil/balanco', icon: <BookText /> },
+          { labelKey: 'nav.trialBalance', to: '/app/accounting/trial-balance', icon: <Scale /> },
+          { labelKey: 'nav.incomeStatement', to: '/app/accounting/income-statement', icon: <LineChart /> },
+          { labelKey: 'nav.balanceSheet', to: '/app/accounting/balance-sheet', icon: <BookText /> },
         ],
       },
       {
         labelKey: 'nav.subgroups.configuration',
-        items: [{ labelKey: 'nav.ledgerAccounts', to: '/app/contabil/plano-de-contas', icon: <ListTree /> }],
+        items: [{ labelKey: 'nav.ledgerAccounts', to: '/app/accounting/chart-of-accounts', icon: <ListTree /> }],
       },
     ],
   },
@@ -142,11 +140,11 @@ export const NAV_DOMAINS: NavDomain[] = [
     groups: [
       {
         items: [
-          { labelKey: 'nav.vendors', to: '/app/fornecedores', icon: <Truck /> },
-          { labelKey: 'nav.customers', to: '/app/clientes', icon: <UserSquare /> },
-          { labelKey: 'nav.employees', to: '/app/colaboradores', icon: <Contact /> },
-          { labelKey: 'nav.expenseCategories', to: '/app/categorias-despesa', icon: <Tag /> },
-          { labelKey: 'nav.bankAccounts', to: '/app/contas-bancarias', icon: <Landmark /> },
+          { labelKey: 'nav.vendors', to: '/app/vendors', icon: <Truck /> },
+          { labelKey: 'nav.customers', to: '/app/customers', icon: <UserSquare /> },
+          { labelKey: 'nav.employees', to: '/app/employees', icon: <Contact /> },
+          { labelKey: 'nav.expenseCategories', to: '/app/expense-categories', icon: <Tag /> },
+          { labelKey: 'nav.bankAccounts', to: '/app/bank-accounts', icon: <Landmark /> },
         ],
       },
     ],
@@ -155,7 +153,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'structure',
     icon: <Building2 />,
     labelKey: 'nav.domains.structure',
-    groups: [{ items: [{ labelKey: 'nav.companiesUnits', to: '/app/estrutura', icon: <Building2 /> }] }],
+    groups: [{ items: [{ labelKey: 'nav.companiesUnits', to: '/app/structure', icon: <Building2 /> }] }],
   },
   {
     key: 'settings',

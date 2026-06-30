@@ -68,7 +68,7 @@ test('login -> contas a pagar list -> detail with parcelas', async ({ page }) =>
   // Navigate to Contas a Pagar via the sidebar nav item.
   const sidebar = page.locator('aside.sidebar');
   await sidebar.getByRole('button', { name: 'Contas a pagar' }).click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable$/);
   await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
 
   // The list is scoped to the selected company (EmpresaPicker). Pick the seeded
@@ -85,10 +85,10 @@ test('login -> contas a pagar list -> detail with parcelas', async ({ page }) =>
   const firstRow = page.locator('table tbody tr.row-click').first();
   await expect(firstRow).toBeVisible();
 
-  // Drill into the detail: clicking a row routes to /app/contas-a-pagar/<id>
+  // Drill into the detail: clicking a row routes to /app/accounts-payable/<id>
   // and the "Parcelas" panel lists at least one installment row.
   await firstRow.click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/[^/]+$/);
   const parcelas = page.locator('.panel', { hasText: 'Parcelas' });
   await expect(parcelas).toBeVisible();
   await expect(parcelas.locator('table tbody tr').first()).toBeVisible();
@@ -109,7 +109,7 @@ test('login -> contas a pagar -> dar baixa on an open installment', async ({ pag
   // Navigate to Contas a Pagar.
   const sidebar = page.locator('aside.sidebar');
   await sidebar.getByRole('button', { name: 'Contas a pagar' }).click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable$/);
   await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
 
   // Scope to the ULBRA company that owns the seeded payables.
@@ -136,7 +136,7 @@ test('login -> contas a pagar -> dar baixa on an open installment', async ({ pag
   await openRow.click();
 
   // Detail page for the chosen payable.
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/[^/]+$/);
   const parcelas = page.locator('.panel', { hasText: 'Parcelas' });
   await expect(parcelas).toBeVisible();
 
@@ -444,11 +444,11 @@ test('login -> aging -> bucket cards + pivot by cost center', async ({ page }) =
   }
 });
 
-test('logged-out access to /app/inicio redirects to /login', async ({ browser }) => {
+test('logged-out access to /app/home redirects to /login', async ({ browser }) => {
   // Fresh context => no token in localStorage.
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto('/app/inicio');
+  await page.goto('/app/home');
   await expect(page).toHaveURL(/\/login$/);
   await context.close();
 });

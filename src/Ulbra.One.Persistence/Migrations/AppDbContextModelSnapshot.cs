@@ -1405,6 +1405,16 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("date")
                         .HasColumnName("due_date");
 
+                    b.Property<string>("HoldReason")
+                        .HasColumnType("text")
+                        .HasColumnName("hold_reason");
+
+                    b.Property<bool>("IsHeld")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_held");
+
                     b.Property<decimal>("NetAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -1418,6 +1428,10 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<Guid>("PayableId")
                         .HasColumnType("uuid")
                         .HasColumnName("payable_id");
+
+                    b.Property<DateOnly>("ScheduledPaymentDate")
+                        .HasColumnType("date")
+                        .HasColumnName("scheduled_payment_date");
 
                     b.Property<int>("Sequence")
                         .HasColumnType("integer")
@@ -3198,10 +3212,38 @@ namespace Ulbra.One.Persistence.Migrations
                                 .HasConstraintName("fk_vendors_vendors_id");
                         });
 
+                    b.OwnsOne("Ulbra.One.Registry.Domain.ValueObjects.PaymentSchedule", "PaymentSchedule", b1 =>
+                        {
+                            b1.Property<Guid>("VendorEntityId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<int?>("DayOfMonth")
+                                .HasColumnType("integer")
+                                .HasColumnName("payment_schedule_day_of_month");
+
+                            b1.Property<string>("Mode")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("payment_schedule_mode");
+
+                            b1.HasKey("VendorEntityId");
+
+                            b1.ToTable("vendors", "registry");
+
+                            b1.WithOwner()
+                                .HasForeignKey("VendorEntityId")
+                                .HasConstraintName("fk_vendors_vendors_id");
+                        });
+
                     b.Navigation("Address")
                         .IsRequired();
 
                     b.Navigation("BankInfo")
+                        .IsRequired();
+
+                    b.Navigation("PaymentSchedule")
                         .IsRequired();
                 });
 

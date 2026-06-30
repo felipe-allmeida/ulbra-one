@@ -11,7 +11,7 @@ import { ofxStatement, uniqueFitid, writeOfxFile } from './helpers/fake-bank';
  *   re-Confirmar -> manual match via the drawer (pick the installment) -> Ignorar an orphan ->
  *   idempotent reimport (dedup by FITID, no duplicate rows).
  *
- * It drives the REAL frontend (in-app nav, never page.goto('/novo')) and is significant, not
+ * It drives the REAL frontend (in-app nav, never page.goto('/new')) and is significant, not
  * vacuously green: it FAILS if matching, confirm, unmatch, manual-match, ignore, or idempotency
  * break. No try/catch swallowing, no "if visible" escape hatches around critical assertions.
  *
@@ -84,7 +84,7 @@ async function manualMatchByAmount(page: Page, drawer: ReturnType<Page['getByRol
  */
 async function createApprovedPayable(page: Page, description: string, amount: number, dueIso: string): Promise<string> {
   await page.getByRole('button', { name: 'Nova conta' }).click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/novo$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/new$/);
   await expect(page.getByRole('heading', { name: 'Nova conta a pagar' })).toBeVisible();
 
   // Vendor: Radix combobox (aria-haspopup=listbox). Open it, pick the first seeded option.
@@ -137,7 +137,7 @@ async function createApprovedPayable(page: Page, description: string, amount: nu
   const submit = page.getByRole('button', { name: 'Lançar', exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page).toHaveURL(/\/app\/contas-a-pagar\/[^/]+$/);
+  await expect(page).toHaveURL(/\/app\/accounts-payable\/[^/]+$/);
   await expect(page.getByRole('heading', { name: description })).toBeVisible();
 
   // Approve: INFRA auto-approval is below our amount, so the Aprovar button must appear.
@@ -178,7 +178,7 @@ test('full-flow C: conciliação surface — import counts, suggest/confirm, unm
 
   // ---------- 1. Login + scope to ULBRA ----------
   await devLogin(page);
-  await page.goto('/app/contas-a-pagar');
+  await page.goto('/app/accounts-payable');
   await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
 
@@ -186,7 +186,7 @@ test('full-flow C: conciliação surface — import counts, suggest/confirm, unm
   await createApprovedPayable(page, descMatch, amountMatch, dueIso);
   // Re-scope to ULBRA on the list before opening the second form (the detail->list nav keeps the
   // global company, but assert it explicitly so the second payable lands under ULBRA too).
-  await page.goto('/app/contas-a-pagar');
+  await page.goto('/app/accounts-payable');
   await expect(page.getByRole('heading', { name: 'Contas a pagar' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
   await createApprovedPayable(page, descManual, amountManual, dueIso);
@@ -202,7 +202,7 @@ test('full-flow C: conciliação surface — import counts, suggest/confirm, unm
   const ofxPath = writeOfxFile(ofx);
 
   // ---------- 4. Conciliação: pick ULBRA + a bank account, import the OFX ----------
-  await page.goto('/app/conciliacao');
+  await page.goto('/app/reconciliation');
   await expect(page.getByRole('heading', { name: 'Conciliação bancária' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
 

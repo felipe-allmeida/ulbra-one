@@ -13,6 +13,9 @@ public class Installment
     public decimal NetAmount { get; private set; }
     public InstallmentStatus Status { get; private set; } = InstallmentStatus.Open;
     public decimal PaidAmount { get; private set; }
+    public DateOnly ScheduledPaymentDate { get; private set; }
+    public bool IsHeld { get; private set; }
+    public string? HoldReason { get; private set; }
 
     public IReadOnlyList<Payment> Payments => _payments;
 
@@ -23,9 +26,29 @@ public class Installment
         DueDate = dueDate;
         Amount = amount;
         NetAmount = amount;
+        ScheduledPaymentDate = dueDate;
     }
 
     internal void SetNetAmount(decimal net) => NetAmount = net;
+
+    public void SetScheduledPaymentDate(DateOnly date) => ScheduledPaymentDate = date;
+
+    /// <summary>Pauses an open installment so the daily remittance sweep skips it.</summary>
+    public void Hold(string reason)
+    {
+        if (Status != InstallmentStatus.Open)
+            throw new InvalidOperationException($"Only an open installment can be held (was {Status}).");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Hold reason is required.");
+        IsHeld = true;
+        HoldReason = reason;
+    }
+
+    public void ReleaseHold()
+    {
+        IsHeld = false;
+        HoldReason = null;
+    }
 
     public Payment RegisterPayment(Payment payment)
     {

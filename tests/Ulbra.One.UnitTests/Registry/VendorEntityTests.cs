@@ -11,7 +11,8 @@ public class VendorEntityTests
         email: "contato@gs.com", phone: "5133334444", address: Address.Empty,
         paymentTerms: "30 dias",
         bankInfo: new BankInfo("001", "1234", "56789", "6", ""),
-        taxRegime: TaxRegime.SimplesNacional);
+        taxRegime: TaxRegime.SimplesNacional,
+        paymentSchedule: PaymentSchedule.Default);
 
     [Fact]
     public void New_Vendor_Is_Active_With_Normalized_Document()
@@ -28,7 +29,8 @@ public class VendorEntityTests
     {
         var v = NewVendor();
         v.Update(PersonType.Company, "Novo Nome", "NN", "11222333000181",
-            "novo@x.com", "5199998888", Address.Empty, "à vista", BankInfo.Empty, TaxRegime.Unknown);
+            "novo@x.com", "5199998888", Address.Empty, "à vista", BankInfo.Empty, TaxRegime.Unknown,
+            PaymentSchedule.Default);
         Assert.Equal("Novo Nome", v.Name);
         Assert.Equal("à vista", v.PaymentTerms);
         Assert.Equal(BankInfo.Empty, v.BankInfo);

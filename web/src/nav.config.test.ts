@@ -3,32 +3,32 @@ import { domainForPath, itemForPath } from './nav.config';
 
 describe('itemForPath', () => {
   it('matches an exact route', () => {
-    expect(itemForPath('/app/contas-a-pagar')?.labelKey).toBe('nav.accountsPayable');
+    expect(itemForPath('/app/payables')?.labelKey).toBe('nav.accountsPayable');
   });
 
   it('matches a detail route via the longest prefix', () => {
-    expect(itemForPath('/app/contas-a-pagar/123/editar')?.labelKey).toBe('nav.accountsPayable');
+    expect(itemForPath('/app/payables/123/edit')?.labelKey).toBe('nav.accountsPayable');
   });
 
-  it('disambiguates finance vs accounting "plano de contas"', () => {
-    expect(itemForPath('/app/plano-de-contas')?.labelKey).toBe('nav.chartAccounts');
-    expect(itemForPath('/app/contabil/plano-de-contas')?.labelKey).toBe('nav.ledgerAccounts');
+  it('disambiguates finance vs accounting "chart of accounts"', () => {
+    expect(itemForPath('/app/chart-of-accounts')?.labelKey).toBe('nav.chartAccounts');
+    expect(itemForPath('/app/accounting/chart-of-accounts')?.labelKey).toBe('nav.ledgerAccounts');
   });
 
   it('returns null for an unknown route', () => {
-    expect(itemForPath('/app/desconhecido')).toBeNull();
+    expect(itemForPath('/app/unknown')).toBeNull();
   });
 });
 
 describe('domainForPath', () => {
   it('resolves the owning domain', () => {
-    expect(domainForPath('/app/contas-a-pagar').key).toBe('finance');
-    expect(domainForPath('/app/contabil/dre').key).toBe('accounting');
-    expect(domainForPath('/app/estrutura').key).toBe('structure');
-    expect(domainForPath('/app/fornecedores').key).toBe('registry');
+    expect(domainForPath('/app/payables').key).toBe('finance');
+    expect(domainForPath('/app/accounting/income-statement').key).toBe('accounting');
+    expect(domainForPath('/app/structure').key).toBe('structure');
+    expect(domainForPath('/app/vendors').key).toBe('registry');
   });
 
   it('falls back to the first domain for unknown routes', () => {
-    expect(domainForPath('/app/desconhecido').key).toBe('inicio');
+    expect(domainForPath('/app/unknown').key).toBe('home');
   });
 });

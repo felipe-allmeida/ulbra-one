@@ -60,15 +60,12 @@ public sealed class GoogleSignIn : IEndpoint
 
         var email = payload.Email.ToLowerInvariant();
 
-        if (opt.AllowedDomains.Length > 0)
-        {
-            var domain = email.Contains('@') ? email[(email.IndexOf('@') + 1)..] : string.Empty;
-            if (!opt.AllowedDomains.Contains(domain, StringComparer.OrdinalIgnoreCase))
-                return TypedResults.Problem(detail: $"Domain '{domain}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
-        }
+        // Bootstrap admins bypass the domain allow-list (see GoogleAuthOptions.IsEmailAllowed).
+        if (!opt.IsEmailAllowed(email))
+            return TypedResults.Problem(detail: $"Email '{email}' is not allowed.", statusCode: StatusCodes.Status403Forbidden, title: "Auth.DomainNotAllowed");
 
         var user = await uow.Set<User>().FirstOrDefaultAsync(u => u.Email == email, ct);
-        var isBootstrapAdmin = opt.BootstrapAdmins.Contains(email, StringComparer.OrdinalIgnoreCase);
+        var isBootstrapAdmin = opt.IsBootstrapAdmin(email);
 
         if (user is null)
         {

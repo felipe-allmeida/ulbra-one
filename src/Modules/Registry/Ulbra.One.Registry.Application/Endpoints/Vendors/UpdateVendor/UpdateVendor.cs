@@ -13,6 +13,7 @@ using Ulbra.One.Common.Application.Validation;
 using Ulbra.One.Registry.Application.Contracts;
 using Ulbra.One.Registry.Application.Validation;
 using Ulbra.One.Registry.Domain.Entities;
+using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Vendors.UpdateVendor;
 
@@ -41,7 +42,8 @@ public sealed class UpdateVendor : IEndpoint
         if (vendor is null)
             return Result.Failure<VendorResponse>(Error.NotFound("Vendor.NotFound", "Vendor not found.")).ToOk();
         vendor.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,
-            req.Address.ToAddress(), req.PaymentTerms, req.BankInfo.ToBankInfo(), req.TaxRegime);
+            req.Address.ToAddress(), req.PaymentTerms, req.BankInfo.ToBankInfo(), req.TaxRegime,
+            new PaymentSchedule(req.PaymentScheduleMode, req.PaymentScheduleDay));
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToOk();
     }

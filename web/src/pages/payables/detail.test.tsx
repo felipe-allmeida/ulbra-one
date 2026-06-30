@@ -41,6 +41,9 @@ beforeEach(() => {
         { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, status: 'Open', paidAmount: 0, payments: [] },
       ],
       attachments: [],
+      withholdings: [],
+      totalWithheld: 0,
+      netTotal: 1000,
     },
   });
   mockUseAudit.mockReturnValue({
@@ -80,6 +83,9 @@ describe('PayableDetailPage', () => {
         approvedAt: '2026-06-02T10:00:00Z',
         installments: [],
         attachments: [],
+        withholdings: [],
+        totalWithheld: 0,
+        netTotal: 1000,
       },
     });
     renderWithProviders(<PayableDetailPage />);

@@ -3,14 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
-const { mockUsePayables, mockApprove, mockReject, mockUseCashFlow } = vi.hoisted(() => ({
-  mockUsePayables: vi.fn(),
+const { mockUsePayableStageItems, mockApprove, mockReject, mockUseCashFlow } = vi.hoisted(() => ({
+  mockUsePayableStageItems: vi.fn(),
   mockApprove: vi.fn(),
   mockReject: vi.fn(),
   mockUseCashFlow: vi.fn(),
 }));
 vi.mock('../../queries', () => ({
-  usePayables: mockUsePayables,
+  usePayableStageItems: mockUsePayableStageItems,
   useApprovePayable: () => ({ mutate: mockApprove, isPending: false }),
   useRejectPayable: () => ({ mutate: mockReject, isPending: false }),
   useCashFlow: mockUseCashFlow,
@@ -21,21 +21,18 @@ import { ApprovalTab } from './approval-tab';
 
 const item = {
   payableId: 'payable_1',
-  installmentId: 'i1',
-  sequence: 1,
-  installmentCount: 1,
   counterpartyName: 'ACME',
   description: 'NF 1',
   costCenterId: 'cc_1',
   categoryId: null,
-  dueDate: '2026-06-30',
-  amount: 1000,
-  installmentStatus: 'Open',
-  payableStatus: 'PendingApproval',
+  firstDueDate: '2026-06-30',
+  installmentCount: 1,
+  totalAmount: 1000,
+  status: 'PendingApproval',
 };
 
 beforeEach(() => {
-  mockUsePayables.mockReturnValue({ data: { items: [item], total: 1, totalPages: 1 } });
+  mockUsePayableStageItems.mockReturnValue({ data: { items: [item], total: 1, totalPages: 1 } });
   mockUseCashFlow.mockReturnValue({
     data: {
       startingBalance: 5000,
@@ -54,7 +51,7 @@ describe('ApprovalTab', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('NF 1')).toBeInTheDocument();
-    expect(mockUsePayables).toHaveBeenCalledWith(
+    expect(mockUsePayableStageItems).toHaveBeenCalledWith(
       expect.objectContaining({ companyId: 'company_1', status: 'PendingApproval' }),
       expect.anything(),
     );

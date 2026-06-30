@@ -31,6 +31,7 @@ public static class FinanceModule
         // Remittance generation + return conciliation use-cases.
         services.AddScoped<IRemittanceGenerationService, RemittanceGenerationService>();
         services.AddScoped<IRemittanceReturnService, RemittanceReturnService>();
+        services.AddScoped<IRemittanceSweepService, RemittanceSweepService>();
 
         // Development-only: synthetic return file simulator.
         services.AddScoped<IRemittanceReturnSimulator, CnabReturnSimulator>();
@@ -41,13 +42,13 @@ public static class FinanceModule
         services.AddScoped<AiFiscalExtractor>();
         services.AddScoped<IFiscalDocumentReader, FiscalDocumentReader>();
 
-        var autoPayEnabled = configuration.GetValue("AutoPay:Enabled", false);
-        var autoPayInterval = configuration.GetValue("AutoPay:Interval", TimeSpan.FromHours(24));
-        services.AddHostedService(sp => new PayableAutoPayJob(
+        var sweepEnabled = configuration.GetValue("RemittanceSweep:Enabled", false);
+        var sweepInterval = configuration.GetValue("RemittanceSweep:Interval", TimeSpan.FromHours(24));
+        services.AddHostedService(sp => new RemittanceSweepJob(
             sp.GetRequiredService<IServiceScopeFactory>(),
             sp.GetRequiredService<TimeProvider>(),
-            sp.GetRequiredService<ILogger<PayableAutoPayJob>>(),
-            autoPayEnabled, autoPayInterval));
+            sp.GetRequiredService<ILogger<RemittanceSweepJob>>(),
+            sweepEnabled, sweepInterval));
 
         return services;
     }

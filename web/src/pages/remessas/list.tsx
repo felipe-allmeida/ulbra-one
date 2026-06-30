@@ -20,7 +20,7 @@ import { brlCents } from '../../lib';
 import { Button, EmptyState, Field, Modal, PageHeader, Pager, Panel, Select } from '../../ui';
 import { EmpresaPicker } from '../shared';
 import { fmtDateTime, fmtDate } from '../../datetime';
-import { RemittanceLineStatusBadge } from '../contas-a-pagar/badges';
+import { RemittanceLineStatusBadge } from './badges';
 
 /* ============ Status badge ============ */
 function RemittanceStatusBadge({ status }: { status: string }) {

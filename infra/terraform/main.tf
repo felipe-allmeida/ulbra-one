@@ -91,6 +91,9 @@ module "key_vault" {
     # Secret name follows ASP.NET Core config hierarchy separator "--"
     "Authentication--JwtSecret" = var.jwt_secret
 
+    # Anthropic API key for the payable AI classifier (app reads Ai:ApiKey).
+    "Ai--ApiKey" = var.ai_api_key
+
     # Full ADO connection string for EF Core / Npgsql (app reads ConnectionStrings:Database)
     "ConnectionStrings--Database" = join(";", [
       "Host=${module.postgres.fqdn}",
@@ -167,12 +170,16 @@ module "container_app_api" {
 
     # Google sign-in: backend validates the id_token audience against this client id.
     Authentication__Google__ClientId = var.google_client_id
+
+    # Payable AI classifier → real Anthropic provider (key injected via secret_env_vars below).
+    Ai__Provider = "Anthropic"
   }
 
   # Key Vault–backed secrets injected as env vars (names match app config keys).
   secret_env_vars = {
     "Authentication__JwtSecret"   = module.key_vault.secret_versionless_ids["Authentication--JwtSecret"]
     "ConnectionStrings__Database" = module.key_vault.secret_versionless_ids["ConnectionStrings--Database"]
+    "Ai__ApiKey"                  = module.key_vault.secret_versionless_ids["Ai--ApiKey"]
   }
 
   tags = local.common_tags

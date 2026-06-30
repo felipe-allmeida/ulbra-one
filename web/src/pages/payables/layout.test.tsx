@@ -3,15 +3,18 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
-const { mockUseStageSummary, mockUsePayables } = vi.hoisted(() => ({
+const { mockUseStageSummary, mockUsePayableStageItems } = vi.hoisted(() => ({
   mockUseStageSummary: vi.fn(),
-  mockUsePayables: vi.fn(),
+  mockUsePayableStageItems: vi.fn(),
 }));
 vi.mock('../../store', () => ({
   useApp: () => ({ empresa: { id: 'company_1', legalName: 'ACME' }, empresaId: 'company_1' }),
 }));
 vi.mock('../shared', () => ({ EmpresaPicker: () => <div data-testid='empresa-picker' /> }));
-vi.mock('../../queries', () => ({ usePayableStageSummary: mockUseStageSummary, usePayables: mockUsePayables }));
+vi.mock('../../queries', () => ({
+  usePayableStageSummary: mockUseStageSummary,
+  usePayableStageItems: mockUsePayableStageItems,
+}));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
 
 import { PayablesLayout } from './layout';
@@ -26,7 +29,7 @@ beforeEach(() => {
       reconciled: { count: 9, totalAmount: 900 },
     },
   });
-  mockUsePayables.mockReturnValue({ data: { items: [], total: 0, totalPages: 1 } });
+  mockUsePayableStageItems.mockReturnValue({ data: { items: [], total: 0, totalPages: 1 } });
 });
 
 describe('PayablesLayout', () => {
@@ -50,6 +53,6 @@ describe('PayablesLayout', () => {
     // Every card has a "Ver pendências" link — click the first one (entry card).
     fireEvent.click(screen.getAllByText('Ver pendências')[0]);
     // entry tab queried with the Received status (default active tab still renders a list)
-    expect(mockUsePayables).toHaveBeenCalled();
+    expect(mockUsePayableStageItems).toHaveBeenCalled();
   });
 });

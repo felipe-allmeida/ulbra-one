@@ -2,25 +2,24 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Ulbra.One.Common.Application.Persistence;
-using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Remittances;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
-using Ulbra.One.Finance.Infrastructure.Jobs;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
 /// <summary>
-/// Verifies that payment paths use <see cref="Installment.NetAmount"/> (net of withholdings)
+/// Verifies that the remittance path uses <see cref="Installment.NetAmount"/> (net of withholdings)
 /// rather than the gross <see cref="Installment.Amount"/>.
 ///
-/// Scenario A — remittance: <see cref="RemittanceLine.Amount"/> == installment.NetAmount (net).
-/// Scenario B — auto-pay:   Payment.Amount == installment.NetAmount.
-/// Regression — no withholdings: both paths pay Amount exactly (NetAmount == Amount).
+/// Scenario A — remittance with withholding: <see cref="RemittanceLine.Amount"/> == installment.NetAmount.
+/// Regression — no withholdings: remittance path pays Amount exactly (NetAmount == Amount).
+///
+/// Note: auto-pay (auto-baixa) tests were removed — the system no longer auto-settles installments to Paid.
+/// That behavior was intentionally removed; only a human "Dar baixa" or a .RET return import settles.
 /// </summary>
 [Collection("Postgres")]
 public class PayableNetAmountPaymentTests(PostgresFixture fixture)
@@ -147,13 +146,6 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
         return payableId;
     }
 
-    private static PayableAutoPayJob BuildJob(IServiceProvider services) =>
-        new(services.GetRequiredService<IServiceScopeFactory>(),
-            services.GetRequiredService<TimeProvider>(),
-            services.GetRequiredService<ILogger<PayableAutoPayJob>>(),
-            enabled: true,
-            interval: TimeSpan.FromHours(24));
-
     private sealed record NetAmountSeed(
         Guid CompanyId,
         string CompanyPrefixedId,
@@ -205,46 +197,6 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
     }
 
     /// <summary>
-    /// (B) Auto-pay path: when a payable has an IRRF withholding, the created Payment.Amount
-    /// must equal installment.NetAmount (net), not Amount (gross).
-    /// </summary>
-    [Fact]
-    public async Task AutoPay_Uses_NetAmount_When_Payable_Has_Withholding()
-    {
-        await using var factory = new ApiFactory(fixture.ConnectionString);
-        var client = await factory.CreateAdminClientAsync();
-        var seed = await SeedCompanyVendorBankAsync(factory, client);
-
-        // Gross 800, IRRF 80 → NetAmount = 720.
-        const decimal gross = 800m;
-        const decimal withheld = 80m;
-        const decimal expectedNet = gross - withheld; // 720
-
-        var payableId = await CreateScheduledPayableWithWithholdingAsync(factory, seed, gross, withheld);
-        var payablePrefixedId = $"payable_{payableId}";
-
-        var job = BuildJob(factory.Services);
-        await job.RunOnceAsync(CancellationToken.None);
-
-        // Reload the payable to inspect the payment amount and settlement status.
-        // The installment must be Paid (not PartiallyPaid) because Installment.Recompute now
-        // compares PaidAmount against NetAmount — paying exactly NetAmount settles to Paid.
-        // Consequently the payable itself must also reach Paid (via RecomputeSettlement).
-        var after = await ReadJson(await client.GetAsync($"/api/payables/{payablePrefixedId}"));
-
-        Assert.Equal("Paid", after.GetProperty("status").GetString());
-
-        var installment = after.GetProperty("installments")[0];
-        Assert.Equal("Paid", installment.GetProperty("status").GetString());
-        Assert.Equal(1, installment.GetProperty("payments").GetArrayLength());
-
-        var payment = installment.GetProperty("payments")[0];
-        var paymentAmount = payment.GetProperty("amount").GetDecimal();
-        Assert.Equal(expectedNet, paymentAmount);
-        Assert.NotEqual(gross, paymentAmount); // must NOT be the gross amount
-    }
-
-    /// <summary>
     /// (Regression A) Remittance path: a payable with NO withholding must still produce a
     /// RemittanceLine.Amount equal to installment.Amount (since NetAmount == Amount).
     /// </summary>
@@ -276,32 +228,4 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
         Assert.Equal(amount, line.Amount); // NetAmount == Amount when no withholdings
     }
 
-    /// <summary>
-    /// (Regression B) Auto-pay path: a payable with NO withholding must create a Payment.Amount
-    /// equal to installment.Amount (since NetAmount == Amount).
-    /// </summary>
-    [Fact]
-    public async Task AutoPay_Uses_Amount_When_No_Withholding()
-    {
-        await using var factory = new ApiFactory(fixture.ConnectionString);
-        var client = await factory.CreateAdminClientAsync();
-        var seed = await SeedCompanyVendorBankAsync(factory, client);
-
-        const decimal amount = 350m;
-        var payableId = await CreateScheduledPayableNoWithholdingAsync(client, seed, amount);
-        var payablePrefixedId = $"payable_{payableId}";
-
-        var job = BuildJob(factory.Services);
-        await job.RunOnceAsync(CancellationToken.None);
-
-        var after = await ReadJson(await client.GetAsync($"/api/payables/{payablePrefixedId}"));
-        Assert.Equal("Paid", after.GetProperty("status").GetString());
-
-        var installment = after.GetProperty("installments")[0];
-        Assert.Equal(1, installment.GetProperty("payments").GetArrayLength());
-
-        var payment = installment.GetProperty("payments")[0];
-        var paymentAmount = payment.GetProperty("amount").GetDecimal();
-        Assert.Equal(amount, paymentAmount); // regression: NetAmount == Amount when no withholdings
-    }
 }

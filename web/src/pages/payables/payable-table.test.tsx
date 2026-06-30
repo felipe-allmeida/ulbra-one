@@ -17,17 +17,14 @@ import { PayableTable } from './payable-table';
 const items = [
   {
     payableId: 'payable_1',
-    installmentId: 'i1',
-    sequence: 1,
-    installmentCount: 1,
     counterpartyName: 'ACME',
     description: 'NF 100',
     costCenterId: 'cc_1',
     categoryId: null,
-    dueDate: '2026-06-30',
-    amount: 1234,
-    installmentStatus: 'Open',
-    payableStatus: 'Received',
+    firstDueDate: '2026-06-30',
+    installmentCount: 3,
+    totalAmount: 3702,
+    status: 'Received',
   },
 ] as any;
 
@@ -48,6 +45,7 @@ describe('PayableTable', () => {
     );
     expect(screen.getByText('NF 100')).toBeInTheDocument();
     expect(screen.getByText('ACME')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
     fireEvent.click(screen.getByText('NF 100'));
     expect(navigate).toHaveBeenCalledWith('/app/payables/payable_1');
   });
