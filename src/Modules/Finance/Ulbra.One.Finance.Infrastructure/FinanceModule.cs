@@ -38,6 +38,7 @@ public static class FinanceModule
         // Fiscal-document reading: XML parsers (detected by namespace) + AI extractor for PDF/image.
         services.AddScoped<IFiscalXmlParser, NfeM55XmlParser>();
         services.AddScoped<IFiscalXmlParser, NfseAbrasfXmlParser>();
+        services.AddScoped<IFiscalXmlParser, NfseNacionalXmlParser>();
         services.AddScoped<AiFiscalExtractor>();
         services.AddScoped<IFiscalDocumentReader, FiscalDocumentReader>();
 

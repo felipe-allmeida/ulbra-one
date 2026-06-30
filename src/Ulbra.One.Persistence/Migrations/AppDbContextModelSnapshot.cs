@@ -1268,8 +1268,8 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("AccessKey")
-                        .HasMaxLength(44)
-                        .HasColumnType("character varying(44)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("access_key");
 
                     b.Property<string>("Cfops")
