@@ -2537,6 +2537,107 @@ namespace Ulbra.One.Persistence.Migrations
                     b.ToTable("transactions", "finance");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Fiscal.Domain.Entities.WithholdingRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean")
+                        .HasColumnName("active");
+
+                    b.Property<string>("BaseRule")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("base_rule");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Lc116Subitem")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("lc116subitem");
+
+                    b.Property<decimal?>("MinimumAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("minimum_amount");
+
+                    b.Property<string>("MunicipalityIbge")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("municipality_ibge");
+
+                    b.Property<decimal?>("Rate")
+                        .HasPrecision(10, 6)
+                        .HasColumnType("numeric(10,6)")
+                        .HasColumnName("rate");
+
+                    b.Property<string>("RateSource")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("rate_source");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("reason");
+
+                    b.Property<bool>("Retains")
+                        .HasColumnType("boolean")
+                        .HasColumnName("retains");
+
+                    b.Property<string>("TaxType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tax_type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("VendorRegime")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("vendor_regime");
+
+                    b.HasKey("Id")
+                        .HasName("pk_withholding_rules");
+
+                    b.HasIndex("CompanyId", "TaxType")
+                        .HasDatabaseName("ix_withholding_rules_company_id_tax_type");
+
+                    b.ToTable("withholding_rules", "fiscal");
+                });
+
             modelBuilder.Entity("Ulbra.One.Identity.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")

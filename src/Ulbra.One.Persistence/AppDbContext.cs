@@ -7,6 +7,8 @@ using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Core.Infrastructure.Database.Configurations;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Finance.Infrastructure.Database.Configurations;
+using Ulbra.One.Fiscal.Domain.Entities;
+using Ulbra.One.Fiscal.Infrastructure.Database.Configurations;
 using Ulbra.One.Identity.Domain.Entities;
 using Ulbra.One.Identity.Infrastructure.Database.Configurations;
 using Ulbra.One.Registry.Domain.Entities;
@@ -52,6 +54,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<VendorEntity> Vendors => Set<VendorEntity>();
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
     public DbSet<EmployeeEntity> Employees => Set<EmployeeEntity>();
+    // Fiscal
+    public DbSet<WithholdingRule> WithholdingRules => Set<WithholdingRule>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CompanyConfiguration).Assembly);
@@ -59,6 +63,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VendorConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LedgerAccountConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(WithholdingRuleConfiguration).Assembly);
         modelBuilder.MapAuditLog(ownsTable: false);
 
         // Schema only (table names come from the snake_case convention) — the project's .ToTable anti-pattern.

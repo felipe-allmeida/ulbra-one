@@ -10,6 +10,7 @@
     <ProjectReference Include="../Modules/Accounting/Ulbra.One.Accounting.Infrastructure/Ulbra.One.Accounting.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Core/Ulbra.One.Core.Infrastructure/Ulbra.One.Core.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Finance/Ulbra.One.Finance.Infrastructure/Ulbra.One.Finance.Infrastructure.csproj" />
+    <ProjectReference Include="../Modules/Fiscal/Ulbra.One.Fiscal.Infrastructure/Ulbra.One.Fiscal.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Identity/Ulbra.One.Identity.Infrastructure/Ulbra.One.Identity.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Registry/Ulbra.One.Registry.Infrastructure/Ulbra.One.Registry.Infrastructure.csproj" />
     <ProjectReference Include="../Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
