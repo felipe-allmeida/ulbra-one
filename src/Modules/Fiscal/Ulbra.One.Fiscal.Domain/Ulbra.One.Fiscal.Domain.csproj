@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
-    <!-- Reusa o vocabulário tributário compartilhado: WithholdingTaxType (Finance) e TaxRegime (Registry). -->
+    <!-- Reuses the shared tax vocabulary: WithholdingTaxType (Finance) and TaxRegime (Registry). -->
     <ProjectReference Include="../../Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
   </ItemGroup>

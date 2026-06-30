@@ -42,7 +42,7 @@ public class FiscalDocument
     public decimal? CofinsAmount { get; private set; }
     public decimal? TotalTaxesAmount { get; private set; }
 
-    // Fiscal signals (NFS-e only): subitem LC 116 + código municipal + IBGE de incidência + Cnae + alíquota/ISS retido da nota.
+    // Fiscal signals (NFS-e only): LC 116 subitem + municipal code + incidence IBGE + Cnae + invoice ISS rate/withheld flag.
     public string? Lc116Subitem { get; private set; }
     public string? MunicipalServiceCode { get; private set; }
     public string? ServiceMunicipalityIbge { get; private set; }

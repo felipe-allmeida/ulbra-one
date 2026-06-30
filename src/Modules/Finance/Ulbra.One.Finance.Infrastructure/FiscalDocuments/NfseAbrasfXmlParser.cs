@@ -53,8 +53,8 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
         var rpsSeries = rpsIdentification?.Element(Ns + "Serie")?.Value;
         var serviceDescription = service?.Element(Ns + "Discriminacao")?.Value;
         var cnaeCode = service?.Element(Ns + "CodigoCnae")?.Value;
-        // Sinais de serviço/tributação NFS-e. ItemListaServico (subitem LC 116) é o confiável; os demais
-        // são opcionais no ABRASF (best-effort p/ ISS). Aliquota/IssRetido ficam em Servico/Valores.
+        // NFS-e service/tax signals. ItemListaServico (LC 116 subitem) is the reliable one; the others
+        // are optional in ABRASF (best-effort for ISS). Aliquota/IssRetido live under Servico/Valores.
         var lc116Subitem = service?.Element(Ns + "ItemListaServico")?.Value;
         var municipalServiceCode = service?.Element(Ns + "CodigoTributacaoMunicipio")?.Value;
         var serviceMunicipalityIbge = service?.Element(Ns + "CodigoMunicipio")?.Value;
@@ -93,7 +93,7 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
             IssRetidoNaNota: issRetidoNaNota);
     }
 
-    // ABRASF tcSimNao: 1 = Sim, 2 = Não; qualquer outro valor (ou ausente) → null.
+    // ABRASF tcSimNao: 1 = Yes, 2 = No; any other value (or absent) -> null.
     private static bool? ParseSimNao(string? value) => value?.Trim() switch
     {
         "1" => true,

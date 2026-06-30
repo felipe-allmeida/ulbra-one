@@ -10,8 +10,8 @@ using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.SetSimplesDeclaration;
 
-/// <summary>Marca se a declaração do Simples Nacional do fornecedor está em arquivo — condição da dispensa
-/// da retenção federal (IN RFB 1.234/2012, art. 4º, XI). Sem ela, a fonte pagadora deve reter.</summary>
+/// <summary>Marks whether the vendor's Simples Nacional declaration is on file — the condition for waiving
+/// federal withholding (IN RFB 1.234/2012, art. 4, XI). Without it, the paying source must withhold.</summary>
 public sealed class SetSimplesDeclaration : IEndpoint
 {
     public sealed record Request

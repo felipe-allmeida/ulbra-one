@@ -35,8 +35,8 @@ public class Payable : IAuditable, ISoftDeletable
     public Guid? SuggestedFinancialAccountId { get; private set; }
     public double? ClassificationConfidence { get; private set; }
     public string? ClassificationRationale { get; private set; }
-    // Declaração do Simples Nacional do fornecedor (IN RFB 1.234/2012, art. 4º, XI): condição da dispensa
-    // da retenção federal. false (default) = sem declaração em arquivo → a fonte deve reter.
+    // Vendor's Simples Nacional declaration (IN RFB 1.234/2012, art. 4, XI): condition for the federal
+    // withholding exemption. false (default) = no declaration on file -> the paying source must withhold.
     public bool SimplesDeclarationProvided { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -235,7 +235,7 @@ public class Payable : IAuditable, ISoftDeletable
     }
 
     /// <summary>Marks whether the vendor's Simples Nacional declaration is on file — the condition for waiving
-    /// federal withholding (IN RFB 1.234/2012, art. 4º, XI). Without it, the paying source must withhold.</summary>
+    /// federal withholding (IN RFB 1.234/2012, art. 4, XI). Without it, the paying source must withhold.</summary>
     public void SetSimplesDeclarationProvided(bool provided)
     {
         EnsureMutable();

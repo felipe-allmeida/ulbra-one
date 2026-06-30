@@ -7,25 +7,25 @@ using Xunit;
 
 namespace Ulbra.One.UnitTests.Fiscal;
 
-/// <summary>Tabela de aceitação do cálculo automático de retenção (HTML §4.5).</summary>
+/// <summary>Acceptance table for the automatic withholding calculation (HTML §4.5).</summary>
 public class WithholdingRuleResolverTests
 {
-    // Conjunto-base de regras (espelha o seed que a Contabilidade valida).
+    // Baseline rule set (mirrors the seed the Accounting team validates).
     private static List<WithholdingRule> BaseRules() =>
     [
-        // Federais gerais (qualquer regime).
+        // General federal taxes (any regime).
         new(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.015m),
         new(WithholdingTaxType.Pis, retains: true, RateSource.Fixed, 0.0065m),
         new(WithholdingTaxType.Cofins, retains: true, RateSource.Fixed, 0.03m),
         new(WithholdingTaxType.Csll, retains: true, RateSource.Fixed, 0.01m),
-        // Dispensa do Simples (federais de renda/contribuição) — condicionada à declaração.
-        new(WithholdingTaxType.Irrf, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeDispensa),
-        new(WithholdingTaxType.Pis, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeDispensa),
-        new(WithholdingTaxType.Cofins, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeDispensa),
-        new(WithholdingTaxType.Csll, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeDispensa),
-        // INSS 11% para cessão de mão de obra (subitem 11.02 = vigilância) — qualquer regime.
+        // Simples exemption (federal income/contribution taxes) — conditioned on the declaration.
+        new(WithholdingTaxType.Irrf, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+        new(WithholdingTaxType.Pis, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+        new(WithholdingTaxType.Cofins, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+        new(WithholdingTaxType.Csll, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+        // INSS 11% for labor-supply services (LC116 subitem 11.02 = security) — any regime.
         new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02"),
-        // ISS: não-Simples usa a alíquota do município (Canoas 5%); Simples usa a alíquota da nota (faixa).
+        // ISS: non-Simples uses the municipal rate (Canoas 5%); Simples uses the invoice rate (band).
         new(WithholdingTaxType.Iss, retains: true, RateSource.Fixed, 0.05m, municipalityIbge: "4304606"),
         new(WithholdingTaxType.Iss, retains: true, RateSource.FromNota, null, vendorRegime: TaxRegime.SimplesNacional),
     ];
@@ -34,26 +34,26 @@ public class WithholdingRuleResolverTests
         r.Where(c => c.TaxType == t).Sum(c => c.Amount);
 
     [Fact]
-    public void LucroPresumido_assessoria_em_canoas_retem_irrf_csrf_e_iss()
+    public void LucroPresumido_service_withholds_irrf_csrf_and_iss()
     {
         var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido, false,
             [new ServiceLine("17.01", "4304606", null, 3000m)]);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // 1,5%
-        Assert.Equal(19.50m, Amount(r, WithholdingTaxType.Pis));     // 0,65%
+        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // 1.5%
+        Assert.Equal(19.50m, Amount(r, WithholdingTaxType.Pis));     // 0.65%
         Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Cofins));  // 3%
         Assert.Equal(30.00m, Amount(r, WithholdingTaxType.Csll));    // 1%
         Assert.Equal(150.00m, Amount(r, WithholdingTaxType.Iss));    // 5% (Canoas)
-        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // não é cessão de MO
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // not labor-supply
     }
 
     [Fact]
-    public void Simples_com_declaracao_nao_retem_federal_mas_retem_iss_da_nota()
+    public void Simples_with_declaration_skips_federal_keeps_iss_from_nota()
     {
         var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: true,
-            [new ServiceLine("17.01", "4304606", 0.03m, 3000m)]); // nota traz ISS 3% (faixa do Simples)
+            [new ServiceLine("17.01", "4304606", 0.03m, 3000m)]); // invoice carries ISS 3% (Simples band)
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
@@ -61,39 +61,39 @@ public class WithholdingRuleResolverTests
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Pis));
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Cofins));
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Csll));
-        Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Iss));     // 3% da nota
+        Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Iss));     // 3% from the invoice
     }
 
     [Fact]
-    public void Simples_sem_declaracao_retem_federal()
+    public void Simples_without_declaration_withholds_federal()
     {
         var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: false,
             [new ServiceLine("17.01", "4304606", 0.03m, 3000m)]);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // dispensa cai → retém
+        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // exemption falls → withholds
         Assert.Equal(19.50m, Amount(r, WithholdingTaxType.Pis));
         Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Cofins));
         Assert.Equal(30.00m, Amount(r, WithholdingTaxType.Csll));
     }
 
     [Fact]
-    public void Cessao_de_mao_de_obra_retem_inss_em_qualquer_regime()
+    public void Labor_supply_withholds_inss_regardless_of_regime()
     {
         var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: true,
-            [new ServiceLine("11.02", "4304606", null, 5000m)]); // vigilância
+            [new ServiceLine("11.02", "4304606", null, 5000m)]); // security
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11% mesmo no Simples
+        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11% even under Simples
     }
 
     [Fact]
-    public void Produto_sem_linha_de_servico_nao_gera_retencao()
+    public void Product_without_service_line_yields_no_withholding()
     {
         var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, false,
-            [new ServiceLine(null, null, null, 15500m)]); // NF-e produto: sem subitem LC116
+            [new ServiceLine(null, null, null, 15500m)]); // NF-e product: no LC116 subitem
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 

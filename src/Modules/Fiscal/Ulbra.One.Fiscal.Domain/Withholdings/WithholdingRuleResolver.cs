@@ -4,20 +4,20 @@ using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Fiscal.Domain.Withholdings;
 
-/// <summary>Uma linha de serviço da nota: a base do cálculo é a linha, não o documento.
-/// <paramref name="Lc116Subitem"/> nulo = não é serviço (produto) → não sofre retenção.</summary>
+/// <summary>A service line of the invoice: the calculation base is the line, not the document.
+/// A null <paramref name="Lc116Subitem"/> = not a service (a product) → no withholding.</summary>
 public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? NotaIssRate, decimal Amount);
 
-/// <summary>Insumos da resolução: empresa, regime do fornecedor, presença da declaração do Simples e as linhas.</summary>
+/// <summary>Resolution inputs: company, vendor regime, whether the Simples declaration is on file, and the lines.</summary>
 public sealed record ResolutionContext(
     Guid? CompanyId, TaxRegime VendorRegime, bool SimplesDeclarationProvided, IReadOnlyList<ServiceLine> Lines);
 
-/// <summary>Uma retenção calculada (atômica por tributo), pronta para virar PayableWithholding.</summary>
+/// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
 
 /// <summary>
-/// Resolve as retenções POR TRIBUTO a partir das regras e do contexto. Puro (sem EF) e determinístico.
-/// Federal robusto (chave LC116 + regime); ISS best-effort (precisa de município + alíquota).
+/// Resolves withholdings PER TAX from the rules and the context. Pure (no EF) and deterministic.
+/// Federal is robust (key = LC116 + regime); ISS is best-effort (needs municipality + rate).
 /// </summary>
 public static class WithholdingRuleResolver
 {
@@ -30,12 +30,12 @@ public static class WithholdingRuleResolver
     public static IReadOnlyList<WithholdingComputation> Resolve(
         IReadOnlyCollection<WithholdingRule> rules, ResolutionContext context)
     {
-        // Acumula por tributo atômico, somando as linhas de serviço.
+        // Accumulate per atomic tax, summing across the service lines.
         var perTax = new Dictionary<WithholdingTaxType, (decimal Base, decimal Amount, decimal Rate)>();
 
         foreach (var line in context.Lines)
         {
-            // Só linha de serviço (com subitem LC116) sofre retenção; produto / sem subitem é ignorado.
+            // Only a service line (with an LC116 subitem) is subject to withholding; a product / no subitem is skipped.
             if (string.IsNullOrWhiteSpace(line.Lc116Subitem)) continue;
 
             foreach (var tax in WithholdingTaxes)
@@ -43,11 +43,11 @@ public static class WithholdingRuleResolver
                 var rule = ResolveRule(rules, tax, line, context);
                 if (rule is null || !rule.Retains) continue;
 
-                // Fixed: alíquota da regra. FromNota: alíquota da própria nota (ISS de Simples = faixa do prestador).
+                // Fixed: rate from the rule. FromNota: rate from the invoice itself (Simples ISS = provider's band).
                 var rate = rule.RateSource == RateSource.FromNota ? line.NotaIssRate : rule.Rate;
-                if (rate is null or <= 0) continue; // best-effort: sem alíquota não calcula
+                if (rate is null or <= 0) continue; // best-effort: without a rate we cannot compute
 
-                var baseAmount = line.Amount; // BaseRule.Cheia (MVP)
+                var baseAmount = line.Amount; // BaseRule.Full (MVP)
                 var amount = Math.Round(baseAmount * rate.Value, 2, MidpointRounding.AwayFromZero);
                 if (amount <= 0) continue;
 
@@ -64,8 +64,8 @@ public static class WithholdingRuleResolver
             .ToList();
     }
 
-    /// <summary>Escolhe a regra mais específica e elegível para (tributo × linha × contexto).
-    /// Especificidade = nº de dimensões fixadas; desempate: regime &gt; município &gt; empresa &gt; Id (determinístico).</summary>
+    /// <summary>Picks the most specific eligible rule for (tax × line × context).
+    /// Specificity = number of pinned dimensions; tiebreak: regime &gt; municipality &gt; company &gt; Id (deterministic).</summary>
     private static WithholdingRule? ResolveRule(
         IReadOnlyCollection<WithholdingRule> rules, WithholdingTaxType tax, ServiceLine line, ResolutionContext ctx) =>
         rules.Where(r =>
@@ -83,12 +83,12 @@ public static class WithholdingRuleResolver
             .ThenBy(r => r.Id)
             .FirstOrDefault();
 
-    // Gate da declaração do Simples: a dispensa federal do Simples (regime Simples + não-retém) só vale
-    // com a declaração em arquivo. Sem ela, a regra de dispensa é inelegível → cai na regra geral (retém).
+    // Simples declaration gate: the Simples federal exemption (Simples regime + does-not-retain) only holds
+    // when the declaration is on file. Without it, the exemption rule is ineligible → the general rule wins (withholds).
     private static bool IsEligible(WithholdingRule r, ResolutionContext ctx) =>
         !(r.VendorRegime == TaxRegime.SimplesNacional && !r.Retains && !ctx.SimplesDeclarationProvided);
 
-    // Piso/dispensa no nível do grupo de recolhimento (ex.: CSRF sobre a soma PIS+COFINS+CSLL).
+    // Minimum/exemption at the collection-group level (e.g., CSRF over the PIS+COFINS+CSLL sum).
     private static void ApplyGroupMinimum(
         IReadOnlyCollection<WithholdingRule> rules,
         Dictionary<WithholdingTaxType, (decimal Base, decimal Amount, decimal Rate)> perTax)

@@ -6,7 +6,7 @@ public static class FiscalEndpoints
 {
     public static IEndpointRouteBuilder MapFiscalEndpoints(this IEndpointRouteBuilder builder)
     {
-        // Endpoints do módulo Fiscal (ex.: CRUD de WithholdingRule) entram aqui.
+        // Fiscal module endpoints (e.g., WithholdingRule CRUD) go here.
         return builder;
     }
 }

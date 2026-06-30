@@ -162,7 +162,7 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
-    // NFS-e ABRASF com campos de ISS/município preenchidos (assessoria 17.01, Canoas IBGE 4304606, ISS 5% retido).
+    // NFS-e ABRASF with ISS/municipality fields populated (advisory 17.01, Canoas IBGE 4304606, ISS 5% withheld).
     private const string NfseWithIssXml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -277,7 +277,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("RPS", p.RpsSeries);
         Assert.Equal("6201501", p.CnaeCode);
         Assert.Contains("CT-2026-014", p.ServiceDescription);
-        // LC 116 subitem é confiável (vem na nota); os demais campos de ISS são opcionais e ausentes nesta amostra.
+        // LC 116 subitem is reliable (comes in the invoice); the other ISS fields are optional and absent in this sample.
         Assert.Equal("01.04", p.Lc116Subitem);
         Assert.Null(p.MunicipalServiceCode);
         Assert.Null(p.ServiceMunicipalityIbge);

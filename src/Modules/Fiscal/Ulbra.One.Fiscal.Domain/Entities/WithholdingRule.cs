@@ -5,10 +5,10 @@ using Ulbra.One.Registry.Domain.Entities;
 namespace Ulbra.One.Fiscal.Domain.Entities;
 
 /// <summary>
-/// Regra de retenção editável que o resolver aplica POR TRIBUTO. A chave são dimensões opcionais
-/// (null = "qualquer"): <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>, <see cref="MunicipalityIbge"/>,
-/// <see cref="CompanyId"/>. O desfecho é <see cref="Retains"/> + alíquota/base/piso. A especificidade
-/// (qual regra vence quando várias casam) é CALCULADA na resolução, não armazenada.
+/// Editable withholding rule applied by the resolver PER TAX. The key is a set of optional dimensions
+/// (null = "any"): <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>, <see cref="MunicipalityIbge"/>,
+/// <see cref="CompanyId"/>. The outcome is <see cref="Retains"/> + rate/base/minimum. Specificity
+/// (which rule wins when several match) is COMPUTED during resolution, not stored.
 /// </summary>
 public class WithholdingRule : IAuditable, ISoftDeletable
 {
@@ -33,10 +33,10 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     public DateTimeOffset UpdatedAt { get; private set; }
     public string UpdatedBy { get; private set; } = string.Empty;
 
-    /// <summary>Grupo de recolhimento (DARF/guia) derivado do tributo.</summary>
+    /// <summary>Collection group (DARF/guia) derived from the tax.</summary>
     public RetentionGroup Group => RetentionGroups.For(TaxType);
 
-    /// <summary>Quantas dimensões a regra fixa (não-nulas) — base da especificidade na resolução.</summary>
+    /// <summary>How many dimensions the rule pins (non-null) — the basis of specificity during resolution.</summary>
     public int DimensionCount =>
         (Lc116Subitem is not null ? 1 : 0) + (VendorRegime is not null ? 1 : 0)
         + (MunicipalityIbge is not null ? 1 : 0) + (CompanyId is not null ? 1 : 0);
@@ -45,7 +45,7 @@ public class WithholdingRule : IAuditable, ISoftDeletable
 
     public WithholdingRule(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
         string? lc116Subitem = null, TaxRegime? vendorRegime = null, string? municipalityIbge = null,
-        Guid? companyId = null, BaseRule baseRule = BaseRule.Cheia, decimal? minimumAmount = null,
+        Guid? companyId = null, BaseRule baseRule = BaseRule.Full, decimal? minimumAmount = null,
         NonRetentionReason reason = NonRetentionReason.None)
     {
         TaxType = taxType;
