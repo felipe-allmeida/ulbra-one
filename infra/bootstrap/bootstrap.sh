@@ -159,7 +159,10 @@ echo "==> [6/6] Role assignments for SP"
 
 SUBSCRIPTION_SCOPE="/subscriptions/${SUBSCRIPTION_ID}"
 
-for ROLE in "Contributor" "User Access Administrator"; do
+# "Key Vault Secrets Officer" gives the deploy SP data-plane access to read/write KV secrets.
+# Granted here (not in Terraform) so Terraform never has to bootstrap its own KV access — that
+# self-grant broke deploys whenever the OIDC identity changed (chicken-and-egg 403 on refresh).
+for ROLE in "Contributor" "User Access Administrator" "Key Vault Secrets Officer"; do
   EXISTING=$(az role assignment list \
     --assignee "${APP_ID}" \
     --role "${ROLE}" \
