@@ -1277,6 +1277,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("cfops");
 
+                    b.Property<string>("Cnae")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("cnae");
+
                     b.Property<decimal?>("CofinsAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -1317,6 +1322,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("ipi_amount");
 
+                    b.Property<bool?>("IssRetidoNaNota")
+                        .HasColumnType("boolean")
+                        .HasColumnName("iss_retido_na_nota");
+
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");
@@ -1331,10 +1340,25 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("issuer_name");
 
+                    b.Property<string>("Lc116Subitem")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("lc116subitem");
+
+                    b.Property<string>("MunicipalServiceCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("municipal_service_code");
+
                     b.Property<string>("Ncms")
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("ncms");
+
+                    b.Property<decimal?>("NotaIssRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("nota_iss_rate");
 
                     b.Property<Guid>("PayableId")
                         .HasColumnType("uuid")
@@ -1354,6 +1378,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasMaxLength(14)
                         .HasColumnType("character varying(14)")
                         .HasColumnName("recipient_document");
+
+                    b.Property<string>("ServiceMunicipalityIbge")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("service_municipality_ibge");
 
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint")
@@ -1558,6 +1587,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("rejection_reason");
+
+                    b.Property<bool>("SimplesDeclarationProvided")
+                        .HasColumnType("boolean")
+                        .HasColumnName("simples_declaration_provided");
 
                     b.Property<string>("Status")
                         .IsRequired()
