@@ -33,6 +33,13 @@ public sealed record ParsedFiscalDocument(
     string? RpsSeries = null,
     string? ServiceDescription = null,
     string? CnaeCode = null,
+    // NFS-e (serviço) — sinais tributários promovidos a colunas; insumo do cálculo de retenção.
+    // Lc116Subitem (ItemListaServico) é confiável; os demais são opcionais no ABRASF (best-effort p/ ISS).
+    string? Lc116Subitem = null,
+    string? MunicipalServiceCode = null,
+    string? ServiceMunicipalityIbge = null,
+    decimal? NotaIssRate = null,
+    bool? IssRetidoNaNota = null,
     // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
     string? IssuerPhone = null,
     ParsedAddress? IssuerAddress = null,

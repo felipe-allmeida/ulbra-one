@@ -162,6 +162,43 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    // NFS-e ABRASF com campos de ISS/município preenchidos (assessoria 17.01, Canoas IBGE 4304606, ISS 5% retido).
+    private const string NfseWithIssXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.04">
+    <InfNfse Id="NFSE00000005678">
+      <Numero>00000005678</Numero>
+      <DataEmissao>2026-06-20T09:15:00</DataEmissao>
+      <Servico>
+        <Valores>
+          <ValorServicos>3000.00</ValorServicos>
+          <Aliquota>0.0500</Aliquota>
+          <IssRetido>1</IssRetido>
+          <ValorIss>150.00</ValorIss>
+        </Valores>
+        <ItemListaServico>17.01</ItemListaServico>
+        <CodigoTributacaoMunicipio>170100</CodigoTributacaoMunicipio>
+        <CodigoMunicipio>4304606</CodigoMunicipio>
+        <CodigoCnae>6204000</CodigoCnae>
+        <Discriminacao>Assessoria e consultoria.</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador>
+          <CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj>
+        </IdentificacaoPrestador>
+        <RazaoSocial>Consultoria Exemplo LTDA</RazaoSocial>
+      </PrestadorServico>
+      <TomadorServico>
+        <IdentificacaoTomador>
+          <CpfCnpj><Cnpj>11444777000161</Cnpj></CpfCnpj>
+        </IdentificacaoTomador>
+      </TomadorServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
+""";
+
     private sealed class DisabledAi : IAiCompletion
     {
         public Task<Result<T>> CompleteAsync<T>(AiPrompt p, AiOptions? o = null, CancellationToken ct = default) where T : class =>
@@ -240,6 +277,23 @@ public class FiscalDocumentParserTests
         Assert.Equal("RPS", p.RpsSeries);
         Assert.Equal("6201501", p.CnaeCode);
         Assert.Contains("CT-2026-014", p.ServiceDescription);
+        // LC 116 subitem é confiável (vem na nota); os demais campos de ISS são opcionais e ausentes nesta amostra.
+        Assert.Equal("01.04", p.Lc116Subitem);
+        Assert.Null(p.MunicipalServiceCode);
+        Assert.Null(p.ServiceMunicipalityIbge);
+        Assert.Null(p.NotaIssRate);
+        Assert.Null(p.IssRetidoNaNota);
+    }
+
+    [Fact]
+    public void Nfse_parser_extracts_iss_and_municipal_fields()
+    {
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseWithIssXml));
+        Assert.Equal("17.01", p.Lc116Subitem);
+        Assert.Equal("170100", p.MunicipalServiceCode);
+        Assert.Equal("4304606", p.ServiceMunicipalityIbge);
+        Assert.Equal(0.05m, p.NotaIssRate);
+        Assert.True(p.IssRetidoNaNota);
     }
 
     [Fact]
