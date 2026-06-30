@@ -61,6 +61,24 @@ public class WithholdingRule : IAuditable, ISoftDeletable
         Reason = reason;
     }
 
+    /// <summary>Replaces all rule fields (CRUD update).</summary>
+    public void Update(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
+        string? lc116Subitem, TaxRegime? vendorRegime, string? municipalityIbge, Guid? companyId,
+        BaseRule baseRule, decimal? minimumAmount, NonRetentionReason reason)
+    {
+        TaxType = taxType;
+        Retains = retains;
+        RateSource = rateSource;
+        Rate = rate;
+        Lc116Subitem = lc116Subitem;
+        VendorRegime = vendorRegime;
+        MunicipalityIbge = municipalityIbge;
+        CompanyId = companyId;
+        BaseRule = baseRule;
+        MinimumAmount = minimumAmount;
+        Reason = reason;
+    }
+
     public void Activate() => Active = true;
     public void Deactivate() => Active = false;
 
