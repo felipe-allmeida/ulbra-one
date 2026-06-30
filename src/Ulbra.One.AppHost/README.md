@@ -38,9 +38,18 @@ Aspire injects environment variables into the `api` process:
 | `MassTransit__Password`        | RabbitMQ password parameter                                     |
 | `ObjectStorage__Provider`      | Hardcoded `AzureBlob`                                           |
 | `ObjectStorage__Bucket`        | Hardcoded `attachments`                                         |
-| `ObjectStorage__ConnectionString` | Azurite blob endpoint (injected via `WithReference(blobs)`)  |
+| `ObjectStorage__ConnectionString` | Azurite blob connection string (from `blobs.Resource.ConnectionStringExpression`) |
 
 The web app receives `PORT` (HTTP port) and `VITE_API_BASE_URL` pointing at the running API.
+
+## Upload flow (fiscal / SAS)
+
+The fiscal-document upload is *presigned*: the browser PUTs the file directly to a SAS URL returned
+by the API. Under Aspire the API runs as a host process and Azurite is exposed on `127.0.0.1:<port>`,
+so the SAS URL host is already reachable from the browser. In `docker-compose` the server reaches
+Azurite at the in-network `azurite:10000`, which the browser can't resolve — there
+`ObjectStorage:PublicBlobEndpoint` (`http://localhost:10000`) rewrites the SAS URL host so the
+browser PUT works. Either way the full upload flow (incl. fiscal/SAS) works locally.
 
 ## Notes
 
