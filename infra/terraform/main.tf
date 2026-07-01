@@ -203,9 +203,11 @@ module "container_app_web" {
   identity_id      = module.identity.id
   acr_login_server = data.azurerm_container_registry.shared.login_server
 
-  # Frontend only needs VITE_ vars — no secrets required
+  # Frontend only needs VITE_ vars — no secrets required.
+  # The API mounts every endpoint under /api (app.MapGroup("/api")), so the SPA base URL must
+  # include it — otherwise calls like /api/auth/google resolve to /auth/google → 404.
   env_vars = {
-    VITE_API_BASE_URL     = "https://${module.container_app_api.fqdn}"
+    VITE_API_BASE_URL     = "https://${module.container_app_api.fqdn}/api"
     VITE_GOOGLE_CLIENT_ID = var.google_client_id
   }
 
