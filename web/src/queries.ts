@@ -105,6 +105,7 @@ export const queryKeys = {
   trialBalance: (companyId?: string) => ['trialBalance', companyId ?? ''] as const,
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
+  withholdingsReport: (companyId?: string) => ['withholdingsReport', companyId ?? ''] as const,
   cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
   cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
   pendingPostings: (params: PendingPostingsParams) => ['pendingPostings', params] as const,
@@ -1293,6 +1294,14 @@ export function useBalanceSheet(params: BalanceSheetParams, options?: { enabled?
   return useQuery({
     queryKey: queryKeys.balanceSheet(params),
     queryFn: () => api.balanceSheet(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useWithholdingsReport(companyId?: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.withholdingsReport(companyId),
+    queryFn: () => api.withholdingsReport(companyId),
     enabled: options?.enabled ?? true,
   });
 }

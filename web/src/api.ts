@@ -276,6 +276,38 @@ export interface JournalEntryInput {
 // ---------- Aging de Contas a Pagar ----------
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
+
+// ---------- Relatório de Retenções ----------
+// Manual types: this endpoint is not yet in the generated OpenAPI schema. Reuses the existing string enums.
+export interface WithholdingReportLine {
+  id: string;
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  rate: number | null;
+  amount: number;
+}
+export interface WithholdingByTaxRow {
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  amount: number;
+  payableCount: number;
+}
+export interface WithholdingPayableRow {
+  id: string;
+  vendorId: string;
+  counterpartyName: string;
+  documentNumber: string | null;
+  status: PayableStatus;
+  totalAmount: number;
+  totalWithheld: number;
+  netTotal: number;
+  lines: WithholdingReportLine[];
+}
+export interface WithholdingsReport {
+  totals: { grossTotal: number; withheldTotal: number; netTotal: number; payableCount: number };
+  byTax: WithholdingByTaxRow[];
+  byPayable: WithholdingPayableRow[];
+}
 export type AgingBucket = Schemas['AgingBucket'];
 
 // ---------- Cash flow (Fluxo de caixa) ----------
@@ -1006,6 +1038,11 @@ export const api = {
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.asOf) q.set('asOf', params.asOf);
     return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
+  withholdingsReport: (companyId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    return request<WithholdingsReport>(`/payables/withholdings?${q}`);
   },
 
   // ---------- Registry: Lookups ----------

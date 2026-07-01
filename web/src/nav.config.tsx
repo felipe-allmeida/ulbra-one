@@ -21,6 +21,7 @@ import {
   Tags,
   BookOpen,
   Scale,
+  Percent,
   Truck,
   UserSquare,
   Tag,
@@ -125,6 +126,7 @@ export const NAV_DOMAINS: NavDomain[] = [
           { labelKey: 'nav.trialBalance', to: '/app/accounting/trial-balance', icon: <Scale /> },
           { labelKey: 'nav.incomeStatement', to: '/app/accounting/income-statement', icon: <LineChart /> },
           { labelKey: 'nav.balanceSheet', to: '/app/accounting/balance-sheet', icon: <BookText /> },
+          { labelKey: 'nav.withholdings', to: '/app/accounting/withholdings', icon: <Percent /> },
         ],
       },
       {

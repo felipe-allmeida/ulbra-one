@@ -54,6 +54,7 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
 using Ulbra.One.Finance.Application.Endpoints.Payables.StageSummary;
 using Ulbra.One.Finance.Application.Endpoints.Payables.StageItems;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadPaymentProof;
+using Ulbra.One.Finance.Application.Endpoints.Payables.WithholdingsReport;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CancelReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.CreateReceivable;
 using Ulbra.One.Finance.Application.Endpoints.Receivables.DownloadReceiptProof;
@@ -137,6 +138,9 @@ public static class FinanceEndpoints
         var aging = builder.MapGroup("/payables/aging");
         aging.MapEndpoint<GetAgingReport>();
         aging.MapEndpoint<GetAgingItems>();
+
+        var withholdingsReport = builder.MapGroup("/payables/withholdings");
+        withholdingsReport.MapEndpoint<GetWithholdingsReport>();
 
         var receivables = builder.MapGroup("/receivables");
         receivables.MapEndpoint<ListReceivables>();
