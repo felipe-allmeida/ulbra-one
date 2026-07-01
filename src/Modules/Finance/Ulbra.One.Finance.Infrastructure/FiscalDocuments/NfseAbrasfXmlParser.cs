@@ -57,7 +57,9 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
         var cnaeCode = service?.Element(Ns + "CodigoCnae")?.Value;
         // NFS-e service/tax signals. ItemListaServico (LC 116 subitem) is the reliable one; the others
         // are optional in ABRASF (best-effort for ISS). Aliquota/IssRetido live under Servico/Valores.
-        var lc116Subitem = service?.Element(Ns + "ItemListaServico")?.Value;
+        // Trimmed so stray whitespace can't break the exact-match against the withholding rules — the same
+        // canonical "XX.XX" form the national parser derives from cTribNac.
+        var lc116Subitem = service?.Element(Ns + "ItemListaServico")?.Value?.Trim();
         var municipalServiceCode = service?.Element(Ns + "CodigoTributacaoMunicipio")?.Value;
         var serviceMunicipalityIbge = service?.Element(Ns + "CodigoMunicipio")?.Value;
         var notaIssRate = FiscalXml.ParseDecimal(
