@@ -15,7 +15,8 @@ public sealed class FiscalDocumentConfiguration : BaseEntityConfiguration<Fiscal
     protected override void ConfigureEntity(EntityTypeBuilder<FiscalDocument> e)
     {
         e.HasKey(x => x.Id);
-        e.Property(x => x.AccessKey).HasMaxLength(44);
+        // 44 for NF-e/NFS-e ABRASF; 50 for the NFS-e national standard (SEFIN) access key.
+        e.Property(x => x.AccessKey).HasMaxLength(50);
         e.Property(x => x.DocumentNumber).HasMaxLength(60);
         e.Property(x => x.TotalAmount).HasPrecision(18, 2);
         e.Property(x => x.IssuerDocument).HasMaxLength(14);

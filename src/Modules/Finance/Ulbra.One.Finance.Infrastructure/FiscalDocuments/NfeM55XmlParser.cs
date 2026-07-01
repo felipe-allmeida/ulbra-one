@@ -65,7 +65,7 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
         }
 
         // Item descriptions (det/prod/xProd) joined into one free-text description — the NF-e analog of the
-        // NFS-e "discriminação"; used to pre-fill the payable description (à NFS-e já preenche por serviceDescription).
+        // NFS-e "Discriminacao" field; used to pre-fill the payable description (NFS-e already fills it via ServiceDescription).
         var productDescriptions = nfeInfo.Elements(Ns + "det")
             .Select(item => item.Element(Ns + "prod")?.Element(Ns + "xProd")?.Value?.Trim())
             .Where(text => !string.IsNullOrEmpty(text))
@@ -87,8 +87,8 @@ public sealed class NfeM55XmlParser : IFiscalXmlParser
             FiscalXml.ParseDecimal(totals?.Element(Ns + "vCOFINS")?.Value),
             FiscalXml.ParseDecimal(totals?.Element(Ns + "vTotTrib")?.Value));
 
-        var invoice = billing?.Element(Ns + "fat"); // fatura-mãe (sintética)
-        var payment = nfeInfo.Element(Ns + "pag"); // <pag>/<detPag>: forma + valor (parcelado ou único somando vNF)
+        var invoice = billing?.Element(Ns + "fat"); // synthetic parent invoice (fatura-mãe)
+        var payment = nfeInfo.Element(Ns + "pag"); // <pag>/<detPag>: method + amount (installments or a single sum of vNF)
         var rawExtraction = JsonSerializer.Serialize(new
         {
             accessKey,

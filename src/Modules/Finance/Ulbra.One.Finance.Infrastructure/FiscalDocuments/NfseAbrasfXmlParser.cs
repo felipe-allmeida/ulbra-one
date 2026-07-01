@@ -9,7 +9,7 @@ using Ulbra.One.Finance.Domain;
 namespace Ulbra.One.Finance.Infrastructure.FiscalDocuments;
 
 /// <summary>
-/// Parses NFS-e in the ABRASF national standard (serviço). Namespace: abrasf.org.br/nfse.xsd. Detection
+/// Parses NFS-e in the ABRASF national standard (service). Namespace: abrasf.org.br/nfse.xsd. Detection
 /// is by namespace only (the root varies: <c>CompNfse</c>, query responses, etc.); the <c>InfNfse</c>
 /// block is located anywhere in the tree.
 /// </summary>
@@ -33,8 +33,10 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
 
         var documentNumber = nfseInfo.Element(Ns + "Numero")?.Value;
         var issueDate = FiscalXml.ParseDate(nfseInfo.Element(Ns + "DataEmissao")?.Value);
+        // TotalAmount = gross service value (ValorServicos); ValorLiquidoNfse is only a fallback.
+        // (Changed from liquid-first — see AEL-646.)
         var totalAmount = FiscalXml.ParseDecimal(
-            serviceAmounts?.Element(Ns + "ValorLiquidoNfse")?.Value ?? serviceAmounts?.Element(Ns + "ValorServicos")?.Value);
+            serviceAmounts?.Element(Ns + "ValorServicos")?.Value ?? serviceAmounts?.Element(Ns + "ValorLiquidoNfse")?.Value);
 
         var providerIdentification = provider?.Element(Ns + "IdentificacaoPrestador");
         var providerCpfCnpj = providerIdentification?.Element(Ns + "CpfCnpj");

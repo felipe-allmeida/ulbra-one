@@ -28,7 +28,7 @@ public sealed record ParsedFiscalDocument(
     IReadOnlyList<ParsedInstallment> Installments,
     VendorId? MatchedVendorId = null,
     string? MatchedVendorName = null,
-    // NFS-e (serviço) — informativos, exibidos no preview; null para NF-e/PDF.
+    // NFS-e (service) — informational, shown in the preview; null for NF-e/PDF.
     string? RpsNumber = null,
     string? RpsSeries = null,
     string? ServiceDescription = null,
