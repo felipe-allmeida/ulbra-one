@@ -6,6 +6,7 @@ using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.SetSimplesDeclaration;
@@ -27,7 +28,8 @@ public sealed class SetSimplesDeclaration : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(PayableId id, Request req, IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(
+        PayableId id, Request req, IUnitOfWork uow, IAutoWithholdingService autoWithholding, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null)
@@ -42,6 +44,9 @@ public sealed class SetSimplesDeclaration : IEndpoint
             return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "Payable.NotMutable");
         }
 
+        // The declaration flips the federal exemption → recompute so the change takes effect immediately
+        // (no-op when the payable is already scheduled/locked or is not a service).
+        await autoWithholding.RecalculateAndApplyAsync(p, ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));
     }

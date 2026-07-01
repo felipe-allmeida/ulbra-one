@@ -38,6 +38,11 @@ public class Payable : IAuditable, ISoftDeletable
     // Vendor's Simples Nacional declaration (IN RFB 1.234/2012, art. 4, XI): condition for the federal
     // withholding exemption. false (default) = no declaration on file -> the paying source must withhold.
     public bool SimplesDeclarationProvided { get; private set; }
+    // Whether this payable is a service subject to source withholding: true = service (retains per the rules);
+    // false = product / not subject; null = undetermined (no auto-calculation). This — not the LC116 subitem —
+    // is what triggers the automatic withholding. Derived from the fiscal document (NFS-e=true, NF-e=false) or
+    // set manually for doc-less payables.
+    public bool? IsService { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public bool IsClassified => AccountingAccountId is not null && FinancialAccountId is not null;
@@ -240,6 +245,15 @@ public class Payable : IAuditable, ISoftDeletable
     {
         EnsureMutable();
         SimplesDeclarationProvided = provided;
+    }
+
+    /// <summary>Marks whether this payable is a service subject to source withholding (true), a product / not
+    /// subject (false), or undetermined (null). This — not the LC116 subitem — is what triggers the automatic
+    /// withholding calculation; the subitem only refines specific taxes (INSS labor supply, ISS by municipality).</summary>
+    public void SetIsService(bool? isService)
+    {
+        EnsureMutable();
+        IsService = isService;
     }
 
     /// <summary>Sets (or clears) the accounting + financial chart accounts that classify this payable.</summary>

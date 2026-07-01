@@ -167,6 +167,37 @@ public class PayableWithholdingTests
         Assert.Equal(500m, i.NetAmount);
     }
 
+    // IsService (the withholding trigger, not the LC116 subitem) is undetermined by default and settable.
+    [Fact]
+    public void IsService_is_null_by_default_and_settable()
+    {
+        var p = NewPayable(1000m);
+        Assert.Null(p.IsService);
+
+        p.SetIsService(true);
+        Assert.True(p.IsService);
+
+        p.SetIsService(false);
+        Assert.False(p.IsService);
+
+        p.SetIsService(null);
+        Assert.Null(p.IsService);
+    }
+
+    // A terminal payable cannot have its service-nature changed (EnsureMutable guard).
+    [Fact]
+    public void SetIsService_throws_when_payable_is_paid()
+    {
+        var p = NewPayable(1000m);
+        p.Approve("contador", At);
+        var inst = p.Installments[0];
+        inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 7, 10), 1000m, Guid.NewGuid(),
+            PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));
+        p.RecomputeSettlement(); // → Paid
+
+        Assert.Throws<InvalidOperationException>(() => p.SetIsService(true));
+    }
+
     // Multiple withholdings summed correctly
     [Fact]
     public void SetWithholdings_multiple_types_sums_all()

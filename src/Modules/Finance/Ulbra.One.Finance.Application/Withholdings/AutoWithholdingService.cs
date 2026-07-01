@@ -20,18 +20,23 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
         // Never recompute once locked: the accounting incurral already booked the withholdings.
         if (payable.Status is PayableStatus.Scheduled or PayableStatus.Paid) return;
 
-        // Need the service signals from the fiscal document; without an LC116 subitem (no doc, or NF-e product)
-        // we don't fabricate withholdings — leave it for manual entry.
+        // Withholding is a service obligation of the paying source. The trigger is service-nature — NOT the
+        // LC116 subitem, which only refines specific taxes (INSS on labor supply, ISS by municipality). Skip
+        // products / undetermined; a service still withholds the general federal taxes even without a subitem.
+        if (payable.IsService != true) return;
+
+        // The fiscal document refines the calculation when present (LC116 subitem, municipality, ISS rate), but a
+        // service may have none of it (doc-less manual payable, or a PDF/NFS-e without those fields).
         var doc = await uow.ReadSet<FiscalDocument>().FirstOrDefaultAsync(d => d.PayableId == payable.Id, ct);
-        if (doc?.Lc116Subitem is null) return;
 
         var regime = await uow.ReadSet<VendorEntity>()
             .Where(v => v.Id == payable.VendorId && v.CompanyId == payable.CompanyId)
             .Select(v => (TaxRegime?)v.TaxRegime)
             .FirstOrDefaultAsync(ct) ?? TaxRegime.Unknown;
 
-        // Base = the line amount (BaseRule.Full / MVP). Single service line per NFS-e today.
-        var line = new ServiceLineInput(doc.Lc116Subitem, doc.ServiceMunicipalityIbge, doc.NotaIssRate, payable.TotalAmount);
+        // Base = the payable's gross (BaseRule.Full / MVP). Single service line today; refinement signals are
+        // null when there is no document or the document didn't carry them.
+        var line = new ServiceLineInput(doc?.Lc116Subitem, doc?.ServiceMunicipalityIbge, doc?.NotaIssRate, payable.TotalAmount);
         var context = new WithholdingContext(
             payable.CompanyId, payable.VendorId, regime, payable.SimplesDeclarationProvided, [line]);
 

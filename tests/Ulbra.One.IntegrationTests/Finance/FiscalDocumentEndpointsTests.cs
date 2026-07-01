@@ -281,6 +281,36 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Upload_Sets_Service_Nature_From_Document_Format()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var payableId = await CreatePayableAsync(client, seed);
+
+        // NFS-e (service) → IsService = true. This — not the LC116 subitem — is the withholding trigger;
+        // note this ABRASF sample carries no ItemListaServico, yet the payable is still marked a service.
+        var nfseBytes = Encoding.UTF8.GetBytes(NfseXml);
+        var nfseKey = await SeedBlobAsync(factory, NfseXml, "nfse.xml");
+        var up1 = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
+            new { key = nfseKey, fileName = "nfse.xml", contentType = "application/xml", sizeBytes = nfseBytes.Length });
+        Assert.Equal(HttpStatusCode.Created, up1.StatusCode);
+
+        var afterNfse = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.True(afterNfse.GetProperty("isService").GetBoolean());
+
+        // Re-upload a NF-e (product) → IsService = false → no source withholding.
+        var nfeBytes = Encoding.UTF8.GetBytes(NfeXml);
+        var nfeKey = await SeedBlobAsync(factory, NfeXml, "nfe.xml");
+        var up2 = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
+            new { key = nfeKey, fileName = "nfe.xml", contentType = "application/xml", sizeBytes = nfeBytes.Length });
+        Assert.Equal(HttpStatusCode.Created, up2.StatusCode);
+
+        var afterNfe = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.False(afterNfe.GetProperty("isService").GetBoolean());
+    }
+
+    [Fact]
     public async Task Upload_To_NonExistent_Payable_Returns_404()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

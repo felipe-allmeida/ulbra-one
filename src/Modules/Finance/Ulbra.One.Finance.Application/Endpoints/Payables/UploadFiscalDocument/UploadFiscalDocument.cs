@@ -11,6 +11,7 @@ using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Application.FiscalDocuments;
 using Ulbra.One.Finance.Application.Withholdings;
+using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
@@ -109,9 +110,21 @@ public sealed class UploadFiscalDocument : IEndpoint
         await uow.AddAsync(doc, ct);
         await uow.SaveChangesAsync(ct);
 
-        // Recompute withholdings now that the NFS-e service signals (LC116/município) are persisted — the
-        // auto-calc at classification time may have run before this document was linked. No-op when the payable
-        // is already Scheduled/Paid (locked) or when the document has no LC116 subitem (NF-e product).
+        // Service-nature drives the withholding calc (NOT the LC116 subitem). NFS-e = service and NF-e = product
+        // are authoritative; a PDF/image guess only fills an undetermined value and never overrides a human choice.
+        var derivedNature = DeriveIsService(parsed);
+        try
+        {
+            if (parsed.Format is FiscalDocumentFormat.NfseXml or FiscalDocumentFormat.NfeXml)
+                payable.SetIsService(derivedNature);
+            else if (payable.IsService is null && derivedNature is not null)
+                payable.SetIsService(derivedNature);
+        }
+        catch (InvalidOperationException) { /* payable in a terminal state: keep the existing nature */ }
+
+        // Recompute withholdings now that the document + service-nature are persisted — the auto-calc at
+        // classification time may have run before this document was linked. No-op when the payable is already
+        // Scheduled/Paid (locked) or when it is not a service.
         await autoWithholding.RecalculateAndApplyAsync(payable, ct);
         await uow.SaveChangesAsync(ct);
 
@@ -119,6 +132,17 @@ public sealed class UploadFiscalDocument : IEndpoint
             $"/api/payables/{id}/fiscal-document",
             FiscalDocumentResponse.From(doc));
     }
+
+    // NFS-e = service, NF-e = product. For a PDF/image (AI-extracted) it is best-effort: a service signal
+    // (LC116) → service; a product fingerprint (CFOP/NCM) → product; otherwise undetermined (manual review).
+    private static bool? DeriveIsService(ParsedFiscalDocument parsed) => parsed.Format switch
+    {
+        FiscalDocumentFormat.NfseXml => true,
+        FiscalDocumentFormat.NfeXml => false,
+        _ => parsed.Lc116Subitem is not null ? true
+           : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? false
+           : null,
+    };
 }
 
 public sealed record UploadFiscalDocumentRequest(string Key, string FileName, string ContentType, long SizeBytes);

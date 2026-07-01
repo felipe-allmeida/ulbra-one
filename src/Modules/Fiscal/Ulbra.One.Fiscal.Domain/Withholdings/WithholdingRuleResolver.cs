@@ -4,8 +4,10 @@ using Ulbra.One.Registry.Domain.Entities;
 
 namespace Ulbra.One.Fiscal.Domain.Withholdings;
 
-/// <summary>A service line of the invoice: the calculation base is the line, not the document.
-/// A null <paramref name="Lc116Subitem"/> = not a service (a product) → no withholding.</summary>
+/// <summary>A service line of the invoice: the calculation base is the line, not the document. The caller only
+/// builds a line for a service (products are filtered upstream by service-nature). A null
+/// <paramref name="Lc116Subitem"/> means the specific subitem is unknown — the general federal taxes still apply;
+/// only INSS (labor supply) and ISS (by municipality) need the subitem/municipality to refine.</summary>
 public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? NotaIssRate, decimal Amount);
 
 /// <summary>Resolution inputs: company, vendor regime, whether the Simples declaration is on file, and the lines.</summary>
@@ -35,9 +37,9 @@ public static class WithholdingRuleResolver
 
         foreach (var line in context.Lines)
         {
-            // Only a service line (with an LC116 subitem) is subject to withholding; a product / no subitem is skipped.
-            if (string.IsNullOrWhiteSpace(line.Lc116Subitem)) continue;
-
+            // Every line here is a service (the caller gates on service-nature). The LC116 subitem is a
+            // refinement, not a gate: a null subitem still matches the general federal rules (Lc116Subitem=null),
+            // while subitem-specific rules (INSS 11.02) only match when the line carries that subitem.
             foreach (var tax in WithholdingTaxes)
             {
                 var rule = ResolveRule(rules, tax, line, context);

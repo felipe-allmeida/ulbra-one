@@ -1572,6 +1572,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("financial_account_id");
 
+                    b.Property<bool?>("IsService")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_service");
+
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");

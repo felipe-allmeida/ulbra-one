@@ -90,13 +90,20 @@ public class WithholdingRuleResolverTests
     }
 
     [Fact]
-    public void Product_without_service_line_yields_no_withholding()
+    public void Service_without_lc116_subitem_still_withholds_federal()
     {
-        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, false,
-            [new ServiceLine(null, null, null, 15500m)]); // NF-e product: no LC116 subitem
+        // The LC116 subitem is a refinement, not the trigger: a service whose subitem wasn't parsed still
+        // withholds the general federal taxes. INSS (labor-supply 11.02) and ISS (needs municipality) don't apply.
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido, false,
+            [new ServiceLine(null, null, null, 3000m)]);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Empty(r);
+        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // 1.5%
+        Assert.Equal(19.50m, Amount(r, WithholdingTaxType.Pis));     // 0.65%
+        Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Cofins));  // 3%
+        Assert.Equal(30.00m, Amount(r, WithholdingTaxType.Csll));    // 1%
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // not labor-supply (no 11.02)
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Iss));         // no municipality → no ISS
     }
 }
