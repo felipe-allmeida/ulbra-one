@@ -895,6 +895,9 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+.edit-grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
 @media (max-width: 640px) {
   .edit-grid {
     grid-template-columns: 1fr;

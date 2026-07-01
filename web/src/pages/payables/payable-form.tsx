@@ -51,6 +51,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const [paymentMethodOverride, setPaymentMethodOverride] = useState<PaymentMethod | null>(
     initial?.paymentMethod ?? null,
   );
+  // Service-nature: drives the automatic withholding. Set here so it's applied before any auto-approval.
+  const [isService, setIsService] = useState<boolean | null>(initial?.isService ?? null);
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -238,6 +240,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
       paymentMethod: paymentMethodOverride ?? null,
+      isService,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
     if (xmlInstallments && xmlInstallments.length > 0) {
@@ -347,7 +350,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                   <div className='help'>{t('payables.confirmSection.hint')}</div>
                 </div>
               )}
-              <div className='edit-grid'>
+              <div className='edit-grid cols-3'>
                 <Field
                   label={
                     <>
@@ -392,6 +395,21 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     <div className='field-err'>{fieldError(formState.errors.costCenterId?.message)}</div>
                   )}
                 </Field>
+                <Field label={t('payables.fields.nature')}>
+                  <Select
+                    value={isService === true ? 'service' : isService === false ? 'product' : ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setIsService(v === 'service' ? true : v === 'product' ? false : null);
+                    }}
+                  >
+                    <option value=''>{t('payables.fields.natureUndefined')}</option>
+                    <option value='service'>{t('payables.fields.natureService')}</option>
+                    <option value='product'>{t('payables.fields.natureProduct')}</option>
+                  </Select>
+                </Field>
+              </div>
+              <div className='edit-grid' style={{ marginTop: 14 }}>
                 <Field label={t('payables.accountingAccount')}>
                   <Controller
                     control={control}
