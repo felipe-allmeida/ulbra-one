@@ -23,6 +23,7 @@ import { InstallmentsTable } from './installments-table';
 import { AttachmentsPanel } from './attachments-panel';
 import { PaymentHistory } from './payment-history';
 import { PaymentForm } from './payment-form';
+import { WithholdingSection } from './withholding-section';
 
 /* ============ DETAIL ============ */
 export function PayableDetailPage() {
@@ -100,7 +101,7 @@ export function PayableDetailPage() {
             </Button>
           )}
           {editable && (
-            <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/editar`)}>
+            <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/edit`)}>
               {t('payables.actions.edit')}
             </Button>
           )}
@@ -168,16 +169,18 @@ export function PayableDetailPage() {
 
       {(p.status === 'Scheduled' || p.status === 'Paid') && p.approvedBy && p.approvedAt && (
         <p className='detail-sub'>
-          {t('payables.approvedBy', { user: p.approvedBy, date: fmtDateTime(p.approvedAt) })}
+          {t('payables.approvedBy', { user: p.approvedByName ?? p.approvedBy, date: fmtDateTime(p.approvedAt) })}
         </p>
       )}
       {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
         <p className='detail-sub'>
-          {t('payables.rejectedBy', { user: p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
+          {t('payables.rejectedBy', { user: p.rejectedByName ?? p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
         </p>
       )}
 
       <InstallmentsTable payable={p} onRegister={setBaixaInstallment} />
+
+      <WithholdingSection payable={p} editable={editable} />
 
       {[...p.installments]
         .sort((a, b) => a.sequence - b.sequence)

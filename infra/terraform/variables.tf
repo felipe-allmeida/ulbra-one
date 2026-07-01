@@ -34,6 +34,12 @@ variable "google_client_id" {
   description = "Google OAuth client ID exposed to the web frontend as VITE_GOOGLE_CLIENT_ID."
 }
 
+variable "web_custom_domain" {
+  type        = string
+  default     = ""
+  description = "Custom domain bound to the web app (e.g. dev.one.ulbra.ai). Added to API + blob CORS so the browser on that domain is allowed. Empty = only the default *.azurecontainerapps.io origin."
+}
+
 variable "api_min_replicas" {
   type        = number
   default     = 0
@@ -70,6 +76,12 @@ variable "jwt_secret" {
   description = "JWT signing secret. Stored in Key Vault as 'Authentication--JwtSecret'."
 }
 
+variable "ai_api_key" {
+  type        = string
+  sensitive   = true
+  description = "Anthropic API key for the payable AI classifier. Stored in Key Vault as 'Ai--ApiKey'. Supply via -var / TF_VAR_ai_api_key; never commit the value."
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}
@@ -95,6 +107,14 @@ locals {
   # ACR is shared across environments — created by bootstrap (Task C3)
   acr_name    = "crulbraone"
   acr_rg_name = "rg-ulbraone-tfstate"
+
+  # Browser origins allowed by API CORS + blob CORS: the default web FQDN plus any custom domain.
+  web_origins = compact(concat(
+    ["https://${local.ca_web_name}.${module.container_app_env.default_domain}"],
+    var.web_custom_domain != "" ? ["https://${var.web_custom_domain}"] : [],
+  ))
+  # Indexed env vars (AllowedOrigins__0, __1, …) bind to the app's AllowedOrigins string[] config.
+  cors_env_vars = { for i, o in local.web_origins : "AllowedOrigins__${i}" => o }
 
   common_tags = merge(var.tags, {
     environment = var.environment

@@ -82,13 +82,37 @@ export type VendorBankInfoValues = z.infer<typeof vendorBankInfoSchema>;
 export const TAX_REGIMES = ['Unknown', 'Mei', 'SimplesNacional', 'LucroPresumido', 'LucroReal'] as const;
 export type TaxRegimeValue = (typeof TAX_REGIMES)[number];
 
+export const PAYMENT_SCHEDULE_MODES = ['OnDueDate', 'FixedDayOfMonth', 'FirstDayOfMonth'] as const;
+export type PaymentScheduleMode = (typeof PAYMENT_SCHEDULE_MODES)[number];
+
 export const vendorSchema = refineDocument(
-  z.object({
-    ...personFields(),
-    paymentTerms: z.string(),
-    bankInfo: vendorBankInfoSchema,
-    taxRegime: z.enum(TAX_REGIMES),
-  }),
+  z
+    .object({
+      ...personFields(),
+      paymentTerms: z.string(),
+      bankInfo: vendorBankInfoSchema,
+      taxRegime: z.enum(TAX_REGIMES),
+      paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
+      paymentScheduleDay: z.number().nullable().default(null),
+    })
+    .superRefine((val, ctx) => {
+      if (val.paymentScheduleMode === 'FixedDayOfMonth') {
+        const day = val.paymentScheduleDay;
+        if (day === null || day === undefined) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'validation.paymentScheduleDayRequired',
+            path: ['paymentScheduleDay'],
+          });
+        } else if (!Number.isInteger(day) || day < 1 || day > 28) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'validation.paymentScheduleDayRange',
+            path: ['paymentScheduleDay'],
+          });
+        }
+      }
+    }),
 );
 export type VendorValues = z.infer<typeof vendorSchema>;
 

@@ -12,6 +12,7 @@ namespace Ulbra.One.UnitTests.Finance;
 public class FiscalDocumentParserTests
 {
     private const string Key44 = "12345678901234567890123456789012345678901234";
+    private const string Key50 = "12345678901234567890123456789012345678901234567890";
 
     private const string NfeXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,7 +42,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e parcelada: <cobr> com fatura + 3 duplicatas (dVenc/vDup) e <pag> com um detPag por parcela.
+    // NF-e in installments: <cobr> with invoice + 3 duplicatas (dVenc/vDup) and <pag> with one detPag per installment.
     private const string NfeWithCobrXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -67,7 +68,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e à vista: sem <cobr>, <pag> com um único detPag somando vNF.
+    // NF-e paid upfront: no <cobr>, a single <pag>/detPag summing to vNF.
     private const string NfeAVistaXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -83,7 +84,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e com 2 itens (det/prod/xProd) → descrição combinada para preencher a conta a pagar.
+    // NF-e with 2 items (det/prod/xProd) → combined description to pre-fill the payable.
     private const string NfeMultiItemXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -100,7 +101,7 @@ public class FiscalDocumentParserTests
 </nfeProc>
 """;
 
-    // NF-e com itens + totais fiscais (ICMSTot com vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — usado no teste de FiscalSummary.
+    // NF-e with items + fiscal totals (ICMSTot with vICMS/vIPI/vPIS/vCOFINS/vTotTrib) — used by the FiscalSummary test.
     private const string NfeWithFiscalXml = $"""
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
@@ -162,6 +163,80 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    // NFS-e national standard (SEFIN): NFSe → infNFSe (emit) → DPS → infDPS. vLiq (17370.00) differs from
+    // vServ (18000.00) on purpose, to prove TotalAmount takes the gross vServ.
+    private const string NfseNacionalXml = $"""
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infNFSe Id="NFS{Key50}">
+    <nNFSe>60063</nNFSe>
+    <dhProc>2026-06-15T18:50:53-03:00</dhProc>
+    <emit>
+      <CNPJ>11222333000181</CNPJ>
+      <xNome>Codeforge Desenvolvimento de Software LTDA</xNome>
+      <enderNac><xLgr>Rua Guilherme Kurtz</xLgr><nro>3210</nro><xBairro>Centro</xBairro><cMun>4310538</cMun><UF>RS</UF><CEP>97185000</CEP></enderNac>
+      <fone>5133785980</fone>
+    </emit>
+    <valores><vBC>18000.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>360.00</vISSQN><vLiq>17370.00</vLiq></valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS00000000000000000000000000000000000000001">
+        <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+        <serie>001</serie>
+        <nDPS>8360128</nDPS>
+        <prest><CNPJ>11222333000181</CNPJ></prest>
+        <toma><CNPJ>11444777000161</CNPJ><xNome>Industria Mecanica Sul-Brasileira LTDA</xNome></toma>
+        <serv><cServ><cTribNac>010701</cTribNac><xDescServ>Servicos digitais e suporte</xDescServ><cNBS>115013000</cNBS></cServ></serv>
+        <valores>
+          <vServPrest><vServ>18000.00</vServ></vServPrest>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>
+""";
+
+    // File with only <DPS> (no infNFSe/emit): lenient parse, anchored on infDPS.
+    private const string DpsOnlyXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infDPS Id="DPS00000000000000000000000000000000000000003">
+    <dhEmi>2026-06-15T18:49:34-03:00</dhEmi>
+    <serie>001</serie>
+    <nDPS>8360128</nDPS>
+    <toma><CNPJ>11444777000161</CNPJ></toma>
+    <serv><cServ><xDescServ>Suporte</xDescServ></cServ></serv>
+    <valores><vServPrest><vServ>4402.00</vServ></vServPrest></valores>
+  </infDPS>
+</DPS>
+""";
+
+    // NFS-e ABRASF with both ValorServicos and ValorLiquidoNfse (differing) — proves TotalAmount = gross.
+    private const string NfseAbrasfGrossXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.04">
+    <InfNfse Id="NFSE00000005678">
+      <Numero>00000005678</Numero>
+      <DataEmissao>2026-06-16T14:32:18</DataEmissao>
+      <Servico>
+        <Valores>
+          <ValorServicos>10000.00</ValorServicos>
+          <ValorLiquidoNfse>9000.00</ValorLiquidoNfse>
+        </Valores>
+        <Discriminacao>Servico.</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></IdentificacaoPrestador>
+        <RazaoSocial>Codeforge</RazaoSocial>
+      </PrestadorServico>
+      <TomadorServico>
+        <IdentificacaoTomador><CpfCnpj><Cnpj>11444777000161</Cnpj></CpfCnpj></IdentificacaoTomador>
+      </TomadorServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
+""";
+
     // NFS-e ABRASF with ISS/municipality fields populated (advisory 17.01, Canoas IBGE 4304606, ISS 5% withheld).
     private const string NfseWithIssXml = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -206,7 +281,9 @@ public class FiscalDocumentParserTests
     }
 
     private static IFiscalDocumentReader NewReader() =>
-        new FiscalDocumentReader([new NfeM55XmlParser(), new NfseAbrasfXmlParser()], new AiFiscalExtractor(new DisabledAi()));
+        new FiscalDocumentReader(
+            [new NfeM55XmlParser(), new NfseAbrasfXmlParser(), new NfseNacionalXmlParser()],
+            new AiFiscalExtractor(new DisabledAi()));
 
     private static Stream StreamOf(string xml) => new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
@@ -226,7 +303,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("11222333000181", p.IssuerDocument);
         Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
         Assert.Equal("11444777000161", p.RecipientDocument);
-        Assert.Empty(p.Installments); // sem <cobr> → à vista
+        Assert.Empty(p.Installments); // no <cobr> → paid upfront
     }
 
     [Fact]
@@ -272,7 +349,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("11222333000181", p.IssuerDocument);
         Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
         Assert.Equal("11444777000161", p.RecipientDocument);
-        Assert.Empty(p.Installments); // NFS-e ABRASF não traz duplicatas
+        Assert.Empty(p.Installments); // ABRASF NFS-e carries no installments
         Assert.Equal("1234", p.RpsNumber);
         Assert.Equal("RPS", p.RpsSeries);
         Assert.Equal("6201501", p.CnaeCode);
@@ -297,10 +374,69 @@ public class FiscalDocumentParserTests
     }
 
     [Fact]
+    public void Nfse_abrasf_uses_gross_total()
+    {
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseAbrasfGrossXml));
+        Assert.Equal(10000.00m, p.TotalAmount); // ValorServicos (gross), not ValorLiquidoNfse (9000.00)
+    }
+
+    [Fact]
     public void Parsers_reject_the_other_standard()
     {
+        // NF-e parser rejects both NFS-e standards.
         Assert.False(new NfeM55XmlParser().CanParse(XDocument.Parse(NfseXml)));
+        Assert.False(new NfeM55XmlParser().CanParse(XDocument.Parse(NfseNacionalXml)));
+        // ABRASF parser rejects NF-e and the national NFS-e.
         Assert.False(new NfseAbrasfXmlParser().CanParse(XDocument.Parse(NfeXml)));
+        Assert.False(new NfseAbrasfXmlParser().CanParse(XDocument.Parse(NfseNacionalXml)));
+        // National parser rejects NF-e and ABRASF NFS-e.
+        Assert.False(new NfseNacionalXmlParser().CanParse(XDocument.Parse(NfeXml)));
+        Assert.False(new NfseNacionalXmlParser().CanParse(XDocument.Parse(NfseXml)));
+    }
+
+    [Fact]
+    public void Nfse_nacional_parser_extracts_service_fields()
+    {
+        var parser = new NfseNacionalXmlParser();
+        var doc = XDocument.Parse(NfseNacionalXml);
+        Assert.True(parser.CanParse(doc));
+
+        var p = parser.Parse(doc);
+        Assert.Equal(FiscalDocumentFormat.NfseXml, p.Format);
+        Assert.Equal(Key50, p.AccessKey);          // 50-digit national key, "NFS" prefix stripped
+        Assert.Equal(50, p.AccessKey!.Length);
+        Assert.Equal("60063", p.DocumentNumber);
+        Assert.Equal(new DateOnly(2026, 6, 15), p.IssueDate);
+        Assert.Equal(18000.00m, p.TotalAmount);    // gross (vServ), not vLiq (17370.00)
+        Assert.Equal("11222333000181", p.IssuerDocument);
+        Assert.Equal("Codeforge Desenvolvimento de Software LTDA", p.IssuerName);
+        Assert.Equal("11444777000161", p.RecipientDocument);
+        Assert.Equal("8360128", p.RpsNumber);
+        Assert.Equal("001", p.RpsSeries);
+        Assert.Null(p.CnaeCode);                   // national has no CNAE
+        Assert.Equal("5133785980", p.IssuerPhone);
+        Assert.NotNull(p.IssuerAddress);
+        Assert.Equal("RS", p.IssuerAddress!.State);
+        Assert.Null(p.IssuerAddress.City);         // only the IBGE code is in the XML, no city name
+    }
+
+    [Fact]
+    public void Nfse_nacional_parses_bare_dps_without_throwing()
+    {
+        var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(DpsOnlyXml));
+        Assert.Equal(FiscalDocumentFormat.NfseXml, p.Format);
+        Assert.Null(p.DocumentNumber);             // no infNFSe/nNFSe
+        Assert.Equal(4402.00m, p.TotalAmount);     // vServ from infDPS
+        Assert.Equal("11444777000161", p.RecipientDocument);
+    }
+
+    [Fact]
+    public async Task Reader_detects_nfse_nacional_by_namespace()
+    {
+        var parsed = await NewReader().ReadAsync("nota.xml", StreamOf(NfseNacionalXml), default);
+        Assert.NotNull(parsed);
+        Assert.Equal(FiscalDocumentFormat.NfseXml, parsed!.Format);
+        Assert.Equal("60063", parsed.DocumentNumber);
     }
 
     [Fact]

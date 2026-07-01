@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
-import { type PayableListItem } from '../../api';
-import { usePayables, useApprovePayable, useRejectPayable } from '../../queries';
+import { type PayableStageItem } from '../../api';
+import { usePayableStageItems, useApprovePayable, useRejectPayable } from '../../queries';
 import { Button, ConfirmDialog, Input } from '../../ui';
 import { BalanceForecastBanner, BalanceForecastPanel } from '../../components/workflow';
 import { STAGE_STATUS } from './stages';
@@ -12,13 +12,13 @@ export function ApprovalTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
-  const list = usePayables({ companyId, status: STAGE_STATUS.approval, page }, { enabled: !!companyId });
+  const list = usePayableStageItems({ companyId, status: STAGE_STATUS.approval, page }, { enabled: !!companyId });
   const data = list.data;
 
   const approve = useApprovePayable();
   const reject = useRejectPayable();
-  const [toApprove, setToApprove] = useState<PayableListItem | null>(null);
-  const [toReject, setToReject] = useState<PayableListItem | null>(null);
+  const [toApprove, setToApprove] = useState<PayableStageItem | null>(null);
+  const [toReject, setToReject] = useState<PayableStageItem | null>(null);
   const [reason, setReason] = useState('');
 
   return (
@@ -58,7 +58,7 @@ export function ApprovalTab({ companyId }: { companyId: string }) {
       {toApprove && (
         <BalanceForecastPanel
           companyId={companyId}
-          impactAmount={toApprove.amount}
+          impactAmount={toApprove.totalAmount}
           open
           busy={approve.isPending}
           onClose={() => setToApprove(null)}

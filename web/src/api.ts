@@ -177,6 +177,10 @@ export type Payment = Schemas['PaymentResponse'];
 export type BankAccountType = Schemas['BankAccountType'];
 export type PaymentMethod = Schemas['PaymentMethod'];
 
+// ---------- Payable / Receivable stage items (payable-grain, one row per title) ----------
+export type PayableStageItem = Schemas['PayableStageItemResponse'];
+export type ReceivableStageItem = Schemas['ReceivableStageItemResponse'];
+
 // ---------- Receivables (Contas a Receber) ----------
 export type Receivable = Schemas['ReceivableResponse'];
 export type ReceivableListItem = Schemas['ReceivableListItemResponse'];
@@ -417,6 +421,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, name }),
     }),
+  googleSignIn: (idToken: string) =>
+    request<Schemas['LoginResponse']>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
   me: () => request<Schemas['MeResponse']>('/auth/me'),
 
   listCompanies: () => request<Company[]>('/companies'),
@@ -525,6 +534,18 @@ export const api = {
     const q = new URLSearchParams({ companyId });
     return request<PayableStageSummaryResponse>(`/payables/stage-summary?${q}`);
   },
+  payableStageItems: (params: {
+    companyId: string;
+    status?: PayableStatus;
+    page?: number;
+    pageSize?: number;
+  }): Promise<Paginated<PayableStageItem>> => {
+    const q = new URLSearchParams({ companyId: params.companyId });
+    if (params.status) q.set('status', params.status);
+    if (params.page) q.set('Page', String(params.page));
+    if (params.pageSize) q.set('PageSize', String(params.pageSize));
+    return request<Paginated<PayableStageItem>>(`/payables/stage-items?${q}`);
+  },
   payableAuditTrail: (id: string): Promise<AuditTrailEvent[]> =>
     request<AuditTrailEvent[]>(`/payables/${id}/audit-trail`),
   createPayable: (body: PayableInput) => request<Payable>('/payables', { method: 'POST', body: JSON.stringify(body) }),
@@ -581,6 +602,15 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  // ---------- Installment hold / release ----------
+  holdInstallment: (id: string, installmentId: string, reason: string) =>
+    request<void>(`/payables/${id}/installments/${installmentId}/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  releaseInstallmentHold: (id: string, installmentId: string) =>
+    request<void>(`/payables/${id}/installments/${installmentId}/release-hold`, { method: 'POST' }),
+
   // ---------- Payments (baixa) ----------
   registerPayment: (payableId: string, installmentId: string, body: RegisterPaymentInput) =>
     request<Payable>(`/payables/${payableId}/installments/${installmentId}/payments`, {
@@ -635,6 +665,24 @@ export const api = {
     return request<Paginated<ReceivableListItem>>(`/receivables?${q}`);
   },
   getReceivable: (id: string) => request<Receivable>(`/receivables/${id}`),
+  receivableStageSummary: (companyId: string): Promise<ReceivableStageSummaryResponse> => {
+    const q = new URLSearchParams({ companyId });
+    return request<ReceivableStageSummaryResponse>(`/receivables/stage-summary?${q}`);
+  },
+  receivableStageItems: (params: {
+    companyId: string;
+    status?: ReceivableStatus;
+    page?: number;
+    pageSize?: number;
+  }): Promise<Paginated<ReceivableStageItem>> => {
+    const q = new URLSearchParams({ companyId: params.companyId });
+    if (params.status) q.set('status', params.status);
+    if (params.page) q.set('Page', String(params.page));
+    if (params.pageSize) q.set('PageSize', String(params.pageSize));
+    return request<Paginated<ReceivableStageItem>>(`/receivables/stage-items?${q}`);
+  },
+  receivableAuditTrail: (id: string): Promise<AuditTrailEvent[]> =>
+    request<AuditTrailEvent[]>(`/receivables/${id}/audit-trail`),
   createReceivable: (body: ReceivableInput) =>
     request<Receivable>('/receivables', { method: 'POST', body: JSON.stringify(body) }),
   updateReceivable: (id: string, body: Omit<ReceivableInput, 'origin'>) =>

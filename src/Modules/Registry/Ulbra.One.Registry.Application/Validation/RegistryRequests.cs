@@ -1,6 +1,7 @@
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Registry.Domain.Entities;
+using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Registry.Application.Validation;
 
@@ -15,7 +16,8 @@ public sealed record VendorRequest(
     CompanyId CompanyId, PersonType PersonType, [property: NormalizeText] string Name,
     [property: NormalizeText] string? TradeName, [property: NormalizeText] string Document,
     string? Email, string? Phone, AddressRequest? Address,
-    [property: NormalizeText] string? PaymentTerms, BankInfoRequest? BankInfo, TaxRegime TaxRegime);
+    [property: NormalizeText] string? PaymentTerms, BankInfoRequest? BankInfo, TaxRegime TaxRegime,
+    PaymentScheduleMode PaymentScheduleMode = PaymentScheduleMode.OnDueDate, int? PaymentScheduleDay = null);
 
 public sealed record CustomerRequest(
     CompanyId CompanyId, PersonType PersonType, [property: NormalizeText] string Name,

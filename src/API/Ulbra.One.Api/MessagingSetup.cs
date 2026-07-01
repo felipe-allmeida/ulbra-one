@@ -12,7 +12,7 @@ internal static class MessagingSetup
     {
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<Ulbra.One.Finance.Infrastructure.Messaging.PayableReceivedConsumer>();
+            x.AddConsumer<Ulbra.One.Finance.Infrastructure.Messaging.PayableReceivedConsumer, Ulbra.One.Finance.Infrastructure.Messaging.PayableReceivedConsumerDefinition>();
             x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.PayableScheduledConsumer>();
             x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.PaymentRegisteredConsumer>();
             x.AddConsumer<Ulbra.One.Accounting.Infrastructure.Messaging.AccountingReversalConsumer>();
@@ -51,6 +51,7 @@ internal static class MessagingSetup
                         });
                     }
 
+                    cfg.UseServiceBusMessageScheduler();
                     cfg.ConfigureEndpoints(context);
                 });
             }
@@ -67,6 +68,10 @@ internal static class MessagingSetup
                         h.Username(mt["User"] ?? "guest");
                         h.Password(mt["Password"] ?? "guest");
                     });
+                    // Delayed redelivery via the RabbitMQ delayed-message-exchange plugin (docker-compose
+                    // provides it via rabbitmq.Dockerfile). The exchange is declared lazily on the first
+                    // scheduled redelivery, so startup never fails when the plugin is absent.
+                    cfg.UseDelayedMessageScheduler();
                     cfg.ConfigureEndpoints(context);
                 });
             }

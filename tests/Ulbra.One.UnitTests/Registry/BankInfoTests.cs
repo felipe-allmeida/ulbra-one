@@ -18,7 +18,8 @@ public class BankInfoTests
     {
         var v = new VendorEntity(Guid.NewGuid(), PersonType.Company, "Acme", null, "12345678000199",
             null, null, Ulbra.One.Registry.Domain.ValueObjects.Address.Empty, null,
-            new BankInfo("033", "1234", "56789", "0", "acme@pix.com"), TaxRegime.SimplesNacional);
+            new BankInfo("033", "1234", "56789", "0", "acme@pix.com"), TaxRegime.SimplesNacional,
+            PaymentSchedule.Default);
 
         Assert.Equal("033", v.BankInfo.BankCode);
         Assert.Equal(TaxRegime.SimplesNacional, v.TaxRegime);

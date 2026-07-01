@@ -48,7 +48,7 @@ export function PayablesLayout() {
           disabled={!empresa}
           style={{ alignSelf: 'flex-end' }}
           onClick={() => {
-            void nav('/app/payables/novo');
+            void nav('/app/payables/new');
           }}
         >
           {t('payables.new')}

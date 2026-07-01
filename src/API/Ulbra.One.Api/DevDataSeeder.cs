@@ -127,22 +127,22 @@ public static class DevDataSeeder
 
         var vGoogle = new VendorEntity(ulbra.Id, PersonType.Company, "Google Brasil Internet Ltda.", "Google",
             "06990590000123", "ads@google.com", "1140003000", Addr("04538133", "Av. Brigadeiro Faria Lima", "3477", "Itaim Bibi", "São Paulo", "SP"),
-            "30 dias", new BankInfo("341", "0001", "123456", "6", ""), TaxRegime.LucroReal);
+            "30 dias", new BankInfo("341", "0001", "123456", "6", ""), TaxRegime.LucroReal, PaymentSchedule.Default);
         var vCeee = new VendorEntity(ulbra.Id, PersonType.Company, "CEEE Equatorial Energia S.A.", "CEEE",
             "08467115000100", "atendimento@ceee.com.br", "5132000000", Addr("90230000", "Rua dos Andradas", "1000", "Centro", "Porto Alegre", "RS"),
-            "à vista", BankInfo.Empty, TaxRegime.LucroReal);
+            "à vista", BankInfo.Empty, TaxRegime.LucroReal, PaymentSchedule.Default);
         var vMicrosoft = new VendorEntity(ulbra.Id, PersonType.Company, "Microsoft Informática Ltda.", "Microsoft",
             "60316817000103", "licen@microsoft.com", "1150004000", Addr("04711130", "Av. das Nações Unidas", "12901", "Brooklin", "São Paulo", "SP"),
-            "anual", BankInfo.Empty, TaxRegime.LucroReal);
+            "anual", BankInfo.Empty, TaxRegime.LucroReal, PaymentSchedule.Default);
         var vGrafica = new VendorEntity(ulbra.Id, PersonType.Company, "Gráfica Sul Impressões Ltda.", "Gráfica Sul",
             "92749225000180", "comercial@graficasul.com.br", "5133334444", Addr("92020000", "Rua Marechal Floriano", "250", "Centro", "Canoas", "RS"),
-            "28 dias", BankInfo.Empty, TaxRegime.SimplesNacional);
+            "28 dias", BankInfo.Empty, TaxRegime.SimplesNacional, PaymentSchedule.Default);
         var vLimpeza = new VendorEntity(ulbra.Id, PersonType.Company, "Limpa Bem Serviços Ltda.", "Limpa Bem",
             "11444777000161", "contato@limpabem.com.br", "5133335555", Addr("94010000", "Av. Getúlio Vargas", "800", "Centro", "Gravataí", "RS"),
-            "30 dias", BankInfo.Empty, TaxRegime.SimplesNacional);
+            "30 dias", BankInfo.Empty, TaxRegime.SimplesNacional, PaymentSchedule.Default);
         var vJoao = new VendorEntity(ulbra.Id, PersonType.Individual, "João Pedro Consultoria", null,
             "52998224725", "joao.consultor@gmail.com", "51999990000", Addr("90560000", "Rua Mostardeiro", "100", "Moinhos de Vento", "Porto Alegre", "RS"),
-            "à vista", BankInfo.Empty, TaxRegime.Mei);
+            "à vista", BankInfo.Empty, TaxRegime.Mei, PaymentSchedule.Default);
         registry.Vendors.AddRange(vGoogle, vCeee, vMicrosoft, vGrafica, vLimpeza, vJoao);
 
         // ---------- Customers ----------
@@ -439,6 +439,19 @@ public static class DevDataSeeder
         finance.ExpenseCategories.AddRange(ExpenseCategoryNames.Select(name => new ExpenseCategory(name)));
         await finance.SaveChangesAsync(ct);
         logger.LogInformation("Dev seed: {Count} expense categories seeded.", ExpenseCategoryNames.Length);
+    }
+
+    /// <summary>
+    /// Seeds ONLY the chart of accounts (contábil + financeiro) — the reference data the payable
+    /// classifier needs. No mock business data (companies/vendors/payables). Idempotent.
+    /// </summary>
+    public static async Task SeedChartOfAccountsAsync(IServiceProvider services, CancellationToken ct = default)
+    {
+        using var scope = services.CreateScope();
+        var sp = scope.ServiceProvider;
+        var finance = sp.GetRequiredService<AppDbContext>();
+        var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
+        await SeedChartOfAccountsAsync(finance, logger, ct);
     }
 
     private static async Task SeedChartOfAccountsAsync(AppDbContext finance, ILogger logger, CancellationToken ct)

@@ -22,14 +22,25 @@ public sealed class PayableReceivedConsumer(
 
     public async Task Consume(ConsumeContext<PayableReceived> context)
     {
-        await ProcessAsync(context.Message.PayableId, context.CancellationToken);
+        var giveUp = context.GetRedeliveryCount() >= ClassificationRetry.MaxRedeliveries;
+        await ProcessAsync(context.Message.PayableId, giveUp, context.CancellationToken);
     }
 
     /// <summary>
     /// Core logic extracted for direct testing without a broker: load payable, guard idempotency,
-    /// classify, apply decision, persist.
+    /// classify, apply decision, persist. Callers that don't pass giveUpIfUnclassified always settle
+    /// (equivalent to the final retry attempt), preserving backwards compatibility.
     /// </summary>
-    public async Task ProcessAsync(Guid payableId, CancellationToken ct)
+    public Task ProcessAsync(Guid payableId, CancellationToken ct) =>
+        ProcessAsync(payableId, giveUpIfUnclassified: true, ct);
+
+    /// <summary>
+    /// Full 3-arg variant. When <paramref name="giveUpIfUnclassified"/> is <c>false</c> and
+    /// classification yields no suggestion, throws <see cref="ClassificationUnavailableException"/>
+    /// so MassTransit redelivers with the escalating schedule. When <c>true</c> (final attempt or
+    /// direct call) it settles the payable into PendingClassification instead.
+    /// </summary>
+    public async Task ProcessAsync(Guid payableId, bool giveUpIfUnclassified, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == payableId, ct);
 
@@ -37,6 +48,13 @@ public sealed class PayableReceivedConsumer(
         if (payable is null || payable.Status != PayableStatus.Received) return;
 
         var result = await classifier.ClassifyAsync(payable, ct);
+
+        // Nothing to go on (no AI suggestion, no vendor history). Retry with escalating delays until data
+        // or the AI is available — unless this is the final attempt, where we settle for a human below.
+        var hasSuggestion = result.AccountingAccountId is not null || result.FinancialAccountId is not null;
+        if (!payable.IsClassified && !hasSuggestion && !giveUpIfUnclassified)
+            throw new ClassificationUnavailableException(payableId);
+
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
 
         // Compute + apply withholdings before Apply() (which may auto-approve → schedule and lock them).

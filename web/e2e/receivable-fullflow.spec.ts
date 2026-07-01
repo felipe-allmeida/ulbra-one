@@ -61,12 +61,12 @@ test('full-flow B: receivable created -> receipt registered -> cash flow reflect
   // The new-receivable FORM has no EmpresaPicker — it scopes to the globally-selected company,
   // which lives in in-memory React state (auto-defaults to the first company, CELSP). So scope
   // to ULBRA on the LIST first, then open the form via the in-app "Nova conta" button (client-side
-  // nav, no reload) — a full page.goto('/novo') would reset the selection back to CELSP.
-  await page.goto('/app/contas-a-receber');
+  // nav, no reload) — a full page.goto('/new') would reset the selection back to CELSP.
+  await page.goto('/app/accounts-receivable');
   await expect(page.getByRole('heading', { name: 'Contas a receber' })).toBeVisible();
   await pickCompany(page, /ULBRA/i);
   await page.getByRole('button', { name: 'Nova conta' }).click();
-  await expect(page).toHaveURL(/\/app\/contas-a-receber\/novo$/);
+  await expect(page).toHaveURL(/\/app\/accounts-receivable\/new$/);
   await expect(page.getByRole('heading', { name: 'Nova conta a receber' })).toBeVisible();
 
   // Payer (Devedor): Radix combobox (aria-haspopup=listbox). Open it, then pick the first seeded
@@ -117,7 +117,7 @@ test('full-flow B: receivable created -> receipt registered -> cash flow reflect
   const submit = page.getByRole('button', { name: 'Lançar', exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page).toHaveURL(/\/app\/contas-a-receber\/[^/]+$/);
+  await expect(page).toHaveURL(/\/app\/accounts-receivable\/[^/]+$/);
   await expect(page.getByRole('heading', { name: description })).toBeVisible();
 
   // ---------- 3. Born "A receber" — NO approval step ----------

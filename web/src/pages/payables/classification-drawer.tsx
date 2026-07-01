@@ -6,8 +6,10 @@ import { Drawer, Button, Field, Combobox, type ComboboxItem } from '../../ui';
 export function ClassificationDrawer({ payableId, onClose }: { payableId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const { data: p } = usePayable(payableId);
-  const accounting = useChartAccounts({ chartType: 'Accounting' }).data ?? [];
-  const financial = useChartAccounts({ chartType: 'Financial' }).data ?? [];
+  // Only analytical, active accounts can receive a payable — the classify endpoint rejects synthetic
+  // (parent) accounts with ChartAccount.NotAnalytical, so don't offer them in the picker.
+  const accounting = useChartAccounts({ chartType: 'Accounting', kind: 'Analytical', activeOnly: true }).data ?? [];
+  const financial = useChartAccounts({ chartType: 'Financial', kind: 'Analytical', activeOnly: true }).data ?? [];
   const classify = useClassifyPayable();
 
   const [accountingId, setAccountingId] = useState<string | null>(null);

@@ -11,6 +11,7 @@ using Ulbra.One.Common.Application.Validation;
 using Ulbra.One.Registry.Application.Contracts;
 using Ulbra.One.Registry.Application.Validation;
 using Ulbra.One.Registry.Domain.Entities;
+using Ulbra.One.Registry.Domain.ValueObjects;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Vendors.CreateVendor;
 
@@ -35,7 +36,8 @@ public sealed class CreateVendor : IEndpoint
     {
         var vendor = new VendorEntity(req.CompanyId.Value, req.PersonType, req.Name, req.TradeName,
             req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.PaymentTerms,
-            req.BankInfo.ToBankInfo(), req.TaxRegime);
+            req.BankInfo.ToBankInfo(), req.TaxRegime,
+            new PaymentSchedule(req.PaymentScheduleMode, req.PaymentScheduleDay));
         await uow.AddAsync(vendor, ct);
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToCreated(v => $"/api/vendors/{v.Id}");

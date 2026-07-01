@@ -7,6 +7,8 @@
     <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <!-- Overrides the vulnerable 2.3.0 pulled transitively by Swashbuckle (CVE-2026-49451); see Directory.Packages.props. -->
+    <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
   </ItemGroup>

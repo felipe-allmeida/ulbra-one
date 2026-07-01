@@ -250,7 +250,10 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
+    // Mock business data (companies/vendors/payables) stays off; seed only the chart of accounts
+    // (contábil + financeiro) so the payable AI classifier has a catalog to classify into.
+    await Ulbra.One.Api.DevDataSeeder.SeedChartOfAccountsAsync(app.Services);
+    //await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
     app.UseSwagger();
     app.UseSwaggerUI();
 }

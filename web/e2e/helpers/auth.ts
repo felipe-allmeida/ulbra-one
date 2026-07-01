@@ -14,7 +14,7 @@ export const E2E_EMAIL = 'e2e@ulbra.br';
 
 /**
  * Dev-login flow: landing -> "Entrar" CTA -> /login -> fill email -> submit -> dashboard.
- * Lands on /app/inicio. The token is persisted in localStorage by the app.
+ * Lands on /app/home. The token is persisted in localStorage by the app.
  */
 export async function devLogin(page: Page, email: string = E2E_EMAIL): Promise<void> {
   await page.goto('/');
