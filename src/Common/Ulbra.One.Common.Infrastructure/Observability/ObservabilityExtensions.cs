@@ -1,9 +1,11 @@
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -14,11 +16,16 @@ namespace Ulbra.One.Common.Infrastructure.Observability;
 /// Wires application observability: OpenTelemetry tracing + metrics and structured logging.
 /// </summary>
 /// <remarks>
-/// Tracing/metrics export is config-driven and a no-op without a collector: the OTLP exporter is
-/// only registered when an endpoint is configured via the <c>OTEL_EXPORTER_OTLP_ENDPOINT</c>
-/// environment variable or the <c>Otlp:Endpoint</c> config key. Point it at an OpenTelemetry
-/// Collector or the .NET Aspire dashboard (default OTLP gRPC port <c>http://localhost:4317</c>,
-/// or HTTP/protobuf on <c>http://localhost:4318</c>) to ship telemetry.
+/// Export is config-driven and a no-op when unconfigured — no background connections, no startup
+/// dependency on any backend. Two independent, additive sinks:
+/// <list type="bullet">
+///   <item><b>OTLP</b> — registered only when <c>OTEL_EXPORTER_OTLP_ENDPOINT</c> (env) or
+///   <c>Otlp:Endpoint</c> (config) is set. Point it at an OpenTelemetry Collector or the .NET Aspire
+///   dashboard (OTLP gRPC <c>http://localhost:4317</c>, or HTTP/protobuf <c>http://localhost:4318</c>).</item>
+///   <item><b>Azure Application Insights</b> — registered only when
+///   <c>APPLICATIONINSIGHTS_CONNECTION_STRING</c> is set (Container Apps inject it via Terraform).
+///   Ships the same traces, metrics and logs to Azure Monitor.</item>
+/// </list>
 /// </remarks>
 public static class ObservabilityExtensions
 {
@@ -49,6 +56,13 @@ public static class ObservabilityExtensions
             ?? builder.Configuration["Otlp:Endpoint"];
         var hasOtlp = !string.IsNullOrWhiteSpace(otlpEndpoint);
 
+        // Azure Application Insights: ship the SAME OTel signals to Azure Monitor when a connection
+        // string is present (Container Apps inject APPLICATIONINSIGHTS_CONNECTION_STRING via Terraform).
+        // Absent (e.g. local dev without the var) → not registered, so no export and no coupling.
+        var appInsightsConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+            ?? builder.Configuration["ApplicationInsights:ConnectionString"];
+        var hasAppInsights = !string.IsNullOrWhiteSpace(appInsightsConnectionString);
+
         var serviceVersion = typeof(ObservabilityExtensions).Assembly.GetName().Version?.ToString()
             ?? "1.0.0";
 
@@ -68,6 +82,11 @@ public static class ObservabilityExtensions
                 {
                     t.AddOtlpExporter();
                 }
+
+                if (hasAppInsights)
+                {
+                    t.AddAzureMonitorTraceExporter(o => o.ConnectionString = appInsightsConnectionString);
+                }
             })
             .WithMetrics(m =>
             {
@@ -79,7 +98,24 @@ public static class ObservabilityExtensions
                 {
                     m.AddOtlpExporter();
                 }
+
+                if (hasAppInsights)
+                {
+                    m.AddAzureMonitorMetricExporter(o => o.ConnectionString = appInsightsConnectionString);
+                }
             });
+
+        // Logs → Azure Monitor (App Insights "traces" table). Registered only when the connection
+        // string is present; otherwise logs stay on the console sinks configured above.
+        if (hasAppInsights)
+        {
+            builder.Logging.AddOpenTelemetry(o =>
+            {
+                o.IncludeScopes = true;
+                o.IncludeFormattedMessage = true;
+                o.AddAzureMonitorLogExporter(x => x.ConnectionString = appInsightsConnectionString);
+            });
+        }
 
         return builder;
     }
