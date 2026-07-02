@@ -8,6 +8,9 @@ public enum PayableOrigin { Manual, Purchase, Payroll, SeniorImport }
 
 public enum PayableStatus { Received, PendingClassification, PendingApproval, Scheduled, Paid, Rejected, Cancelled }
 
+/// <summary>Whether a payable is a Service (subject to source withholding) or a Product. Undetermined = null on the payable.</summary>
+public enum PayableType { Service, Product }
+
 public enum InstallmentStatus { Open, PartiallyPaid, Paid, InRemittance }
 
 public enum BankAccountType { Checking, Savings }

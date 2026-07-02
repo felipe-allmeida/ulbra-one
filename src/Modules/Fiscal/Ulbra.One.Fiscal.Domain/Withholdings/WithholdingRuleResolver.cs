@@ -8,7 +8,7 @@ namespace Ulbra.One.Fiscal.Domain.Withholdings;
 /// builds a line for a service (products are filtered upstream by service-nature). A null
 /// <paramref name="Lc116Subitem"/> means the specific subitem is unknown — the general federal taxes still apply;
 /// only INSS (labor supply) and ISS (by municipality) need the subitem/municipality to refine.</summary>
-public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? NotaIssRate, decimal Amount);
+public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? InvoiceIssRate, decimal Amount);
 
 /// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
 /// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.</summary>
@@ -47,7 +47,7 @@ public static class WithholdingRuleResolver
                 if (rule is null || !rule.Retains) continue;
 
                 // Fixed: rate from the rule. FromNota: rate from the invoice itself (Simples ISS = provider's band).
-                var rate = rule.RateSource == RateSource.FromNota ? line.NotaIssRate : rule.Rate;
+                var rate = rule.RateSource == RateSource.FromNota ? line.InvoiceIssRate : rule.Rate;
                 if (rate is null or <= 0) continue; // best-effort: without a rate we cannot compute
 
                 var baseAmount = line.Amount; // BaseRule.Full (MVP)

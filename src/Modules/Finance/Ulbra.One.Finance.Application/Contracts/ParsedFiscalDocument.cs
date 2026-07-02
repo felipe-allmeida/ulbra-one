@@ -38,8 +38,8 @@ public sealed record ParsedFiscalDocument(
     string? Lc116Subitem = null,
     string? MunicipalServiceCode = null,
     string? ServiceMunicipalityIbge = null,
-    decimal? NotaIssRate = null,
-    bool? IssRetidoNaNota = null,
+    decimal? InvoiceIssRate = null,
+    bool? IssWithheldOnInvoice = null,
     // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
     string? IssuerPhone = null,
     ParsedAddress? IssuerAddress = null,

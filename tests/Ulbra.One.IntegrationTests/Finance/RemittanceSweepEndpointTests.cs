@@ -75,7 +75,7 @@ public class RemittanceSweepEndpointTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable Endpoint Sweep",
             installments = new[] { new { dueDate = scheduledPaymentDate.ToString("yyyy-MM-dd"), amount = 600m } },
-            isService = false, // determined product — required before a payable can schedule
+            type = "Product", // determined product — required before a payable can schedule
             paymentMethod = "Pix",
         });
         payableRes.EnsureSuccessStatusCode();

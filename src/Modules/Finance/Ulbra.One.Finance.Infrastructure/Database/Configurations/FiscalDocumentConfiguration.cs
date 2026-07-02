@@ -53,6 +53,6 @@ public sealed class FiscalDocumentConfiguration : BaseEntityConfiguration<Fiscal
         e.Property(x => x.MunicipalServiceCode).HasMaxLength(20);
         e.Property(x => x.ServiceMunicipalityIbge).HasMaxLength(7);
         e.Property(x => x.Cnae).HasMaxLength(7);
-        e.Property(x => x.NotaIssRate).HasPrecision(5, 4);
+        e.Property(x => x.InvoiceIssRate).HasPrecision(5, 4);
     }
 }

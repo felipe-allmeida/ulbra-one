@@ -92,9 +92,9 @@ export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
 // ---------- Payables (Contas a Pagar) ----------
-// `isService` (natureza serviço/produto — dispara a retenção) ainda não está no schema OpenAPI gerado;
+// `type` (Service/Product — dispara a retenção) ainda não está no schema OpenAPI gerado;
 // aumentamos o tipo até o próximo `pnpm gen:api`. O valor já vem no JSON em runtime.
-export type Payable = Schemas['PayableResponse'] & { isService?: boolean | null };
+export type Payable = Schemas['PayableResponse'] & { type?: 'Service' | 'Product' | null };
 export type PayableListItem = Schemas['PayableListItemResponse'];
 export type Installment = Schemas['InstallmentResponse'];
 export type PayableAttachment = Schemas['PayableAttachmentResponse'];
@@ -377,8 +377,8 @@ export interface PayableInput {
   /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
   paymentBankAccountId?: string | null;
   paymentMethod?: PaymentMethod | null;
-  /** Service-nature: true=service (triggers withholding), false=product, null/omitted=undetermined. */
-  isService?: boolean | null;
+  /** Type: 'Service' (triggers withholding), 'Product', null/omitted=undetermined. */
+  type?: 'Service' | 'Product' | null;
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
@@ -611,11 +611,6 @@ export const api = {
     id: string,
     items: { taxType: Schemas['WithholdingTaxType']; baseAmount: number; rate?: number | null; amount: number }[],
   ) => request<Payable>(`/payables/${id}/withholdings`, { method: 'PUT', body: JSON.stringify({ items }) }),
-  /** Marks the payable's service-nature (true=service/withholds, false=product, null=undetermined) and
-   *  recomputes the automatic withholdings on the server. */
-  setPayableServiceNature: (id: string, isService: boolean | null) =>
-    request<Payable>(`/payables/${id}/service-nature`, { method: 'PUT', body: JSON.stringify({ isService }) }),
-
   // ---------- Fiscal documents (leitor de NF) ----------
   /** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */
   requestFiscalUploadUrl: (fileName: string) =>

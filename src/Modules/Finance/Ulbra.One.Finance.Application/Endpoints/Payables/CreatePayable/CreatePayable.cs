@@ -39,9 +39,9 @@ public sealed class CreatePayable : IEndpoint
         public ChartAccountId? FinancialAccountId { get; set; }
         public BankAccountId? PaymentBankAccountId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
-        // Optional service-nature for a manual payable (no fiscal document): true = service subject to source
-        // withholding. When a document is later uploaded, its format (NFS-e/NF-e) authoritatively sets this.
-        public bool? IsService { get; set; }
+        // Optional type for a manual payable (no fiscal document): Service = subject to source withholding.
+        // When a document is later uploaded, its format (NFS-e/NF-e) authoritatively sets this.
+        public PayableType? Type { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -100,7 +100,7 @@ public sealed class CreatePayable : IEndpoint
         }
 
         payable.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);
-        if (req.IsService is not null) payable.SetIsService(req.IsService);
+        if (req.Type is not null) payable.SetType(req.Type);
 
         // Apply vendor payment schedule to each installment's scheduled payment date.
         var schedule = vendor.PaymentSchedule ?? PaymentSchedule.Default;

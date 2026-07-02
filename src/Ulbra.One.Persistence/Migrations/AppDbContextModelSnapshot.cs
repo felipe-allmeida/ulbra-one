@@ -1317,14 +1317,19 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("icms_amount");
 
+                    b.Property<decimal?>("InvoiceIssRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("invoice_iss_rate");
+
                     b.Property<decimal?>("IpiAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("ipi_amount");
 
-                    b.Property<bool?>("IssRetidoNaNota")
+                    b.Property<bool?>("IssWithheldOnInvoice")
                         .HasColumnType("boolean")
-                        .HasColumnName("iss_retido_na_nota");
+                        .HasColumnName("iss_withheld_on_invoice");
 
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
@@ -1354,11 +1359,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("ncms");
-
-                    b.Property<decimal?>("NotaIssRate")
-                        .HasPrecision(5, 4)
-                        .HasColumnType("numeric(5,4)")
-                        .HasColumnName("nota_iss_rate");
 
                     b.Property<Guid>("PayableId")
                         .HasColumnType("uuid")
@@ -1572,10 +1572,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("financial_account_id");
 
-                    b.Property<bool?>("IsService")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_service");
-
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");
@@ -1624,6 +1620,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("total_amount");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

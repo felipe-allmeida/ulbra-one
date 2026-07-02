@@ -51,8 +51,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const [paymentMethodOverride, setPaymentMethodOverride] = useState<PaymentMethod | null>(
     initial?.paymentMethod ?? null,
   );
-  // Service-nature: drives the automatic withholding. Set here so it's applied before any auto-approval.
-  const [isService, setIsService] = useState<boolean | null>(initial?.isService ?? null);
+  // Type (Service/Product): drives the automatic withholding. Set here so it's applied before any auto-approval.
+  const [payableType, setPayableType] = useState<'Service' | 'Product' | null>(initial?.type ?? null);
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -240,7 +240,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
       paymentMethod: paymentMethodOverride ?? null,
-      isService,
+      type: payableType,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
     if (xmlInstallments && xmlInstallments.length > 0) {
@@ -397,10 +397,10 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 </Field>
                 <Field label={t('payables.fields.nature')}>
                   <Select
-                    value={isService === true ? 'service' : isService === false ? 'product' : ''}
+                    value={payableType === 'Service' ? 'service' : payableType === 'Product' ? 'product' : ''}
                     onChange={(e) => {
                       const v = e.target.value;
-                      setIsService(v === 'service' ? true : v === 'product' ? false : null);
+                      setPayableType(v === 'service' ? 'Service' : v === 'product' ? 'Product' : null);
                     }}
                   >
                     <option value=''>{t('payables.fields.natureUndefined')}</option>

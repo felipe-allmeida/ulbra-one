@@ -62,9 +62,9 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
         var lc116Subitem = service?.Element(Ns + "ItemListaServico")?.Value?.Trim();
         var municipalServiceCode = service?.Element(Ns + "CodigoTributacaoMunicipio")?.Value;
         var serviceMunicipalityIbge = service?.Element(Ns + "CodigoMunicipio")?.Value;
-        var notaIssRate = FiscalXml.ParseDecimal(
+        var invoiceIssRate = FiscalXml.ParseDecimal(
             serviceAmounts?.Element(Ns + "Aliquota")?.Value ?? service?.Element(Ns + "Aliquota")?.Value);
-        var issRetidoNaNota = ParseSimNao(
+        var issWithheldOnInvoice = ParseSimNao(
             serviceAmounts?.Element(Ns + "IssRetido")?.Value ?? service?.Element(Ns + "IssRetido")?.Value);
 
         var rawExtraction = JsonSerializer.Serialize(new Dictionary<string, string?>
@@ -82,8 +82,8 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
             ["lc116Subitem"] = lc116Subitem,
             ["municipalServiceCode"] = municipalServiceCode,
             ["serviceMunicipalityIbge"] = serviceMunicipalityIbge,
-            ["notaIssRate"] = notaIssRate?.ToString(CultureInfo.InvariantCulture),
-            ["issRetidoNaNota"] = issRetidoNaNota?.ToString(),
+            ["invoiceIssRate"] = invoiceIssRate?.ToString(CultureInfo.InvariantCulture),
+            ["issWithheldOnInvoice"] = issWithheldOnInvoice?.ToString(),
         });
 
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfseXml, null, documentNumber,
@@ -93,8 +93,8 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
             Lc116Subitem: FiscalXml.NullIfEmpty(lc116Subitem),
             MunicipalServiceCode: FiscalXml.NullIfEmpty(municipalServiceCode),
             ServiceMunicipalityIbge: FiscalXml.NullIfEmpty(serviceMunicipalityIbge),
-            NotaIssRate: notaIssRate,
-            IssRetidoNaNota: issRetidoNaNota);
+            InvoiceIssRate: invoiceIssRate,
+            IssWithheldOnInvoice: issWithheldOnInvoice);
     }
 
     // ABRASF tcSimNao: 1 = Yes, 2 = No; any other value (or absent) -> null.

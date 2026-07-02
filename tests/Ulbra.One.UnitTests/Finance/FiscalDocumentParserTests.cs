@@ -358,8 +358,8 @@ public class FiscalDocumentParserTests
         Assert.Equal("01.04", p.Lc116Subitem);
         Assert.Null(p.MunicipalServiceCode);
         Assert.Null(p.ServiceMunicipalityIbge);
-        Assert.Null(p.NotaIssRate);
-        Assert.Null(p.IssRetidoNaNota);
+        Assert.Null(p.InvoiceIssRate);
+        Assert.Null(p.IssWithheldOnInvoice);
     }
 
     [Fact]
@@ -369,8 +369,8 @@ public class FiscalDocumentParserTests
         Assert.Equal("17.01", p.Lc116Subitem);
         Assert.Equal("170100", p.MunicipalServiceCode);
         Assert.Equal("4304606", p.ServiceMunicipalityIbge);
-        Assert.Equal(0.05m, p.NotaIssRate);
-        Assert.True(p.IssRetidoNaNota);
+        Assert.Equal(0.05m, p.InvoiceIssRate);
+        Assert.True(p.IssWithheldOnInvoice);
     }
 
     [Fact]

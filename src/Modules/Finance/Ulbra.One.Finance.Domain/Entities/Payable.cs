@@ -35,11 +35,10 @@ public class Payable : IAuditable, ISoftDeletable
     public Guid? SuggestedFinancialAccountId { get; private set; }
     public double? ClassificationConfidence { get; private set; }
     public string? ClassificationRationale { get; private set; }
-    // Whether this payable is a service subject to source withholding: true = service (retains per the rules);
-    // false = product / not subject; null = undetermined (no auto-calculation). This — not the LC116 subitem —
-    // is what triggers the automatic withholding. Derived from the fiscal document (NFS-e=true, NF-e=false) or
-    // set manually for doc-less payables.
-    public bool? IsService { get; private set; }
+    // Whether this payable is a Service (subject to source withholding) or a Product; null = undetermined
+    // (no auto-calculation). This — not the LC116 subitem — is what triggers the automatic withholding.
+    // Derived from the fiscal document (NFS-e=Service, NF-e=Product) or set on manual creation.
+    public PayableType? Type { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public bool IsClassified => AccountingAccountId is not null && FinancialAccountId is not null;
@@ -175,11 +174,11 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void ApplyAutoApproval(decimal autoApprovalLimit, DateTimeOffset at)
     {
-        // Never auto-schedule while the service nature is undetermined (IsService is null): withholding is skipped
-        // for a non-service (IsService != true), so the payable would schedule with zero retention and lock it in.
-        // A determined nature is required first — service → federal withholding already computed; product → nothing
-        // to withhold. This is the automatic half of the "scheduled always withholds" guarantee.
-        if (IsClassified && IsService is not null && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit
+        // Never auto-schedule while the type is undetermined (Type is null): withholding is skipped for a
+        // non-service, so the payable would schedule with zero retention and lock it in. A determined type is
+        // required first — Service → federal withholding already computed; Product → nothing to withhold.
+        // This is the automatic half of the "scheduled always withholds" guarantee.
+        if (IsClassified && Type is not null && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit
             && Status is PayableStatus.Received or PayableStatus.PendingClassification or PayableStatus.PendingApproval)
             Approve("system", at);
     }
@@ -240,13 +239,13 @@ public class Payable : IAuditable, ISoftDeletable
         PaymentMethod = method;
     }
 
-    /// <summary>Marks whether this payable is a service subject to source withholding (true), a product / not
-    /// subject (false), or undetermined (null). This — not the LC116 subitem — is what triggers the automatic
-    /// withholding calculation; the subitem only refines specific taxes (INSS labor supply, ISS by municipality).</summary>
-    public void SetIsService(bool? isService)
+    /// <summary>Marks whether this payable is a Service (subject to source withholding), a Product, or undetermined
+    /// (null). This — not the LC116 subitem — is what triggers the automatic withholding calculation; the subitem
+    /// only refines specific taxes (INSS labor supply, ISS by municipality).</summary>
+    public void SetType(PayableType? type)
     {
         EnsureMutable();
-        IsService = isService;
+        Type = type;
     }
 
     /// <summary>Sets (or clears) the accounting + financial chart accounts that classify this payable.</summary>

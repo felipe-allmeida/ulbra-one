@@ -5,7 +5,7 @@ namespace Ulbra.One.Finance.Application.Withholdings;
 
 /// <summary>A service line — the calculation base. Built only for services (the caller gates on service-nature).
 /// A null Lc116Subitem means the specific subitem is unknown: the general federal taxes still apply.</summary>
-public sealed record ServiceLineInput(string? Lc116Subitem, string? MunicipalityIbge, decimal? NotaIssRate, decimal Amount);
+public sealed record ServiceLineInput(string? Lc116Subitem, string? MunicipalityIbge, decimal? InvoiceIssRate, decimal Amount);
 
 /// <summary>Inputs for the withholding calculation, assembled by Finance from the payable + vendor + fiscal document.</summary>
 public sealed record WithholdingContext(

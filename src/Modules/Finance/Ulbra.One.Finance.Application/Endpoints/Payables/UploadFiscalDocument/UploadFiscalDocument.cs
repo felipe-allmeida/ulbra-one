@@ -105,22 +105,22 @@ public sealed class UploadFiscalDocument : IEndpoint
             municipalServiceCode: parsed.MunicipalServiceCode,
             serviceMunicipalityIbge: parsed.ServiceMunicipalityIbge,
             cnae: parsed.CnaeCode,
-            notaIssRate: parsed.NotaIssRate,
-            issRetidoNaNota: parsed.IssRetidoNaNota);
+            invoiceIssRate: parsed.InvoiceIssRate,
+            issWithheldOnInvoice: parsed.IssWithheldOnInvoice);
         await uow.AddAsync(doc, ct);
         await uow.SaveChangesAsync(ct);
 
-        // Service-nature drives the withholding calc (NOT the LC116 subitem). NFS-e = service and NF-e = product
-        // are authoritative; a PDF/image guess only fills an undetermined value and never overrides a human choice.
-        var derivedNature = DeriveIsService(parsed);
+        // The type drives the withholding calc (NOT the LC116 subitem). NFS-e = Service and NF-e = Product are
+        // authoritative; a PDF/image guess only fills an undetermined value and never overrides a human choice.
+        var derivedType = DeriveType(parsed);
         try
         {
             if (parsed.Format is FiscalDocumentFormat.NfseXml or FiscalDocumentFormat.NfeXml)
-                payable.SetIsService(derivedNature);
-            else if (payable.IsService is null && derivedNature is not null)
-                payable.SetIsService(derivedNature);
+                payable.SetType(derivedType);
+            else if (payable.Type is null && derivedType is not null)
+                payable.SetType(derivedType);
         }
-        catch (InvalidOperationException) { /* payable in a terminal state: keep the existing nature */ }
+        catch (InvalidOperationException) { /* payable in a terminal state: keep the existing type */ }
 
         // Recompute withholdings now that the document + service-nature are persisted — the auto-calc at
         // classification time may have run before this document was linked. No-op when the payable is already
@@ -133,15 +133,15 @@ public sealed class UploadFiscalDocument : IEndpoint
             FiscalDocumentResponse.From(doc));
     }
 
-    // NFS-e = service, NF-e = product. For a PDF/image (AI-extracted) it is best-effort: a service signal
-    // (LC116) → service; a product fingerprint (CFOP/NCM) → product; otherwise undetermined (manual review).
-    private static bool? DeriveIsService(ParsedFiscalDocument parsed) => parsed.Format switch
+    // NFS-e = Service, NF-e = Product. For a PDF/image (AI-extracted) it is best-effort: a service signal
+    // (LC116) → Service; a product fingerprint (CFOP/NCM) → Product; otherwise undetermined (manual review).
+    private static PayableType? DeriveType(ParsedFiscalDocument parsed) => parsed.Format switch
     {
-        FiscalDocumentFormat.NfseXml => true,
-        FiscalDocumentFormat.NfeXml => false,
-        _ => parsed.Lc116Subitem is not null ? true
-           : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? false
-           : null,
+        FiscalDocumentFormat.NfseXml => PayableType.Service,
+        FiscalDocumentFormat.NfeXml => PayableType.Product,
+        _ => parsed.Lc116Subitem is not null ? PayableType.Service
+           : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? PayableType.Product
+           : (PayableType?)null,
     };
 }
 

@@ -725,20 +725,6 @@ export function useSetPayableWithholdings(
   );
 }
 
-export function useSetPayableServiceNature(
-  options?: UseMutationOptions<Payable, unknown, { id: string; isService: boolean | null }>,
-) {
-  return useInvalidatingMutation(
-    ({ id, isService }) => api.setPayableServiceNature(id, isService),
-    (qc, _d, vars) => {
-      void qc.invalidateQueries({ queryKey: ['payables'] });
-      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
-      void qc.invalidateQueries({ queryKey: ['withholdingsReport'] });
-    },
-    options,
-  );
-}
-
 export function useHoldInstallment(
   options?: UseMutationOptions<void, unknown, { id: string; installmentId: string; reason: string }>,
 ) {

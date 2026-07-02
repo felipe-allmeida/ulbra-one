@@ -288,7 +288,7 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
         var payableId = await CreatePayableAsync(client, seed);
 
-        // NFS-e (service) → IsService = true. This — not the LC116 subitem — is the withholding trigger;
+        // NFS-e (service) → Type = Service. This — not the LC116 subitem — is the withholding trigger;
         // note this ABRASF sample carries no ItemListaServico, yet the payable is still marked a service.
         var nfseBytes = Encoding.UTF8.GetBytes(NfseXml);
         var nfseKey = await SeedBlobAsync(factory, NfseXml, "nfse.xml");
@@ -297,9 +297,9 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, up1.StatusCode);
 
         var afterNfse = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
-        Assert.True(afterNfse.GetProperty("isService").GetBoolean());
+        Assert.Equal("Service", afterNfse.GetProperty("type").GetString());
 
-        // Re-upload a NF-e (product) → IsService = false → no source withholding.
+        // Re-upload a NF-e (product) → Type = Product → no source withholding.
         var nfeBytes = Encoding.UTF8.GetBytes(NfeXml);
         var nfeKey = await SeedBlobAsync(factory, NfeXml, "nfe.xml");
         var up2 = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
@@ -307,7 +307,7 @@ public class FiscalDocumentEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.Created, up2.StatusCode);
 
         var afterNfe = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
-        Assert.False(afterNfe.GetProperty("isService").GetBoolean());
+        Assert.Equal("Product", afterNfe.GetProperty("type").GetString());
     }
 
     [Fact]

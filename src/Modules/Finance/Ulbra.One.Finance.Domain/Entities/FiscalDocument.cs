@@ -47,8 +47,8 @@ public class FiscalDocument
     public string? MunicipalServiceCode { get; private set; }
     public string? ServiceMunicipalityIbge { get; private set; }
     public string? Cnae { get; private set; }
-    public decimal? NotaIssRate { get; private set; }
-    public bool? IssRetidoNaNota { get; private set; }
+    public decimal? InvoiceIssRate { get; private set; }
+    public bool? IssWithheldOnInvoice { get; private set; }
 
     private FiscalDocument() { }
 
@@ -60,7 +60,7 @@ public class FiscalDocument
         decimal? icmsAmount = null, decimal? ipiAmount = null, decimal? pisAmount = null,
         decimal? cofinsAmount = null, decimal? totalTaxesAmount = null,
         string? lc116Subitem = null, string? municipalServiceCode = null, string? serviceMunicipalityIbge = null,
-        string? cnae = null, decimal? notaIssRate = null, bool? issRetidoNaNota = null)
+        string? cnae = null, decimal? invoiceIssRate = null, bool? issWithheldOnInvoice = null)
     {
         PayableId = payableId;
         Format = format;
@@ -89,7 +89,7 @@ public class FiscalDocument
         MunicipalServiceCode = municipalServiceCode;
         ServiceMunicipalityIbge = serviceMunicipalityIbge;
         Cnae = cnae;
-        NotaIssRate = notaIssRate;
-        IssRetidoNaNota = issRetidoNaNota;
+        InvoiceIssRate = invoiceIssRate;
+        IssWithheldOnInvoice = issWithheldOnInvoice;
     }
 }

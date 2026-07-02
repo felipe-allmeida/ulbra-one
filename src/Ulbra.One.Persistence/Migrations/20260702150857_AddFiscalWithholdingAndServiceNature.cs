@@ -14,11 +14,12 @@ namespace Ulbra.One.Persistence.Migrations
             migrationBuilder.EnsureSchema(
                 name: "fiscal");
 
-            migrationBuilder.AddColumn<bool>(
-                name: "is_service",
+            migrationBuilder.AddColumn<string>(
+                name: "type",
                 schema: "finance",
                 table: "payables",
-                type: "boolean",
+                type: "character varying(20)",
+                maxLength: 20,
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
@@ -29,8 +30,17 @@ namespace Ulbra.One.Persistence.Migrations
                 maxLength: 7,
                 nullable: true);
 
+            migrationBuilder.AddColumn<decimal>(
+                name: "invoice_iss_rate",
+                schema: "finance",
+                table: "fiscal_documents",
+                type: "numeric(5,4)",
+                precision: 5,
+                scale: 4,
+                nullable: true);
+
             migrationBuilder.AddColumn<bool>(
-                name: "iss_retido_na_nota",
+                name: "iss_withheld_on_invoice",
                 schema: "finance",
                 table: "fiscal_documents",
                 type: "boolean",
@@ -50,15 +60,6 @@ namespace Ulbra.One.Persistence.Migrations
                 table: "fiscal_documents",
                 type: "character varying(20)",
                 maxLength: 20,
-                nullable: true);
-
-            migrationBuilder.AddColumn<decimal>(
-                name: "nota_iss_rate",
-                schema: "finance",
-                table: "fiscal_documents",
-                type: "numeric(5,4)",
-                precision: 5,
-                scale: 4,
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
@@ -113,7 +114,7 @@ namespace Ulbra.One.Persistence.Migrations
                 schema: "fiscal");
 
             migrationBuilder.DropColumn(
-                name: "is_service",
+                name: "type",
                 schema: "finance",
                 table: "payables");
 
@@ -123,7 +124,12 @@ namespace Ulbra.One.Persistence.Migrations
                 table: "fiscal_documents");
 
             migrationBuilder.DropColumn(
-                name: "iss_retido_na_nota",
+                name: "invoice_iss_rate",
+                schema: "finance",
+                table: "fiscal_documents");
+
+            migrationBuilder.DropColumn(
+                name: "iss_withheld_on_invoice",
                 schema: "finance",
                 table: "fiscal_documents");
 
@@ -134,11 +140,6 @@ namespace Ulbra.One.Persistence.Migrations
 
             migrationBuilder.DropColumn(
                 name: "municipal_service_code",
-                schema: "finance",
-                table: "fiscal_documents");
-
-            migrationBuilder.DropColumn(
-                name: "nota_iss_rate",
                 schema: "finance",
                 table: "fiscal_documents");
 

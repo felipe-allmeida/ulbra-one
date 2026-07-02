@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { type Payable, type WithholdingTaxType } from '../../api';
-import { useSetPayableWithholdings, useSetPayableServiceNature } from '../../queries';
+import { useSetPayableWithholdings } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { Button, Input, Select, Panel } from '../../ui';
@@ -30,47 +30,21 @@ function rowToItem(r: Row) {
   };
 }
 
-/* ============ Service-nature selector (the withholding trigger) ============ */
-/** Product vs. service is what drives the automatic withholding — NOT the LC116 subitem. Changing it here
- *  recomputes the withholdings on the server (SetServiceNature re-runs the calculator). */
-function ServiceNatureRow({ payable, editable }: { payable: Payable; editable: boolean }) {
+/* ============ Type indicator (the withholding trigger) ============ */
+/** Service vs. product is what drives the automatic withholding — NOT the LC116 subitem. The type is set on
+ *  creation or derived from the fiscal document (NFS-e=Service, NF-e=Product), so it is read-only here. */
+function PayableTypeRow({ payable }: { payable: Payable }) {
   const { t } = useTranslation();
-  const toast = useToast();
-  const setNature = useSetPayableServiceNature({ onError: (e) => toast.error(getErrorMessage(e)) });
-
-  const value = payable.isService === true ? 'service' : payable.isService === false ? 'product' : '';
   const label =
-    value === 'service'
+    payable.type === 'Service'
       ? t('payables.withholding.nature.service')
-      : value === 'product'
+      : payable.type === 'Product'
         ? t('payables.withholding.nature.product')
         : t('payables.withholding.nature.undefined');
 
-  if (!editable) {
-    return (
-      <div className='help' style={{ marginBottom: 12 }}>
-        {t('payables.withholding.nature.label')}: <strong>{label}</strong>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-      <span className='info-label'>{t('payables.withholding.nature.label')}</span>
-      <Select
-        value={value}
-        disabled={setNature.isPending}
-        onChange={(e) => {
-          const v = e.target.value;
-          setNature.mutate({ id: payable.id, isService: v === 'service' ? true : v === 'product' ? false : null });
-        }}
-        style={{ maxWidth: 240 }}
-      >
-        <option value=''>{t('payables.withholding.nature.undefined')}</option>
-        <option value='service'>{t('payables.withholding.nature.service')}</option>
-        <option value='product'>{t('payables.withholding.nature.product')}</option>
-      </Select>
-      <span className='help'>{t('payables.withholding.nature.hint')}</span>
+    <div className='help' style={{ marginBottom: 12 }}>
+      {t('payables.withholding.nature.label')}: <strong>{label}</strong>
     </div>
   );
 }
@@ -125,7 +99,7 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
 
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
-      <ServiceNatureRow payable={payable} editable />
+      <PayableTypeRow payable={payable} />
       {rows.length > 0 && (
         <table>
           <thead>
@@ -227,7 +201,7 @@ function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
 
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
-      <ServiceNatureRow payable={payable} editable={false} />
+      <PayableTypeRow payable={payable} />
       {payable.withholdings.length > 0 ? (
         <table>
           <thead>

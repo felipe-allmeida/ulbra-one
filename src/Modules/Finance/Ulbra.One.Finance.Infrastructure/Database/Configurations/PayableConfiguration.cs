@@ -29,6 +29,7 @@ public sealed class PayableConfiguration : BaseEntityConfiguration<Payable>
         e.HasIndex(x => x.CostCenterId);
         e.HasIndex(x => x.VendorId);
         e.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
+        e.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
         e.Property(x => x.ClassificationRationale).HasMaxLength(1000);
         e.HasIndex(x => x.Status);
         // Optimistic concurrency via Postgres' hidden xmin system column (no DDL created).
