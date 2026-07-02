@@ -162,6 +162,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
     setValue('mode', 'single', { shouldValidate: true });
     setValue('installmentCount', '2', { shouldValidate: true });
     setXmlInstallments(null);
+    // Tipo volta ao estado base (null na criação; o valor original na edição).
+    setPayableType(initial?.type ?? null);
     if (vendorFromXml.current) {
       setValue('vendorId', '', { shouldValidate: true });
       vendorFromXml.current = false;
@@ -210,6 +212,14 @@ function PayableForm({ initial }: { initial?: Payable }) {
       setValue('description', p.serviceDescription.slice(0, 300), { shouldValidate: true, shouldDirty: true });
       descriptionFromXml.current = true;
       filled.add('description');
+    }
+
+    // Tipo (serviço/produto) a partir do formato do documento — regra autoritativa do servidor para XML
+    // (NFS-e → serviço, NF-e → produto). PDF/imagem fica indeterminado (o usuário informa).
+    const derivedType = p.format === 'NfseXml' ? 'Service' : p.format === 'NfeXml' ? 'Product' : null;
+    if (derivedType) {
+      setPayableType(derivedType);
+      filled.add('type');
     }
 
     setNf(p);
@@ -395,7 +405,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     <div className='field-err'>{fieldError(formState.errors.costCenterId?.message)}</div>
                   )}
                 </Field>
-                <Field label={t('payables.fields.nature')}>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.nature')} {nfFields.has('type') && <AutoHint />}
+                    </>
+                  }
+                >
                   <Select
                     value={payableType === 'Service' ? 'service' : payableType === 'Product' ? 'product' : ''}
                     onChange={(e) => {
