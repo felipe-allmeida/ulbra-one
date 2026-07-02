@@ -77,6 +77,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Para pagar",
             installments = new[] { new { dueDate, amount } },
+            isService = false, // determined product — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

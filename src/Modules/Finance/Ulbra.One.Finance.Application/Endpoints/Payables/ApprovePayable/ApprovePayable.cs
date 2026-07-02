@@ -20,6 +20,7 @@ public sealed class ApprovePayable : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/approve", Handle).WithName("ApprovePayable").WithTags("Finance")
             .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, UserContext user,
@@ -29,6 +30,10 @@ public sealed class ApprovePayable : IEndpoint
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
         if (await ClassificationGate.RequiresButMissingAsync(uow, p, forPay: false, ct))
             return TypedResults.Problem(detail: "This payable must be classified before it can be approved.", statusCode: 400, title: "Payable.NotClassified");
+        // "Scheduled always withholds": don't schedule a payable whose service nature is still undetermined —
+        // withholding would be skipped and locked at zero. The Tipo must be set (via service-nature / fiscal doc) first.
+        if (p.IsService is null)
+            return TypedResults.Problem(detail: "The service nature (service/product) must be set before this payable can be approved.", statusCode: 400, title: "Payable.ServiceNatureUndetermined");
         try { p.Approve(user.UserId, clock.GetUtcNow()); }
         catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 409, title: "Payable.InvalidState"); }
         if (p.Status == PayableStatus.Scheduled)

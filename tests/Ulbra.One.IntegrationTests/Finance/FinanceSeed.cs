@@ -107,6 +107,7 @@ public static class FinanceSeed
             costCenterId,
             description = "Para pagar",
             installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+            isService = false, // determined product (no source withholding) — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var body = await ReadJson(createRes);
@@ -134,6 +135,7 @@ public static class FinanceSeed
             costCenterId,
             description = "Para pagar",
             installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+            isService = false, // determined product (no source withholding) — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var body = await ReadJson(createRes);

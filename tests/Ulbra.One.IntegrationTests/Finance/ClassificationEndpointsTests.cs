@@ -74,6 +74,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Para classificar",
             installments = new[] { new { dueDate = "2026-07-10", amount } },
+            isService = false, // determined product — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

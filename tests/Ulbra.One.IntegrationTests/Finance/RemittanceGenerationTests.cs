@@ -125,6 +125,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable TED",
             installments = new[] { new { dueDate = "2026-06-01", amount = 1_000m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableARes.EnsureSuccessStatusCode();
         var payableAPrefixedId = (await ReadJson(payableARes)).GetProperty("id").GetString()!;
@@ -141,6 +142,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable PIX",
             installments = new[] { new { dueDate = "2026-06-10", amount = 500m } },
+            isService = false, // determined product — required before a payable can schedule
             paymentMethod = "Pix",
         });
         payableBRes.EnsureSuccessStatusCode();
@@ -157,6 +159,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable SemBanco",
             installments = new[] { new { dueDate = "2026-06-15", amount = 200m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableCRes.EnsureSuccessStatusCode();
         var payableCPrefixedId = (await ReadJson(payableCRes)).GetProperty("id").GetString()!;
@@ -416,6 +419,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable SemDados",
             installments = new[] { new { dueDate = "2026-06-10", amount = 750m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableRes.EnsureSuccessStatusCode();
         var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;

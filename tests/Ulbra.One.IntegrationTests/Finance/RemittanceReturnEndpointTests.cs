@@ -97,6 +97,7 @@ public class RemittanceReturnEndpointTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable TED RetEP",
             installments = new[] { new { dueDate = "2026-06-01", amount = 1_000m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableARes.EnsureSuccessStatusCode();
         var payableAPrefixedId = (await ReadJson(payableARes)).GetProperty("id").GetString()!;

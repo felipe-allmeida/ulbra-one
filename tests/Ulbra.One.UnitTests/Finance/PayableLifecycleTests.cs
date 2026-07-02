@@ -30,6 +30,7 @@ public class PayableLifecycleTests
 
         var classified = NewPayable(100m);
         classified.Classify(Guid.NewGuid(), Guid.NewGuid());
+        classified.SetIsService(true); // service nature must be determined before auto-scheduling
         classified.ApplyAutoApproval(500m, DateTimeOffset.UnixEpoch);
         Assert.Equal(PayableStatus.Scheduled, classified.Status);
 

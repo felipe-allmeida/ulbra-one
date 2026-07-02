@@ -116,6 +116,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable TED Return",
             installments = new[] { new { dueDate = "2026-05-01", amount = 1_000m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableARes.EnsureSuccessStatusCode();
         var payableAPrefixedId = (await ReadJson(payableARes)).GetProperty("id").GetString()!;
@@ -130,6 +131,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable PIX Return",
             installments = new[] { new { dueDate = "2026-05-10", amount = 500m } },
+            isService = false, // determined product — required before a payable can schedule
             paymentMethod = "Pix",
         });
         payableBRes.EnsureSuccessStatusCode();

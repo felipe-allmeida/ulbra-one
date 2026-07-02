@@ -78,6 +78,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Para pagar",
             installments = new[] { new { dueDate = "2026-07-10", amount } },
+            isService = false, // determined product — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
@@ -505,6 +506,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable InRemittance Block",
             installments = new[] { new { dueDate = "2026-06-01", amount = 500m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         payableRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;

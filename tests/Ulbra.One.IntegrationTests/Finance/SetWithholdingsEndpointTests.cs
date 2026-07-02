@@ -56,6 +56,7 @@ public class SetWithholdingsEndpointTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Servico para retencao",
             installments = new[] { new { dueDate = "2026-09-01", amount } },
+            isService = false, // product here (test drives withholdings via the manual endpoint) — lets it schedule
         });
         res.EnsureSuccessStatusCode();
         return (await ReadJson(res)).GetProperty("id").GetString()!;

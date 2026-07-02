@@ -252,6 +252,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Para aprovar",
             installments = new[] { new { dueDate = "2026-07-10", amount = 5000m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
@@ -276,6 +277,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Auditoria de aprovação",
             installments = new[] { new { dueDate = "2026-07-10", amount = 5000m } },
+            isService = false, // determined product — required before a payable can schedule
         });
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

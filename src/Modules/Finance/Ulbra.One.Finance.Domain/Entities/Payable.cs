@@ -175,7 +175,11 @@ public class Payable : IAuditable, ISoftDeletable
 
     public void ApplyAutoApproval(decimal autoApprovalLimit, DateTimeOffset at)
     {
-        if (IsClassified && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit
+        // Never auto-schedule while the service nature is undetermined (IsService is null): withholding is skipped
+        // for a non-service (IsService != true), so the payable would schedule with zero retention and lock it in.
+        // A determined nature is required first — service → federal withholding already computed; product → nothing
+        // to withhold. This is the automatic half of the "scheduled always withholds" guarantee.
+        if (IsClassified && IsService is not null && autoApprovalLimit > 0 && TotalAmount <= autoApprovalLimit
             && Status is PayableStatus.Received or PayableStatus.PendingClassification or PayableStatus.PendingApproval)
             Approve("system", at);
     }
