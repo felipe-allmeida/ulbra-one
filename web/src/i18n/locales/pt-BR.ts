@@ -919,6 +919,12 @@ const ptBR = {
         title: 'Sem retenções',
         sub: 'Nenhum título com retenção no filtro atual.',
       },
+      detail: {
+        title: 'Impostos retidos',
+        columns: { tax: 'Tributo', base: 'Base', rate: 'Alíquota', amount: 'Retido' },
+        empty: 'Sem retenções neste título.',
+        openPayable: 'Abrir título completo',
+      },
     },
     income: {
       title: 'DRE',

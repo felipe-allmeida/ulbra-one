@@ -1142,6 +1142,11 @@ tbody td {
 tbody tr:last-child td {
   border-bottom: none;
 }
+tfoot td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-top: 2px solid var(--border);
+}
 .t-mono {
   font-variant-numeric: tabular-nums;
 }

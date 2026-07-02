@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Percent } from 'lucide-react';
 import { useWithholdingsReport } from '../queries';
+import type { WithholdingPayableRow } from '../api';
 import { brlCents } from '../lib';
-import { EmptyState, PageHeader, Panel } from '../ui';
+import { Drawer, EmptyState, PageHeader, Panel } from '../ui';
 import { ConsolidatedPicker } from './contabil-shared';
 
 export function ContabilRetencoesPage() {
   const { t } = useTranslation();
   const [companyId, setCompanyId] = useState('');
+  // The row whose per-tax breakdown is shown in the side drawer (lines already come in the report GET).
+  const [selected, setSelected] = useState<WithholdingPayableRow | null>(null);
   const query = useWithholdingsReport(companyId || undefined);
   const report = query.data;
   const hasData = (report?.byPayable.length ?? 0) > 0;
@@ -82,43 +85,116 @@ export function ContabilRetencoesPage() {
             </table>
           </Panel>
 
-          <Panel title={t('accounting.withholdings.byPayable')}>
+          <div style={{ marginTop: 16 }}>
+            <Panel title={t('accounting.withholdings.byPayable')}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('accounting.withholdings.columns.supplier')}</th>
+                    <th>{t('accounting.withholdings.columns.document')}</th>
+                    <th>{t('accounting.withholdings.columns.status')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.gross')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.amount')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.net')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(report?.byPayable ?? []).map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <button type='button' className='linklike' onClick={() => setSelected(p)}>
+                          {p.counterpartyName}
+                        </button>
+                      </td>
+                      <td className='t-mono'>{p.documentNumber ?? '—'}</td>
+                      <td>
+                        <span className='badge-status'>{t(`payables.status.${p.status}`)}</span>
+                      </td>
+                      <td className='amount-cell' style={{ textAlign: 'right' }}>
+                        {brlCents(p.totalAmount)}
+                      </td>
+                      <td className='amount-cell' style={{ textAlign: 'right' }}>
+                        {brlCents(p.totalWithheld)}
+                      </td>
+                      <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 600 }}>
+                        {brlCents(p.netTotal)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+          </div>
+        </>
+      )}
+
+      {selected && (
+        <Drawer
+          open
+          onClose={() => setSelected(null)}
+          title={t('accounting.withholdings.detail.title')}
+          sub={selected.counterpartyName}
+        >
+          <div className='info-grid' style={{ marginBottom: 16 }}>
+            <div className='info-card'>
+              <div className='info-label'>{t('accounting.withholdings.gross')}</div>
+              <div className='info-value'>{brlCents(selected.totalAmount)}</div>
+            </div>
+            <div className='info-card'>
+              <div className='info-label'>{t('accounting.withholdings.withheld')}</div>
+              <div className='info-value'>{brlCents(selected.totalWithheld)}</div>
+            </div>
+            <div className='info-card'>
+              <div className='info-label'>{t('accounting.withholdings.net')}</div>
+              <div className='info-value'>{brlCents(selected.netTotal)}</div>
+            </div>
+          </div>
+
+          {selected.lines.length > 0 ? (
             <table>
               <thead>
                 <tr>
-                  <th>{t('accounting.withholdings.columns.supplier')}</th>
-                  <th>{t('accounting.withholdings.columns.document')}</th>
-                  <th>{t('accounting.withholdings.columns.status')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.gross')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.amount')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.columns.net')}</th>
+                  <th>{t('accounting.withholdings.detail.columns.tax')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.base')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.rate')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.amount')}</th>
                 </tr>
               </thead>
               <tbody>
-                {(report?.byPayable ?? []).map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <Link to={`/app/payables/${p.id}`}>{p.counterpartyName}</Link>
-                    </td>
-                    <td className='t-mono'>{p.documentNumber ?? '—'}</td>
-                    <td>
-                      <span className='badge-status'>{t(`payables.status.${p.status}`)}</span>
-                    </td>
+                {selected.lines.map((l) => (
+                  <tr key={l.id}>
+                    <td>{t(`payables.withholding.taxType.${l.taxType}`)}</td>
                     <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {brlCents(p.totalAmount)}
+                      {brlCents(l.baseAmount)}
                     </td>
+                    <td style={{ textAlign: 'right' }}>{l.rate != null ? `${(l.rate * 100).toFixed(2)}%` : '—'}</td>
                     <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {brlCents(p.totalWithheld)}
-                    </td>
-                    <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {brlCents(p.netTotal)}
+                      {brlCents(l.amount)}
                     </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>{t('accounting.withholdings.total')}</td>
+                  <td />
+                  <td />
+                  <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                    {brlCents(selected.totalWithheld)}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
-          </Panel>
-        </>
+          ) : (
+            <div className='help'>{t('accounting.withholdings.detail.empty')}</div>
+          )}
+
+          <div style={{ marginTop: 16 }}>
+            <Link className='linklike' to={`/app/payables/${selected.id}`}>
+              {t('accounting.withholdings.detail.openPayable')}
+            </Link>
+          </div>
+        </Drawer>
       )}
     </>
   );
