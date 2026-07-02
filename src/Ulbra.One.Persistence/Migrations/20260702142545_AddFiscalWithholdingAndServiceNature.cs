@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Ulbra.One.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFiscalWithholdingAndNfseServiceFields : Migration
+    public partial class AddFiscalWithholdingAndServiceNature : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,12 +15,11 @@ namespace Ulbra.One.Persistence.Migrations
                 name: "fiscal");
 
             migrationBuilder.AddColumn<bool>(
-                name: "simples_declaration_provided",
+                name: "is_service",
                 schema: "finance",
                 table: "payables",
                 type: "boolean",
-                nullable: false,
-                defaultValue: false);
+                nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "cnae",
@@ -114,7 +113,7 @@ namespace Ulbra.One.Persistence.Migrations
                 schema: "fiscal");
 
             migrationBuilder.DropColumn(
-                name: "simples_declaration_provided",
+                name: "is_service",
                 schema: "finance",
                 table: "payables");
 

@@ -12,8 +12,8 @@ using Ulbra.One.Persistence;
 namespace Ulbra.One.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260701122700_AddFiscalWithholdingAndNfseServiceFields")]
-    partial class AddFiscalWithholdingAndNfseServiceFields
+    [Migration("20260702142545_AddFiscalWithholdingAndServiceNature")]
+    partial class AddFiscalWithholdingAndServiceNature
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1575,6 +1575,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("financial_account_id");
 
+                    b.Property<bool?>("IsService")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_service");
+
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");
@@ -1604,10 +1608,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("rejection_reason");
-
-                    b.Property<bool>("SimplesDeclarationProvided")
-                        .HasColumnType("boolean")
-                        .HasColumnName("simples_declaration_provided");
 
                     b.Property<string>("Status")
                         .IsRequired()
