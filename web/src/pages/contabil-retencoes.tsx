@@ -135,18 +135,19 @@ export function ContabilRetencoesPage() {
           title={t('accounting.withholdings.detail.title')}
           sub={selected.counterpartyName}
         >
-          <div className='info-grid' style={{ marginBottom: 16 }}>
+          {/* Bruto e Líquido lado a lado; Retido ocupa a linha inteira. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div className='info-card'>
               <div className='info-label'>{t('accounting.withholdings.gross')}</div>
               <div className='info-value'>{brlCents(selected.totalAmount)}</div>
             </div>
             <div className='info-card'>
-              <div className='info-label'>{t('accounting.withholdings.withheld')}</div>
-              <div className='info-value'>{brlCents(selected.totalWithheld)}</div>
-            </div>
-            <div className='info-card'>
               <div className='info-label'>{t('accounting.withholdings.net')}</div>
               <div className='info-value'>{brlCents(selected.netTotal)}</div>
+            </div>
+            <div className='info-card' style={{ gridColumn: '1 / -1' }}>
+              <div className='info-label'>{t('accounting.withholdings.withheld')}</div>
+              <div className='info-value'>{brlCents(selected.totalWithheld)}</div>
             </div>
           </div>
 
