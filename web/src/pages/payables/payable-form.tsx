@@ -162,7 +162,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
     setValue('mode', 'single', { shouldValidate: true });
     setValue('installmentCount', '2', { shouldValidate: true });
     setXmlInstallments(null);
-    // Tipo volta ao estado base (null na criação; o valor original na edição).
+    // Reset the type to its base state (null on create; the original value when editing).
     setPayableType(initial?.type ?? null);
     if (vendorFromXml.current) {
       setValue('vendorId', '', { shouldValidate: true });
@@ -214,8 +214,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       filled.add('description');
     }
 
-    // Tipo (serviço/produto) a partir do formato do documento — regra autoritativa do servidor para XML
-    // (NFS-e → serviço, NF-e → produto). PDF/imagem fica indeterminado (o usuário informa).
+    // Type (service/product) from the document format — authoritative for XML (NFS-e → Service,
+    // NF-e → Product). PDF/image stays undetermined (the user sets it).
     const derivedType = p.format === 'NfseXml' ? 'Service' : p.format === 'NfeXml' ? 'Product' : null;
     if (derivedType) {
       setPayableType(derivedType);

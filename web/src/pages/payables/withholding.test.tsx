@@ -103,12 +103,12 @@ describe('WithholdingSection — editable', () => {
     const addBtn = screen.getByText('Adicionar retenção');
     fireEvent.click(addBtn);
 
-    // Row inputs are now base (index 0) + alíquota% (index 1); the withheld value is derived (locked, no input).
+    // Row inputs are now base (index 0) + rate% (index 1); the withheld value is derived (locked, no input).
     const allInputs = screen.getAllByRole('textbox');
     fireEvent.change(allInputs[0], { target: { value: '1000' } }); // base
-    fireEvent.change(allInputs[1], { target: { value: '15' } }); // alíquota %
+    fireEvent.change(allInputs[1], { target: { value: '15' } }); // rate %
 
-    // valor = 1000 × 15% = 150 → Líquido = 1000 − 150 = 850
+    // amount = 1000 × 15% = 150 → net = 1000 − 150 = 850
     const liquidoEl = screen.getByTestId('withholding-liquido');
     // brlCents(850) in pt-BR locale → contains "850"
     expect(liquidoEl.textContent).toContain('850');
@@ -122,7 +122,7 @@ describe('WithholdingSection — editable', () => {
     // Add a row
     fireEvent.click(screen.getByText('Adicionar retenção'));
 
-    // Fill in base + alíquota (%); the withheld value is computed (base × alíquota), not typed.
+    // Fill in base + rate (%); the withheld value is computed (base × rate), not typed.
     const allInputs = screen.getAllByRole('textbox');
     fireEvent.change(allInputs[0], { target: { value: '1000' } });
     fireEvent.change(allInputs[1], { target: { value: '15' } });

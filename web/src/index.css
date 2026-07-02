@@ -856,13 +856,13 @@ body {
   border-radius: calc(var(--radius) + 4px);
   padding: 14px 16px;
 }
-/* Vertical rhythm between stacked detail sections (parcelas, retenções, anexos, timeline). */
+/* Vertical rhythm between the stacked detail sections (installments, withholdings, attachments, timeline). */
 .detail-sections {
   display: flex;
   flex-direction: column;
   gap: 22px;
 }
-/* Retenções: two-column block — left = Bruto/Retido/Líquido, right = per-tax lines; columns stretch equal height. */
+/* Withholdings: two-column block — left = gross/withheld/net, right = per-tax lines; columns stretch to equal height. */
 .ret-block {
   display: grid;
   grid-template-columns: 1fr 1fr;

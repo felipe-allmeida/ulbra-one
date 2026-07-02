@@ -3,7 +3,7 @@ import type { WithholdingPayableRow } from '../../api';
 import { brlCents } from '../../lib';
 import { Panel } from '../../ui';
 
-/** "Por título": uma linha por payable com retenção; clicar no nome abre o detalhamento (onSelect). */
+/** "By payable": one row per payable with withholding; clicking the name opens the breakdown (onSelect). */
 export function ByPayableTable({
   rows,
   onSelect,

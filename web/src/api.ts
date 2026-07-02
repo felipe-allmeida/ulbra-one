@@ -92,8 +92,8 @@ export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
 // ---------- Payables (Contas a Pagar) ----------
-// `type` (Service/Product — dispara a retenção) ainda não está no schema OpenAPI gerado;
-// aumentamos o tipo até o próximo `pnpm gen:api`. O valor já vem no JSON em runtime.
+// `type` (Service/Product — drives the withholding) isn't in the generated OpenAPI schema yet;
+// augment it until the next `pnpm gen:api`. The value already comes in the JSON at runtime.
 export type Payable = Schemas['PayableResponse'] & { type?: 'Service' | 'Product' | null };
 export type PayableListItem = Schemas['PayableListItemResponse'];
 export type Installment = Schemas['InstallmentResponse'];

@@ -3,7 +3,7 @@ import type { WithholdingByTaxRow } from '../../api';
 import { brlCents } from '../../lib';
 import { Panel } from '../../ui';
 
-/** "Por tributo": agregado das retenções por tipo de tributo, com total no rodapé. */
+/** "By tax": withholdings aggregated per tax type, with a footer total. */
 export function ByTaxTable({ rows, withheldTotal }: { rows: WithholdingByTaxRow[]; withheldTotal: number }) {
   const { t } = useTranslation();
   return (

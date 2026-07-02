@@ -115,7 +115,7 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
                     placeholder='%'
                   />
                 </td>
-                {/* Withheld value is derived (base × alíquota) — locked, not editable. */}
+                {/* Withheld value is derived (base × rate) — locked, not editable. */}
                 <td
                   className='amount-cell'
                   style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
@@ -177,7 +177,7 @@ function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
       <div className='ret-block'>
-        {/* Left: Bruto → Retido → Líquido, all with the same styling (no highlight). */}
+        {/* Left: gross → withheld → net, all with the same styling (no highlight). */}
         <div className='ret-col'>
           <div className='ret-row'>
             <span className='ret-row-label'>{t('payables.withholding.bruto')}</span>
@@ -195,7 +195,7 @@ function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
           </div>
         </div>
 
-        {/* Right: one row per withheld tax — name · alíquota% + valor; stretches to match the left height. */}
+        {/* Right: one row per withheld tax — name · rate% + amount; stretches to match the left height. */}
         <div className='ret-col'>
           {payable.withholdings.length > 0 ? (
             payable.withholdings.map((w) => (

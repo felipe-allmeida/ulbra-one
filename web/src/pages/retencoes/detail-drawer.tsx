@@ -4,7 +4,7 @@ import type { WithholdingPayableRow } from '../../api';
 import { brlCents } from '../../lib';
 import { Drawer } from '../../ui';
 
-/** Drawer lateral com o detalhamento dos impostos retidos de um título (dados já vêm no report GET). */
+/** Side drawer with a payable's per-tax withholding breakdown (data already comes in the report GET). */
 export function WithholdingDetailDrawer({
   row,
   onClose,
@@ -17,7 +17,7 @@ export function WithholdingDetailDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('accounting.withholdings.detail.title')} sub={row.counterpartyName}>
-      {/* Bruto e Líquido lado a lado; Retido ocupa a linha inteira. */}
+      {/* Gross and Net side by side; Withheld spans the full row. */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div className='info-card'>
           <div className='info-label'>{t('accounting.withholdings.gross')}</div>
