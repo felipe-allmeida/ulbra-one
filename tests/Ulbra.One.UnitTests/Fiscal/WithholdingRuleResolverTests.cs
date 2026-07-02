@@ -36,7 +36,7 @@ public class WithholdingRuleResolverTests
     [Fact]
     public void LucroPresumido_service_withholds_irrf_csrf_and_iss()
     {
-        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido, false,
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
             [new ServiceLine("17.01", "4304606", null, 3000m)]);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
@@ -50,9 +50,11 @@ public class WithholdingRuleResolverTests
     }
 
     [Fact]
-    public void Simples_with_declaration_skips_federal_keeps_iss_from_nota()
+    public void Simples_service_skips_federal_keeps_iss_from_nota()
     {
-        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: true,
+        // Regime alone decides: a SimplesNacional vendor is exempt from the federal withholding (the exemption
+        // rule wins by specificity) and the ISS is withheld at the band rate the invoice carries.
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
             [new ServiceLine("17.01", "4304606", 0.03m, 3000m)]); // invoice carries ISS 3% (Simples band)
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
@@ -65,23 +67,9 @@ public class WithholdingRuleResolverTests
     }
 
     [Fact]
-    public void Simples_without_declaration_withholds_federal()
-    {
-        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: false,
-            [new ServiceLine("17.01", "4304606", 0.03m, 3000m)]);
-
-        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
-
-        Assert.Equal(45.00m, Amount(r, WithholdingTaxType.Irrf));    // exemption falls → withholds
-        Assert.Equal(19.50m, Amount(r, WithholdingTaxType.Pis));
-        Assert.Equal(90.00m, Amount(r, WithholdingTaxType.Cofins));
-        Assert.Equal(30.00m, Amount(r, WithholdingTaxType.Csll));
-    }
-
-    [Fact]
     public void Labor_supply_withholds_inss_regardless_of_regime()
     {
-        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional, SimplesDeclarationProvided: true,
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
             [new ServiceLine("11.02", "4304606", null, 5000m)]); // security
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
@@ -94,7 +82,7 @@ public class WithholdingRuleResolverTests
     {
         // The LC116 subitem is a refinement, not the trigger: a service whose subitem wasn't parsed still
         // withholds the general federal taxes. INSS (labor-supply 11.02) and ISS (needs municipality) don't apply.
-        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido, false,
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
             [new ServiceLine(null, null, null, 3000m)]);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);

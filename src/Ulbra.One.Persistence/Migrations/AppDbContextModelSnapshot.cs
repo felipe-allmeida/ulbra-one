@@ -1606,10 +1606,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("rejection_reason");
 
-                    b.Property<bool>("SimplesDeclarationProvided")
-                        .HasColumnType("boolean")
-                        .HasColumnName("simples_declaration_provided");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)

@@ -38,7 +38,7 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
         // null when there is no document or the document didn't carry them.
         var line = new ServiceLineInput(doc?.Lc116Subitem, doc?.ServiceMunicipalityIbge, doc?.NotaIssRate, payable.TotalAmount);
         var context = new WithholdingContext(
-            payable.CompanyId, payable.VendorId, regime, payable.SimplesDeclarationProvided, [line]);
+            payable.CompanyId, payable.VendorId, regime, [line]);
 
         var results = await calculator.CalculateAsync(context, ct);
 

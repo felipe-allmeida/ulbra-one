@@ -19,7 +19,6 @@ public sealed class WithholdingCalculator(IUnitOfWork uow) : IWithholdingCalcula
         var resolutionContext = new ResolutionContext(
             context.CompanyId,
             context.VendorRegime,
-            context.SimplesDeclarationProvided,
             context.Lines
                 .Select(l => new ServiceLine(l.Lc116Subitem, l.MunicipalityIbge, l.NotaIssRate, l.Amount))
                 .ToList());

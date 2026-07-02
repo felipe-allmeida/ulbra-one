@@ -9,7 +9,7 @@ public sealed record ServiceLineInput(string? Lc116Subitem, string? Municipality
 
 /// <summary>Inputs for the withholding calculation, assembled by Finance from the payable + vendor + fiscal document.</summary>
 public sealed record WithholdingContext(
-    Guid CompanyId, Guid VendorId, TaxRegime VendorRegime, bool SimplesDeclarationProvided, IReadOnlyList<ServiceLineInput> Lines);
+    Guid CompanyId, Guid VendorId, TaxRegime VendorRegime, IReadOnlyList<ServiceLineInput> Lines);
 
 /// <summary>A computed withholding line (same shape Payable.SetWithholdings consumes).</summary>
 public sealed record WithholdingResult(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);

@@ -10,9 +10,10 @@ namespace Ulbra.One.Fiscal.Domain.Withholdings;
 /// only INSS (labor supply) and ISS (by municipality) need the subitem/municipality to refine.</summary>
 public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? NotaIssRate, decimal Amount);
 
-/// <summary>Resolution inputs: company, vendor regime, whether the Simples declaration is on file, and the lines.</summary>
+/// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
+/// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.</summary>
 public sealed record ResolutionContext(
-    Guid? CompanyId, TaxRegime VendorRegime, bool SimplesDeclarationProvided, IReadOnlyList<ServiceLine> Lines);
+    Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines);
 
 /// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
@@ -66,8 +67,10 @@ public static class WithholdingRuleResolver
             .ToList();
     }
 
-    /// <summary>Picks the most specific eligible rule for (tax × line × context).
-    /// Specificity = number of pinned dimensions; tiebreak: regime &gt; municipality &gt; company &gt; Id (deterministic).</summary>
+    /// <summary>Picks the most specific rule for (tax × line × context). Specificity = number of pinned dimensions;
+    /// tiebreak: regime &gt; municipality &gt; company &gt; Id (deterministic). A Simples vendor matches both the general
+    /// rule (regime = any) and the Simples exemption (regime = Simples, does-not-retain); the exemption wins by
+    /// specificity (its regime dimension is pinned), so a Simples service is exempt from the federal withholding.</summary>
     private static WithholdingRule? ResolveRule(
         IReadOnlyCollection<WithholdingRule> rules, WithholdingTaxType tax, ServiceLine line, ResolutionContext ctx) =>
         rules.Where(r =>
@@ -76,19 +79,13 @@ public static class WithholdingRuleResolver
                 && (r.CompanyId is null || r.CompanyId == ctx.CompanyId)
                 && (r.Lc116Subitem is null || r.Lc116Subitem == line.Lc116Subitem)
                 && (r.MunicipalityIbge is null || r.MunicipalityIbge == line.MunicipalityIbge)
-                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime)
-                && IsEligible(r, ctx))
+                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime))
             .OrderByDescending(r => r.DimensionCount)
             .ThenByDescending(r => r.VendorRegime is not null)
             .ThenByDescending(r => r.MunicipalityIbge is not null)
             .ThenByDescending(r => r.CompanyId is not null)
             .ThenBy(r => r.Id)
             .FirstOrDefault();
-
-    // Simples declaration gate: the Simples federal exemption (Simples regime + does-not-retain) only holds
-    // when the declaration is on file. Without it, the exemption rule is ineligible → the general rule wins (withholds).
-    private static bool IsEligible(WithholdingRule r, ResolutionContext ctx) =>
-        !(r.VendorRegime == TaxRegime.SimplesNacional && !r.Retains && !ctx.SimplesDeclarationProvided);
 
     // Minimum/exemption at the collection-group level (e.g., CSRF over the PIS+COFINS+CSLL sum).
     private static void ApplyGroupMinimum(

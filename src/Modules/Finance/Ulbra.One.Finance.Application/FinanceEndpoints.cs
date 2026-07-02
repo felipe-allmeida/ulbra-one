@@ -46,7 +46,6 @@ using Ulbra.One.Finance.Application.Endpoints.Payables.RequestFiscalUploadUrl;
 using Ulbra.One.Finance.Application.Endpoints.Payables.RejectPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ReversePayment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.SetServiceNature;
-using Ulbra.One.Finance.Application.Endpoints.Payables.SetSimplesDeclaration;
 using Ulbra.One.Finance.Application.Endpoints.Payables.SetWithholdings;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UpdatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.UploadAttachment;
@@ -110,7 +109,6 @@ public static class FinanceEndpoints
         payables.MapEndpoint<CreatePayable>();
         payables.MapEndpoint<UpdatePayable>();
         payables.MapEndpoint<SetWithholdings>();
-        payables.MapEndpoint<SetSimplesDeclaration>();
         payables.MapEndpoint<SetServiceNature>();
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
