@@ -103,13 +103,12 @@ describe('WithholdingSection — editable', () => {
     const addBtn = screen.getByText('Adicionar retenção');
     fireEvent.click(addBtn);
 
-    // Find all text inputs (inputMode=numeric renders as text inputs in jsdom)
+    // Row inputs are now base (index 0) + alíquota% (index 1); the withheld value is derived (locked, no input).
     const allInputs = screen.getAllByRole('textbox');
-    // Row inputs in order: base (index 0), rate (index 1), amount (index 2)
-    const amountInput = allInputs[2];
-    fireEvent.change(amountInput, { target: { value: '150' } });
+    fireEvent.change(allInputs[0], { target: { value: '1000' } }); // base
+    fireEvent.change(allInputs[1], { target: { value: '15' } }); // alíquota %
 
-    // Líquido should be 1000 - 150 = 850
+    // valor = 1000 × 15% = 150 → Líquido = 1000 − 150 = 850
     const liquidoEl = screen.getByTestId('withholding-liquido');
     // brlCents(850) in pt-BR locale → contains "850"
     expect(liquidoEl.textContent).toContain('850');
@@ -123,18 +122,18 @@ describe('WithholdingSection — editable', () => {
     // Add a row
     fireEvent.click(screen.getByText('Adicionar retenção'));
 
-    // Fill in base, rate, amount
+    // Fill in base + alíquota (%); the withheld value is computed (base × alíquota), not typed.
     const allInputs = screen.getAllByRole('textbox');
     fireEvent.change(allInputs[0], { target: { value: '1000' } });
     fireEvent.change(allInputs[1], { target: { value: '15' } });
-    fireEvent.change(allInputs[2], { target: { value: '150' } });
 
     // Click Salvar
     fireEvent.click(screen.getByText('Salvar retenções'));
 
+    // rate is sent as a decimal fraction (15% → 0.15); amount is computed (1000 × 0.15 = 150).
     expect(mockMutate).toHaveBeenCalledWith({
       id: 'payable_1',
-      items: [{ taxType: 'Irrf', baseAmount: 1000, rate: 15, amount: 150 }],
+      items: [{ taxType: 'Irrf', baseAmount: 1000, rate: 0.15, amount: 150 }],
     });
   });
 });

@@ -487,6 +487,8 @@ const ptBR = {
       save: 'Salvar retenções',
       saving: 'Salvando…',
       saveSuccess: 'Retenções salvas.',
+      noWithholdings: 'Sem retenções',
+      amountAuto: 'Calculado automaticamente (base × alíquota)',
       nature: {
         label: 'Tipo',
         service: 'Serviço',
