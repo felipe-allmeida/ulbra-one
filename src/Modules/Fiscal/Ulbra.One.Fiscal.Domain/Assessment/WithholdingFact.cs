@@ -20,7 +20,8 @@ public sealed record WithholdingFact(
     WithholdingTaxType TaxType,
     decimal BaseAmount,
     decimal Amount,
-    DateOnly IssueDate)
+    DateOnly IssueDate,
+    string? Lc116Subitem = null)
 {
     /// <summary>Collection group (guia de recolhimento) for this tax — the assessment's fiscal grouping axis
     /// (IRRF / CSRF / INSS / ISS). PIS+COFINS+CSLL fold into CSRF.</summary>

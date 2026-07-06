@@ -50,6 +50,13 @@ internal static class WithholdingFactLoader
             .Select(v => new { v.Id, v.Document })
             .ToDictionaryAsync(v => v.Id, v => v.Document, ct);
 
+        // LC116 subitem (NFS-e) per payable — drives the EFD-Reinf natureza do rendimento in the export adapter.
+        var payableIds = payables.Select(p => p.Id).ToList();
+        var lc116ByPayable = await uow.ReadSet<FiscalDocument>()
+            .Where(d => payableIds.Contains(d.PayableId) && d.Lc116Subitem != null)
+            .Select(d => new { d.PayableId, d.Lc116Subitem })
+            .ToDictionaryAsync(d => d.PayableId, d => d.Lc116Subitem, ct);
+
         var facts = new List<WithholdingFact>();
         foreach (var p in payables)
         {
@@ -67,7 +74,8 @@ internal static class WithholdingFactLoader
                     p.CompanyId, company?.LegalName ?? string.Empty, company?.Cnpj ?? string.Empty,
                     p.CostCenterId, costCenter?.Code ?? string.Empty, costCenter?.Name ?? string.Empty,
                     p.VendorId, vendorDocument ?? string.Empty,
-                    w.TaxType, w.BaseAmount, w.Amount, p.IssueDate!.Value));
+                    w.TaxType, w.BaseAmount, w.Amount, p.IssueDate!.Value,
+                    lc116ByPayable.GetValueOrDefault(p.Id)));
             }
         }
 
