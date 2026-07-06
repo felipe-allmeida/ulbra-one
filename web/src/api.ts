@@ -310,6 +310,62 @@ export interface WithholdingsReport {
   byTax: WithholdingByTaxRow[];
   byPayable: WithholdingPayableRow[];
 }
+
+// Manual types: the fiscal assessment (apuração de retenções) endpoint is not yet in the generated OpenAPI schema.
+// Guia de recolhimento (collection group): PIS+COFINS+CSLL fold into CSRF.
+export type RetentionGroup = 'Irrf' | 'Csrf' | 'Inss' | 'Iss' | 'Other';
+export interface WithholdingFactRow {
+  payableId: string;
+  counterpartyName: string;
+  documentNumber: string | null;
+  companyId: string;
+  costCenterId: string;
+  vendorId: string;
+  vendorDocument: string;
+  taxType: WithholdingTaxType;
+  group: RetentionGroup;
+  baseAmount: number;
+  amount: number;
+}
+export interface CompanyAssessmentRow {
+  companyId: string;
+  companyName: string;
+  cnpj: string;
+  baseAmount: number;
+  withheldAmount: number;
+  payableCount: number;
+}
+export interface RetentionGroupRow {
+  group: RetentionGroup;
+  baseAmount: number;
+  withheldAmount: number;
+  payableCount: number;
+}
+export interface TaxTypeAssessmentRow {
+  taxType: WithholdingTaxType;
+  group: RetentionGroup;
+  baseAmount: number;
+  withheldAmount: number;
+  payableCount: number;
+}
+export interface CostCenterAssessmentRow {
+  costCenterId: string;
+  code: string;
+  name: string;
+  withheldAmount: number;
+  payableCount: number;
+}
+export interface FiscalAssessment {
+  perApur: string;
+  companyId: string | null;
+  totals: { baseTotal: number; withheldTotal: number; payableCount: number };
+  byCompany: CompanyAssessmentRow[];
+  byRetentionGroup: RetentionGroupRow[];
+  byTaxType: TaxTypeAssessmentRow[];
+  byCostCenter: CostCenterAssessmentRow[];
+  facts: WithholdingFactRow[];
+}
+
 export type AgingBucket = Schemas['AgingBucket'];
 
 // ---------- Cash flow (Fluxo de caixa) ----------
@@ -1046,6 +1102,22 @@ export const api = {
     const q = new URLSearchParams();
     if (companyId) q.set('companyId', companyId);
     return request<WithholdingsReport>(`/payables/withholdings?${q}`);
+  },
+
+  // ---------- Fiscal: apuração de retenções (base do painel de Obrigações Acessórias) ----------
+  fiscalAssessment: (params: {
+    perApur: string;
+    companyId?: string;
+    costCenterId?: string;
+    taxType?: WithholdingTaxType;
+    retentionGroup?: RetentionGroup;
+  }) => {
+    const q = new URLSearchParams({ perApur: params.perApur });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.taxType) q.set('taxType', params.taxType);
+    if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
+    return request<FiscalAssessment>(`/fiscal/assessment?${q}`);
   },
 
   // ---------- Registry: Lookups ----------

@@ -61,6 +61,7 @@ import {
   type Vendor,
   type VendorInput,
   type WithholdingTaxType,
+  type RetentionGroup,
   type Remittance,
   type RemittanceListItem,
   type RemittanceReturnOutcome,
@@ -106,6 +107,7 @@ export const queryKeys = {
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
   withholdingsReport: (companyId?: string) => ['withholdingsReport', companyId ?? ''] as const,
+  fiscalAssessment: (params: FiscalAssessmentParams) => ['fiscalAssessment', params] as const,
   cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
   cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
   pendingPostings: (params: PendingPostingsParams) => ['pendingPostings', params] as const,
@@ -164,6 +166,14 @@ export interface RemittancesParams {
   companyId?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface FiscalAssessmentParams {
+  perApur: string;
+  companyId?: string;
+  costCenterId?: string;
+  taxType?: WithholdingTaxType;
+  retentionGroup?: RetentionGroup;
 }
 
 export interface BankTransactionsParams {
@@ -1303,6 +1313,15 @@ export function useWithholdingsReport(companyId?: string, options?: { enabled?: 
     queryKey: queryKeys.withholdingsReport(companyId),
     queryFn: () => api.withholdingsReport(companyId),
     enabled: options?.enabled ?? true,
+  });
+}
+
+/* ---------- Fiscal: apuração de retenções (Obrigações Acessórias) ---------- */
+export function useFiscalAssessment(params: FiscalAssessmentParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.fiscalAssessment(params),
+    queryFn: () => api.fiscalAssessment(params),
+    enabled: (options?.enabled ?? true) && !!params.perApur,
   });
 }
 
