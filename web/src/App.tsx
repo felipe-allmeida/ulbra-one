@@ -19,6 +19,7 @@ import { ContabilBalancetePage } from './pages/contabil-balancete';
 import { ContabilDrePage } from './pages/contabil-dre';
 import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { RetencoesPage } from './pages/retencoes';
+import { ObrigacoesPage } from './pages/fiscal/obrigacoes';
 import { ContabilPendentesPage } from './pages/contabil-pendentes';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
@@ -66,6 +67,7 @@ export default function App() {
         <Route path='accounting/income-statement' element={<ContabilDrePage />} />
         <Route path='accounting/balance-sheet' element={<ContabilBalancoPage />} />
         <Route path='accounting/withholdings' element={<RetencoesPage />} />
+        <Route path='fiscal/obrigacoes' element={<ObrigacoesPage />} />
         <Route path='accounting/pending' element={<ContabilPendentesPage />} />
         <Route path='classification' element={<ClassificacaoPage />} />
         <Route path='reconciliation' element={<ConciliacaoPage />} />
