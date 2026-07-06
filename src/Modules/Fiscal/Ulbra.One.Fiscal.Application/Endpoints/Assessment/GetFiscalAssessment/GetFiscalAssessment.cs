@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -29,25 +28,12 @@ public sealed class GetFiscalAssessment : IEndpoint
         WithholdingTaxType? taxType, RetentionGroup? retentionGroup,
         IUnitOfWork uow, CancellationToken ct)
     {
-        if (!TryParsePerApur(perApur, out var period))
+        if (!AssessmentPeriodParser.TryParse(perApur, out var period))
             return TypedResults.BadRequest("perApur inválido — use o formato YYYY-MM.");
 
         var filter = new AssessmentFilter(period, companyId?.Value, costCenterId?.Value, taxType, retentionGroup);
         var facts = await WithholdingFactLoader.LoadAsync(uow, filter, ct);
         var assessment = WithholdingAssessmentCalculator.Build(facts);
         return TypedResults.Ok(WithholdingAssessmentResponse.From(period.PerApur, companyId, assessment));
-    }
-
-    private static bool TryParsePerApur(string? value, out AssessmentPeriod period)
-    {
-        period = default;
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        var parts = value.Split('-');
-        if (parts.Length != 2) return false;
-        if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var year)) return false;
-        if (!int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var month)) return false;
-        if (year is < 2000 or > 9999 || month is < 1 or > 12) return false;
-        period = new AssessmentPeriod(year, month);
-        return true;
     }
 }
