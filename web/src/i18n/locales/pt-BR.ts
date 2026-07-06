@@ -90,6 +90,7 @@ const ptBR = {
       byCostCenter: 'Por centro de custo',
       costCenterNote: 'Centro de custo não é dimensão da EFD-Reinf — visão gerencial interna.',
       total: 'Total retido',
+      exportCsv: 'CSV',
       drillTitle: 'Títulos da retenção',
       openPayable: 'Abrir título',
       columns: {

@@ -1119,6 +1119,21 @@ export const api = {
     if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
     return request<FiscalAssessment>(`/fiscal/assessment?${q}`);
   },
+  /** Direct URL do export CSV (text/csv). Requer Bearer → baixe via downloadAssessmentCsv (fetch+blob). */
+  fiscalAssessmentCsvUrl: (params: {
+    perApur: string;
+    companyId?: string;
+    costCenterId?: string;
+    taxType?: WithholdingTaxType;
+    retentionGroup?: RetentionGroup;
+  }) => {
+    const q = new URLSearchParams({ perApur: params.perApur });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.taxType) q.set('taxType', params.taxType);
+    if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
+    return `${BASE_URL}/fiscal/assessment/csv?${q}`;
+  },
 
   // ---------- Registry: Lookups ----------
   lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),

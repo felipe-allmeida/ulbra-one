@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollText } from 'lucide-react';
+import { ScrollText, Download } from 'lucide-react';
 import { useFiscalAssessment } from '../../../queries';
 import type { WithholdingFactRow } from '../../../api';
 import { brlCents } from '../../../lib';
 import { EmptyState, PageHeader } from '../../../ui';
 import { ConsolidatedPicker } from '../../contabil-shared';
+import { downloadAssessmentCsv } from './download';
 import { GuiaTable } from './by-guia-table';
 import { ByCompanyTable } from './by-company-table';
 import { ByCostCenterTable } from './by-cost-center-table';
@@ -36,6 +37,14 @@ export function ObrigacoesPage() {
           aria-label={t('fiscal.obrigacoes.competencia')}
         />
         <ConsolidatedPicker value={companyId} onChange={setCompanyId} />
+        <button
+          type='button'
+          className='btn btn-ghost'
+          disabled={!hasData}
+          onClick={() => void downloadAssessmentCsv({ perApur, companyId: companyId || undefined })}
+        >
+          <Download size={16} /> {t('fiscal.obrigacoes.exportCsv')}
+        </button>
       </PageHeader>
 
       {query.isLoading ? (
