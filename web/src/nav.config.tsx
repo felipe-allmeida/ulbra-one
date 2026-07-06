@@ -62,6 +62,10 @@ export interface NavDomain {
   labelKey: string;
   /** i18n key for the panel title; falls back to `labelKey`. */
   titleKey?: string;
+  /** Absolute route the rail button navigates to directly (e.g. the home dashboard). */
+  to?: string;
+  /** Render the panel as an index of every routable page grouped by domain. */
+  index?: boolean;
   /** Pin to the bottom of the rail (e.g. settings). */
   footer?: boolean;
   groups: NavGroup[];
@@ -72,7 +76,12 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'home',
     icon: <LayoutDashboard />,
     labelKey: 'nav.domains.home',
-    groups: [{ items: [{ labelKey: 'nav.home', to: '/app/home', icon: <LayoutDashboard /> }] }],
+    // The rail button navigates straight to the dashboard; the panel is an index
+    // of every routable page grouped by domain (see `index`), so there is no
+    // redundant single "Início" sub-item.
+    to: '/app/home',
+    index: true,
+    groups: [],
   },
   {
     key: 'finance',
@@ -192,6 +201,9 @@ const ROUTABLE = NAV_DOMAINS.flatMap((domain) =>
   domain.groups.flatMap((group) => group.items.filter((item) => item.to).map((item) => ({ domain, item }))),
 );
 
+/** Domains that are themselves routable from the rail (e.g. the home dashboard). */
+const DOMAIN_ROUTES = NAV_DOMAINS.filter((domain) => domain.to).map((domain) => ({ domain, to: domain.to! }));
+
 function isPrefix(to: string, pathname: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
@@ -213,6 +225,12 @@ export function domainForPath(pathname: string): NavDomain {
   for (const { domain, item } of ROUTABLE) {
     if (item.to && isPrefix(item.to, pathname) && (!best || item.to.length > best.len)) {
       best = { domain, len: item.to.length };
+    }
+  }
+  // Domain-level routes (e.g. the home dashboard) have no sub-item to match on.
+  for (const { domain, to } of DOMAIN_ROUTES) {
+    if (isPrefix(to, pathname) && (!best || to.length > best.len)) {
+      best = { domain, len: to.length };
     }
   }
   return best?.domain ?? NAV_DOMAINS[0];

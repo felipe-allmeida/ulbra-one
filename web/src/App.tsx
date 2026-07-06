@@ -118,10 +118,14 @@ function Shell({ children }: { children: ReactNode }) {
 
   const domain = domainForPath(pathname);
   const item = itemForPath(pathname);
-  const crumb = (
+  // A directly-routable domain (e.g. home) has no sub-item — show a single crumb
+  // instead of repeating the domain label ("Início / Início").
+  const crumb = item ? (
     <>
-      {t(domain.titleKey ?? domain.labelKey)} <b>/ {t(item?.labelKey ?? 'nav.home')}</b>
+      {t(domain.titleKey ?? domain.labelKey)} <b>/ {t(item.labelKey)}</b>
     </>
+  ) : (
+    <b>{t(domain.titleKey ?? domain.labelKey)}</b>
   );
 
   return (
