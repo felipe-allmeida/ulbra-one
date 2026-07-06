@@ -5,7 +5,16 @@ import { api, auth } from '../../../api';
  * transformamos em blob object-URL e disparamos o download programático (mesmo padrão de payables/download.ts).
  */
 export async function downloadAssessmentCsv(params: { perApur: string; companyId?: string }): Promise<void> {
-  const url = api.fiscalAssessmentCsvUrl(params);
+  await downloadWithAuth(api.fiscalAssessmentCsvUrl(params), `apuracao-retencoes-${params.perApur}.csv`);
+}
+
+/** Baixa o XML da EFD-Reinf (R-4020) de uma empresa/competência. */
+export async function downloadEfdReinfXml(params: { perApur: string; companyId: string }): Promise<void> {
+  await downloadWithAuth(api.efdReinfXmlUrl(params), `efd-reinf-r4020-${params.perApur}.xml`);
+}
+
+/** fetch com Bearer → blob → download programático (o endpoint exige auth; `<a href>` não envia o token). */
+async function downloadWithAuth(url: string, fileName: string): Promise<void> {
   const headers = new Headers();
   if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
   const res = await fetch(url, { headers });
@@ -14,7 +23,7 @@ export async function downloadAssessmentCsv(params: { perApur: string; companyId
   const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = objectUrl;
-  a.download = `apuracao-retencoes-${params.perApur}.csv`;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();

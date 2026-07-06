@@ -6,7 +6,7 @@ import type { WithholdingFactRow } from '../../../api';
 import { brlCents } from '../../../lib';
 import { EmptyState, PageHeader } from '../../../ui';
 import { ConsolidatedPicker } from '../../contabil-shared';
-import { downloadAssessmentCsv } from './download';
+import { downloadAssessmentCsv, downloadEfdReinfXml } from './download';
 import { GuiaTable } from './by-guia-table';
 import { ByCompanyTable } from './by-company-table';
 import { ByCostCenterTable } from './by-cost-center-table';
@@ -44,6 +44,15 @@ export function ObrigacoesPage() {
           onClick={() => void downloadAssessmentCsv({ perApur, companyId: companyId || undefined })}
         >
           <Download size={16} /> {t('fiscal.obrigacoes.exportCsv')}
+        </button>
+        <button
+          type='button'
+          className='btn btn-primary'
+          disabled={!hasData || !companyId}
+          title={!companyId ? t('fiscal.obrigacoes.xmlNeedsCompany') : undefined}
+          onClick={() => void downloadEfdReinfXml({ perApur, companyId })}
+        >
+          <Download size={16} /> {t('fiscal.obrigacoes.exportXml')}
         </button>
       </PageHeader>
 

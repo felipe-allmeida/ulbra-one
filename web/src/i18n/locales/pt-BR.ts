@@ -91,6 +91,8 @@ const ptBR = {
       costCenterNote: 'Centro de custo não é dimensão da EFD-Reinf — visão gerencial interna.',
       total: 'Total retido',
       exportCsv: 'CSV',
+      exportXml: 'Exportar XML',
+      xmlNeedsCompany: 'Selecione uma empresa (contribuinte) para exportar o XML da EFD-Reinf',
       drillTitle: 'Títulos da retenção',
       openPayable: 'Abrir título',
       columns: {

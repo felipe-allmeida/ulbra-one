@@ -1134,6 +1134,12 @@ export const api = {
     if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
     return `${BASE_URL}/fiscal/assessment/csv?${q}`;
   },
+  /** Direct URL do XML da EFD-Reinf (R-4020). Requer empresa (contribuinte) + Bearer → baixe via downloadEfdReinfXml. */
+  efdReinfXmlUrl: (params: { perApur: string; companyId: string; tpAmb?: number }) => {
+    const q = new URLSearchParams({ perApur: params.perApur, companyId: params.companyId });
+    if (params.tpAmb != null) q.set('tpAmb', String(params.tpAmb));
+    return `${BASE_URL}/fiscal/assessment/efd-reinf.xml?${q}`;
+  },
 
   // ---------- Registry: Lookups ----------
   lookupCep: (cep: string) => request<CepLookup>(`/lookup/cep/${cep}`),
