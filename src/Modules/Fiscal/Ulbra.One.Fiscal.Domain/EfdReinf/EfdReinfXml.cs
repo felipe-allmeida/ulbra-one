@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Xml;
+using Ulbra.One.Common.Domain.Validation;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Fiscal.Domain.Assessment;
 
@@ -43,8 +44,10 @@ public static class ReinfR4020Projection
                 var first = g.First(); // CNPJs / subitem / bruto são do título — iguais em todas as linhas
                 decimal Base(WithholdingTaxType t) => g.Where(f => f.TaxType == t).Sum(f => f.BaseAmount);
                 decimal Ret(WithholdingTaxType t) => g.Where(f => f.TaxType == t).Sum(f => f.Amount);
+                // Strip any CNPJ mask (Company.Cnpj is not digit-normalized on write) so nrInscEstab/cnpjBenef
+                // stay digits-only per the XSD [0-9]{11}|[0-9]{14}.
                 return new ReinfR4020Payment(
-                    first.CompanyCnpj, first.VendorDocument,
+                    DocumentValidator.Normalize(first.CompanyCnpj), DocumentValidator.Normalize(first.VendorDocument),
                     IncomeNatureResolver.Resolve(first.Lc116Subitem, first.Group),
                     first.IssueDate, first.GrossAmount,
                     Base(WithholdingTaxType.Irrf), Ret(WithholdingTaxType.Irrf),

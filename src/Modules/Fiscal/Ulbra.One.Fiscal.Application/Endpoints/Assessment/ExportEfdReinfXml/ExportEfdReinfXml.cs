@@ -36,8 +36,8 @@ public sealed class ExportEfdReinfXml : IEndpoint
         var facts = await WithholdingFactLoader.LoadAsync(uow, new AssessmentFilter(period, cid.Value), ct);
         var items = ReinfR4020Projection.FromFacts(facts);
 
-        // Contribuinte = raiz (8 primeiros dígitos do CNPJ, tolerante a máscara/alfanumérico).
-        var raiz = new string(company.Cnpj.Where(char.IsLetterOrDigit).Take(8).ToArray());
+        // Contribuinte = raiz: 8 primeiros dígitos do CNPJ (sem máscara — nrInsc no XSD é \d{8}).
+        var raiz = new string(company.Cnpj.Where(char.IsDigit).Take(8).ToArray());
         var input = new ReinfR4020Input(period.PerApur, tpAmb ?? 2,
             new ReinfContribuinte(raiz, company.LegalName), items);
 

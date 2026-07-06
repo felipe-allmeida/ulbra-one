@@ -86,6 +86,18 @@ public class ReinfR4020ProjectionTests
         ]);
         Assert.Equal(2, payments.Count);
     }
+
+    [Fact]
+    public void Strips_cnpj_mask_from_estab_and_beneficiary() // Company.Cnpj may carry a mask; XSD wants digits
+    {
+        var payments = ReinfR4020Projection.FromFacts(
+        [
+            Fact(Guid.NewGuid(), "88.332.466/0001-03", "11.222.333/0001-81", WithholdingTaxType.Irrf, 1000m, 15m),
+        ]);
+        var pay = Assert.Single(payments);
+        Assert.Equal("88332466000103", pay.EstabCnpj);
+        Assert.Equal("11222333000181", pay.BeneficiaryCnpj);
+    }
 }
 
 public class EfdReinfXmlBuilderTests
