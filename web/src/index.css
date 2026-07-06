@@ -134,7 +134,7 @@ body {
 
 /* --- contextual panel --- */
 .nav-panel {
-  width: 204px;
+  width: 225px;
   background: var(--sb-bg);
   display: flex;
   flex-direction: column;
