@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application.Extensions;
+using Ulbra.One.Fiscal.Application.Endpoints.Assessment.GetFiscalAssessment;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.CreateWithholdingRule;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.DeleteWithholdingRule;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.ListWithholdingRules;
@@ -17,6 +18,10 @@ public static class FiscalEndpoints
         rules.MapEndpoint<CreateWithholdingRule>();
         rules.MapEndpoint<UpdateWithholdingRule>();
         rules.MapEndpoint<DeleteWithholdingRule>();
+
+        // Apuração de retenções (agnóstica de formato) — base do painel de Obrigações Acessórias.
+        var assessment = builder.MapGroup("/fiscal/assessment");
+        assessment.MapEndpoint<GetFiscalAssessment>();
         return builder;
     }
 }
