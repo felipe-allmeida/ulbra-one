@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application.Extensions;
+using Ulbra.One.Fiscal.Application.Endpoints.Assessment.ExportEfdReinfXml;
 using Ulbra.One.Fiscal.Application.Endpoints.Assessment.ExportFiscalAssessmentCsv;
 using Ulbra.One.Fiscal.Application.Endpoints.Assessment.GetFiscalAssessment;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.CreateWithholdingRule;
@@ -24,6 +25,7 @@ public static class FiscalEndpoints
         var assessment = builder.MapGroup("/fiscal/assessment");
         assessment.MapEndpoint<GetFiscalAssessment>();
         assessment.MapEndpoint<ExportFiscalAssessmentCsv>();
+        assessment.MapEndpoint<ExportEfdReinfXml>();
         return builder;
     }
 }
