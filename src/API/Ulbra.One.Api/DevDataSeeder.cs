@@ -482,6 +482,19 @@ public static class DevDataSeeder
         logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting + 4 financial chart accounts).", contabil.Count);
     }
 
+    /// <summary>
+    /// Seeds ONLY the group-wide default withholding rules — the reference data the auto-withholding
+    /// calculation needs. No mock business data (companies/vendors/payables). Idempotent.
+    /// </summary>
+    public static async Task SeedWithholdingRulesAsync(IServiceProvider services, CancellationToken ct = default)
+    {
+        using var scope = services.CreateScope();
+        var sp = scope.ServiceProvider;
+        var db = sp.GetRequiredService<AppDbContext>();
+        var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
+        await SeedWithholdingRulesAsync(db, logger, ct);
+    }
+
     /// <summary>Seeds group-wide default withholding rules so the auto-calculation produces output in dev/homologação.
     /// Mirrors the acceptance-table set. Idempotent. 🔶 Rates/scope to be validated with Accounting before production.</summary>
     private static async Task SeedWithholdingRulesAsync(AppDbContext db, ILogger logger, CancellationToken ct)
