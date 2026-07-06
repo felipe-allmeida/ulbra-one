@@ -1136,7 +1136,10 @@ export const api = {
   },
   /** Direct URL do XML da EFD-Reinf (R-4020). Requer empresa (contribuinte) + Bearer → baixe via downloadEfdReinfXml. */
   efdReinfXmlUrl: (params: { perApur: string; companyId: string; tpAmb?: number }) => {
-    const q = new URLSearchParams({ perApur: params.perApur, companyId: params.companyId });
+    const q = new URLSearchParams({ perApur: params.perApur });
+    // Só envia companyId quando presente (mesmo padrão do CSV/assessment). Um `companyId=` vazio faria o
+    // binding do CompanyId? no endpoint devolver 400 opaco; ausente cai no guard limpo "Selecione a empresa".
+    if (params.companyId) q.set('companyId', params.companyId);
     if (params.tpAmb != null) q.set('tpAmb', String(params.tpAmb));
     return `${BASE_URL}/fiscal/assessment/efd-reinf.xml?${q}`;
   },
