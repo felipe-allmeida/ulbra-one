@@ -7,12 +7,12 @@ using Ulbra.One.Fiscal.Domain.Assessment;
 
 namespace Ulbra.One.Fiscal.Domain.EfdReinf;
 
-/// <summary>Contribuinte (raiz de 8 dígitos) do lote — o ideContri do R-4020.</summary>
+/// <summary>Contribuinte (8-digit root) of the lote — the ideContri of R-4020.</summary>
 public sealed record ReinfTaxpayer(string Root, string Name);
 
-/// <summary>Um pagamento a beneficiário PJ = um <c>infoPgto</c> do R-4020 (um por título/fato gerador). Carrega o
-/// bruto do título (<c>vlrBruto</c>), a data do fato gerador (<c>dtFG</c>) e, por tributo, a base e o valor retido
-/// (IR/CSLL/COFINS/PIS-PASEP). Não existe "CSRF" no leiaute — cada tributo tem base própria.</summary>
+/// <summary>A payment to a PJ beneficiary = one <c>infoPgto</c> of R-4020 (one per título/fato gerador). Carries the
+/// gross of the título (<c>vlrBruto</c>), the fato gerador date (<c>dtFG</c>) and, per tribute, the base and the
+/// withheld amount (IR/CSLL/COFINS/PIS-PASEP). There is no "CSRF" in the leiaute — each tribute has its own base.</summary>
 public sealed record ReinfR4020Payment(
     string EstabCnpj,
     string BeneficiaryCnpj,
@@ -24,13 +24,13 @@ public sealed record ReinfR4020Payment(
     decimal BaseCofins, decimal Cofins,
     decimal BasePis, decimal Pis);
 
-/// <summary>Entrada do writer do R-4020: contribuinte + competência + ambiente + pagamentos já projetados.</summary>
+/// <summary>Input to the R-4020 writer: contribuinte + competência + ambiente (tpAmb) + already-projected payments.</summary>
 public sealed record ReinfR4020Input(
     string PerApur, int TpAmb, ReinfTaxpayer Taxpayer, IReadOnlyList<ReinfR4020Payment> Payments);
 
-/// <summary>Projeta os fatos de retenção nos pagamentos do R-4020 — só guias IRRF/CSRF (série 4000 sobre PJ:
-/// IR/CSLL/COFINS/PIS). Um <see cref="ReinfR4020Payment"/> por título (payable) = um <c>infoPgto</c>; base e valor
-/// somados por tributo dentro do título. INSS (R-2010) / ISS (municipal) / Other ficam de fora.</summary>
+/// <summary>Projects the withholding facts into R-4020 payments — only IRRF/CSRF guias (série 4000 on PJ:
+/// IR/CSLL/COFINS/PIS). One <see cref="ReinfR4020Payment"/> per título (payable) = one <c>infoPgto</c>; base and
+/// amount summed per tribute within the título. INSS (R-2010) / ISS (municipal) / Other are excluded.</summary>
 public static class ReinfR4020Projection
 {
     public static IReadOnlyList<ReinfR4020Payment> FromFacts(IEnumerable<WithholdingFact> facts)
@@ -41,7 +41,7 @@ public static class ReinfR4020Projection
             .GroupBy(f => f.PayableId)
             .Select(g =>
             {
-                var first = g.First(); // CNPJs / subitem / bruto são do título — iguais em todas as linhas
+                var first = g.First(); // CNPJs / subitem / gross belong to the título — same on every line
                 decimal Base(WithholdingTaxType t) => g.Where(f => f.TaxType == t).Sum(f => f.BaseAmount);
                 decimal Ret(WithholdingTaxType t) => g.Where(f => f.TaxType == t).Sum(f => f.Amount);
                 // Strip any CNPJ mask (Company.Cnpj is not digit-normalized on write) so nrInscEstab/cnpjBenef
@@ -63,13 +63,13 @@ public static class ReinfR4020Projection
     }
 }
 
-/// <summary>Builder puro do XML do R-4020 (leiaute 2.1.2, schema <c>evt4020PagtoBeneficiarioPJ/v2_01_02</c>) — sem
-/// I/O. O lote (<c>envioLoteEventos</c>) envolve <b>um evento por (estabelecimento × beneficiário)</b> — no XSD
-/// <c>ideEstab</c> e <c>ideBenef</c> são 1..1; dentro, um <c>idePgto</c> por natureza e um <c>infoPgto</c> por
-/// título. A <c>ds:Signature</c> (exigida pelo XSD do evento) é adicionada na assinatura — etapa deferida.</summary>
+/// <summary>Pure builder of the R-4020 XML (leiaute 2.1.2, schema <c>evt4020PagtoBeneficiarioPJ/v2_01_02</c>) — no
+/// I/O. The lote (<c>envioLoteEventos</c>) wraps <b>one event per (establishment × beneficiary)</b> — in the XSD
+/// <c>ideEstab</c> and <c>ideBenef</c> are 1..1; inside, one <c>idePgto</c> per natureza and one <c>infoPgto</c>
+/// per título. The <c>ds:Signature</c> (required by the event XSD) is added at signing — a deferred step.</summary>
 public static class EfdReinfXmlBuilder
 {
-    // Envelope de envio de lote (não coberto pelo XSD do evento) × schema do evento R-4020.
+    // Lote-envelope schema (not covered by the event XSD) × the R-4020 event schema.
     private const string EnvNs = "http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_05_01";
     private const string EvtNs = "http://www.reinf.esocial.gov.br/schemas/evt4020PagtoBeneficiarioPJ/v2_01_02";
 
@@ -94,7 +94,7 @@ public static class EfdReinfXmlBuilder
 
                 w.WriteStartElement("evento", EnvNs);
                 w.WriteAttributeString("id", id);
-                w.WriteStartElement("Reinf", EvtNs); // raiz do documento de evento (namespace do evento)
+                w.WriteStartElement("Reinf", EvtNs); // root of the event document (event namespace)
                 w.WriteStartElement("evtRetPJ", EvtNs);
                 w.WriteAttributeString("id", id);
 
@@ -147,8 +147,8 @@ public static class EfdReinfXmlBuilder
         return sb.ToString();
     }
 
-    /// <summary>Emite <c>retencoes</c> na ordem do XSD, só os pares (base + retido) que se aplicam. <c>retencoes</c>
-    /// é 0..1 — omitido se o título não tem nenhuma retenção da série 4000.</summary>
+    /// <summary>Emits <c>retencoes</c> in XSD order, only the (base + withheld) pairs that apply. <c>retencoes</c>
+    /// is 0..1 — omitted when the título has no série-4000 withholding.</summary>
     private static void WriteRetencoes(XmlWriter w, ReinfR4020Payment p)
     {
         var hasIr = p.Irrf > 0 || p.BaseIrrf > 0;
@@ -165,8 +165,8 @@ public static class EfdReinfXmlBuilder
         w.WriteEndElement(); // retencoes
     }
 
-    /// <summary>Id do evento no padrão do XSD (<c>I{1}D{1}[0-9]{34}</c>): ID + tpInscr(1) + CNPJ estab(14) +
-    /// carimbo de tempo (placeholder de 14 zeros — a compor na transmissão/assinatura, deferida) + sequencial(5).</summary>
+    /// <summary>Event id in the XSD pattern (<c>I{1}D{1}[0-9]{34}</c>): ID + tpInscr(1) + estab CNPJ(14) +
+    /// timestamp (14-zero placeholder — to compose at transmissão/assinatura, deferred) + sequential(5).</summary>
     private static string EventId(string estabCnpj, int seq)
     {
         var digits = new string(estabCnpj.Where(char.IsDigit).ToArray());
@@ -174,6 +174,6 @@ public static class EfdReinfXmlBuilder
         return $"ID1{cnpj14}00000000000000{seq:D5}";
     }
 
-    // Valores monetários no padrão do leiaute: vírgula decimal, 2 casas ([0-9]{1,12}[,][0-9]{2}).
+    // Monetary values in the leiaute format: comma decimal, 2 places ([0-9]{1,12}[,][0-9]{2}).
     private static string Money(decimal v) => v.ToString("0.00", CultureInfo.InvariantCulture).Replace('.', ',');
 }

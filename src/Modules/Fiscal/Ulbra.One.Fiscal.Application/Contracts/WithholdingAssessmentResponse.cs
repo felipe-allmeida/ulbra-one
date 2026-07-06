@@ -8,19 +8,19 @@ namespace Ulbra.One.Fiscal.Application.Contracts;
 /// <summary>Headline totals of the assessment.</summary>
 public sealed record AssessmentTotalsResponse(decimal BaseTotal, decimal WithheldTotal, int PayableCount);
 
-/// <summary>Retido por empresa/estabelecimento (dimensão fiscal).</summary>
+/// <summary>Withheld per company/establishment (fiscal dimension).</summary>
 public sealed record CompanyAssessmentRowResponse(
     CompanyId CompanyId, string CompanyName, string Cnpj, decimal BaseAmount, decimal WithheldAmount, int PayableCount);
 
-/// <summary>Retido por guia de recolhimento (IRRF / CSRF / INSS / ISS).</summary>
+/// <summary>Withheld per guia de recolhimento (IRRF / CSRF / INSS / ISS).</summary>
 public sealed record RetentionGroupRowResponse(
     RetentionGroup Group, decimal BaseAmount, decimal WithheldAmount, int PayableCount);
 
-/// <summary>Retido por tributo atômico, com sua guia.</summary>
+/// <summary>Withheld per atomic tribute, with its guia.</summary>
 public sealed record TaxTypeRowResponse(
     WithholdingTaxType TaxType, RetentionGroup Group, decimal BaseAmount, decimal WithheldAmount, int PayableCount);
 
-/// <summary>Retido por centro de custo — visão gerencial interna (não é dimensão fiscal).</summary>
+/// <summary>Withheld per cost center — internal management view (not a fiscal dimension).</summary>
 public sealed record CostCenterAssessmentRowResponse(
     CostCenterId CostCenterId, string Code, string Name, decimal WithheldAmount, int PayableCount);
 

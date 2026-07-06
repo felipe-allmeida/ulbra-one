@@ -12,10 +12,10 @@ using Ulbra.One.Fiscal.Domain.EfdReinf;
 
 namespace Ulbra.One.Fiscal.Application.Endpoints.Assessment.ExportEfdReinfXml;
 
-/// <summary>Gera o XML da EFD-Reinf (evento <b>R-4020</b> — IR/CSLL/PIS/COFINS sobre PJ) da competência, para
-/// uma empresa (contribuinte), <b>on-the-fly</b> a partir da apuração — sem persistência. <c>tpAmb</c> default 2
-/// (homologação). INSS/R-2010 e beneficiário PF/R-4010 ficam fora desta fatia; a natureza do rendimento usa o
-/// mapa default (🔶 homologar com a Contabilidade — AEL-627).</summary>
+/// <summary>Generates the EFD-Reinf XML (event <b>R-4020</b> — IR/CSLL/PIS/COFINS on PJ) for the competência, for
+/// one company (contribuinte), <b>on-the-fly</b> from the apuração — no persistence. <c>tpAmb</c> default 2
+/// (homologação). INSS/R-2010 and the PF beneficiary/R-4010 are out of this slice; the natureza do rendimento uses
+/// the default map (🔶 to homologate with Accounting — AEL-627).</summary>
 public sealed class ExportEfdReinfXml : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
@@ -36,7 +36,7 @@ public sealed class ExportEfdReinfXml : IEndpoint
         var facts = await WithholdingFactLoader.LoadAsync(uow, new AssessmentFilter(period, cid.Value), ct);
         var items = ReinfR4020Projection.FromFacts(facts);
 
-        // Contribuinte = raiz: 8 primeiros dígitos do CNPJ (sem máscara — nrInsc no XSD é \d{8}).
+        // Contribuinte root: first 8 digits of the CNPJ (no mask — nrInsc in the XSD is \d{8}).
         var root = new string(company.Cnpj.Where(char.IsDigit).Take(8).ToArray());
         var input = new ReinfR4020Input(period.PerApur, tpAmb ?? 2,
             new ReinfTaxpayer(root, company.LegalName), items);

@@ -3,8 +3,8 @@ using System.Text;
 
 namespace Ulbra.One.Fiscal.Domain.Assessment;
 
-/// <summary>Pure builder of the agnostic "valores retidos" CSV — one row per withholding line, `;`-separated
-/// (pt-BR/Excel), comma decimals. No EF, no I/O, no event codes (that's the EFD-Reinf adapter's concern).</summary>
+/// <summary>Pure builder of the format-agnostic withholding CSV (valores retidos) — one row per withholding line,
+/// `;`-separated (pt-BR/Excel), comma decimals. No EF, no I/O, no event codes (that's the EFD-Reinf adapter).</summary>
 public static class AssessmentCsv
 {
     private const string Header = "competencia;empresa;cnpj;centro_custo;fornecedor;documento;guia;tributo;base;retido";
