@@ -8,7 +8,7 @@ using Ulbra.One.Fiscal.Domain.Assessment;
 namespace Ulbra.One.Fiscal.Domain.EfdReinf;
 
 /// <summary>Contribuinte (raiz de 8 dígitos) do lote — o ideContri do R-4020.</summary>
-public sealed record ReinfContribuinte(string Raiz, string Name);
+public sealed record ReinfTaxpayer(string Root, string Name);
 
 /// <summary>Um pagamento a beneficiário PJ = um <c>infoPgto</c> do R-4020 (um por título/fato gerador). Carrega o
 /// bruto do título (<c>vlrBruto</c>), a data do fato gerador (<c>dtFG</c>) e, por tributo, a base e o valor retido
@@ -26,7 +26,7 @@ public sealed record ReinfR4020Payment(
 
 /// <summary>Entrada do writer do R-4020: contribuinte + competência + ambiente + pagamentos já projetados.</summary>
 public sealed record ReinfR4020Input(
-    string PerApur, int TpAmb, ReinfContribuinte Contribuinte, IReadOnlyList<ReinfR4020Payment> Payments);
+    string PerApur, int TpAmb, ReinfTaxpayer Taxpayer, IReadOnlyList<ReinfR4020Payment> Payments);
 
 /// <summary>Projeta os fatos de retenção nos pagamentos do R-4020 — só guias IRRF/CSRF (série 4000 sobre PJ:
 /// IR/CSLL/COFINS/PIS). Um <see cref="ReinfR4020Payment"/> por título (payable) = um <c>infoPgto</c>; base e valor
@@ -108,7 +108,7 @@ public static class EfdReinfXmlBuilder
 
                 w.WriteStartElement("ideContri", EvtNs);
                 w.WriteElementString("tpInsc", EvtNs, "1");
-                w.WriteElementString("nrInsc", EvtNs, input.Contribuinte.Raiz);
+                w.WriteElementString("nrInsc", EvtNs, input.Taxpayer.Root);
                 w.WriteEndElement(); // ideContri
 
                 w.WriteStartElement("ideEstab", EvtNs);

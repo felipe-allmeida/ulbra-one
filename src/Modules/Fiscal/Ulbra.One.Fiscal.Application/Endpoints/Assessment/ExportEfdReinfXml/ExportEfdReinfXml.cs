@@ -37,12 +37,12 @@ public sealed class ExportEfdReinfXml : IEndpoint
         var items = ReinfR4020Projection.FromFacts(facts);
 
         // Contribuinte = raiz: 8 primeiros dígitos do CNPJ (sem máscara — nrInsc no XSD é \d{8}).
-        var raiz = new string(company.Cnpj.Where(char.IsDigit).Take(8).ToArray());
+        var root = new string(company.Cnpj.Where(char.IsDigit).Take(8).ToArray());
         var input = new ReinfR4020Input(period.PerApur, tpAmb ?? 2,
-            new ReinfContribuinte(raiz, company.LegalName), items);
+            new ReinfTaxpayer(root, company.LegalName), items);
 
         var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + EfdReinfXmlBuilder.Build(input);
         return TypedResults.File(Encoding.UTF8.GetBytes(xml), "application/xml",
-            $"efd-reinf-r4020-{raiz}-{period.PerApur}.xml");
+            $"efd-reinf-r4020-{root}-{period.PerApur}.xml");
     }
 }

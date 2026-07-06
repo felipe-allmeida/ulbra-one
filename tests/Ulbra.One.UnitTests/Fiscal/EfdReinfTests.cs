@@ -103,7 +103,7 @@ public class ReinfR4020ProjectionTests
 public class EfdReinfXmlBuilderTests
 {
     private static ReinfR4020Input Input() => new(
-        "2026-07", 2, new ReinfContribuinte("99999999", "Empresa A"),
+        "2026-07", 2, new ReinfTaxpayer("99999999", "Empresa A"),
         [new ReinfR4020Payment("99999999000191", "11222333000181", "15009",
             new DateOnly(2026, 7, 15), 1000m, 1000m, 15m, 1000m, 10m, 1000m, 30m, 1000m, 6.5m)]);
 

@@ -16,7 +16,7 @@ public class EfdReinfXsdValidationTests
     private const string EvtNs = "http://www.reinf.esocial.gov.br/schemas/evt4020PagtoBeneficiarioPJ/v2_01_02";
 
     private static ReinfR4020Input SampleInput() => new(
-        "2026-07", 2, new ReinfContribuinte("99999999", "Empresa A"),
+        "2026-07", 2, new ReinfTaxpayer("99999999", "Empresa A"),
         [
             // Dois beneficiários no mesmo estabelecimento → dois eventos; o segundo com duas naturezas.
             new ReinfR4020Payment("99999999000191", "11222333000181", "15009",
