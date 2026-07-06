@@ -18,6 +18,10 @@ describe('itemForPath', () => {
   it('returns null for an unknown route', () => {
     expect(itemForPath('/app/unknown')).toBeNull();
   });
+
+  it('returns null for the home route (the domain is routable, with no sub-item)', () => {
+    expect(itemForPath('/app/home')).toBeNull();
+  });
 });
 
 describe('domainForPath', () => {
@@ -26,6 +30,10 @@ describe('domainForPath', () => {
     expect(domainForPath('/app/accounting/income-statement').key).toBe('accounting');
     expect(domainForPath('/app/structure').key).toBe('structure');
     expect(domainForPath('/app/vendors').key).toBe('registry');
+  });
+
+  it('resolves the home domain via its domain-level route', () => {
+    expect(domainForPath('/app/home').key).toBe('home');
   });
 
   it('falls back to the first domain for unknown routes', () => {

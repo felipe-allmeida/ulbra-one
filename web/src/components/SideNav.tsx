@@ -42,6 +42,12 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
     onClose();
   };
 
+  // Selecting a domain shows its panel; a directly-routable domain (home) also navigates.
+  const selectDomain = (d: NavDomain) => {
+    setSelectedKey(d.key);
+    if (d.to) go(d.to);
+  };
+
   const logout = () => {
     auth.clear();
     nav('/');
@@ -81,7 +87,7 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
               icon={d.icon}
               label={t(d.labelKey)}
               active={d.key === selected.key}
-              onClick={() => setSelectedKey(d.key)}
+              onClick={() => selectDomain(d)}
             />
           ))}
           <div className='nav-rail-spacer' />
@@ -91,7 +97,7 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
               icon={d.icon}
               label={t(d.labelKey)}
               active={d.key === selected.key}
-              onClick={() => setSelectedKey(d.key)}
+              onClick={() => selectDomain(d)}
             />
           ))}
           <RailButton icon={<LogOut />} label={t('nav.logout')} onClick={logout} />
@@ -126,28 +132,74 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
               )}
             </div>
           ) : (
-            <div className='nav-panel-body'>
-              <div className='nav-panel-title'>{t(selected.titleKey ?? selected.labelKey)}</div>
-              {selected.groups.map((group, gi) => (
-                <div className='nav-group' key={group.labelKey ?? gi}>
-                  {group.labelKey && <div className='nav-subgroup'>{t(group.labelKey)}</div>}
-                  {group.items.map((item) => (
-                    <PanelItem
-                      key={item.labelKey}
-                      icon={item.icon}
-                      label={t(item.labelKey)}
-                      active={!!item.to && item.to === activeTo}
-                      soon={item.soon}
-                      onClick={() => go(item.to)}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
+            <DomainPanel selected={selected} activeTo={activeTo} onGo={go} />
           )}
         </div>
       </aside>
     </>
+  );
+}
+
+/**
+ * The panel body for the selected domain. An `index` domain (home) renders an
+ * index of every routable page grouped by domain instead of its own groups;
+ * any other domain renders its title + groups as before.
+ */
+function DomainPanel({
+  selected,
+  activeTo,
+  onGo,
+}: {
+  selected: NavDomain;
+  activeTo: string | null;
+  onGo: (to?: string) => void;
+}) {
+  const { t } = useTranslation();
+
+  if (selected.index) {
+    return (
+      <div className='nav-panel-body'>
+        {NAV_DOMAINS.filter((d) => !d.footer && !d.index).map((d) => {
+          const items = d.groups.flatMap((g) => g.items).filter((it) => it.to && !it.soon);
+          if (items.length === 0) return null;
+          return (
+            <div className='nav-group' key={d.key}>
+              <div className='nav-subgroup'>{t(d.labelKey)}</div>
+              {items.map((item) => (
+                <PanelItem
+                  key={item.to}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  active={item.to === activeTo}
+                  onClick={() => onGo(item.to)}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className='nav-panel-body'>
+      <div className='nav-panel-title'>{t(selected.titleKey ?? selected.labelKey)}</div>
+      {selected.groups.map((group, gi) => (
+        <div className='nav-group' key={group.labelKey ?? gi}>
+          {group.labelKey && <div className='nav-subgroup'>{t(group.labelKey)}</div>}
+          {group.items.map((item) => (
+            <PanelItem
+              key={item.labelKey}
+              icon={item.icon}
+              label={t(item.labelKey)}
+              active={!!item.to && item.to === activeTo}
+              soon={item.soon}
+              onClick={() => onGo(item.to)}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -18,7 +18,6 @@ const ptBR = {
       system: 'Sistema',
       modules: 'Módulos',
     },
-    home: 'Início',
     accountsPayable: 'Contas a pagar',
     payablesWorkflow: 'Contas a pagar (esteira)',
     accountsReceivable: 'Contas a receber',
