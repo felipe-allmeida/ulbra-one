@@ -237,6 +237,43 @@ public class FiscalDocumentParserTests
 </CompNfse>
 """;
 
+    // NFS-e ABRASF with ISS/municipality fields populated (advisory 17.01, Canoas IBGE 4304606, ISS 5% withheld).
+    private const string NfseWithIssXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.04">
+    <InfNfse Id="NFSE00000005678">
+      <Numero>00000005678</Numero>
+      <DataEmissao>2026-06-20T09:15:00</DataEmissao>
+      <Servico>
+        <Valores>
+          <ValorServicos>3000.00</ValorServicos>
+          <Aliquota>0.0500</Aliquota>
+          <IssRetido>1</IssRetido>
+          <ValorIss>150.00</ValorIss>
+        </Valores>
+        <ItemListaServico>17.01</ItemListaServico>
+        <CodigoTributacaoMunicipio>170100</CodigoTributacaoMunicipio>
+        <CodigoMunicipio>4304606</CodigoMunicipio>
+        <CodigoCnae>6204000</CodigoCnae>
+        <Discriminacao>Assessoria e consultoria.</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador>
+          <CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj>
+        </IdentificacaoPrestador>
+        <RazaoSocial>Consultoria Exemplo LTDA</RazaoSocial>
+      </PrestadorServico>
+      <TomadorServico>
+        <IdentificacaoTomador>
+          <CpfCnpj><Cnpj>11444777000161</Cnpj></CpfCnpj>
+        </IdentificacaoTomador>
+      </TomadorServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
+""";
+
     private sealed class DisabledAi : IAiCompletion
     {
         public Task<Result<T>> CompleteAsync<T>(AiPrompt p, AiOptions? o = null, CancellationToken ct = default) where T : class =>
@@ -317,6 +354,23 @@ public class FiscalDocumentParserTests
         Assert.Equal("RPS", p.RpsSeries);
         Assert.Equal("6201501", p.CnaeCode);
         Assert.Contains("CT-2026-014", p.ServiceDescription);
+        // LC 116 subitem is reliable (comes in the invoice); the other ISS fields are optional and absent in this sample.
+        Assert.Equal("01.04", p.Lc116Subitem);
+        Assert.Null(p.MunicipalServiceCode);
+        Assert.Null(p.ServiceMunicipalityIbge);
+        Assert.Null(p.InvoiceIssRate);
+        Assert.Null(p.IssWithheldOnInvoice);
+    }
+
+    [Fact]
+    public void Nfse_parser_extracts_iss_and_municipal_fields()
+    {
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseWithIssXml));
+        Assert.Equal("17.01", p.Lc116Subitem);
+        Assert.Equal("170100", p.MunicipalServiceCode);
+        Assert.Equal("4304606", p.ServiceMunicipalityIbge);
+        Assert.Equal(0.05m, p.InvoiceIssRate);
+        Assert.True(p.IssWithheldOnInvoice);
     }
 
     [Fact]
@@ -324,6 +378,33 @@ public class FiscalDocumentParserTests
     {
         var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(NfseAbrasfGrossXml));
         Assert.Equal(10000.00m, p.TotalAmount); // ValorServicos (gross), not ValorLiquidoNfse (9000.00)
+    }
+
+    [Fact]
+    public void Nfse_abrasf_trims_item_lista_servico()
+    {
+        // Stray whitespace around ItemListaServico must not break the exact-match against withholding rules.
+        var xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.04">
+    <InfNfse Id="NFSE00000005679">
+      <Numero>00000005679</Numero>
+      <DataEmissao>2026-06-20T09:15:00</DataEmissao>
+      <Servico>
+        <Valores><ValorServicos>3000.00</ValorServicos></Valores>
+        <ItemListaServico>  17.01  </ItemListaServico>
+        <Discriminacao>Servico.</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></IdentificacaoPrestador>
+      </PrestadorServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
+""";
+        var p = new NfseAbrasfXmlParser().Parse(XDocument.Parse(xml));
+        Assert.Equal("17.01", p.Lc116Subitem);
     }
 
     [Fact]
@@ -360,6 +441,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("8360128", p.RpsNumber);
         Assert.Equal("001", p.RpsSeries);
         Assert.Null(p.CnaeCode);                   // national has no CNAE
+        Assert.Equal("01.07", p.Lc116Subitem);     // derived from cTribNac 010701 (item 01, subitem 07)
         Assert.Equal("5133785980", p.IssuerPhone);
         Assert.NotNull(p.IssuerAddress);
         Assert.Equal("RS", p.IssuerAddress!.State);
@@ -374,6 +456,26 @@ public class FiscalDocumentParserTests
         Assert.Null(p.DocumentNumber);             // no infNFSe/nNFSe
         Assert.Equal(4402.00m, p.TotalAmount);     // vServ from infDPS
         Assert.Equal("11444777000161", p.RecipientDocument);
+        Assert.Null(p.Lc116Subitem);               // no cTribNac in this bare DPS → no subitem
+    }
+
+    [Fact]
+    public void Nfse_nacional_leaves_lc116_null_when_ctribnac_malformed()
+    {
+        // cTribNac must be exactly 6 numeric digits (item + subitem + national breakdown); a malformed value
+        // yields no subitem, so no withholding is fabricated (best-effort — never guess a subitem).
+        var malformed = """
+<?xml version="1.0" encoding="UTF-8"?>
+<DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
+  <infDPS Id="DPS00000000000000000000000000000000000000009">
+    <toma><CNPJ>11444777000161</CNPJ></toma>
+    <serv><cServ><cTribNac>0107</cTribNac><xDescServ>Suporte</xDescServ></cServ></serv>
+    <valores><vServPrest><vServ>1000.00</vServ></vServPrest></valores>
+  </infDPS>
+</DPS>
+""";
+        var p = new NfseNacionalXmlParser().Parse(XDocument.Parse(malformed));
+        Assert.Null(p.Lc116Subitem);
     }
 
     [Fact]

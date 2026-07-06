@@ -135,6 +135,7 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Payable without withholding",
             installments = new[] { new { dueDate = "2026-06-01", amount } },
+            type = "Product", // determined product (no source withholding) — required before scheduling
         });
         createRes.EnsureSuccessStatusCode();
         var payablePrefixedId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

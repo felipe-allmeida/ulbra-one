@@ -92,7 +92,9 @@ export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
 // ---------- Payables (Contas a Pagar) ----------
-export type Payable = Schemas['PayableResponse'];
+// `type` (Service/Product — drives the withholding) isn't in the generated OpenAPI schema yet;
+// augment it until the next `pnpm gen:api`. The value already comes in the JSON at runtime.
+export type Payable = Schemas['PayableResponse'] & { type?: 'Service' | 'Product' | null };
 export type PayableListItem = Schemas['PayableListItemResponse'];
 export type Installment = Schemas['InstallmentResponse'];
 export type PayableAttachment = Schemas['PayableAttachmentResponse'];
@@ -276,6 +278,38 @@ export interface JournalEntryInput {
 // ---------- Aging de Contas a Pagar ----------
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
+
+// ---------- Relatório de Retenções ----------
+// Manual types: this endpoint is not yet in the generated OpenAPI schema. Reuses the existing string enums.
+export interface WithholdingReportLine {
+  id: string;
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  rate: number | null;
+  amount: number;
+}
+export interface WithholdingByTaxRow {
+  taxType: WithholdingTaxType;
+  baseAmount: number;
+  amount: number;
+  payableCount: number;
+}
+export interface WithholdingPayableRow {
+  id: string;
+  vendorId: string;
+  counterpartyName: string;
+  documentNumber: string | null;
+  status: PayableStatus;
+  totalAmount: number;
+  totalWithheld: number;
+  netTotal: number;
+  lines: WithholdingReportLine[];
+}
+export interface WithholdingsReport {
+  totals: { grossTotal: number; withheldTotal: number; netTotal: number; payableCount: number };
+  byTax: WithholdingByTaxRow[];
+  byPayable: WithholdingPayableRow[];
+}
 export type AgingBucket = Schemas['AgingBucket'];
 
 // ---------- Cash flow (Fluxo de caixa) ----------
@@ -343,6 +377,8 @@ export interface PayableInput {
   /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
   paymentBankAccountId?: string | null;
   paymentMethod?: PaymentMethod | null;
+  /** Type: 'Service' (triggers withholding), 'Product', null/omitted=undetermined. */
+  type?: 'Service' | 'Product' | null;
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */
@@ -575,7 +611,6 @@ export const api = {
     id: string,
     items: { taxType: Schemas['WithholdingTaxType']; baseAmount: number; rate?: number | null; amount: number }[],
   ) => request<Payable>(`/payables/${id}/withholdings`, { method: 'PUT', body: JSON.stringify({ items }) }),
-
   // ---------- Fiscal documents (leitor de NF) ----------
   /** Requests a presigned/SAS PUT URL for uploading a fiscal document directly to blob storage. */
   requestFiscalUploadUrl: (fileName: string) =>
@@ -1006,6 +1041,11 @@ export const api = {
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.asOf) q.set('asOf', params.asOf);
     return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
+  withholdingsReport: (companyId?: string) => {
+    const q = new URLSearchParams();
+    if (companyId) q.set('companyId', companyId);
+    return request<WithholdingsReport>(`/payables/withholdings?${q}`);
   },
 
   // ---------- Registry: Lookups ----------

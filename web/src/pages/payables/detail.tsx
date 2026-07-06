@@ -178,27 +178,29 @@ export function PayableDetailPage() {
         </p>
       )}
 
-      <InstallmentsTable payable={p} onRegister={setBaixaInstallment} />
+      <div className='detail-sections'>
+        <InstallmentsTable payable={p} onRegister={setBaixaInstallment} />
 
-      <WithholdingSection payable={p} editable={editable} />
+        <WithholdingSection payable={p} editable={editable} />
 
-      {[...p.installments]
-        .sort((a, b) => a.sequence - b.sequence)
-        .filter((inst) => inst.payments.length > 0)
-        .map((inst) => (
-          <Panel
-            key={inst.id}
-            title={`${t('payments.title')} — ${t('installments.label')} ${inst.sequence}/${p.installments.length}`}
-          >
-            <PaymentHistory payable={p} installment={inst} />
-          </Panel>
-        ))}
+        {[...p.installments]
+          .sort((a, b) => a.sequence - b.sequence)
+          .filter((inst) => inst.payments.length > 0)
+          .map((inst) => (
+            <Panel
+              key={inst.id}
+              title={`${t('payments.title')} — ${t('installments.label')} ${inst.sequence}/${p.installments.length}`}
+            >
+              <PaymentHistory payable={p} installment={inst} />
+            </Panel>
+          ))}
 
-      <AttachmentsPanel payable={p} onDelete={setAttToDelete} />
+        <AttachmentsPanel payable={p} onDelete={setAttToDelete} />
 
-      <Panel title={t('payables.cards.timeline')}>
-        <AuditTimeline events={audit.data ?? []} loading={audit.isLoading} />
-      </Panel>
+        <Panel title={t('payables.cards.timeline')}>
+          <AuditTimeline events={audit.data ?? []} loading={audit.isLoading} />
+        </Panel>
+      </div>
 
       {rejectOpen && (
         <ConfirmDialog

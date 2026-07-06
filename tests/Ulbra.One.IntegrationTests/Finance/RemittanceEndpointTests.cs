@@ -79,6 +79,7 @@ public class RemittanceEndpointTests(PostgresFixture fixture)
             costCenterId,
             description = "Payable TED Endpoint",
             installments = new[] { new { dueDate = "2026-06-01", amount = 1_000m } },
+            type = "Product", // determined product — required before a payable can schedule
         });
         payableRes.EnsureSuccessStatusCode();
         var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;

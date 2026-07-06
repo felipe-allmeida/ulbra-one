@@ -10,6 +10,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Application.Messaging;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -25,7 +26,7 @@ public sealed class ClassifyPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, CancellationToken ct)
+        IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, IAutoWithholdingService autoWithholding, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
@@ -34,6 +35,9 @@ public sealed class ClassifyPayable : IEndpoint
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+
+        // Compute + apply withholdings before any auto-approval (they must be final before the payable schedules).
+        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
 
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
         payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());

@@ -101,6 +101,7 @@ public class ListPayablesRailTests(PostgresFixture fixture)
             costCenterId,
             description = "Pix rail test",
             installments = new[] { new { dueDate = "2026-07-10", amount = 1_000m } },
+            type = "Product", // determined product — required before a payable can schedule
             paymentMethod = "Pix",
         });
         createRes.EnsureSuccessStatusCode();
@@ -132,6 +133,7 @@ public class ListPayablesRailTests(PostgresFixture fixture)
             costCenterId,
             description = "No bank info rail test",
             installments = new[] { new { dueDate = "2026-07-15", amount = 500m } },
+            type = "Product", // determined product — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

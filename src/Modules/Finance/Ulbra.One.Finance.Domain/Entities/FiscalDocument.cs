@@ -42,6 +42,14 @@ public class FiscalDocument
     public decimal? CofinsAmount { get; private set; }
     public decimal? TotalTaxesAmount { get; private set; }
 
+    // Fiscal signals (NFS-e only): LC 116 subitem + municipal code + incidence IBGE + Cnae + invoice ISS rate/withheld flag.
+    public string? Lc116Subitem { get; private set; }
+    public string? MunicipalServiceCode { get; private set; }
+    public string? ServiceMunicipalityIbge { get; private set; }
+    public string? Cnae { get; private set; }
+    public decimal? InvoiceIssRate { get; private set; }
+    public bool? IssWithheldOnInvoice { get; private set; }
+
     private FiscalDocument() { }
 
     public FiscalDocument(Guid payableId, FiscalDocumentFormat format, string? accessKey, string? documentNumber,
@@ -50,7 +58,9 @@ public class FiscalDocument
         string storagePath, Guid uploadedById, DateTimeOffset createdAt,
         IReadOnlyList<string>? cfops = null, IReadOnlyList<string>? ncms = null,
         decimal? icmsAmount = null, decimal? ipiAmount = null, decimal? pisAmount = null,
-        decimal? cofinsAmount = null, decimal? totalTaxesAmount = null)
+        decimal? cofinsAmount = null, decimal? totalTaxesAmount = null,
+        string? lc116Subitem = null, string? municipalServiceCode = null, string? serviceMunicipalityIbge = null,
+        string? cnae = null, decimal? invoiceIssRate = null, bool? issWithheldOnInvoice = null)
     {
         PayableId = payableId;
         Format = format;
@@ -75,5 +85,11 @@ public class FiscalDocument
         PisAmount = pisAmount;
         CofinsAmount = cofinsAmount;
         TotalTaxesAmount = totalTaxesAmount;
+        Lc116Subitem = lc116Subitem;
+        MunicipalServiceCode = municipalServiceCode;
+        ServiceMunicipalityIbge = serviceMunicipalityIbge;
+        Cnae = cnae;
+        InvoiceIssRate = invoiceIssRate;
+        IssWithheldOnInvoice = issWithheldOnInvoice;
     }
 }

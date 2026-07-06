@@ -92,6 +92,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
             costCenterId = seed.CostCenterId,
             description = "Cloud hosting subscription",
             installments = new[] { new { dueDate = "2026-07-01", amount } },
+            type = "Product", // determined product — required before a payable can schedule
         });
         res.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);

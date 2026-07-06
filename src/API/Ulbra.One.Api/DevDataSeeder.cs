@@ -7,6 +7,8 @@ using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
+using Ulbra.One.Fiscal.Domain;
+using Ulbra.One.Fiscal.Domain.Entities;
 using Ulbra.One.Persistence;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
@@ -33,6 +35,7 @@ public static class DevDataSeeder
 
         await SeedExpenseCategoriesAsync(finance, logger, ct);
         await SeedChartOfAccountsAsync(finance, logger, ct);
+        await SeedWithholdingRulesAsync(finance, logger, ct);
 
         var existing = await core.Companies.CountAsync(ct);
         if (existing > 0)
@@ -477,6 +480,38 @@ public static class DevDataSeeder
         finance.ChartAccounts.AddRange(despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
         await finance.SaveChangesAsync(ct);
         logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting + 4 financial chart accounts).", contabil.Count);
+    }
+
+    /// <summary>Seeds group-wide default withholding rules so the auto-calculation produces output in dev/homologação.
+    /// Mirrors the acceptance-table set. Idempotent. 🔶 Rates/scope to be validated with Accounting before production.</summary>
+    private static async Task SeedWithholdingRulesAsync(AppDbContext db, ILogger logger, CancellationToken ct)
+    {
+        if (await db.WithholdingRules.AnyAsync(ct))
+        {
+            logger.LogInformation("Dev seed: withholding rules already present — skipping.");
+            return;
+        }
+
+        var rules = new List<WithholdingRule>
+        {
+            // General federal taxes (any regime).
+            new(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.015m),
+            new(WithholdingTaxType.Pis, retains: true, RateSource.Fixed, 0.0065m),
+            new(WithholdingTaxType.Cofins, retains: true, RateSource.Fixed, 0.03m),
+            new(WithholdingTaxType.Csll, retains: true, RateSource.Fixed, 0.01m),
+            // Simples exemption (federal income/contribution) — conditioned on the declaration on file.
+            new(WithholdingTaxType.Irrf, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+            new(WithholdingTaxType.Pis, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+            new(WithholdingTaxType.Cofins, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+            new(WithholdingTaxType.Csll, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+            // INSS 11% for labor-supply services (LC 116 subitem 11.02 = security) — any regime.
+            new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02"),
+            // ISS for Simples providers: withheld at the band rate informed on the invoice.
+            new(WithholdingTaxType.Iss, retains: true, RateSource.FromNota, null, vendorRegime: TaxRegime.SimplesNacional),
+        };
+        db.WithholdingRules.AddRange(rules);
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: {Count} withholding rules seeded (validate with Accounting before production).", rules.Count);
     }
 
     private static void ApplyStatus(Transaction t, TransactionStatus target, decimal autoApprovalLimit)

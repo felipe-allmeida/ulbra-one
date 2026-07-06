@@ -6,27 +6,34 @@ import { useSetPayableWithholdings } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { Button, Input, Select, Panel } from '../../ui';
-import { brlCents } from '../../lib';
+import { brlCents, fmtPct, roundCents } from '../../lib';
 
 const TAX_TYPES: WithholdingTaxType[] = ['Irrf', 'Iss', 'Inss', 'Pis', 'Cofins', 'Csll', 'Other'];
 
 interface Row {
   taxType: WithholdingTaxType;
   baseAmount: string;
-  rate: string;
-  amount: string;
+  ratePct: string; // percent as typed by the user (e.g. "1.5" = 1,5%); wire stores it as a decimal fraction
 }
 
 function emptyRow(): Row {
-  return { taxType: 'Irrf', baseAmount: '', rate: '', amount: '' };
+  return { taxType: 'Irrf', baseAmount: '', ratePct: '' };
+}
+
+/** Withheld amount = base × rate%, rounded to cents like the backend (the server trusts this amount). */
+function computeAmount(r: Row): number {
+  const base = Number(r.baseAmount) || 0;
+  const pct = Number(r.ratePct) || 0;
+  return roundCents(base * (pct / 100));
 }
 
 function rowToItem(r: Row) {
+  const pct = r.ratePct.trim() ? Number(r.ratePct) : null;
   return {
     taxType: r.taxType,
     baseAmount: Number(r.baseAmount) || 0,
-    rate: r.rate.trim() ? Number(r.rate) : null,
-    amount: Number(r.amount) || 0,
+    rate: pct != null ? pct / 100 : null, // wire = decimal fraction (0.0065 = 0,65%)
+    amount: computeAmount(r),
   };
 }
 
@@ -35,29 +42,20 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
   const { t } = useTranslation();
   const toast = useToast();
 
-  const [rows, setRows] = useState<Row[]>(() =>
-    payable.withholdings.length > 0
-      ? payable.withholdings.map((w) => ({
-          taxType: w.taxType,
-          baseAmount: String(w.baseAmount),
-          rate: w.rate != null ? String(w.rate) : '',
-          amount: String(w.amount),
-        }))
-      : [],
-  );
+  const prefill = (): Row[] =>
+    payable.withholdings.map((w) => ({
+      taxType: w.taxType,
+      baseAmount: String(w.baseAmount),
+      // fraction → percent for display/editing (0.0065 → "0.65"); trim trailing zeros
+      ratePct: w.rate != null ? String(Number((w.rate * 100).toFixed(4))) : '',
+    }));
 
-  // Prefill from server whenever payable changes
+  const [rows, setRows] = useState<Row[]>(prefill);
+
+  // Prefill from server whenever the payable changes.
   useEffect(() => {
-    setRows(
-      payable.withholdings.length > 0
-        ? payable.withholdings.map((w) => ({
-            taxType: w.taxType,
-            baseAmount: String(w.baseAmount),
-            rate: w.rate != null ? String(w.rate) : '',
-            amount: String(w.amount),
-          }))
-        : [],
-    );
+    setRows(prefill());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payable.id, payable.withholdings]);
 
   const save = useSetPayableWithholdings({
@@ -65,18 +63,15 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
-  const totalRetido = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const totalRetido = rows.reduce((s, r) => s + computeAmount(r), 0);
   const liquido = payable.totalAmount - totalRetido;
 
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
   const removeRow = (i: number) => setRows((prev) => prev.filter((_, idx) => idx !== i));
-
   const updateRow = (i: number, field: keyof Row, value: string) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
 
-  const handleSave = () => {
-    save.mutate({ id: payable.id, items: rows.map(rowToItem) });
-  };
+  const handleSave = () => save.mutate({ id: payable.id, items: rows.map(rowToItem) });
 
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
@@ -114,19 +109,19 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
                 <td style={{ textAlign: 'right' }}>
                   <Input
                     inputMode='numeric'
-                    value={row.rate}
-                    onChange={(e) => updateRow(i, 'rate', e.target.value)}
+                    value={row.ratePct}
+                    onChange={(e) => updateRow(i, 'ratePct', e.target.value)}
                     style={{ textAlign: 'right' }}
-                    placeholder='—'
+                    placeholder='%'
                   />
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <Input
-                    inputMode='numeric'
-                    value={row.amount}
-                    onChange={(e) => updateRow(i, 'amount', e.target.value)}
-                    style={{ textAlign: 'right' }}
-                  />
+                {/* Withheld value is derived (base × rate) — locked, not editable. */}
+                <td
+                  className='amount-cell'
+                  style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
+                  title={t('payables.withholding.amountAuto')}
+                >
+                  {brlCents(computeAmount(row))}
                 </td>
                 <td className='td-action'>
                   <Button
@@ -175,47 +170,46 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
   );
 }
 
-/* ============ Read-only withholding section ============ */
+/* ============ Read-only withholding section (2-column block) ============ */
 function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
   const { t } = useTranslation();
 
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
-      {payable.withholdings.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>{t('payables.withholding.columns.taxType')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.amount')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payable.withholdings.map((w) => (
-              <tr key={w.id}>
-                <td>{t(`payables.withholding.taxType.${w.taxType}`)}</td>
-                <td className='amount-cell' style={{ textAlign: 'right' }}>
-                  {brlCents(w.amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : null}
-
-      <div className='info-grid' style={{ marginTop: 16 }}>
-        <div className='info-card'>
-          <div className='info-label'>{t('payables.withholding.bruto')}</div>
-          <div className='info-value'>{brlCents(payable.totalAmount)}</div>
-        </div>
-        <div className='info-card'>
-          <div className='info-label'>{t('payables.withholding.retido')}</div>
-          <div className='info-value'>{brlCents(payable.totalWithheld)}</div>
-        </div>
-        <div className='info-card'>
-          <div className='info-label'>{t('payables.withholding.liquido')}</div>
-          <div className='info-value' data-testid='withholding-liquido'>
-            {brlCents(payable.netTotal)}
+      <div className='ret-block'>
+        {/* Left: gross → withheld → net, all with the same styling (no highlight). */}
+        <div className='ret-col'>
+          <div className='ret-row'>
+            <span className='ret-row-label'>{t('payables.withholding.bruto')}</span>
+            <span className='ret-row-value'>{brlCents(payable.totalAmount)}</span>
           </div>
+          <div className='ret-row'>
+            <span className='ret-row-label'>{t('payables.withholding.retido')}</span>
+            <span className='ret-row-value'>{brlCents(payable.totalWithheld)}</span>
+          </div>
+          <div className='ret-row'>
+            <span className='ret-row-label'>{t('payables.withholding.liquido')}</span>
+            <span className='ret-row-value' data-testid='withholding-liquido'>
+              {brlCents(payable.netTotal)}
+            </span>
+          </div>
+        </div>
+
+        {/* Right: one row per withheld tax — name · rate% + amount; stretches to match the left height. */}
+        <div className='ret-col'>
+          {payable.withholdings.length > 0 ? (
+            payable.withholdings.map((w) => (
+              <div className='ret-row' key={w.id}>
+                <span>
+                  <span className='ret-row-label'>{t(`payables.withholding.taxType.${w.taxType}`)}</span>
+                  {w.rate != null && <span className='ret-row-sub'> · {fmtPct(w.rate)}</span>}
+                </span>
+                <span className='ret-row-value'>{brlCents(w.amount)}</span>
+              </div>
+            ))
+          ) : (
+            <div className='ret-row ret-empty'>{t('payables.withholding.noWithholdings')}</div>
+          )}
         </div>
       </div>
     </Panel>

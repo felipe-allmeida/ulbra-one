@@ -8,6 +8,14 @@ export const brl = (v: number) =>
 export const brlCents = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
+/** Rounds to cents (2 decimals), half-away-from-zero — matches the backend's MidpointRounding.AwayFromZero
+ *  so the value shown equals the value persisted (numeric(18,2)). Withholding amounts are non-negative. */
+export const roundCents = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
+
+/** Formats a decimal fraction as a pt-BR percent: 0.0065 → "0,65%". */
+export const fmtPct = (fraction: number) =>
+  fraction.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export const brlCompact = (v: number) =>
   v >= 1_000_000
     ? `R$ ${(v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}M`

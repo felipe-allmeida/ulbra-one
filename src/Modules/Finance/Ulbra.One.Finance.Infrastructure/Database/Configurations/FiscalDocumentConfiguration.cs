@@ -47,5 +47,12 @@ public sealed class FiscalDocumentConfiguration : BaseEntityConfiguration<Fiscal
         e.Property(x => x.Cfops).HasColumnType("jsonb");
         e.Property(x => x.Ncms).HasConversion(strListToJson).Metadata.SetValueComparer(strListComparer);
         e.Property(x => x.Ncms).HasColumnType("jsonb");
+
+        // Fiscal signals (NFS-e only).
+        e.Property(x => x.Lc116Subitem).HasMaxLength(10);
+        e.Property(x => x.MunicipalServiceCode).HasMaxLength(20);
+        e.Property(x => x.ServiceMunicipalityIbge).HasMaxLength(7);
+        e.Property(x => x.Cnae).HasMaxLength(7);
+        e.Property(x => x.InvoiceIssRate).HasPrecision(5, 4);
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ulbra.One.Finance.Application.Classification;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Application.Conciliation;
 using Ulbra.One.Finance.Application.FiscalDocuments;
 using Ulbra.One.Finance.Application.Payments;
@@ -18,6 +19,7 @@ public static class FinanceModule
     public static IServiceCollection AddFinanceModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IPayableClassifier, PayableClassifier>();
+        services.AddScoped<IAutoWithholdingService, AutoWithholdingService>();
         services.AddScoped<IPayablePaymentService, PayablePaymentService>();
         services.AddScoped<IBankStatementParser, OfxStatementParser>();
 

@@ -88,6 +88,7 @@ public class CashFlowEndpointsTests(PostgresFixture fixture)
         {
             companyId, vendorId, costCenterId, description = "Para pagar",
             installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+            type = "Product", // determined product — required before a payable can schedule
         });
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;

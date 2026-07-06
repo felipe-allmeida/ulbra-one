@@ -10,6 +10,8 @@ using Ulbra.One.Common.Application.Results;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Finance.Application.Contracts;
 using Ulbra.One.Finance.Application.FiscalDocuments;
+using Ulbra.One.Finance.Application.Withholdings;
+using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Payables.UploadFiscalDocument;
@@ -37,6 +39,7 @@ public sealed class UploadFiscalDocument : IEndpoint
         IFiscalDocumentReader reader,
         IFileStorageService storage,
         IUnitOfWork uow,
+        IAutoWithholdingService autoWithholding,
         TimeProvider timeProvider,
         CancellationToken ct)
     {
@@ -97,14 +100,49 @@ public sealed class UploadFiscalDocument : IEndpoint
             ipiAmount: parsed.Fiscal?.Ipi,
             pisAmount: parsed.Fiscal?.Pis,
             cofinsAmount: parsed.Fiscal?.Cofins,
-            totalTaxesAmount: parsed.Fiscal?.TotalTaxes);
+            totalTaxesAmount: parsed.Fiscal?.TotalTaxes,
+            lc116Subitem: parsed.Lc116Subitem,
+            municipalServiceCode: parsed.MunicipalServiceCode,
+            serviceMunicipalityIbge: parsed.ServiceMunicipalityIbge,
+            cnae: parsed.CnaeCode,
+            invoiceIssRate: parsed.InvoiceIssRate,
+            issWithheldOnInvoice: parsed.IssWithheldOnInvoice);
         await uow.AddAsync(doc, ct);
+        await uow.SaveChangesAsync(ct);
+
+        // The type drives the withholding calc (NOT the LC116 subitem). NFS-e = Service and NF-e = Product are
+        // authoritative; a PDF/image guess only fills an undetermined value and never overrides a human choice.
+        var derivedType = DeriveType(parsed);
+        try
+        {
+            if (parsed.Format is FiscalDocumentFormat.NfseXml or FiscalDocumentFormat.NfeXml)
+                payable.SetType(derivedType);
+            else if (payable.Type is null && derivedType is not null)
+                payable.SetType(derivedType);
+        }
+        catch (InvalidOperationException) { /* payable in a terminal state: keep the existing type */ }
+
+        // Recompute withholdings now that the document + service-nature are persisted — the auto-calc at
+        // classification time may have run before this document was linked. No-op when the payable is already
+        // Scheduled/Paid (locked) or when it is not a service.
+        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
         await uow.SaveChangesAsync(ct);
 
         return TypedResults.Created(
             $"/api/payables/{id}/fiscal-document",
             FiscalDocumentResponse.From(doc));
     }
+
+    // NFS-e = Service, NF-e = Product. For a PDF/image (AI-extracted) it is best-effort: a service signal
+    // (LC116) → Service; a product fingerprint (CFOP/NCM) → Product; otherwise undetermined (manual review).
+    private static PayableType? DeriveType(ParsedFiscalDocument parsed) => parsed.Format switch
+    {
+        FiscalDocumentFormat.NfseXml => PayableType.Service,
+        FiscalDocumentFormat.NfeXml => PayableType.Product,
+        _ => parsed.Lc116Subitem is not null ? PayableType.Service
+           : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? PayableType.Product
+           : (PayableType?)null,
+    };
 }
 
 public sealed record UploadFiscalDocumentRequest(string Key, string FileName, string ContentType, long SizeBytes);

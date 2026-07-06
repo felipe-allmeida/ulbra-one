@@ -67,6 +67,9 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
         var serviceDescription = cServ?.Element(Ns + "xDescServ")?.Value;
         var tribNacCode = cServ?.Element(Ns + "cTribNac")?.Value;
         var nbsCode = cServ?.Element(Ns + "cNBS")?.Value;
+        // LC 116 subitem derived from cTribNac (first 4 digits = item.subitem), in the same canonical "XX.XX"
+        // form the ABRASF parser stores from ItemListaServico — so the withholding rules match either standard.
+        var lc116Subitem = FiscalXml.Lc116FromCTribNac(tribNacCode);
 
         // The national key is 50 digits, prefixed with "NFS" in infNFSe/@Id (vs "NFe"/44 for NF-e).
         var idAttribute = infNFSe?.Attribute("Id")?.Value ?? string.Empty;
@@ -86,12 +89,14 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
             ["serviceDescription"] = serviceDescription,
             ["cTribNac"] = tribNacCode,
             ["cNBS"] = nbsCode,
+            ["lc116Subitem"] = lc116Subitem,
         });
 
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfseXml, accessKey, documentNumber,
             issueDate, totalAmount, issuerDocument, issuerName, recipientDocument, rawExtraction, [],
             RpsNumber: FiscalXml.NullIfEmpty(rpsNumber), RpsSeries: FiscalXml.NullIfEmpty(rpsSeries),
             ServiceDescription: FiscalXml.NullIfEmpty(serviceDescription),
+            Lc116Subitem: lc116Subitem,
             IssuerPhone: issuerPhone, IssuerAddress: issuerAddress);
     }
 

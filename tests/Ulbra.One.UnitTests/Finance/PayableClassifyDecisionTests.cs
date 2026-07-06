@@ -15,6 +15,7 @@ public class PayableClassifyDecisionTests
     public void Confident_under_limit_auto_schedules()
     {
         var p = P(100m);
+        p.SetType(PayableType.Service); // type must be determined before auto-scheduling
         PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
         Assert.True(p.IsClassified);
         Assert.Equal(PayableStatus.Scheduled, p.Status);

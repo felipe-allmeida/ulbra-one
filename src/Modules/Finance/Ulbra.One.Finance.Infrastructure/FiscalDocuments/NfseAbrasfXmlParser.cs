@@ -55,6 +55,17 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
         var rpsSeries = rpsIdentification?.Element(Ns + "Serie")?.Value;
         var serviceDescription = service?.Element(Ns + "Discriminacao")?.Value;
         var cnaeCode = service?.Element(Ns + "CodigoCnae")?.Value;
+        // NFS-e service/tax signals. ItemListaServico (LC 116 subitem) is the reliable one; the others
+        // are optional in ABRASF (best-effort for ISS). Aliquota/IssRetido live under Servico/Valores.
+        // Trimmed so stray whitespace can't break the exact-match against the withholding rules — the same
+        // canonical "XX.XX" form the national parser derives from cTribNac.
+        var lc116Subitem = service?.Element(Ns + "ItemListaServico")?.Value?.Trim();
+        var municipalServiceCode = service?.Element(Ns + "CodigoTributacaoMunicipio")?.Value;
+        var serviceMunicipalityIbge = service?.Element(Ns + "CodigoMunicipio")?.Value;
+        var invoiceIssRate = FiscalXml.ParseDecimal(
+            serviceAmounts?.Element(Ns + "Aliquota")?.Value ?? service?.Element(Ns + "Aliquota")?.Value);
+        var issWithheldOnInvoice = ParseSimNao(
+            serviceAmounts?.Element(Ns + "IssRetido")?.Value ?? service?.Element(Ns + "IssRetido")?.Value);
 
         var rawExtraction = JsonSerializer.Serialize(new Dictionary<string, string?>
         {
@@ -68,11 +79,29 @@ public sealed class NfseAbrasfXmlParser : IFiscalXmlParser
             ["rpsSeries"] = rpsSeries,
             ["serviceDescription"] = serviceDescription,
             ["cnaeCode"] = cnaeCode,
+            ["lc116Subitem"] = lc116Subitem,
+            ["municipalServiceCode"] = municipalServiceCode,
+            ["serviceMunicipalityIbge"] = serviceMunicipalityIbge,
+            ["invoiceIssRate"] = invoiceIssRate?.ToString(CultureInfo.InvariantCulture),
+            ["issWithheldOnInvoice"] = issWithheldOnInvoice?.ToString(),
         });
 
         return new ParsedFiscalDocument(FiscalDocumentFormat.NfseXml, null, documentNumber,
             issueDate, totalAmount, issuerDocument, issuerName, recipientDocument, rawExtraction, [],
             RpsNumber: FiscalXml.NullIfEmpty(rpsNumber), RpsSeries: FiscalXml.NullIfEmpty(rpsSeries),
-            ServiceDescription: FiscalXml.NullIfEmpty(serviceDescription), CnaeCode: FiscalXml.NullIfEmpty(cnaeCode));
+            ServiceDescription: FiscalXml.NullIfEmpty(serviceDescription), CnaeCode: FiscalXml.NullIfEmpty(cnaeCode),
+            Lc116Subitem: FiscalXml.NullIfEmpty(lc116Subitem),
+            MunicipalServiceCode: FiscalXml.NullIfEmpty(municipalServiceCode),
+            ServiceMunicipalityIbge: FiscalXml.NullIfEmpty(serviceMunicipalityIbge),
+            InvoiceIssRate: invoiceIssRate,
+            IssWithheldOnInvoice: issWithheldOnInvoice);
     }
+
+    // ABRASF tcSimNao: 1 = Yes, 2 = No; any other value (or absent) -> null.
+    private static bool? ParseSimNao(string? value) => value?.Trim() switch
+    {
+        "1" => true,
+        "2" => false,
+        _ => null,
+    };
 }

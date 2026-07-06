@@ -33,6 +33,13 @@ public sealed record ParsedFiscalDocument(
     string? RpsSeries = null,
     string? ServiceDescription = null,
     string? CnaeCode = null,
+    // NFS-e (service) — tax signals promoted to columns; inputs for the withholding calculation.
+    // Lc116Subitem (ItemListaServico) is reliable; the others are optional in ABRASF (best-effort for ISS).
+    string? Lc116Subitem = null,
+    string? MunicipalServiceCode = null,
+    string? ServiceMunicipalityIbge = null,
+    decimal? InvoiceIssRate = null,
+    bool? IssWithheldOnInvoice = null,
     // Issuer contact (NF-e emit) — feeds the "cadastrar fornecedor" pre-fill; null for NFS-e/PDF.
     string? IssuerPhone = null,
     ParsedAddress? IssuerAddress = null,

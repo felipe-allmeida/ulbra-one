@@ -856,6 +856,73 @@ body {
   border-radius: calc(var(--radius) + 4px);
   padding: 14px 16px;
 }
+/* Vertical rhythm between the stacked detail sections (installments, withholdings, attachments, timeline). */
+.detail-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+/* Withholdings: two-column block — left = gross/withheld/net, right = per-tax lines; columns stretch to equal height. */
+.ret-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
+  margin-top: 16px;
+}
+.ret-block > .ret-col + .ret-col {
+  border-left: 1px solid var(--border);
+}
+.ret-col {
+  display: flex;
+  flex-direction: column;
+}
+.ret-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  flex: 1;
+}
+.ret-row + .ret-row {
+  border-top: 1px solid var(--border-subtle);
+}
+.ret-row-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ret-row-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.ret-row-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ret-empty {
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+@media (max-width: 640px) {
+  .ret-block {
+    grid-template-columns: 1fr;
+  }
+  .ret-block > .ret-col + .ret-col {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
 .info-label {
   font-size: 11px;
   font-weight: 600;
@@ -894,6 +961,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+.edit-grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 @media (max-width: 640px) {
   .edit-grid {
@@ -1138,6 +1208,11 @@ tbody td {
 }
 tbody tr:last-child td {
   border-bottom: none;
+}
+tfoot td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-top: 2px solid var(--border);
 }
 .t-mono {
   font-variant-numeric: tabular-nums;

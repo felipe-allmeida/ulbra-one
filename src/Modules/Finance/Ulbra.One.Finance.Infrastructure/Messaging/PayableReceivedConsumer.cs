@@ -4,6 +4,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Classification;
 using Ulbra.One.Finance.Application.Messaging;
+using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -13,7 +14,8 @@ public sealed class PayableReceivedConsumer(
     IUnitOfWork uow,
     IPayableClassifier classifier,
     TimeProvider clock,
-    IPublishEndpoint publish)
+    IPublishEndpoint publish,
+    IAutoWithholdingService autoWithholding)
     : IConsumer<PayableReceived>
 {
     internal const double AutoApplyThreshold = 0.8;
@@ -45,6 +47,10 @@ public sealed class PayableReceivedConsumer(
         // Idempotency: only act on a payable still awaiting classification (at-least-once delivery).
         if (payable is null || payable.Status != PayableStatus.Received) return;
 
+        // Withholding doesn't depend on classification — compute + persist it before the (slow) classifier.
+        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
+        await uow.SaveChangesAsync(ct);
+
         var result = await classifier.ClassifyAsync(payable, ct);
 
         // Nothing to go on (no AI suggestion, no vendor history). Retry with escalating delays until data
@@ -54,6 +60,7 @@ public sealed class PayableReceivedConsumer(
             throw new ClassificationUnavailableException(payableId);
 
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
+
         Apply(payable, result, cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
 
         if (payable.Status == PayableStatus.Scheduled)

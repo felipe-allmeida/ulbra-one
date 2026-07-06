@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Ulbra.One.Fiscal.Domain/Ulbra.One.Fiscal.Domain.csproj" />
+    <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
+    <!-- Cross-module port: Fiscal implements IWithholdingCalculator defined in Finance.Application. -->
+    <ProjectReference Include="../../Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
+  </ItemGroup>
+</Project>
