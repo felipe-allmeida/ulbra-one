@@ -15,7 +15,7 @@ public class WithholdingAssessmentCalculatorTests
         Guid? companyId = null, Guid? costCenterId = null) =>
         new(payableId, "Fornecedor X", "NF-1", companyId ?? CompanyA, "Empresa A", "11222333000181",
             costCenterId ?? CcMkt, "MKT", "Marketing", Guid.NewGuid(), "99888777000166",
-            tax, baseAmount, amount, D);
+            tax, baseAmount, amount, baseAmount, D);
 
     [Fact]
     public void Empty_input_yields_empty_assessment()

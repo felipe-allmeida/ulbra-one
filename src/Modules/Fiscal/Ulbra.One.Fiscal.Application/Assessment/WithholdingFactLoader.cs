@@ -74,7 +74,7 @@ internal static class WithholdingFactLoader
                     p.CompanyId, company?.LegalName ?? string.Empty, company?.Cnpj ?? string.Empty,
                     p.CostCenterId, costCenter?.Code ?? string.Empty, costCenter?.Name ?? string.Empty,
                     p.VendorId, vendorDocument ?? string.Empty,
-                    w.TaxType, w.BaseAmount, w.Amount, p.IssueDate!.Value,
+                    w.TaxType, w.BaseAmount, w.Amount, p.TotalAmount, p.IssueDate!.Value,
                     lc116ByPayable.GetValueOrDefault(p.Id)));
             }
         }

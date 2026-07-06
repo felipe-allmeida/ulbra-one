@@ -20,6 +20,9 @@ public sealed record WithholdingFact(
     WithholdingTaxType TaxType,
     decimal BaseAmount,
     decimal Amount,
+    // Gross amount of the whole payable (its TotalAmount) — repeated on every line. The EFD-Reinf R-4020 export
+    // needs it for vlrBruto (payment gross), which is not the per-tax retention base. Ignored by the assessment.
+    decimal GrossAmount,
     DateOnly IssueDate,
     string? Lc116Subitem = null)
 {

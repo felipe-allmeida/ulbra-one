@@ -17,7 +17,7 @@ public class AssessmentCsvTests
         string? document = "NF-1") =>
         new(Guid.NewGuid(), counterparty, document, Guid.NewGuid(), company, cnpj,
             Guid.NewGuid(), "CC", costCenter, Guid.NewGuid(), "99888777000166",
-            tax, baseAmount, amount, new DateOnly(2026, 7, 3));
+            tax, baseAmount, amount, baseAmount, new DateOnly(2026, 7, 3));
 
     [Fact]
     public void First_line_is_the_header()

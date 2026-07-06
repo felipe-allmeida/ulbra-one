@@ -9,6 +9,10 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903;NU1902</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Official EFD-Reinf R-4020 (evt4020) XSDs, vendored to validate the generated XML at test time. -->
+    <Content Include="Fiscal\schemas\*.xsd" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
