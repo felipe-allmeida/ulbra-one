@@ -18,7 +18,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
 public sealed class ClassifyPayableBatch : IEndpoint
 {
     public sealed record Request(
-        IReadOnlyList<PayableId> PayableIds, ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId);
+        IReadOnlyList<PayableId> PayableIds, ChartAccountId? AccountingAccountId);
 
     public sealed record Response(int ClassifiedCount);
 
@@ -30,7 +30,7 @@ public sealed class ClassifyPayableBatch : IEndpoint
     private static async Task<IResult> Handle(Request req,
         IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, IAutoWithholdingService autoWithholding, CancellationToken ct)
     {
-        var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
+        var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, ct);
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
         var ids = req.PayableIds.Select(p => p.Value).ToList();
@@ -45,7 +45,7 @@ public sealed class ClassifyPayableBatch : IEndpoint
 
         foreach (var payable in payables)
         {
-            payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+            payable.Classify(req.AccountingAccountId?.Value);
             // Compute + apply withholdings before any auto-approval (they must be final before the payable schedules).
             await autoWithholding.RecalculateAndApplyAsync(payable, ct);
             var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);

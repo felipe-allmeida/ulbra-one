@@ -32,7 +32,6 @@ public sealed class AiClassificationSuggestion : IEndpoint
 
         return TypedResults.Ok(new AiClassificationSuggestionResponse(
             result.AccountingAccountId is { } acc ? new ChartAccountId(acc) : null,
-            result.FinancialAccountId is { } fin ? new ChartAccountId(fin) : null,
             result.Confidence,
             result.Rationale ?? string.Empty,
             result.Source));

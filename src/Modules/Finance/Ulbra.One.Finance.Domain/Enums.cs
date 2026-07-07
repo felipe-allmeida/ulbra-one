@@ -32,7 +32,7 @@ public enum TransactionDirection { Debit, Credit }
 
 public enum MatchStatus { Unmatched, Suggested, Reconciled, Ignored }
 
-public enum ChartType { Accounting, Financial }
+public enum ChartType { Accounting }
 
 public enum AccountKind { Synthetic, Analytical }
 

@@ -16,7 +16,7 @@ public class PayableClassifyDecisionTests
     {
         var p = P(100m);
         p.SetType(PayableType.Service); // type must be determined before auto-scheduling
-        PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
+        PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
         Assert.True(p.IsClassified);
         Assert.Equal(PayableStatus.Scheduled, p.Status);
     }
@@ -25,7 +25,7 @@ public class PayableClassifyDecisionTests
     public void Confident_over_limit_pending_approval()
     {
         var p = P(1000m);
-        PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
+        PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
         Assert.Equal(PayableStatus.PendingApproval, p.Status);
     }
 
@@ -34,7 +34,7 @@ public class PayableClassifyDecisionTests
     {
         var p = P();
         var acc = Guid.NewGuid();
-        PayableReceivedConsumer.Apply(p, new(acc, Guid.NewGuid(), 0.6, "maybe", "ai"), 500m, Now);
+        PayableReceivedConsumer.Apply(p, new(acc, 0.6, "maybe", "ai"), 500m, Now);
         Assert.Equal(PayableStatus.PendingClassification, p.Status);
         Assert.False(p.IsClassified);
         Assert.Equal(acc, p.SuggestedAccountingAccountId);
@@ -45,7 +45,7 @@ public class PayableClassifyDecisionTests
     public void Low_confidence_parks_blank()
     {
         var p = P();
-        PayableReceivedConsumer.Apply(p, new(null, null, 0, "none", "none"), 500m, Now);
+        PayableReceivedConsumer.Apply(p, new(null, 0, "none", "none"), 500m, Now);
         Assert.Equal(PayableStatus.PendingClassification, p.Status);
         Assert.Null(p.SuggestedAccountingAccountId);
     }

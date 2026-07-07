@@ -36,7 +36,6 @@ public sealed class CreatePayable : IEndpoint
         public List<InstallmentInput>? Installments { get; set; }
         public GenerateInput? Generate { get; set; }
         public ChartAccountId? AccountingAccountId { get; set; }
-        public ChartAccountId? FinancialAccountId { get; set; }
         public BankAccountId? PaymentBankAccountId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
         // Optional type for a manual payable (no fiscal document): Service = subject to source withholding.
@@ -92,11 +91,11 @@ public sealed class CreatePayable : IEndpoint
         var payable = new Payable(companyId, req.Origin, vendor.Id, vendor.Name, req.DocumentNumber, req.IssueDate,
             req.Description, cc.Id, req.CategoryId?.Value, installments);
 
-        if (req.AccountingAccountId is not null || req.FinancialAccountId is not null)
+        if (req.AccountingAccountId is not null)
         {
-            var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
+            var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, ct);
             if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
-            payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+            payable.Classify(req.AccountingAccountId?.Value);
         }
 
         payable.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);

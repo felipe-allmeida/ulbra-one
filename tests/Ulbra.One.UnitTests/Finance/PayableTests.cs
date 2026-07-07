@@ -36,7 +36,7 @@ public class PayableTests
     public void Auto_approval_approves_when_classified_and_within_limit()
     {
         var p = NewPayable(500m);
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
         p.SetType(PayableType.Service); // type must be determined before auto-scheduling
         p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.Scheduled, p.Status);
@@ -50,7 +50,7 @@ public class PayableTests
         // "Scheduled always withholds": a classified payable whose Type is still null must NOT auto-schedule —
         // withholding is skipped for a non-service, so it would lock in at zero retention.
         var p = NewPayable(500m);
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
         p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.Received, p.Status);
     }
@@ -60,7 +60,7 @@ public class PayableTests
     {
         // A determined product (Type=Product) has nothing to withhold, so it may schedule.
         var p = NewPayable(500m);
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
         p.SetType(PayableType.Product);
         p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.Scheduled, p.Status);
@@ -78,7 +78,7 @@ public class PayableTests
     public void Auto_approval_keeps_received_when_above_limit()
     {
         var p = NewPayable(1500m);
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
         p.ApplyAutoApproval(1000m, At);
         Assert.Equal(PayableStatus.Received, p.Status);
     }

@@ -1568,10 +1568,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(60)")
                         .HasColumnName("document_number");
 
-                    b.Property<Guid?>("FinancialAccountId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("financial_account_id");
-
                     b.Property<DateOnly?>("IssueDate")
                         .HasColumnType("date")
                         .HasColumnName("issue_date");
@@ -1611,10 +1607,6 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<Guid?>("SuggestedAccountingAccountId")
                         .HasColumnType("uuid")
                         .HasColumnName("suggested_accounting_account_id");
-
-                    b.Property<Guid?>("SuggestedFinancialAccountId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("suggested_financial_account_id");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)

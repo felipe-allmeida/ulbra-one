@@ -25,7 +25,7 @@ public sealed class ClassificationSuggestion : IEndpoint
         var target = await uow.ReadSet<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (target is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
-        var (acc, fin, basedOn) = await VendorHistorySuggestion.FindAsync(uow, target, ct);
-        return TypedResults.Ok(new ClassificationSuggestionResponse(acc, fin, basedOn));
+        var (acc, basedOn) = await VendorHistorySuggestion.FindAsync(uow, target, ct);
+        return TypedResults.Ok(new ClassificationSuggestionResponse(acc, basedOn));
     }
 }
