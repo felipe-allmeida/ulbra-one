@@ -18,7 +18,7 @@ import { Button, Combobox, EmptyState, Pager, Panel } from '../ui';
 import { EmpresaPicker } from './shared';
 import { fmtDate } from '../datetime';
 
-/** Builds the `code — name` option list of analytical accounts for a chart type. */
+/** Builds the `code — name` option list of analytical accounts. */
 function useAccountItems(accounts: ChartAccount[]) {
   return useMemo(
     () =>
@@ -60,20 +60,16 @@ function SourceBadge({ source }: { source: string }) {
 function AiSuggestionPanel({
   suggestion,
   accountingItems,
-  financialItems,
   onApply,
 }: {
   suggestion: AiClassificationSuggestion;
   accountingItems: { id: string; label: string }[];
-  financialItems: { id: string; label: string }[];
   onApply: () => void;
 }) {
   const { t } = useTranslation();
   const accLabel = resolveAccountLabel(suggestion.accountingAccountId, accountingItems);
-  const finLabel = resolveAccountLabel(suggestion.financialAccountId, financialItems);
-  const hasSuggestion = !!accLabel || !!finLabel;
 
-  if (!hasSuggestion) return null;
+  if (!accLabel) return null;
 
   return (
     <div
@@ -95,22 +91,12 @@ function AiSuggestionPanel({
           {t('classification.confidence')}: {Math.round(suggestion.confidence * 100)}%
         </span>
       </div>
-      {accLabel && (
-        <div>
-          <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 11 }}>
-            {t('classification.columns.accountingAccount')}:{' '}
-          </span>
-          {accLabel}
-        </div>
-      )}
-      {finLabel && (
-        <div>
-          <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 11 }}>
-            {t('classification.columns.financialAccount')}:{' '}
-          </span>
-          {finLabel}
-        </div>
-      )}
+      <div>
+        <span style={{ color: 'var(--fg-muted, #6b7280)', fontSize: 11 }}>
+          {t('classification.columns.accountingAccount')}:{' '}
+        </span>
+        {accLabel}
+      </div>
       <div style={{ color: 'var(--fg-muted, #6b7280)', fontStyle: 'italic', fontSize: 12 }}>
         {t('classification.rationale')}: {suggestion.rationale}
       </div>
@@ -161,35 +147,27 @@ function AiPrefillHint({
 function RowClassify({
   payableId,
   accountingItems,
-  financialItems,
   accountsLoading,
   prefillAccountingAccountId,
-  prefillFinancialAccountId,
   prefillConfidence,
   prefillRationale,
 }: {
   payableId: string;
   accountingItems: { id: string; label: string }[];
-  financialItems: { id: string; label: string }[];
   accountsLoading: boolean;
   prefillAccountingAccountId?: string | null;
-  prefillFinancialAccountId?: string | null;
   prefillConfidence?: number | null;
   prefillRationale?: string | null;
 }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [accountingAccountId, setAccountingAccountId] = useState<string | null>(prefillAccountingAccountId ?? null);
-  const [financialAccountId, setFinancialAccountId] = useState<string | null>(prefillFinancialAccountId ?? null);
-  const hasPrefill = !!(prefillAccountingAccountId ?? prefillFinancialAccountId);
+  const hasPrefill = !!prefillAccountingAccountId;
 
   // Sync prefill values when the payable detail resolves async (don't clobber a manual user change back to null).
   useEffect(() => {
     if (prefillAccountingAccountId != null) setAccountingAccountId(prefillAccountingAccountId);
   }, [prefillAccountingAccountId]);
-  useEffect(() => {
-    if (prefillFinancialAccountId != null) setFinancialAccountId(prefillFinancialAccountId);
-  }, [prefillFinancialAccountId]);
   const [suggesting, setSuggesting] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AiClassificationSuggestion | null>(null);
 
@@ -200,7 +178,7 @@ function RowClassify({
 
   const aiMutation = useAiClassificationSuggestion({
     onSuccess: (s) => {
-      if (!s.accountingAccountId && !s.financialAccountId) {
+      if (!s.accountingAccountId) {
         toast.error(t('classification.noSuggestion'));
         return;
       }
@@ -213,12 +191,11 @@ function RowClassify({
     setSuggesting(true);
     try {
       const s = await api.classificationSuggestion(payableId);
-      if (!s.accountingAccountId && !s.financialAccountId) {
+      if (!s.accountingAccountId) {
         toast.error(t('classification.noSuggestion'));
         return;
       }
-      if (s.accountingAccountId) setAccountingAccountId(s.accountingAccountId);
-      if (s.financialAccountId) setFinancialAccountId(s.financialAccountId);
+      setAccountingAccountId(s.accountingAccountId);
       toast.success(t('classification.suggestionApplied'));
     } catch (e) {
       toast.error(getErrorMessage(e));
@@ -230,13 +207,11 @@ function RowClassify({
   const onApplyAiSuggestion = () => {
     if (!aiSuggestion) return;
     if (aiSuggestion.accountingAccountId) setAccountingAccountId(aiSuggestion.accountingAccountId);
-    if (aiSuggestion.financialAccountId) setFinancialAccountId(aiSuggestion.financialAccountId);
     setAiSuggestion(null);
     toast.success(t('classification.suggestionApplied'));
   };
 
-  // Classify is a full REPLACE — always send BOTH ids together.
-  const canClassify = !!accountingAccountId && !!financialAccountId && !classify.isPending;
+  const canClassify = !!accountingAccountId && !classify.isPending;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -246,17 +221,6 @@ function RowClassify({
             value={accountingAccountId}
             onChange={setAccountingAccountId}
             items={accountingItems}
-            loading={accountsLoading}
-            placeholder={t('classification.selectAccount')}
-            searchPlaceholder={t('classification.searchAccount')}
-            emptyText={t('classification.emptyAccounts')}
-          />
-        </div>
-        <div style={{ minWidth: 200 }}>
-          <Combobox
-            value={financialAccountId}
-            onChange={setFinancialAccountId}
-            items={financialItems}
             loading={accountsLoading}
             placeholder={t('classification.selectAccount')}
             searchPlaceholder={t('classification.searchAccount')}
@@ -273,19 +237,14 @@ function RowClassify({
           variant='brand'
           icon={<Check />}
           disabled={!canClassify}
-          onClick={() => classify.mutate({ id: payableId, body: { accountingAccountId, financialAccountId } })}
+          onClick={() => classify.mutate({ id: payableId, body: { accountingAccountId } })}
         >
           {classify.isPending ? t('classification.classifying') : t('classification.classify')}
         </Button>
       </div>
       {hasPrefill && !aiSuggestion && <AiPrefillHint confidence={prefillConfidence} rationale={prefillRationale} />}
       {aiSuggestion && (
-        <AiSuggestionPanel
-          suggestion={aiSuggestion}
-          accountingItems={accountingItems}
-          financialItems={financialItems}
-          onApply={onApplyAiSuggestion}
-        />
+        <AiSuggestionPanel suggestion={aiSuggestion} accountingItems={accountingItems} onApply={onApplyAiSuggestion} />
       )}
     </div>
   );
@@ -294,19 +253,17 @@ function RowClassify({
 /* ============ Row classify with AI suggestion pre-fill ============ */
 /**
  * Wraps RowClassify for PendingClassification rows: fetches the full payable
- * to read suggestion fields (suggestedAccountingAccountId, suggestedFinancialAccountId,
- * classificationConfidence, classificationRationale) and passes them as prefill props.
- * For other statuses (no suggestion expected) renders RowClassify directly without fetch.
+ * to read suggestion fields (suggestedAccountingAccountId, classificationConfidence,
+ * classificationRationale) and passes them as prefill props. For other statuses
+ * (no suggestion expected) renders RowClassify directly without fetch.
  */
 function RowClassifyWithPrefill({
   payable,
   accountingItems,
-  financialItems,
   accountsLoading,
 }: {
   payable: PayableListItem;
   accountingItems: { id: string; label: string }[];
-  financialItems: { id: string; label: string }[];
   accountsLoading: boolean;
 }) {
   const isPendingClassification = payable.payableStatus === 'PendingClassification';
@@ -317,10 +274,8 @@ function RowClassifyWithPrefill({
     <RowClassify
       payableId={payable.payableId}
       accountingItems={accountingItems}
-      financialItems={financialItems}
       accountsLoading={accountsLoading}
       prefillAccountingAccountId={suggestion?.suggestedAccountingAccountId}
-      prefillFinancialAccountId={suggestion?.suggestedFinancialAccountId}
       prefillConfidence={suggestion?.classificationConfidence}
       prefillRationale={suggestion?.classificationRationale}
     />
@@ -331,32 +286,28 @@ function RowClassifyWithPrefill({
 function BulkBar({
   selectedIds,
   accountingItems,
-  financialItems,
   accountsLoading,
   onClear,
 }: {
   selectedIds: string[];
   accountingItems: { id: string; label: string }[];
-  financialItems: { id: string; label: string }[];
   accountsLoading: boolean;
   onClear: () => void;
 }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [accountingAccountId, setAccountingAccountId] = useState<string | null>(null);
-  const [financialAccountId, setFinancialAccountId] = useState<string | null>(null);
 
   const batch = useClassifyBatch({
     onSuccess: (res) => {
       toast.success(t('classification.bulk.result', { count: res.classifiedCount }));
       setAccountingAccountId(null);
-      setFinancialAccountId(null);
       onClear();
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
-  const canApply = !!accountingAccountId && !!financialAccountId && selectedIds.length > 0 && !batch.isPending;
+  const canApply = !!accountingAccountId && selectedIds.length > 0 && !batch.isPending;
 
   return (
     <div
@@ -387,22 +338,11 @@ function BulkBar({
           emptyText={t('classification.emptyAccounts')}
         />
       </div>
-      <div style={{ minWidth: 220 }}>
-        <Combobox
-          value={financialAccountId}
-          onChange={setFinancialAccountId}
-          items={financialItems}
-          loading={accountsLoading}
-          placeholder={t('classification.bulk.financialAccount')}
-          searchPlaceholder={t('classification.searchAccount')}
-          emptyText={t('classification.emptyAccounts')}
-        />
-      </div>
       <Button
         variant='brand'
         icon={<Check />}
         disabled={!canApply}
-        onClick={() => batch.mutate({ payableIds: selectedIds, accountingAccountId, financialAccountId })}
+        onClick={() => batch.mutate({ payableIds: selectedIds, accountingAccountId })}
       >
         {batch.isPending ? t('classification.bulk.applying') : t('classification.bulk.apply')}
       </Button>
@@ -422,13 +362,8 @@ export function ClassificacaoPage() {
     { chartType: 'Accounting', kind: 'Analytical', activeOnly: true },
     { enabled: !!empresaId },
   );
-  const financial = useChartAccounts(
-    { chartType: 'Financial', kind: 'Analytical', activeOnly: true },
-    { enabled: !!empresaId },
-  );
   const accountingItems = useAccountItems(accounting.data ?? []);
-  const financialItems = useAccountItems(financial.data ?? []);
-  const accountsLoading = accounting.isLoading || financial.isLoading;
+  const accountsLoading = accounting.isLoading;
 
   const list = usePayables({ companyId: empresaId, classified: false, page }, { enabled: !!empresaId });
   const totalPages = list.data?.totalPages ?? 1;
@@ -477,18 +412,13 @@ export function ClassificacaoPage() {
           sub={t('classification.empty.noCompanySub')}
         />
       ) : payables.length === 0 ? (
-        <EmptyState
-          icon={<Tags />}
-          title={t('classification.empty.doneTitle')}
-          sub={t('classification.empty.doneSub')}
-        />
+        <EmptyState icon={<Tags />} title={t('classification.empty.doneTitle')} sub={t('classification.empty.doneSub')} />
       ) : (
         <>
           {selectedIds.length > 0 && (
             <BulkBar
               selectedIds={selectedIds}
               accountingItems={accountingItems}
-              financialItems={financialItems}
               accountsLoading={accountsLoading}
               onClear={() => setSelected(new Set())}
             />
@@ -534,7 +464,6 @@ export function ClassificacaoPage() {
                       <RowClassifyWithPrefill
                         payable={p}
                         accountingItems={accountingItems}
-                        financialItems={financialItems}
                         accountsLoading={accountsLoading}
                       />
                     </td>
