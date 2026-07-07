@@ -31,16 +31,17 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
 
         var vendorTax = await uow.ReadSet<VendorEntity>()
             .Where(v => v.Id == payable.VendorId && v.CompanyId == payable.CompanyId)
-            .Select(v => new { v.TaxRegime, v.SimplesAnexo })
+            .Select(v => new { v.TaxRegime, v.SimplesAnexo, v.CprbForeseen })
             .FirstOrDefaultAsync(ct);
         var regime = vendorTax?.TaxRegime ?? TaxRegime.Unknown;
+        // INSS: usa o CPRB confirmado na NF quando houver; senão cai na sugestão do cadastro (CprbForeseen).
+        var cprb = payable.CprbOnInvoice ?? vendorTax?.CprbForeseen;
 
         // Base = the payable's gross (BaseRule.Full / MVP). Single service line today; refinement signals are
-        // null when there is no document or the document didn't carry them. INSS: o CPRB vem confirmado no payable
-        // ("destacado na NF?") e o anexo do Simples do cadastro do Fornecedor.
+        // null when there is no document or the document didn't carry them. INSS: o anexo do Simples vem do cadastro.
         var line = new ServiceLineInput(doc?.Lc116Subitem, doc?.ServiceMunicipalityIbge, doc?.InvoiceIssRate, payable.TotalAmount);
         var context = new WithholdingContext(
-            payable.CompanyId, payable.VendorId, regime, [line], payable.CprbOnInvoice, vendorTax?.SimplesAnexo);
+            payable.CompanyId, payable.VendorId, regime, [line], cprb, vendorTax?.SimplesAnexo);
 
         var results = await calculator.CalculateAsync(context, ct);
 
