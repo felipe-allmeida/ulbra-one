@@ -77,6 +77,7 @@ function makePayable(overrides: Partial<Payable> = {}): Payable {
     classificationRationale: null,
     paymentBankAccountId: null,
     paymentMethod: 'Pix',
+    type: 'Service',
     createdAt: '2025-06-01T00:00:00Z',
     installments: [],
     attachments: [],

@@ -226,6 +226,7 @@ const basePayable: Payable = {
   classificationRationale: null,
   paymentBankAccountId: null,
   paymentMethod: 'Pix' as const, // non-null placeholder; value unused by test
+  type: 'Service',
   createdAt: '2025-06-01T00:00:00Z',
   installments: [],
   attachments: [],

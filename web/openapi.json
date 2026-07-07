@@ -2173,6 +2173,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -3314,6 +3324,35 @@
                   "items": {
                     "$ref": "#/components/schemas/AgingItemResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/withholdings": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetWithholdingsReport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingsReportResponse"
                 }
               }
             }
@@ -5506,6 +5545,167 @@
         }
       }
     },
+    "/api/withholding-rules": {
+      "get": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "ListWithholdingRules",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WithholdingRuleResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "CreateWithholdingRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithholdingRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/withholding-rules/{id}": {
+      "put": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "UpdateWithholdingRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithholdingRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "DeleteWithholdingRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vendors": {
       "get": {
         "tags": [
@@ -6799,7 +6999,6 @@
       "AiClassificationSuggestionResponse": {
         "required": [
           "accountingAccountId",
-          "financialAccountId",
           "confidence",
           "rationale",
           "source"
@@ -6807,11 +7006,6 @@
         "type": "object",
         "properties": {
           "accountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
@@ -7291,6 +7485,13 @@
         },
         "additionalProperties": false
       },
+      "BaseRule": {
+        "enum": [
+          "Full",
+          "Reduced"
+        ],
+        "type": "string"
+      },
       "CancelPayableCancelRequest": {
         "required": [
           "reason"
@@ -7643,8 +7844,7 @@
       },
       "ChartType": {
         "enum": [
-          "Accounting",
-          "Financial"
+          "Accounting"
         ],
         "type": "string"
       },
@@ -7672,17 +7872,11 @@
       "ClassificationSuggestionResponse": {
         "required": [
           "accountingAccountId",
-          "financialAccountId",
           "basedOnPayableId"
         ],
         "type": "object",
         "properties": {
           "accountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
@@ -7698,8 +7892,7 @@
       "ClassifyPayableBatchRequest": {
         "required": [
           "payableIds",
-          "accountingAccountId",
-          "financialAccountId"
+          "accountingAccountId"
         ],
         "type": "object",
         "properties": {
@@ -7714,28 +7907,17 @@
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
       },
       "ClassifyPayableRequest": {
         "required": [
-          "accountingAccountId",
-          "financialAccountId"
+          "accountingAccountId"
         ],
         "type": "object",
         "properties": {
           "accountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
@@ -8115,9 +8297,9 @@
           "installments",
           "generate",
           "accountingAccountId",
-          "financialAccountId",
           "paymentBankAccountId",
-          "paymentMethod"
+          "paymentMethod",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -8168,11 +8350,6 @@
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
           },
-          "financialAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
           "paymentBankAccountId": {
             "type": "string",
             "nullable": true,
@@ -8180,6 +8357,9 @@
           },
           "paymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PayableType"
           }
         },
         "additionalProperties": false
@@ -9473,6 +9653,15 @@
         },
         "additionalProperties": false
       },
+      "NonRetentionReason": {
+        "enum": [
+          "None",
+          "RegimeExemption",
+          "NoMunicipalSubstitution",
+          "BelowMinimum"
+        ],
+        "type": "string"
+      },
       "NormalBalance": {
         "enum": [
           "Debit",
@@ -9552,6 +9741,11 @@
           "rpsSeries",
           "serviceDescription",
           "cnaeCode",
+          "lc116Subitem",
+          "municipalServiceCode",
+          "serviceMunicipalityIbge",
+          "invoiceIssRate",
+          "issWithheldOnInvoice",
           "issuerPhone",
           "issuerAddress",
           "fiscal"
@@ -9623,6 +9817,27 @@
           },
           "cnaeCode": {
             "type": "string",
+            "nullable": true
+          },
+          "lc116Subitem": {
+            "type": "string",
+            "nullable": true
+          },
+          "municipalServiceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMunicipalityIbge": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceIssRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "issWithheldOnInvoice": {
+            "type": "boolean",
             "nullable": true
           },
           "issuerPhone": {
@@ -9758,38 +9973,31 @@
           },
           "scheduledPaymentDate": {
             "type": "string",
-            "format": "date",
-            "description": "Date the daily sweep will process this installment (defaults to DueDate at creation)."
+            "format": "date"
           },
           "isHeld": {
-            "type": "boolean",
-            "description": "True when this installment has been manually paused from the remittance sweep."
+            "type": "boolean"
           },
           "holdReason": {
             "type": "string",
-            "nullable": true,
-            "description": "The reason provided when holding this installment, or null if not held."
+            "nullable": true
           },
           "remittanceId": {
             "type": "string",
             "nullable": true,
-            "example": "remittance_3fa85f64571742199730000000000000",
-            "description": "Id of the remittance this installment belongs to, or null if not in a remittance."
+            "example": "remittance_3fa85f64571742199730000000000000"
           },
           "remittanceSequence": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "1-based sequence number of this installment within its remittance, or null if not in a remittance."
+            "nullable": true
           },
           "rail": {
-            "type": "string",
-            "description": "\"Remittance\" when the installment can ride the automatic CNAB rail; \"Manual\" otherwise."
+            "type": "string"
           },
           "manualReason": {
             "type": "string",
-            "nullable": true,
-            "description": "The reason the installment cannot use the remittance rail, or null when Rail is \"Remittance\"."
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9861,12 +10069,11 @@
           "rejectedByName",
           "rejectedAt",
           "accountingAccountId",
-          "financialAccountId",
           "isClassified",
           "suggestedAccountingAccountId",
-          "suggestedFinancialAccountId",
           "classificationConfidence",
           "classificationRationale",
+          "type",
           "paymentBankAccountId",
           "paymentMethod",
           "createdAt",
@@ -9963,20 +10170,10 @@
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
           },
-          "financialAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
           "isClassified": {
             "type": "boolean"
           },
           "suggestedAccountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "suggestedFinancialAccountId": {
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
@@ -9989,6 +10186,9 @@
           "classificationRationale": {
             "type": "string",
             "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/PayableType"
           },
           "paymentBankAccountId": {
             "type": "string",
@@ -10154,6 +10354,13 @@
           "Paid",
           "Rejected",
           "Cancelled"
+        ],
+        "type": "string"
+      },
+      "PayableType": {
+        "enum": [
+          "Service",
+          "Product"
         ],
         "type": "string"
       },
@@ -10416,6 +10623,13 @@
           }
         },
         "additionalProperties": { }
+      },
+      "RateSource": {
+        "enum": [
+          "Fixed",
+          "FromNota"
+        ],
+        "type": "string"
       },
       "ReceiptResponse": {
         "required": [
@@ -12106,7 +12320,6 @@
           "installments",
           "generate",
           "accountingAccountId",
-          "financialAccountId",
           "paymentBankAccountId",
           "paymentMethod"
         ],
@@ -12148,11 +12361,6 @@
             "$ref": "#/components/schemas/GenerateInput"
           },
           "accountingAccountId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "financialAccountId": {
             "type": "string",
             "nullable": true,
             "example": "chart_account_3fa85f64571742199730000000000000"
@@ -12485,6 +12693,215 @@
         },
         "additionalProperties": false
       },
+      "WithholdingByTaxRow": {
+        "required": [
+          "taxType",
+          "baseAmount",
+          "amount",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingPayableRow": {
+        "required": [
+          "id",
+          "vendorId",
+          "counterpartyName",
+          "documentNumber",
+          "status",
+          "totalAmount",
+          "totalWithheld",
+          "netTotal",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/PayableStatus"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableWithholdingResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingRuleRequest": {
+        "required": [
+          "companyId",
+          "taxType",
+          "lc116Subitem",
+          "vendorRegime",
+          "municipalityIbge",
+          "retains",
+          "reason",
+          "rateSource",
+          "rate",
+          "baseRule",
+          "minimumAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "lc116Subitem": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendorRegime": {
+            "$ref": "#/components/schemas/TaxRegime"
+          },
+          "municipalityIbge": {
+            "type": "string",
+            "nullable": true
+          },
+          "retains": {
+            "type": "boolean"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/NonRetentionReason"
+          },
+          "rateSource": {
+            "$ref": "#/components/schemas/RateSource"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "baseRule": {
+            "$ref": "#/components/schemas/BaseRule"
+          },
+          "minimumAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingRuleResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "taxType",
+          "lc116Subitem",
+          "vendorRegime",
+          "municipalityIbge",
+          "retains",
+          "reason",
+          "rateSource",
+          "rate",
+          "baseRule",
+          "minimumAmount",
+          "active"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "whrule_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "lc116Subitem": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendorRegime": {
+            "$ref": "#/components/schemas/TaxRegime"
+          },
+          "municipalityIbge": {
+            "type": "string",
+            "nullable": true
+          },
+          "retains": {
+            "type": "boolean"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/NonRetentionReason"
+          },
+          "rateSource": {
+            "$ref": "#/components/schemas/RateSource"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "baseRule": {
+            "$ref": "#/components/schemas/BaseRule"
+          },
+          "minimumAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "WithholdingTaxType": {
         "enum": [
           "Irrf",
@@ -12496,6 +12913,60 @@
           "Other"
         ],
         "type": "string"
+      },
+      "WithholdingsReportResponse": {
+        "required": [
+          "totals",
+          "byTax",
+          "byPayable"
+        ],
+        "type": "object",
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/WithholdingsTotals"
+          },
+          "byTax": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WithholdingByTaxRow"
+            }
+          },
+          "byPayable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WithholdingPayableRow"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingsTotals": {
+        "required": [
+          "grossTotal",
+          "withheldTotal",
+          "netTotal",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "grossTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "withheldTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
@@ -12522,6 +12993,9 @@
     },
     {
       "name": "Finance"
+    },
+    {
+      "name": "Fiscal"
     },
     {
       "name": "Registry"
