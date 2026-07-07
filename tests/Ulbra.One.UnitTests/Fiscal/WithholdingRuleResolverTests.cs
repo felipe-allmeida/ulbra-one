@@ -117,6 +117,42 @@ public class WithholdingRuleResolverTests
     }
 
     [Fact]
+    public void Inss_cprb_does_not_override_simples_exemption()
+    {
+        // Edge: CPRB é regime não-Simples — um Simples marcado como CPRB continua governado pelo anexo (III = isento).
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine("11.02", "4304606", null, 5000m)], Cprb: true, SimplesAnexo: SimplesAnexo.III);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // isento (não 3,5%)
+    }
+
+    [Fact]
+    public void Inss_cprb_false_confirmed_keeps_11pct()
+    {
+        // NF confirma que NÃO há CPRB destacado → volta aos 11% (a confirmação sobrepõe a sugestão do cadastro).
+        var ctx = new ResolutionContext(null, TaxRegime.LucroReal,
+            [new ServiceLine("11.02", "4304606", null, 5000m)], Cprb: false);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11%
+    }
+
+    [Fact]
+    public void Inss_stays_off_outside_cessao_subitem_even_with_cprb()
+    {
+        // CPRB não cria INSS fora dos subitens de cessão/empreitada.
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine("17.01", "4304606", null, 5000m)], Cprb: true);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // 17.01 não é cessão → sem INSS
+    }
+
+    [Fact]
     public void Service_without_lc116_subitem_still_withholds_federal()
     {
         // The LC116 subitem is a refinement, not the trigger: a service whose subitem wasn't parsed still

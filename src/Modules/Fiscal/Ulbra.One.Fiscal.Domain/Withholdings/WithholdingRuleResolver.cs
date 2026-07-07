@@ -87,8 +87,10 @@ public static class WithholdingRuleResolver
                 && (r.SimplesAnexo is null || r.SimplesAnexo == ctx.SimplesAnexo))
             .OrderByDescending(r => r.DimensionCount)
             .ThenByDescending(r => r.SimplesAnexo is not null)
-            .ThenByDescending(r => r.Cprb is not null)
+            // VendorRegime antes de Cprb: CPRB é regime não-Simples, então num empate a regra do Simples
+            // (ex.: isenção do INSS) vence a regra de CPRB — um Simples marcado como CPRB continua pelo anexo.
             .ThenByDescending(r => r.VendorRegime is not null)
+            .ThenByDescending(r => r.Cprb is not null)
             .ThenByDescending(r => r.MunicipalityIbge is not null)
             .ThenByDescending(r => r.CompanyId is not null)
             .ThenBy(r => r.Id)
