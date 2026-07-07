@@ -517,8 +517,12 @@ public static class DevDataSeeder
             new(WithholdingTaxType.Pis, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
             new(WithholdingTaxType.Cofins, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
             new(WithholdingTaxType.Csll, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
-            // INSS 11% for labor-supply services (LC 116 subitem 11.02 = security) — any regime.
+            // INSS on labor-supply (LC116 11.02 = security): geral 11%; CPRB 3,5%; Simples Anexo IV 11%; demais isento.
+            // 🔶 lista de subitens de cessão/empreitada a expandir/homologar (7.02, 7.05, 17.05...) com a Contabilidade.
             new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02"),
+            new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.035m, lc116Subitem: "11.02", cprb: true),
+            new(WithholdingTaxType.Inss, retains: false, RateSource.Fixed, null, lc116Subitem: "11.02", vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+            new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02", vendorRegime: TaxRegime.SimplesNacional, simplesAnexo: SimplesAnexo.IV),
             // ISS for Simples providers: withheld at the band rate informed on the invoice.
             new(WithholdingTaxType.Iss, retains: true, RateSource.FromNota, null, vendorRegime: TaxRegime.SimplesNacional),
         };

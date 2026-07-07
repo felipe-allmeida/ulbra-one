@@ -20,6 +20,11 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public BankInfo BankInfo { get; private set; } = BankInfo.Empty;
     public PaymentSchedule PaymentSchedule { get; private set; } = PaymentSchedule.Default;
     public TaxRegime TaxRegime { get; private set; } = TaxRegime.Unknown;
+    // Indicativos para a retenção de INSS — sugestão do cadastro, confirmada contra a NF no lançamento.
+    // CprbForeseen: CPRB (folha desonerada) previsto? Sim(true)/Não(false)/Desconhecido(null) → sugere 3,5% vs 11%.
+    public bool? CprbForeseen { get; private set; }
+    // Anexo do Simples (só relevante quando TaxRegime=SimplesNacional): Anexo IV retém 11%, demais isento.
+    public SimplesAnexo? SimplesAnexo { get; private set; }
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -32,20 +37,25 @@ public class VendorEntity : IAuditable, ISoftDeletable
 
     public VendorEntity(Guid companyId, PersonType personType, string name, string? tradeName,
         string document, string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule)
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
+        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null)
     {
         CompanyId = companyId;
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime, paymentSchedule);
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
+            paymentSchedule, cprbForeseen, simplesAnexo);
     }
 
     public void Update(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule) =>
-        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime, paymentSchedule);
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
+        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null) =>
+        Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
+            paymentSchedule, cprbForeseen, simplesAnexo);
 
     private void Apply(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
-        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule)
+        BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
+        bool? cprbForeseen, SimplesAnexo? simplesAnexo)
     {
         PersonType = personType;
         Name = name;
@@ -58,6 +68,8 @@ public class VendorEntity : IAuditable, ISoftDeletable
         BankInfo = bankInfo;
         PaymentSchedule = paymentSchedule;
         TaxRegime = taxRegime;
+        CprbForeseen = cprbForeseen;
+        SimplesAnexo = simplesAnexo;
     }
 
     public void Deactivate() => Active = false;
