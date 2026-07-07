@@ -37,7 +37,6 @@ export function PayableDetailPage() {
   const centros = useCostCenters(p?.companyId ?? '').data ?? [];
   const categorias = useExpenseCategories(true).data ?? [];
   const accountingAccounts = useChartAccounts({ chartType: 'Accounting' }).data ?? [];
-  const financialAccounts = useChartAccounts({ chartType: 'Financial' }).data ?? [];
 
   const approve = useApprovePayable();
   const reject = useRejectPayable();
@@ -140,12 +139,6 @@ export function PayableDetailPage() {
           <div className='info-label'>{t('payables.cards.accountingAccount')}</div>
           <div className='info-value' style={{ fontSize: 15 }}>
             {accountLabel(accountingAccounts, p.accountingAccountId)}
-          </div>
-        </div>
-        <div className='info-card'>
-          <div className='info-label'>{t('payables.cards.financialAccount')}</div>
-          <div className='info-value' style={{ fontSize: 15 }}>
-            {accountLabel(financialAccounts, p.financialAccountId)}
           </div>
         </div>
         <div className='info-card'>
