@@ -67,7 +67,7 @@ export default function App() {
         <Route path='accounting/balance-sheet' element={<ContabilBalancoPage />} />
         <Route path='accounting/withholdings' element={<RetencoesPage />} />
         <Route path='accounting/pending' element={<ContabilPendentesPage />} />
-        <Route path='classification' element={<ClassificacaoPage />} />
+        <Route path='accounting/classification' element={<ClassificacaoPage />} />
         <Route path='reconciliation' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />
         <Route path='cash-flow' element={<CashFlowPage />} />
@@ -76,9 +76,9 @@ export default function App() {
         <Route path='approvals' element={<AprovacoesPage />} />
         <Route path='entries/new' element={<NovoLancamentoPage />} />
         <Route path='entries/:id' element={<LancamentoDetailPage />} />
-        <Route path='cost-centers' element={<CentrosListPage />} />
-        <Route path='cost-centers/new' element={<CentroDetailPage modo='novo' />} />
-        <Route path='cost-centers/:id' element={<CentroDetailPage modo='detalhe' />} />
+        <Route path='accounting/cost-centers' element={<CentrosListPage />} />
+        <Route path='accounting/cost-centers/new' element={<CentroDetailPage modo='novo' />} />
+        <Route path='accounting/cost-centers/:id' element={<CentroDetailPage modo='detalhe' />} />
         <Route path='structure' element={<EstruturaPage />} />
         <Route path='vendors' element={<FornecedoresPage />} />
         <Route path='customers' element={<ClientesPage />} />

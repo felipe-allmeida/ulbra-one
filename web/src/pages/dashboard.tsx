@@ -56,7 +56,7 @@ export function DashboardPage() {
                     className='bd-row'
                     key={c.id}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => nav(`/app/cost-centers/${c.id}`)}
+                    onClick={() => nav(`/app/accounting/cost-centers/${c.id}`)}
                   >
                     <div className='bd-name'>
                       {c.name} <small>· {c.code}</small>

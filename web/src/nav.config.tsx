@@ -109,11 +109,7 @@ export const NAV_DOMAINS: NavDomain[] = [
       },
       {
         labelKey: 'nav.subgroups.configuration',
-        items: [
-          { labelKey: 'nav.costCenters', to: '/app/cost-centers', icon: <Target /> },
-          { labelKey: 'nav.chartAccounts', to: '/app/chart-of-accounts', icon: <ListTree /> },
-          { labelKey: 'nav.classification', to: '/app/classification', icon: <Tags /> },
-        ],
+        items: [{ labelKey: 'nav.chartAccounts', to: '/app/chart-of-accounts', icon: <ListTree /> }],
       },
     ],
   },
@@ -140,7 +136,11 @@ export const NAV_DOMAINS: NavDomain[] = [
       },
       {
         labelKey: 'nav.subgroups.configuration',
-        items: [{ labelKey: 'nav.ledgerAccounts', to: '/app/accounting/chart-of-accounts', icon: <ListTree /> }],
+        items: [
+          { labelKey: 'nav.ledgerAccounts', to: '/app/accounting/chart-of-accounts', icon: <ListTree /> },
+          { labelKey: 'nav.costCenters', to: '/app/accounting/cost-centers', icon: <Target /> },
+          { labelKey: 'nav.classification', to: '/app/accounting/classification', icon: <Tags /> },
+        ],
       },
     ],
   },
