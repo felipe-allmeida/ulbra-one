@@ -24,10 +24,8 @@ beforeEach(() => {
       companyId: 'company_1',
       counterpartyName: 'ACME',
       suggestedAccountingAccountId: 'acc_1',
-      suggestedFinancialAccountId: 'fin_1',
       classificationRationale: 'Fornecedor recorrente de TI',
       accountingAccountId: null,
-      financialAccountId: null,
     },
   });
 });

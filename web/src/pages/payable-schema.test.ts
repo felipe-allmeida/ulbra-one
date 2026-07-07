@@ -6,7 +6,6 @@ const basePayable = {
   costCenterId: 'cc_1',
   categoryId: null,
   accountingAccountId: null,
-  financialAccountId: null,
   description: 'Compra',
   documentNumber: '',
   issueDate: '',

@@ -34,7 +34,6 @@ beforeEach(() => {
       costCenterId: 'cc_1',
       categoryId: null,
       accountingAccountId: null,
-      financialAccountId: null,
       documentNumber: 'NF-1',
       issueDate: '2026-06-01',
       installments: [
@@ -75,7 +74,6 @@ describe('PayableDetailPage', () => {
         costCenterId: 'cc_1',
         categoryId: null,
         accountingAccountId: null,
-        financialAccountId: null,
         documentNumber: 'NF-1',
         issueDate: '2026-06-01',
         approvedBy: '3fa85f64-5714-4219-9730-000000000000',

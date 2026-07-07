@@ -1693,7 +1693,6 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** Format: double */
             confidence: number;
             rationale: string;
@@ -1936,7 +1935,7 @@ export interface components {
         /** @enum {string} */
         ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
         /** @enum {string} */
-        ChartType: "Accounting" | "Financial";
+        ChartType: "Accounting";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -1947,7 +1946,6 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example payable_3fa85f64571742199730000000000000 */
             basedOnPayableId: string | null;
         };
@@ -1956,13 +1954,11 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
         };
         ClassifyPayableRequest: {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
         };
         CnpjAddress: {
             cep: string;
@@ -2080,7 +2076,6 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
@@ -2606,12 +2601,10 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             isClassified: boolean;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             suggestedAccountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            suggestedFinancialAccountId: string | null;
             /** Format: double */
             classificationConfidence: number | null;
             classificationRationale: string | null;
@@ -3273,7 +3266,6 @@ export interface components {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
