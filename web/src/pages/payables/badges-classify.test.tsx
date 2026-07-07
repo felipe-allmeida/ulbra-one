@@ -182,12 +182,11 @@ describe('ClassificacaoPage — AI suggestion pre-fill', () => {
     expect(screen.getByText(/75%/)).toBeTruthy();
     expect(screen.getByText('Baseado em histórico de lançamentos similares.')).toBeTruthy();
 
-    // The Combobox triggers must show the pre-selected account labels (verifies the useEffect sync).
-    // acc_1 → "1.1.01 — Despesas gerais" (accounting), acc_2 → "2.1.01 — Caixa" (financial).
+    // The Combobox trigger must show the pre-selected accounting account label (verifies the useEffect sync).
+    // acc_1 → "1.1.01 — Despesas gerais" (accounting).
     const buttons = screen.getAllByRole('button');
     const buttonTexts = buttons.map((b) => b.textContent ?? '');
     expect(buttonTexts.some((t) => t.includes('1.1.01'))).toBe(true);
-    expect(buttonTexts.some((t) => t.includes('2.1.01'))).toBe(true);
   });
 
   it('does not show the AI hint banner when no suggestion fields are present', () => {

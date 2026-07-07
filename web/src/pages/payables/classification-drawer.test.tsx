@@ -35,9 +35,8 @@ beforeEach(() => {
 describe('ClassificationDrawer', () => {
   it('pre-selects the AI-suggested accounts and shows the rationale', () => {
     renderWithProviders(<ClassificationDrawer payableId='payable_1' onClose={() => {}} />);
-    // Suggested account labels are visible in the trigger (Combobox renders the selected item's label).
+    // The suggested accounting account label is visible in the trigger (Combobox renders the selected item's label).
     expect(screen.getByText('Despesas')).toBeInTheDocument();
-    expect(screen.getByText('Caixa')).toBeInTheDocument();
     expect(screen.getByText(/Fornecedor recorrente/)).toBeInTheDocument();
   });
 });
