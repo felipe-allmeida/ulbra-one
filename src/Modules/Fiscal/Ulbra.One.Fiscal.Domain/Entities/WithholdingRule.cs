@@ -18,6 +18,9 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     public string? Lc116Subitem { get; private set; }
     public TaxRegime? VendorRegime { get; private set; }
     public string? MunicipalityIbge { get; private set; }
+    // INSS-specific dimensions (null = "any"): CPRB (folha desonerada) → 3,5%; Simples Anexo IV → 11% vs demais isento.
+    public bool? Cprb { get; private set; }
+    public SimplesAnexo? SimplesAnexo { get; private set; }
 
     public bool Retains { get; private set; }
     public NonRetentionReason Reason { get; private set; }
@@ -39,14 +42,15 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     /// <summary>How many dimensions the rule pins (non-null) — the basis of specificity during resolution.</summary>
     public int DimensionCount =>
         (Lc116Subitem is not null ? 1 : 0) + (VendorRegime is not null ? 1 : 0)
-        + (MunicipalityIbge is not null ? 1 : 0) + (CompanyId is not null ? 1 : 0);
+        + (MunicipalityIbge is not null ? 1 : 0) + (CompanyId is not null ? 1 : 0)
+        + (Cprb is not null ? 1 : 0) + (SimplesAnexo is not null ? 1 : 0);
 
     private WithholdingRule() { }
 
     public WithholdingRule(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
         string? lc116Subitem = null, TaxRegime? vendorRegime = null, string? municipalityIbge = null,
         Guid? companyId = null, BaseRule baseRule = BaseRule.Full, decimal? minimumAmount = null,
-        NonRetentionReason reason = NonRetentionReason.None)
+        NonRetentionReason reason = NonRetentionReason.None, bool? cprb = null, SimplesAnexo? simplesAnexo = null)
     {
         TaxType = taxType;
         Retains = retains;
@@ -59,6 +63,8 @@ public class WithholdingRule : IAuditable, ISoftDeletable
         BaseRule = baseRule;
         MinimumAmount = minimumAmount;
         Reason = reason;
+        Cprb = cprb;
+        SimplesAnexo = simplesAnexo;
     }
 
     /// <summary>Replaces all rule fields (CRUD update).</summary>

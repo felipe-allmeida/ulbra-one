@@ -23,8 +23,11 @@ public class WithholdingRuleResolverTests
         new(WithholdingTaxType.Pis, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
         new(WithholdingTaxType.Cofins, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
         new(WithholdingTaxType.Csll, retains: false, RateSource.Fixed, null, vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
-        // INSS 11% for labor-supply services (LC116 subitem 11.02 = security) — any regime.
+        // INSS on labor-supply (LC116 11.02): geral 11%; CPRB 3,5%; Simples Anexo IV 11%; demais anexos isento.
         new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02"),
+        new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.035m, lc116Subitem: "11.02", cprb: true),
+        new(WithholdingTaxType.Inss, retains: false, RateSource.Fixed, null, lc116Subitem: "11.02", vendorRegime: TaxRegime.SimplesNacional, reason: NonRetentionReason.RegimeExemption),
+        new(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, lc116Subitem: "11.02", vendorRegime: TaxRegime.SimplesNacional, simplesAnexo: SimplesAnexo.IV),
         // ISS: non-Simples uses the municipal rate (Canoas 5%); Simples uses the invoice rate (band).
         new(WithholdingTaxType.Iss, retains: true, RateSource.Fixed, 0.05m, municipalityIbge: "4304606"),
         new(WithholdingTaxType.Iss, retains: true, RateSource.FromNota, null, vendorRegime: TaxRegime.SimplesNacional),
@@ -67,14 +70,50 @@ public class WithholdingRuleResolverTests
     }
 
     [Fact]
-    public void Labor_supply_withholds_inss_regardless_of_regime()
+    public void Inss_labor_supply_normal_pj_withholds_11pct()
     {
-        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
-            [new ServiceLine("11.02", "4304606", null, 5000m)]); // security
+        var ctx = new ResolutionContext(null, TaxRegime.LucroReal,
+            [new ServiceLine("11.02", "4304606", null, 5000m)]); // vigilância
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11% even under Simples
+        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11%
+    }
+
+    [Fact]
+    public void Inss_cprb_provider_withholds_3_5pct()
+    {
+        // CPRB destacado na NF (confirmado no lançamento) → 3,5% em vez de 11%.
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine("11.02", "4304606", null, 5000m)], Cprb: true);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(175.00m, Amount(r, WithholdingTaxType.Inss));   // 3,5%
+    }
+
+    [Fact]
+    public void Inss_simples_anexo_iv_withholds_11pct()
+    {
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine("11.02", "4304606", null, 5000m)], SimplesAnexo: SimplesAnexo.IV);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(550.00m, Amount(r, WithholdingTaxType.Inss));   // 11% (Anexo IV recolhe CPP fora do DAS)
+    }
+
+    [Theory]
+    [InlineData(SimplesAnexo.III)]
+    [InlineData(null)] // anexo não confirmado → isento por padrão (o guard de agendamento força a confirmação)
+    public void Inss_simples_non_iv_or_unknown_is_exempt(SimplesAnexo? anexo)
+    {
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine("11.02", "4304606", null, 5000m)], SimplesAnexo: anexo);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // isento
     }
 
     [Fact]

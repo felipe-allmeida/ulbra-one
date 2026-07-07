@@ -11,9 +11,12 @@ namespace Ulbra.One.Fiscal.Domain.Withholdings;
 public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? InvoiceIssRate, decimal Amount);
 
 /// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
-/// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.</summary>
+/// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.
+/// <para><paramref name="Cprb"/> (CPRB destacado na NF, confirmado no lançamento) e <paramref name="SimplesAnexo"/>
+/// (anexo do Simples) refinam a retenção de INSS: CPRB → 3,5%; Anexo IV → 11%; demais anexos → isento.</para></summary>
 public sealed record ResolutionContext(
-    Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines);
+    Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines,
+    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null);
 
 /// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
@@ -79,8 +82,12 @@ public static class WithholdingRuleResolver
                 && (r.CompanyId is null || r.CompanyId == ctx.CompanyId)
                 && (r.Lc116Subitem is null || r.Lc116Subitem == line.Lc116Subitem)
                 && (r.MunicipalityIbge is null || r.MunicipalityIbge == line.MunicipalityIbge)
-                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime))
+                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime)
+                && (r.Cprb is null || r.Cprb == ctx.Cprb)
+                && (r.SimplesAnexo is null || r.SimplesAnexo == ctx.SimplesAnexo))
             .OrderByDescending(r => r.DimensionCount)
+            .ThenByDescending(r => r.SimplesAnexo is not null)
+            .ThenByDescending(r => r.Cprb is not null)
             .ThenByDescending(r => r.VendorRegime is not null)
             .ThenByDescending(r => r.MunicipalityIbge is not null)
             .ThenByDescending(r => r.CompanyId is not null)
