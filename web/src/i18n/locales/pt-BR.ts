@@ -680,7 +680,7 @@ const ptBR = {
 
   chartAccounts: {
     title: 'Plano de Contas',
-    subtitle: 'Estrutura de contas contábeis e financeiras.',
+    subtitle: 'Estrutura do plano de contas.',
     new: 'Nova conta',
     newTitle: 'Nova conta',
     editTitle: 'Editar conta',
@@ -1296,7 +1296,7 @@ const ptBR = {
 
   classification: {
     title: 'Classificação',
-    subtitle: 'Classifique as contas a pagar nas contas contábil e financeira.',
+    subtitle: 'Classifique as contas a pagar na conta contábil.',
     queueTitle: 'Fila de classificação',
     count_one: '{{count}} conta a classificar',
     count_other: '{{count}} contas a classificar',

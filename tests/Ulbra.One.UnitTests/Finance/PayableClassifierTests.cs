@@ -60,7 +60,6 @@ public class PayableClassifierTests
     // ── fixtures ──────────────────────────────────────────────────────────────
 
     private static readonly Guid AccId = Guid.NewGuid();
-    private static readonly Guid FinId = Guid.NewGuid();
 
     // Helper to build a ChartAccount with a specific Id via reflection (private set).
     private static ChartAccount AccountWithId(Guid id, ChartType type, string code, string name)
@@ -80,13 +79,13 @@ public class PayableClassifierTests
 
     // ── stubs ─────────────────────────────────────────────────────────────────
 
-    /// <summary>AI stub that always succeeds with the given confidence and account codes.</summary>
-    private sealed class StubAi(double confidence, string? accCode, string? finCode) : IAiCompletion
+    /// <summary>AI stub that always succeeds with the given confidence and account code.</summary>
+    private sealed class StubAi(double confidence, string? accCode) : IAiCompletion
     {
         public Task<Result<T>> CompleteAsync<T>(AiPrompt prompt, AiOptions? options = null, CancellationToken ct = default)
             where T : class
         {
-            object result = Activator.CreateInstance(typeof(T), accCode, finCode, confidence, "stub")!;
+            object result = Activator.CreateInstance(typeof(T), accCode, confidence, "stub")!;
             return Task.FromResult(Result.Success((T)result));
         }
     }
@@ -125,20 +124,18 @@ public class PayableClassifierTests
     // ── tests ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task High_confidence_ai_returns_source_ai_with_resolved_account_ids()
+    public async Task High_confidence_ai_returns_source_ai_with_resolved_account_id()
     {
         var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
-        var finAccount = AccountWithId(FinId, ChartType.Financial, "2.1.1", "Suppliers payable");
 
-        var uow = new StubUow(accAccount, finAccount);
-        var ai = new StubAi(confidence: 0.9, accCode: "3.1.1", finCode: "2.1.1");
+        var uow = new StubUow(accAccount);
+        var ai = new StubAi(confidence: 0.9, accCode: "3.1.1");
         var sut = new PayableClassifier(ai, uow);
 
         var result = await sut.ClassifyAsync(NewPayable(), CancellationToken.None);
 
         Assert.Equal("ai", result.Source);
         Assert.Equal(AccId, result.AccountingAccountId);
-        Assert.Equal(FinId, result.FinancialAccountId);
         Assert.Equal(0.9, result.Confidence);
     }
 
@@ -146,17 +143,15 @@ public class PayableClassifierTests
     public async Task Low_confidence_ai_falls_through_to_none_when_no_vendor_history()
     {
         var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
-        var finAccount = AccountWithId(FinId, ChartType.Financial, "2.1.1", "Suppliers payable");
 
-        var uow = new StubUow(accAccount, finAccount); // no prior payables → no vendor history
-        var ai = new StubAi(confidence: 0.3, accCode: "3.1.1", finCode: "2.1.1"); // below threshold
+        var uow = new StubUow(accAccount); // no prior payables → no vendor history
+        var ai = new StubAi(confidence: 0.3, accCode: "3.1.1"); // below threshold
         var sut = new PayableClassifier(ai, uow);
 
         var result = await sut.ClassifyAsync(NewPayable(), CancellationToken.None);
 
         Assert.Equal("none", result.Source);
         Assert.Null(result.AccountingAccountId);
-        Assert.Null(result.FinancialAccountId);
         Assert.Equal(0, result.Confidence);
     }
 
@@ -164,7 +159,6 @@ public class PayableClassifierTests
     public async Task Disabled_ai_falls_through_to_heuristic_when_vendor_history_exists()
     {
         var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
-        var finAccount = AccountWithId(FinId, ChartType.Financial, "2.1.1", "Suppliers payable");
 
         // Build a classified prior payable with the same VendorId.
         var vendorId = Guid.NewGuid();
@@ -172,7 +166,7 @@ public class PayableClassifierTests
             documentNumber: "NF-001", issueDate: new DateOnly(2026, 6, 1),
             description: "Prior hosting", costCenterId: Guid.NewGuid(), categoryId: null,
             Payable.GenerateInstallments(500m, 1, new DateOnly(2026, 6, 30), 1));
-        priorPayable.Classify(AccId, FinId);
+        priorPayable.Classify(AccId);
 
         // Target payable with the same vendor.
         var targetPayable = new Payable(Guid.NewGuid(), PayableOrigin.Manual, vendorId, "Acme Cloud Ltda",
@@ -180,14 +174,13 @@ public class PayableClassifierTests
             description: "Cloud hosting subscription", costCenterId: Guid.NewGuid(), categoryId: null,
             Payable.GenerateInstallments(1234.56m, 1, new DateOnly(2026, 7, 10), 1));
 
-        var uow = new StubUow(accAccount, finAccount, priorPayable);
+        var uow = new StubUow(accAccount, priorPayable);
         var sut = new PayableClassifier(new DisabledAi(), uow);
 
         var result = await sut.ClassifyAsync(targetPayable, CancellationToken.None);
 
         Assert.Equal("heuristic", result.Source);
         Assert.Equal(AccId, result.AccountingAccountId);
-        Assert.Equal(FinId, result.FinancialAccountId);
         Assert.Equal(0, result.Confidence);
     }
 
@@ -201,7 +194,6 @@ public class PayableClassifierTests
 
         Assert.Equal("none", result.Source);
         Assert.Null(result.AccountingAccountId);
-        Assert.Null(result.FinancialAccountId);
         Assert.Equal(0, result.Confidence);
     }
 }

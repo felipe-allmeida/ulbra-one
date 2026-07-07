@@ -218,10 +218,10 @@ public static class FinanceSeed
     }
 
     /// <summary>
-    /// Creates one Accounting analytical account and one Financial analytical account, returning
-    /// (accountingAccountId, financialAccountId). Used to classify a payable in tests.
+    /// Creates one Accounting analytical account (synthetic root + analytical child) and returns
+    /// the analytical account id. Used to classify a payable in tests.
     /// </summary>
-    public static async Task<(string AccountingAccountId, string FinancialAccountId)> CreateChartAccountPairAsync(HttpClient client)
+    public static async Task<string> CreateAccountingAccountAsync(HttpClient client)
     {
         var suffix = Random.Shared.Next(100_000, 999_999);
 
@@ -246,31 +246,6 @@ public static class FinanceSeed
             nature = "Debit",
         });
         accChild.EnsureSuccessStatusCode();
-        var accountingId = (await ReadJson(accChild)).GetProperty("id").GetString()!;
-
-        // Financial: synthetic root + analytical child.
-        var finRoot = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType = "Financial",
-            code = $"F.{suffix}",
-            name = $"Financeiro Seed {suffix}",
-            kind = "Synthetic",
-        });
-        finRoot.EnsureSuccessStatusCode();
-        var finRootId = (await ReadJson(finRoot)).GetProperty("id").GetString()!;
-
-        var finChild = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType = "Financial",
-            code = $"F.{suffix}.01",
-            name = $"Financeiro Seed Analitico {suffix}",
-            kind = "Analytical",
-            parentId = finRootId,
-            nature = "Debit",
-        });
-        finChild.EnsureSuccessStatusCode();
-        var financialId = (await ReadJson(finChild)).GetProperty("id").GetString()!;
-
-        return (accountingId, financialId);
+        return (await ReadJson(accChild)).GetProperty("id").GetString()!;
     }
 }

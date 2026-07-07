@@ -65,7 +65,6 @@ vi.mock('../../queries', async (orig) => {
           isActive: true,
           chartType: 'Accounting',
         },
-        { id: 'acc_2', code: '2.1.01', name: 'Caixa', kind: 'Analytical', isActive: true, chartType: 'Financial' },
       ],
       isLoading: false,
     }),
@@ -145,10 +144,8 @@ const payableWithSuggestion = {
   rejectedByName: null,
   rejectedAt: null,
   accountingAccountId: null,
-  financialAccountId: null,
   isClassified: false,
   suggestedAccountingAccountId: 'acc_1',
-  suggestedFinancialAccountId: 'acc_2',
   classificationConfidence: 0.75,
   classificationRationale: 'Baseado em histórico de lançamentos similares.',
   createdAt: '2025-06-01T00:00:00Z',
@@ -182,12 +179,11 @@ describe('ClassificacaoPage — AI suggestion pre-fill', () => {
     expect(screen.getByText(/75%/)).toBeTruthy();
     expect(screen.getByText('Baseado em histórico de lançamentos similares.')).toBeTruthy();
 
-    // The Combobox triggers must show the pre-selected account labels (verifies the useEffect sync).
-    // acc_1 → "1.1.01 — Despesas gerais" (accounting), acc_2 → "2.1.01 — Caixa" (financial).
+    // The Combobox trigger must show the pre-selected accounting account label (verifies the useEffect sync).
+    // acc_1 → "1.1.01 — Despesas gerais" (accounting).
     const buttons = screen.getAllByRole('button');
     const buttonTexts = buttons.map((b) => b.textContent ?? '');
     expect(buttonTexts.some((t) => t.includes('1.1.01'))).toBe(true);
-    expect(buttonTexts.some((t) => t.includes('2.1.01'))).toBe(true);
   });
 
   it('does not show the AI hint banner when no suggestion fields are present', () => {
@@ -201,7 +197,6 @@ describe('ClassificacaoPage — AI suggestion pre-fill', () => {
       data: {
         ...payableWithSuggestion,
         suggestedAccountingAccountId: null,
-        suggestedFinancialAccountId: null,
         classificationConfidence: null,
         classificationRationale: null,
       },

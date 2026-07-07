@@ -18,7 +18,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
 
 public sealed class ClassifyPayable : IEndpoint
 {
-    public sealed record Request(ChartAccountId? AccountingAccountId, ChartAccountId? FinancialAccountId);
+    public sealed record Request(ChartAccountId? AccountingAccountId);
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/classify", Handle).WithName("ClassifyPayable").WithTags("Finance")
@@ -31,10 +31,10 @@ public sealed class ClassifyPayable : IEndpoint
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
-        var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, req.FinancialAccountId?.Value, ct);
+        var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, ct);
         if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
 
-        payable.Classify(req.AccountingAccountId?.Value, req.FinancialAccountId?.Value);
+        payable.Classify(req.AccountingAccountId?.Value);
 
         // Compute + apply withholdings before any auto-approval (they must be final before the payable schedules).
         await autoWithholding.RecalculateAndApplyAsync(payable, ct);

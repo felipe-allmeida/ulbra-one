@@ -111,7 +111,7 @@ public class PayablePaymentServiceTests
             costCenterId: Guid.NewGuid(), categoryId: null,
             Payable.GenerateInstallments(amount, 1, new DateOnly(2026, 7, 10), 1));
 
-        payable.Classify(Guid.NewGuid(), Guid.NewGuid());
+        payable.Classify(Guid.NewGuid());
         payable.Approve("test-user", FixedNow);
 
         var installment = payable.Installments[0];

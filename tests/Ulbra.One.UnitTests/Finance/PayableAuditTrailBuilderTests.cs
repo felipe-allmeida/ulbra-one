@@ -12,7 +12,7 @@ public class PayableAuditTrailBuilderTests
     {
         var actor = Guid.NewGuid();
         var payable = PayableTestFactory.Scheduled(actorId: actor.ToString(), createdAt: T0,
-            approvedAt: T0.AddDays(2), accountingAccountId: Guid.NewGuid(), financialAccountId: Guid.NewGuid());
+            approvedAt: T0.AddDays(2), accountingAccountId: Guid.NewGuid());
         var names = new Dictionary<Guid, string> { [actor] = "Maria Santos" };
 
         var events = PayableAuditTrailBuilder.Build(payable, names, cancelledAt: null,

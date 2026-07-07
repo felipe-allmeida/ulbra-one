@@ -152,7 +152,8 @@ function ChartAccountForm({
 /* ============ List page ============ */
 export function PlanoDeContasPage() {
   const { t } = useTranslation();
-  const [chartType, setChartType] = useState<ChartType>('Accounting');
+  // Single chart type since the Financial axis was removed (AEL-678); this page manages the accounting chart.
+  const chartType: ChartType = 'Accounting';
   const list = useChartAccounts({ chartType });
   const accounts = list.data ?? [];
 
@@ -218,10 +219,6 @@ export function PlanoDeContasPage() {
   return (
     <>
       <PageHeader title={t('chartAccounts.title')} sub={t('chartAccounts.subtitle')}>
-        <Select value={chartType} onChange={(e) => setChartType(e.target.value as ChartType)}>
-          <option value='Accounting'>{t('chartAccounts.types.Accounting')}</option>
-          <option value='Financial'>{t('chartAccounts.types.Financial')}</option>
-        </Select>
         <Button variant='brand' icon={<Plus />} onClick={openCreate}>
           {t('chartAccounts.new')}
         </Button>

@@ -30,11 +30,11 @@ public static class PayableTestFactory
     /// (unit tests don't call <c>MarkUpdated</c>), so Classified and Created share the same timestamp.
     /// </summary>
     public static Payable Scheduled(string actorId, DateTimeOffset createdAt, DateTimeOffset approvedAt,
-        Guid accountingAccountId, Guid financialAccountId)
+        Guid accountingAccountId)
     {
         var p = BasePayable();
         p.MarkCreated(actorId, createdAt);
-        p.Classify(accountingAccountId, financialAccountId);
+        p.Classify(accountingAccountId);
         p.Approve(actorId, approvedAt);
         return p;
     }

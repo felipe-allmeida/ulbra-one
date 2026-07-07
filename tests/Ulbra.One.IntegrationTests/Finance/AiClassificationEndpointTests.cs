@@ -15,14 +15,14 @@ namespace Ulbra.One.IntegrationTests.Finance;
 public class AiClassificationEndpointTests(PostgresFixture fixture)
 {
     // Returns a fixed suggestion regardless of T (T is always PayableClassificationSuggestion here).
-    private sealed class StubAiCompletion(string? accountingCode, string? financialCode) : IAiCompletion
+    private sealed class StubAiCompletion(string? accountingCode) : IAiCompletion
     {
         public Task<Result<TResult>> CompleteAsync<TResult>(
             AiPrompt prompt, AiOptions? options = null, CancellationToken ct = default)
             where TResult : class
         {
             object suggestion = Activator.CreateInstance(
-                typeof(TResult), accountingCode, financialCode, 0.9, "stub")!;
+                typeof(TResult), accountingCode, 0.9, "stub")!;
             return Task.FromResult(Result.Success((TResult)suggestion));
         }
     }
@@ -31,7 +31,7 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
 
     private sealed record AiSuggestionDto(
-        string? AccountingAccountId, string? FinancialAccountId,
+        string? AccountingAccountId,
         double Confidence, string Rationale, string Source);
 
     private sealed record ChartAccountDto(string Id, string Code, string ChartType, string Kind, bool IsActive);
@@ -108,14 +108,13 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         // Pick a seeded analytical accounting + financial account code to feed the stub.
         var accounts = await setupClient.GetFromJsonAsync<List<ChartAccountDto>>("/api/chart-accounts");
         var acc = accounts!.First(a => a.ChartType == "Accounting" && a.Kind == "Analytical" && a.IsActive);
-        var fin = accounts!.First(a => a.ChartType == "Financial" && a.Kind == "Analytical" && a.IsActive);
 
         // Wire up a factory with the stub IAiCompletion replacing the default Fake provider.
         await using var aiFactory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
             {
                 s.RemoveAll<IAiCompletion>();
-                s.AddScoped<IAiCompletion>(_ => new StubAiCompletion(acc.Code, fin.Code));
+                s.AddScoped<IAiCompletion>(_ => new StubAiCompletion(acc.Code));
             }));
         var aiClient = await CreateAdminClientAsync(aiFactory);
         var seed = await SeedAsync(aiClient);
@@ -127,7 +126,6 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         var body = await res.Content.ReadFromJsonAsync<AiSuggestionDto>();
         Assert.Equal("ai", body!.Source);
         Assert.Equal(acc.Id, body.AccountingAccountId);
-        Assert.Equal(fin.Id, body.FinancialAccountId);
     }
 
     [Fact]
@@ -144,7 +142,6 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         var body = await res.Content.ReadFromJsonAsync<AiSuggestionDto>();
         Assert.Equal("none", body!.Source);
         Assert.Null(body.AccountingAccountId);
-        Assert.Null(body.FinancialAccountId);
     }
 
     [Fact]
@@ -156,7 +153,6 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         // Fetch chart accounts to pick valid analytical account ids for classification.
         var accounts = await client.GetFromJsonAsync<List<ChartAccountDto>>("/api/chart-accounts");
         var acc = accounts!.First(a => a.ChartType == "Accounting" && a.Kind == "Analytical" && a.IsActive);
-        var fin = accounts!.First(a => a.ChartType == "Financial" && a.Kind == "Analytical" && a.IsActive);
 
         var seed = await SeedAsync(client);
 
@@ -164,7 +160,7 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         var firstPayableId = await CreatePayableAsync(client, seed);
         var classifyRes = await client.PostAsJsonAsync(
             $"/api/payables/{firstPayableId}/classify",
-            new { accountingAccountId = acc.Id, financialAccountId = fin.Id });
+            new { accountingAccountId = acc.Id });
         classifyRes.EnsureSuccessStatusCode();
 
         // Create a second payable for the same vendor — AI (Fake) will fail, heuristic should kick in.
@@ -175,6 +171,5 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         var body = await res.Content.ReadFromJsonAsync<AiSuggestionDto>();
         Assert.Equal("heuristic", body!.Source);
         Assert.Equal(acc.Id, body.AccountingAccountId);
-        Assert.Equal(fin.Id, body.FinancialAccountId);
     }
 }

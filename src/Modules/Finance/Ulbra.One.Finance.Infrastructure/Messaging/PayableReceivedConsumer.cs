@@ -55,7 +55,7 @@ public sealed class PayableReceivedConsumer(
 
         // Nothing to go on (no AI suggestion, no vendor history). Retry with escalating delays until data
         // or the AI is available — unless this is the final attempt, where we settle for a human below.
-        var hasSuggestion = result.AccountingAccountId is not null || result.FinancialAccountId is not null;
+        var hasSuggestion = result.AccountingAccountId is not null;
         if (!payable.IsClassified && !hasSuggestion && !giveUpIfUnclassified)
             throw new ClassificationUnavailableException(payableId);
 
@@ -92,17 +92,17 @@ public sealed class PayableReceivedConsumer(
             return;
         }
 
-        if (r.AccountingAccountId is not null && r.FinancialAccountId is not null && r.Confidence >= AutoApplyThreshold)
+        if (r.AccountingAccountId is not null && r.Confidence >= AutoApplyThreshold)
         {
-            payable.Classify(r.AccountingAccountId, r.FinancialAccountId);
+            payable.Classify(r.AccountingAccountId);
             payable.ApplyAutoApproval(autoApprovalLimit, now); // → Scheduled if under limit
             if (payable.Status == PayableStatus.Received) payable.MarkPendingApproval();
         }
         else
         {
-            // 0.5–0.8 band (or heuristic with partial result): keep the suggestion for the human.
-            if (r.AccountingAccountId is not null || r.FinancialAccountId is not null)
-                payable.SetSuggestion(r.AccountingAccountId, r.FinancialAccountId, r.Confidence, r.Rationale);
+            // 0.5–0.8 band (or heuristic): keep the suggestion for the human.
+            if (r.AccountingAccountId is not null)
+                payable.SetSuggestion(r.AccountingAccountId, r.Confidence, r.Rationale);
             payable.MarkPendingClassification();
         }
     }

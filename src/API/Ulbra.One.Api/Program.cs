@@ -251,7 +251,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     // Mock business data (companies/vendors/payables) stays off; seed only the reference data the
-    // payable pipeline needs: the chart of accounts (contábil + financeiro) for the AI classifier,
+    // payable pipeline needs: the chart of accounts (contábil) for the AI classifier,
     // and the group-wide withholding rules so the auto-retention calculation produces output.
     await Ulbra.One.Api.DevDataSeeder.SeedChartOfAccountsAsync(app.Services);
     await Ulbra.One.Api.DevDataSeeder.SeedWithholdingRulesAsync(app.Services);

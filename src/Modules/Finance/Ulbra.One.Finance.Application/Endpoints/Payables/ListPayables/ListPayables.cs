@@ -48,7 +48,7 @@ public sealed class ListPayables : IEndpoint
         if (req.CostCenterId is { } ccid) payables = payables.Where(p => p.CostCenterId == ccid.Value);
         if (req.CategoryId is { } catid) payables = payables.Where(p => p.CategoryId == catid.Value);
         if (req.Classified is { } cl)
-            payables = payables.Where(p => (p.AccountingAccountId != null && p.FinancialAccountId != null) == cl);
+            payables = payables.Where(p => (p.AccountingAccountId != null) == cl);
 
         // One row per installment (the operational Contas a Pagar list). Project to primitive fields
         // FIRST so the query and pagination translate to SQL, then wrap Guids into typed IDs in memory.

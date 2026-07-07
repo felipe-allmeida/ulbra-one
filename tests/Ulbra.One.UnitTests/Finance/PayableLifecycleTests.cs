@@ -29,13 +29,13 @@ public class PayableLifecycleTests
         Assert.Equal(PayableStatus.Received, unclassified.Status); // not classified → no auto-approve
 
         var classified = NewPayable(100m);
-        classified.Classify(Guid.NewGuid(), Guid.NewGuid());
+        classified.Classify(Guid.NewGuid());
         classified.SetType(PayableType.Service); // type must be determined before auto-scheduling
         classified.ApplyAutoApproval(500m, DateTimeOffset.UnixEpoch);
         Assert.Equal(PayableStatus.Scheduled, classified.Status);
 
         var overLimit = NewPayable(1000m);
-        overLimit.Classify(Guid.NewGuid(), Guid.NewGuid());
+        overLimit.Classify(Guid.NewGuid());
         overLimit.ApplyAutoApproval(500m, DateTimeOffset.UnixEpoch);
         Assert.NotEqual(PayableStatus.Scheduled, overLimit.Status);
     }
@@ -44,8 +44,8 @@ public class PayableLifecycleTests
     public void Classify_clears_persisted_suggestion()
     {
         var p = NewPayable();
-        p.SetSuggestion(Guid.NewGuid(), Guid.NewGuid(), 0.6, "maybe");
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.SetSuggestion(Guid.NewGuid(), 0.6, "maybe");
+        p.Classify(Guid.NewGuid());
         Assert.Null(p.SuggestedAccountingAccountId);
         Assert.Null(p.ClassificationConfidence);
     }
@@ -54,7 +54,7 @@ public class PayableLifecycleTests
     public void RecomputeSettlement_paid_when_all_installments_paid()
     {
         var p = NewPayable(100m);
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
         p.Approve("u", DateTimeOffset.UnixEpoch);
         var inst = p.Installments[0];
         inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 1, 10), 100m,

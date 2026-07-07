@@ -30,7 +30,7 @@ public class PayableClassificationRetryTests(PostgresFixture fixture)
     private sealed class EmptyClassifier : IPayableClassifier
     {
         public Task<PayableClassificationResult> ClassifyAsync(Payable payable, CancellationToken ct)
-            => Task.FromResult(new PayableClassificationResult(null, null, 0, "none", "none"));
+            => Task.FromResult(new PayableClassificationResult(null, 0, "none", "none"));
     }
 
     private static async Task<HttpClient> CreateAdminClientAsync(WebApplicationFactory<Program> factory)

@@ -8,9 +8,9 @@ public static class AiClassificationPrompt
 {
     private const string System =
         "You are an accounting assistant for a Brazilian ERP. Given a payable and the company's chart of " +
-        "accounts, choose the single best accounting account and the single best financial account, " +
-        "selecting ONLY from the provided lists by their exact Code. If you are unsure for an axis, set its " +
-        "code to null and lower your confidence (0..1). Respond only with the requested structure.";
+        "accounts, choose the single best accounting account, selecting ONLY from the provided list by its " +
+        "exact Code. If you are unsure, set the code to null and lower your confidence (0..1). Respond only " +
+        "with the requested structure.";
 
     public static AiPrompt Build(
         string description,
@@ -18,7 +18,6 @@ public static class AiClassificationPrompt
         string? documentNumber,
         decimal totalAmount,
         IReadOnlyList<(string Code, string Name)> accountingAccounts,
-        IReadOnlyList<(string Code, string Name)> financialAccounts,
         IReadOnlyList<string>? cfops = null,
         IReadOnlyList<string>? ncms = null)
     {
@@ -33,10 +32,6 @@ public static class AiClassificationPrompt
         sb.AppendLine();
         sb.AppendLine("Accounting accounts (Code — Name):");
         foreach (var (code, name) in accountingAccounts)
-            sb.AppendLine($"- {code} — {name}");
-        sb.AppendLine();
-        sb.AppendLine("Financial accounts (Code — Name):");
-        foreach (var (code, name) in financialAccounts)
             sb.AppendLine($"- {code} — {name}");
 
         return new AiPrompt(System, sb.ToString());
