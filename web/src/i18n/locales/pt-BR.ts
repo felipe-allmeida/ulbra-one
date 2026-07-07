@@ -1664,6 +1664,12 @@ const ptBR = {
       accountDigit: 'Dígito',
       pixKey: 'Chave PIX',
       taxRegime: 'Regime tributário',
+      cprbForeseen: 'CPRB previsto (folha desonerada)',
+      cprbYes: 'Sim',
+      cprbNo: 'Não',
+      cprbUnknown: 'Desconhecido',
+      simplesAnexo: 'Anexo do Simples',
+      simplesAnexoNone: 'Não informado',
     },
   },
 

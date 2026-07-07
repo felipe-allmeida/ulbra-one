@@ -82,6 +82,9 @@ export type VendorBankInfoValues = z.infer<typeof vendorBankInfoSchema>;
 export const TAX_REGIMES = ['Unknown', 'Mei', 'SimplesNacional', 'LucroPresumido', 'LucroReal'] as const;
 export type TaxRegimeValue = (typeof TAX_REGIMES)[number];
 
+export const SIMPLES_ANEXOS = ['I', 'II', 'III', 'IV', 'V'] as const;
+export type SimplesAnexoValue = (typeof SIMPLES_ANEXOS)[number];
+
 export const PAYMENT_SCHEDULE_MODES = ['OnDueDate', 'FixedDayOfMonth', 'FirstDayOfMonth'] as const;
 export type PaymentScheduleMode = (typeof PAYMENT_SCHEDULE_MODES)[number];
 
@@ -92,6 +95,9 @@ export const vendorSchema = refineDocument(
       paymentTerms: z.string(),
       bankInfo: vendorBankInfoSchema,
       taxRegime: z.enum(TAX_REGIMES),
+      // INSS (indicativos do cadastro): CPRB previsto (Sim/Não/Desconhecido) + anexo do Simples.
+      cprbForeseen: z.boolean().nullable().default(null),
+      simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
       paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
       paymentScheduleDay: z.number().nullable().default(null),
     })

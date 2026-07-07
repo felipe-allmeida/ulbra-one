@@ -65,7 +65,12 @@ export type Address = Schemas['AddressResponse'];
 // The DTOs declare `AddressResponse? Address` (nullable), but Swashbuckle can't express the nullability
 // of a nested complex member, so it emits `address` as non-null. Restore the honest `Address | null`.
 type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
-export type Vendor = WithNullableAddress<Schemas['VendorResponse']>;
+/** LC123 Simples annex. Mirrors the backend `SimplesAnexo` enum. */
+export type SimplesAnexoValue = 'I' | 'II' | 'III' | 'IV' | 'V';
+// INSS fields the backend already returns/accepts, but the committed openapi.json is stale — hand-augment until
+// the spec is refreshed (a separate chore). Optional on the response for back-compat with existing fixtures.
+type VendorInssFields = { cprbForeseen: boolean | null; simplesAnexo: SimplesAnexoValue | null };
+export type Vendor = WithNullableAddress<Schemas['VendorResponse']> & Partial<VendorInssFields>;
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
@@ -491,7 +496,7 @@ export interface BankInfoInput {
 export type VendorInput = Omit<Vendor, 'id' | 'active' | 'bankInfo' | 'taxRegime'> & {
   bankInfo: BankInfoInput | null;
   taxRegime: TaxRegime;
-};
+} & VendorInssFields;
 export type CustomerInput = Omit<Customer, 'id' | 'active'>;
 export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
 
