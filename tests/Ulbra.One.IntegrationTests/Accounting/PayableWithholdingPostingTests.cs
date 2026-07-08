@@ -85,8 +85,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
 
         // Resolve account ids by code for assertion.
         var accountIds = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (
-                a.Code == ExpenseCode || a.Code == LiabilityCode || a.Code == IrrfCode))
+            .Where(a => a.Code == ExpenseCode || a.Code == LiabilityCode || a.Code == IrrfCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         Assert.Equal(3, entry.Lines.Count);
@@ -168,7 +167,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         Assert.Equal(2, entry.Lines.Count);
 
         var accountIds = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == ExpenseCode || a.Code == LiabilityCode))
+            .Where(a => a.Code == ExpenseCode || a.Code == LiabilityCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var drLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Debit);

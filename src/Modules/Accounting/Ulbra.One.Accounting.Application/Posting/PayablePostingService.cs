@@ -13,12 +13,12 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         await uow.ReadSet<JournalEntry>()
             .AnyAsync(e => e.CompanyId == companyId && e.SourceKey == sourceKey && e.DeletedAt == null, ct);
 
-    // ── Resolve an active analytical ledger account by code; null if not found ──
-    private async Task<LedgerAccount?> ResolveAsync(Guid companyId, string? code, CancellationToken ct)
+    // ── Resolve an active analytical ledger account by code (global chart); null if not found ──
+    private async Task<LedgerAccount?> ResolveAsync(string? code, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code)) return null;
         var a = await uow.ReadSet<LedgerAccount>()
-            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Code == code && a.DeletedAt == null, ct);
+            .FirstOrDefaultAsync(a => a.Code == code && a.DeletedAt == null, ct);
         return a is { } acct && acct.CanReceiveEntry ? acct : null;
     }
 
@@ -42,7 +42,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         string firstMissingLabel = string.Empty;
         foreach (var (code, side, amount) in lines)
         {
-            var account = await ResolveAsync(companyId, code, ct);
+            var account = await ResolveAsync(code, ct);
             if (account is null)
             {
                 if (!anyUnresolvable)

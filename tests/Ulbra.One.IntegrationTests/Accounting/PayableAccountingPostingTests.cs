@@ -67,7 +67,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
 
         // Find accounts by code to assert sides.
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == ExpenseCode || a.Code == "2.01.01.03.01"))
+            .Where(a => a.Code == ExpenseCode || a.Code == "2.01.01.03.01")
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;
@@ -112,7 +112,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         Assert.Equal(entry.TotalDebit, entry.TotalCredit);
 
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == "2.01.01.03.01" || a.Code == "1.01.01.02.01"))
+            .Where(a => a.Code == "2.01.01.03.01" || a.Code == "1.01.01.02.01")
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;

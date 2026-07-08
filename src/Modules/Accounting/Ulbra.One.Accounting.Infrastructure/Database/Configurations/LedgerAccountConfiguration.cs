@@ -14,8 +14,7 @@ public sealed class LedgerAccountConfiguration : BaseEntityConfiguration<LedgerA
         e.HasKey(x => x.Id);
         e.Property(x => x.Code).HasMaxLength(40).IsRequired();
         e.Property(x => x.Name).HasMaxLength(200).IsRequired();
-        e.HasIndex(x => new { x.CompanyId, x.Code }).IsUnique().HasFilter("deleted_at IS NULL");
-        e.HasIndex(x => x.CompanyId);
+        e.HasIndex(x => x.Code).IsUnique().HasFilter("deleted_at IS NULL");
         e.HasIndex(x => x.ParentId);
     }
 }

@@ -6,13 +6,11 @@ namespace Ulbra.One.UnitTests.Accounting;
 
 public class LedgerAccountTests
 {
-    private static readonly Guid Company = Guid.NewGuid();
+    private static LedgerAccount Synthetic(AccountGroup group = AccountGroup.Asset) =>
+        new("1", "Ativo", group, LedgerAccountKind.Synthetic);
 
-    private static LedgerAccount Synthetic(AccountGroup group = AccountGroup.Asset, Guid? company = null) =>
-        new(company ?? Company, "1", "Ativo", group, LedgerAccountKind.Synthetic);
-
-    private static LedgerAccount Analytical(AccountGroup group = AccountGroup.Asset, Guid? company = null) =>
-        new(company ?? Company, "1.1", "Caixa", group, LedgerAccountKind.Analytical);
+    private static LedgerAccount Analytical(AccountGroup group = AccountGroup.Asset) =>
+        new("1.1", "Caixa", group, LedgerAccountKind.Analytical);
 
     [Fact]
     public void Constructor_derives_normal_balance_from_group()
@@ -27,7 +25,7 @@ public class LedgerAccountTests
     [Fact]
     public void Constructor_honours_explicit_normal_balance()
     {
-        var acct = new LedgerAccount(Company, "1", "X", AccountGroup.Asset, LedgerAccountKind.Analytical,
+        var acct = new LedgerAccount("1", "X", AccountGroup.Asset, LedgerAccountKind.Analytical,
             normalBalance: NormalBalance.Credit);
         Assert.Equal(NormalBalance.Credit, acct.NormalBalance);
     }
@@ -35,18 +33,11 @@ public class LedgerAccountTests
     [Fact]
     public void Constructor_trims_and_requires_code_and_name()
     {
-        var acct = new LedgerAccount(Company, "  1.1  ", "  Caixa  ", AccountGroup.Asset, LedgerAccountKind.Analytical);
+        var acct = new LedgerAccount("  1.1  ", "  Caixa  ", AccountGroup.Asset, LedgerAccountKind.Analytical);
         Assert.Equal("1.1", acct.Code);
         Assert.Equal("Caixa", acct.Name);
-        Assert.Throws<ArgumentException>(() => new LedgerAccount(Company, "  ", "Caixa", AccountGroup.Asset, LedgerAccountKind.Analytical));
-        Assert.Throws<ArgumentNullException>(() => new LedgerAccount(Company, null!, "Caixa", AccountGroup.Asset, LedgerAccountKind.Analytical));
-    }
-
-    [Fact]
-    public void Constructor_requires_company()
-    {
-        Assert.Throws<ArgumentException>(() =>
-            new LedgerAccount(Guid.Empty, "1", "X", AccountGroup.Asset, LedgerAccountKind.Analytical));
+        Assert.Throws<ArgumentException>(() => new LedgerAccount("  ", "Caixa", AccountGroup.Asset, LedgerAccountKind.Analytical));
+        Assert.Throws<ArgumentNullException>(() => new LedgerAccount(null!, "Caixa", AccountGroup.Asset, LedgerAccountKind.Analytical));
     }
 
     [Fact]
@@ -65,7 +56,7 @@ public class LedgerAccountTests
     }
 
     [Fact]
-    public void Reparent_to_synthetic_same_company_and_group_sets_parent()
+    public void Reparent_to_synthetic_same_group_sets_parent()
     {
         var parent = Synthetic(AccountGroup.Asset);
         var child = Analytical(AccountGroup.Asset);
@@ -86,14 +77,6 @@ public class LedgerAccountTests
     public void Reparent_rejects_analytical_parent()
     {
         var parent = Analytical(AccountGroup.Asset);
-        var child = Analytical(AccountGroup.Asset);
-        Assert.Throws<InvalidOperationException>(() => child.Reparent(parent));
-    }
-
-    [Fact]
-    public void Reparent_rejects_different_company()
-    {
-        var parent = Synthetic(AccountGroup.Asset, Guid.NewGuid());
         var child = Analytical(AccountGroup.Asset);
         Assert.Throws<InvalidOperationException>(() => child.Reparent(parent));
     }

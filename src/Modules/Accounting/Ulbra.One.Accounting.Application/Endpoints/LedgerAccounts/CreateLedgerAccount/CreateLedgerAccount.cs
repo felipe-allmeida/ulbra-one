@@ -17,7 +17,6 @@ public sealed class CreateLedgerAccount : IEndpoint
 {
     public sealed record Request
     {
-        public CompanyId CompanyId { get; set; }
         [NormalizeText] public string Code { get; set; } = string.Empty;
         [NormalizeText] public string Name { get; set; } = string.Empty;
         public AccountGroup AccountGroup { get; set; }
@@ -41,11 +40,10 @@ public sealed class CreateLedgerAccount : IEndpoint
         if (string.IsNullOrWhiteSpace(req.Name))
             return TypedResults.Problem(detail: "Name is required.", statusCode: 400, title: "LedgerAccount.Invalid");
 
-        var companyId = req.CompanyId.Value;
         LedgerAccount account;
         try
         {
-            account = new LedgerAccount(companyId, req.Code, req.Name, req.AccountGroup, req.Kind,
+            account = new LedgerAccount(req.Code, req.Name, req.AccountGroup, req.Kind,
                 parentId: null, req.NormalBalance);
         }
         catch (ArgumentException ex)
@@ -63,15 +61,15 @@ public sealed class CreateLedgerAccount : IEndpoint
         }
 
         var duplicate = await uow.ReadSet<LedgerAccount>()
-            .AnyAsync(a => a.CompanyId == companyId && a.Code == account.Code, ct);
+            .AnyAsync(a => a.Code == account.Code && a.DeletedAt == null, ct);
         if (duplicate)
-            return TypedResults.Problem(detail: "A ledger account with this code already exists for the company.", statusCode: 409, title: "LedgerAccount.DuplicateCode");
+            return TypedResults.Problem(detail: "A ledger account with this code already exists.", statusCode: 409, title: "LedgerAccount.DuplicateCode");
 
         await uow.AddAsync(account, ct);
         try { await uow.SaveChangesAsync(ct); }
         catch (DbUpdateException)
         {
-            return TypedResults.Problem(detail: "A ledger account with this code already exists for the company.", statusCode: 409, title: "LedgerAccount.DuplicateCode");
+            return TypedResults.Problem(detail: "A ledger account with this code already exists.", statusCode: 409, title: "LedgerAccount.DuplicateCode");
         }
 
         return TypedResults.Created($"/api/ledger-accounts/{new LedgerAccountId(account.Id)}", LedgerAccountResponse.From(account));

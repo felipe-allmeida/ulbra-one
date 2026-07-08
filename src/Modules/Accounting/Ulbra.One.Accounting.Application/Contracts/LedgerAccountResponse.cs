@@ -4,10 +4,9 @@ using Ulbra.One.Common.Application.Ids;
 
 namespace Ulbra.One.Accounting.Application.Contracts;
 
-/// <summary>A node in a company's accounting chart of accounts (plano de contas contábil).</summary>
+/// <summary>A node in the global accounting chart of accounts (plano de contas contábil).</summary>
 public sealed record LedgerAccountResponse(
     LedgerAccountId Id,
-    CompanyId CompanyId,
     string Code,
     string Name,
     AccountGroup AccountGroup,
@@ -18,7 +17,6 @@ public sealed record LedgerAccountResponse(
 {
     public static LedgerAccountResponse From(LedgerAccount a) => new(
         new LedgerAccountId(a.Id),
-        new CompanyId(a.CompanyId),
         a.Code,
         a.Name,
         a.AccountGroup,

@@ -363,19 +363,26 @@ public static class DevDataSeeder
             2, 4, 6, 6, 4, 5, 9, 5);
     }
 
-    /// <summary>Seeds the RFB Imunes e Isentas chart of accounts for the company plus a handful of posted
-    /// journal entries so the trial balance, DRE and balance sheet come up populated. Idempotent per company.</summary>
+    /// <summary>Seeds the global RFB Imunes e Isentas chart of accounts (once, shared by all companies) plus
+    /// a handful of posted journal entries for the given company so the trial balance, DRE and balance sheet
+    /// come up populated. Chart seed is idempotent globally; the journal entries are idempotent per company.</summary>
     private static async Task SeedAccountingAsync(AppDbContext db, Guid companyId, TimeProvider time, ILogger logger, CancellationToken ct)
     {
-        if (await db.LedgerAccounts.AnyAsync(a => a.CompanyId == companyId, ct))
+        // Global chart of accounts: seed once when empty.
+        var accounts = await db.LedgerAccounts.OrderBy(a => a.Code).ToListAsync(ct);
+        if (accounts.Count == 0)
         {
-            logger.LogInformation("Dev seed: ledger accounts already present — skipping accounting seed.");
-            return;
+            accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas).ToList();
+            db.LedgerAccounts.AddRange(accounts);
+            await db.SaveChangesAsync(ct);
         }
 
-        var accounts = ChartTemplates.Build(companyId, ChartTemplate.RfbImunesIsentas);
-        db.LedgerAccounts.AddRange(accounts);
-        await db.SaveChangesAsync(ct);
+        // Per-company posted entries: skip when this company already has journal entries.
+        if (await db.JournalEntries.AnyAsync(e => e.CompanyId == companyId, ct))
+        {
+            logger.LogInformation("Dev seed: journal entries already present for company — skipping accounting entries.");
+            return;
+        }
 
         var byCode = accounts.ToDictionary(a => a.Code);
         var now = time.GetUtcNow();
