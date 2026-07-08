@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Domain.Validation;
 using Ulbra.One.Fiscal.Application.Contracts;
 using Ulbra.One.Fiscal.Domain;
 using Ulbra.One.Fiscal.Domain.Entities;
@@ -30,8 +31,8 @@ public sealed class UpdateWithholdingRule : IEndpoint
             return TypedResults.Problem(detail: "A retaining Fixed rule requires a positive rate.",
                 statusCode: 400, title: "WithholdingRule.RateRequired");
 
-        rule.Update(req.TaxType, req.Retains, req.RateSource, req.Rate, req.Lc116Subitem, req.VendorRegime,
-            req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount, req.Reason,
+        rule.Update(req.TaxType, req.Retains, req.RateSource, req.Rate, Lc116.Canonical(req.Lc116Subitem),
+            req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount, req.Reason,
             req.Cprb, req.SimplesAnexo);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(WithholdingRuleResponse.From(rule));

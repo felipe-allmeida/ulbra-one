@@ -67,8 +67,8 @@ public sealed class NfseNacionalXmlParser : IFiscalXmlParser
         var serviceDescription = cServ?.Element(Ns + "xDescServ")?.Value;
         var tribNacCode = cServ?.Element(Ns + "cTribNac")?.Value;
         var nbsCode = cServ?.Element(Ns + "cNBS")?.Value;
-        // LC 116 subitem derived from cTribNac (first 4 digits = item.subitem), in the same canonical "XX.XX"
-        // form the ABRASF parser stores from ItemListaServico — so the withholding rules match either standard.
+        // LC 116 subitem derived from cTribNac (first 4 digits = item.subitem), canonicalized via the shared Lc116
+        // normalizer — the same form the ABRASF parser produces, so the withholding rules match either standard.
         var lc116Subitem = FiscalXml.Lc116FromCTribNac(tribNacCode);
 
         // The national key is 50 digits, prefixed with "NFS" in infNFSe/@Id (vs "NFe"/44 for NF-e).

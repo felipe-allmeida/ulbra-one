@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Domain.Validation;
 using Ulbra.One.Fiscal.Application.Contracts;
 using Ulbra.One.Fiscal.Domain;
 using Ulbra.One.Fiscal.Domain.Entities;
@@ -25,8 +26,8 @@ public sealed class CreateWithholdingRule : IEndpoint
                 statusCode: 400, title: "WithholdingRule.RateRequired");
 
         var rule = new WithholdingRule(req.TaxType, req.Retains, req.RateSource, req.Rate,
-            req.Lc116Subitem, req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount,
-            req.Reason, req.Cprb, req.SimplesAnexo);
+            Lc116.Canonical(req.Lc116Subitem), req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule,
+            req.MinimumAmount, req.Reason, req.Cprb, req.SimplesAnexo);
         await uow.AddAsync(rule, ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/withholding-rules/{new WithholdingRuleId(rule.Id)}", WithholdingRuleResponse.From(rule));
