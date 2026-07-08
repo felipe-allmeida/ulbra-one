@@ -19,6 +19,7 @@ public sealed class WithholdingRuleConfiguration : BaseEntityConfiguration<Withh
         e.Property(x => x.RateSource).HasConversion<string>().HasMaxLength(20);
         e.Property(x => x.BaseRule).HasConversion<string>().HasMaxLength(20);
         e.Property(x => x.Reason).HasConversion<string>().HasMaxLength(40);
+        e.Property(x => x.SimplesAnexo).HasConversion<string>().HasMaxLength(4);
 
         e.Property(x => x.Lc116Subitem).HasMaxLength(10);
         e.Property(x => x.MunicipalityIbge).HasMaxLength(7);

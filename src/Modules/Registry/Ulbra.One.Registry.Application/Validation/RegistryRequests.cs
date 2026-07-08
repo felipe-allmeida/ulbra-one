@@ -17,7 +17,9 @@ public sealed record VendorRequest(
     [property: NormalizeText] string? TradeName, [property: NormalizeText] string Document,
     string? Email, string? Phone, AddressRequest? Address,
     [property: NormalizeText] string? PaymentTerms, BankInfoRequest? BankInfo, TaxRegime TaxRegime,
-    PaymentScheduleMode PaymentScheduleMode = PaymentScheduleMode.OnDueDate, int? PaymentScheduleDay = null);
+    PaymentScheduleMode PaymentScheduleMode = PaymentScheduleMode.OnDueDate, int? PaymentScheduleDay = null,
+    // Indicativos p/ INSS (cadastro sugere; NF confirma): CPRB previsto (Sim/Não/null) + anexo do Simples.
+    bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null);
 
 public sealed record CustomerRequest(
     CompanyId CompanyId, PersonType PersonType, [property: NormalizeText] string Name,

@@ -82,6 +82,9 @@ export type VendorBankInfoValues = z.infer<typeof vendorBankInfoSchema>;
 export const TAX_REGIMES = ['Unknown', 'Mei', 'SimplesNacional', 'LucroPresumido', 'LucroReal'] as const;
 export type TaxRegimeValue = (typeof TAX_REGIMES)[number];
 
+export const SIMPLES_ANEXOS = ['I', 'II', 'III', 'IV', 'V'] as const;
+export type SimplesAnexoValue = (typeof SIMPLES_ANEXOS)[number];
+
 export const PAYMENT_SCHEDULE_MODES = ['OnDueDate', 'FixedDayOfMonth', 'FirstDayOfMonth'] as const;
 export type PaymentScheduleMode = (typeof PAYMENT_SCHEDULE_MODES)[number];
 
@@ -92,6 +95,9 @@ export const vendorSchema = refineDocument(
       paymentTerms: z.string(),
       bankInfo: vendorBankInfoSchema,
       taxRegime: z.enum(TAX_REGIMES),
+      // INSS (indicativos do cadastro): CPRB previsto (Sim/Não/Desconhecido) + anexo do Simples.
+      cprbForeseen: z.boolean().nullable().default(null),
+      simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
       paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
       paymentScheduleDay: z.number().nullable().default(null),
     })
@@ -340,6 +346,40 @@ export const costCenterSchema = z.object({
   unitIds: z.array(z.string()),
 });
 export type CostCenterValues = z.infer<typeof costCenterSchema>;
+
+// ---------- Withholding rule (Regra de Retenção) ----------
+export const WITHHOLDING_TAX_TYPES = ['Irrf', 'Iss', 'Inss', 'Pis', 'Cofins', 'Csll', 'Other'] as const;
+export type WithholdingTaxTypeValue = (typeof WITHHOLDING_TAX_TYPES)[number];
+export const RATE_SOURCES = ['Fixed', 'FromNota'] as const;
+export type RateSourceValue = (typeof RATE_SOURCES)[number];
+export const BASE_RULES = ['Full', 'Reduced'] as const;
+export type BaseRuleValue = (typeof BASE_RULES)[number];
+export const NON_RETENTION_REASONS = ['None', 'RegimeExemption', 'NoMunicipalSubstitution', 'BelowMinimum'] as const;
+export type NonRetentionReasonValue = (typeof NON_RETENTION_REASONS)[number];
+
+export const withholdingRuleSchema = z
+  .object({
+    taxType: z.enum(WITHHOLDING_TAX_TYPES),
+    retains: z.boolean().default(true),
+    reason: z.enum(NON_RETENTION_REASONS).default('None'),
+    rateSource: z.enum(RATE_SOURCES).default('Fixed'),
+    rate: z.string().default(''), // percentual no form (ex.: "11"); convertido para fração no submit
+    baseRule: z.enum(BASE_RULES).default('Full'),
+    minimumAmount: nonNegativeNumberString.default(''),
+    lc116Subitem: z.string().default(''),
+    vendorRegime: z.enum(TAX_REGIMES).nullable().default(null),
+    simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
+    cprb: z.boolean().nullable().default(null),
+    municipalityIbge: z.string().default(''),
+    companyId: z.string().default(''), // '' = todas as empresas (grupo-wide)
+  })
+  .superRefine((v, ctx) => {
+    // Espelha o guard do backend: regra que retém com alíquota fixa exige alíquota positiva.
+    if (v.retains && v.rateSource === 'Fixed' && !(Number(v.rate) > 0)) {
+      ctx.addIssue({ code: 'custom', message: 'validation.rateRequiredForFixed', path: ['rate'] });
+    }
+  });
+export type WithholdingRuleValues = z.infer<typeof withholdingRuleSchema>;
 
 /** Resolves a zod error message (an i18n key) to localized text. */
 export function fieldError(message?: string): string | undefined {

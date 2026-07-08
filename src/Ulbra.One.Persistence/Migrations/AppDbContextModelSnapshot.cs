@@ -1472,6 +1472,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("counterparty_name");
 
+                    b.Property<bool?>("CprbOnInvoice")
+                        .HasColumnType("boolean")
+                        .HasColumnName("cprb_on_invoice");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -2494,6 +2498,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
 
+                    b.Property<bool?>("Cprb")
+                        .HasColumnType("boolean")
+                        .HasColumnName("cprb");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -2543,6 +2551,11 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<bool>("Retains")
                         .HasColumnType("boolean")
                         .HasColumnName("retains");
+
+                    b.Property<string>("SimplesAnexo")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("simples_anexo");
 
                     b.Property<string>("TaxType")
                         .IsRequired()
@@ -2833,6 +2846,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
 
+                    b.Property<bool?>("CprbForeseen")
+                        .HasColumnType("boolean")
+                        .HasColumnName("cprb_foreseen");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -2877,6 +2894,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
+
+                    b.Property<string>("SimplesAnexo")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("simples_anexo");
 
                     b.Property<string>("TaxRegime")
                         .IsRequired()

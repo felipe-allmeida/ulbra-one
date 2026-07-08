@@ -24,6 +24,7 @@ import {
   resolver,
   fieldError,
   TAX_REGIMES,
+  SIMPLES_ANEXOS,
   PAYMENT_SCHEDULE_MODES,
   type VendorValues,
   type CustomerValues,
@@ -270,6 +271,8 @@ export function VendorForm({
         pixKey: initial?.bankInfo?.pixKey ?? prefill?.bankInfo?.pixKey ?? '',
       },
       taxRegime: initial?.taxRegime ?? prefill?.taxRegime ?? 'Unknown',
+      cprbForeseen: initial?.cprbForeseen ?? null,
+      simplesAnexo: initial?.simplesAnexo ?? null,
       paymentScheduleMode: initial?.paymentScheduleMode ?? prefill?.paymentScheduleMode ?? 'OnDueDate',
       paymentScheduleDay: initial?.paymentScheduleDay ?? prefill?.paymentScheduleDay ?? null,
       address: initial ? fromAddress(initial.address ?? null) : (prefill?.address ?? { ...emptyAddress }),
@@ -290,6 +293,7 @@ export function VendorForm({
   const personType = watch('personType');
   const isPj = personType === PersonType.Company;
   const paymentScheduleMode = watch('paymentScheduleMode');
+  const taxRegime = watch('taxRegime');
 
   const onCnpjBlur = async () => {
     const document = getValues('document');
@@ -342,6 +346,9 @@ export function VendorForm({
             }
           : null,
         taxRegime: v.taxRegime,
+        cprbForeseen: v.cprbForeseen,
+        // Anexo só faz sentido para Simples — zera se o regime não for Simples.
+        simplesAnexo: v.taxRegime === 'SimplesNacional' ? v.simplesAnexo : null,
         paymentScheduleMode: v.paymentScheduleMode,
         paymentScheduleDay: v.paymentScheduleMode === 'FixedDayOfMonth' ? v.paymentScheduleDay : null,
       },
@@ -455,6 +462,45 @@ export function VendorForm({
             )}
           />
         </Field>
+        <Field label={t('registry.vendor.cprbForeseen')}>
+          <Controller
+            control={control}
+            name='cprbForeseen'
+            render={({ field }) => (
+              <Select
+                value={field.value == null ? '' : String(field.value)}
+                onChange={(e) => field.onChange(e.target.value === '' ? null : e.target.value === 'true')}
+              >
+                <option value=''>{t('registry.vendor.cprbUnknown')}</option>
+                <option value='true'>{t('registry.vendor.cprbYes')}</option>
+                <option value='false'>{t('registry.vendor.cprbNo')}</option>
+              </Select>
+            )}
+          />
+        </Field>
+        {taxRegime === 'SimplesNacional' && (
+          <Field label={t('registry.vendor.simplesAnexo')}>
+            <Controller
+              control={control}
+              name='simplesAnexo'
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? ''}
+                  onChange={(e) =>
+                    field.onChange(e.target.value === '' ? null : (e.target.value as (typeof SIMPLES_ANEXOS)[number]))
+                  }
+                >
+                  <option value=''>{t('registry.vendor.simplesAnexoNone')}</option>
+                  {SIMPLES_ANEXOS.map((a) => (
+                    <option key={a} value={a}>
+                      Anexo {a}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
+          </Field>
+        )}
       </div>
 
       <div className='form-section'>{t('registry.vendor.bankSection')}</div>

@@ -1590,8 +1590,14 @@ tfoot td {
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr) (not 1fr = minmax(auto, 1fr)) so a wide <select>'s min-content can't force the
+     column past the drawer width and spill sideways. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
+}
+/* Let each field shrink below its content's intrinsic width inside the (narrow) drawer. */
+.form-grid > * {
+  min-width: 0;
 }
 .form-grid .span-2 {
   grid-column: 1 / -1;

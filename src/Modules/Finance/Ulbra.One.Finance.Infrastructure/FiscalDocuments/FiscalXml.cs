@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Linq;
+using Ulbra.One.Common.Domain.Validation;
 
 namespace Ulbra.One.Finance.Infrastructure.FiscalDocuments;
 
@@ -22,16 +23,16 @@ internal static class FiscalXml
     public static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     /// <summary>
-    /// Derives the LC 116 subitem in the canonical ABRASF form "XX.XX" from the NFS-e national-standard
-    /// <c>cTribNac</c> (Código de Tributação Nacional). The code is 6 numeric digits — item (2) + subitem (2)
-    /// + national breakdown (2); the first four are the LC 116 item.subitem, and the trailing breakdown has no
-    /// LC 116 counterpart, so it is dropped. Returns null for a malformed code (not exactly 6 digits) —
-    /// best-effort: never fabricate a subitem the rules would match against.
+    /// Derives the canonical LC 116 subitem from the NFS-e national-standard <c>cTribNac</c> (Código de Tributação
+    /// Nacional): 6 numeric digits = item (2) + subitem (2) + desdobro nacional (2). Only the first four (item +
+    /// subitem) map to LC 116; canonicalization (dropping the item's leading zero — "010701" → "1.07") is delegated
+    /// to <see cref="Lc116.Canonical"/>, the single choke-point shared with the ABRASF parser and the rule editor.
+    /// Returns null for a malformed code (not exactly 6 digits).
     /// </summary>
     public static string? Lc116FromCTribNac(string? cTribNac)
     {
         var value = cTribNac?.Trim();
         if (value is null || value.Length != 6 || !value.All(char.IsAsciiDigit)) return null;
-        return $"{value[..2]}.{value[2..4]}";
+        return Lc116.Canonical(value[..4]);
     }
 }
