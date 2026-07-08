@@ -532,6 +532,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/{id}/accounting/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CompletePayableAccounting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payables/{id}/accounting-view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPayableAccountingView"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payables/{id}/reject": {
         parameters: {
             query?: never;
@@ -2491,6 +2523,27 @@ export interface components {
             /** Format: double */
             amount: number;
         };
+        PayableAccountingViewResponse: {
+            /** @example payable_3fa85f64571742199730000000000000 */
+            id: string;
+            status: components["schemas"]["PayableStatus"];
+            counterpartyName: string;
+            documentNumber: string | null;
+            /** Format: double */
+            totalAmount: number;
+            /** Format: double */
+            totalWithheld: number;
+            /** Format: double */
+            netTotal: number;
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            accountingAccountId: string | null;
+            accountingAccountCode: string | null;
+            accountingAccountName: string | null;
+            withholdings: components["schemas"]["PayableWithholdingResponse"][];
+            vendor: components["schemas"]["PayableVendorTaxBlock"];
+            fiscalDocument: components["schemas"]["FiscalDocumentResponse"];
+            hasFiscalDocument: boolean;
+        };
         PayableAttachmentResponse: {
             /** @example attachment_3fa85f64571742199730000000000000 */
             id: string;
@@ -2614,6 +2667,7 @@ export interface components {
             /** Format: double */
             totalAmount: number;
             status: components["schemas"]["PayableStatus"];
+            hasFiscalDocument: boolean;
         };
         PayableStageItemResponsePaginatedResponse: {
             items: components["schemas"]["PayableStageItemResponse"][];
@@ -2630,13 +2684,23 @@ export interface components {
             entry: components["schemas"]["StageBucket"];
             classification: components["schemas"]["StageBucket"];
             approval: components["schemas"]["StageBucket"];
+            accounting: components["schemas"]["StageBucket"];
             payment: components["schemas"]["StageBucket"];
             reconciled: components["schemas"]["StageBucket"];
         };
         /** @enum {string} */
-        PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
+        PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "PendingAccounting" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
         /** @enum {string} */
         PayableType: "Service" | "Product";
+        PayableVendorTaxBlock: {
+            personType: components["schemas"]["PersonType"];
+            name: string;
+            tradeName: string | null;
+            document: string;
+            email: string | null;
+            phone: string | null;
+            taxRegime: components["schemas"]["TaxRegime"];
+        };
         PayableWithholdingResponse: {
             /** @example withholding_3fa85f64571742199730000000000000 */
             id: string;
@@ -4995,6 +5059,86 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CompletePayableAccounting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetPayableAccountingView: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayableAccountingViewResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
