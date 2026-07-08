@@ -21,7 +21,7 @@ namespace Ulbra.One.Persistence.Migrations
                 UPDATE accounting.ledger_accounts AS child
                 SET parent_id = ps.keep_id
                 FROM accounting.ledger_accounts AS oldp
-                JOIN (SELECT code, MIN(id) AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL GROUP BY code) AS ps
+                JOIN (SELECT DISTINCT ON (code) code, id AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL ORDER BY code, id) AS ps
                   ON ps.code = oldp.code
                 WHERE child.parent_id = oldp.id AND child.parent_id <> ps.keep_id;");
 
@@ -30,14 +30,14 @@ namespace Ulbra.One.Persistence.Migrations
                 UPDATE accounting.journal_lines AS jl
                 SET ledger_account_id = s.keep_id
                 FROM accounting.ledger_accounts AS la
-                JOIN (SELECT code, MIN(id) AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL GROUP BY code) AS s
+                JOIN (SELECT DISTINCT ON (code) code, id AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL ORDER BY code, id) AS s
                   ON s.code = la.code
                 WHERE jl.ledger_account_id = la.id AND jl.ledger_account_id <> s.keep_id;");
 
             // 1c) Delete the non-surviving duplicates.
             migrationBuilder.Sql(@"
                 DELETE FROM accounting.ledger_accounts AS la
-                USING (SELECT code, MIN(id) AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL GROUP BY code) AS s
+                USING (SELECT DISTINCT ON (code) code, id AS keep_id FROM accounting.ledger_accounts WHERE deleted_at IS NULL ORDER BY code, id) AS s
                 WHERE la.code = s.code AND la.id <> s.keep_id;");
 
             // 2) Repoint payable classification: accounting_account_id / suggested_accounting_account_id hold
