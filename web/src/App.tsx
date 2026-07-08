@@ -11,6 +11,7 @@ import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
 import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
+import { RegrasRetencaoPage } from './pages/regras-retencao';
 import { BankAccountsPage } from './pages/bank-accounts';
 import { ContabilPlanoPage } from './pages/contabil-plano';
 import { ContabilLancamentosPage } from './pages/contabil-lancamentos';
@@ -57,6 +58,7 @@ export default function App() {
         <Route path='receivables/:id' element={<ReceivableDetailPage />} />
         <Route path='receivables/:id/edit' element={<EditReceivablePage />} />
         <Route path='expense-categories' element={<ExpenseCategoriesPage />} />
+        <Route path='retention-rules' element={<RegrasRetencaoPage />} />
         <Route path='bank-accounts' element={<BankAccountsPage />} />
         <Route path='remittances' element={<RemessasPage />} />
         <Route path='accounting/chart-of-accounts' element={<ContabilPlanoPage />} />

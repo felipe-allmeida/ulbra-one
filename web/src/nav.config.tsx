@@ -163,6 +163,7 @@ export const NAV_DOMAINS: NavDomain[] = [
           { labelKey: 'nav.customers', to: '/app/customers', icon: <UserSquare /> },
           { labelKey: 'nav.employees', to: '/app/employees', icon: <Contact /> },
           { labelKey: 'nav.expenseCategories', to: '/app/expense-categories', icon: <Tag /> },
+          { labelKey: 'nav.retentionRules', to: '/app/retention-rules', icon: <Percent /> },
           { labelKey: 'nav.bankAccounts', to: '/app/bank-accounts', icon: <Landmark /> },
         ],
       },
