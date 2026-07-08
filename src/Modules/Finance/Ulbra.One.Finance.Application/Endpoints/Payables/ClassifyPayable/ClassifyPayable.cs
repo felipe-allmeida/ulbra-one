@@ -1,4 +1,3 @@
-using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -9,7 +8,6 @@ using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
-using Ulbra.One.Finance.Application.Messaging;
 using Ulbra.One.Finance.Application.Withholdings;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
@@ -26,7 +24,7 @@ public sealed class ClassifyPayable : IEndpoint
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, IAutoWithholdingService autoWithholding, CancellationToken ct)
+        IUnitOfWork uow, TimeProvider clock, IAutoWithholdingService autoWithholding, CancellationToken ct)
     {
         var payable = await uow.Set<Payable>().FirstOrDefaultAsync(p => p.Id == id.Value, ct);
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
@@ -43,12 +41,6 @@ public sealed class ClassifyPayable : IEndpoint
         payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
         if (payable.Status is PayableStatus.Received or PayableStatus.PendingClassification)
             payable.MarkPendingApproval();
-
-        if (payable.Status == PayableStatus.Scheduled)
-        {
-            var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, payable.AccountingAccountId, withholdings), ct);
-        }
 
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(payable));
