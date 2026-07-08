@@ -85,6 +85,7 @@ public class RemittanceEndpointTests(PostgresFixture fixture)
         var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payablePrefixedId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payablePrefixedId); // → Scheduled
 
         return new SeedResult(companyPrefixedId, companyId, bankAccountPrefixedId, bankAccount.Id);
     }

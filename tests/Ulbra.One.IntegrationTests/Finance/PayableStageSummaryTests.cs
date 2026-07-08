@@ -18,9 +18,9 @@ public class PayableStageSummaryTests(PostgresFixture fixture)
         var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
 
         // Two payables left in the default 'Received' stage (Entry); one approved -> Scheduled (Payment).
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(10), 200m, approve: false);
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(10), 50m, approve: true);
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 200m, approve: false);
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 50m, approve: true);
 
         var res = await client.GetAsync($"/api/payables/stage-summary?companyId={companyId}");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);

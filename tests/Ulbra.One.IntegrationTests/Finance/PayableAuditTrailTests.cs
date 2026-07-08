@@ -22,7 +22,7 @@ public class PayableAuditTrailTests(PostgresFixture fixture)
         var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
 
         // Create payable without approving yet — we need to classify first.
-        var payableId = await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
+        var payableId = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
 
         // Classify (requires valid ChartAccounts of the right type).
         var accId = await FinanceSeed.CreateAccountingAccountAsync(client);

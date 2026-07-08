@@ -82,9 +82,10 @@ public class RemittanceSweepEndpointTests(PostgresFixture fixture)
         var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
         var payableId = ParseGuid(payablePrefixedId);
 
-        // Approve → Scheduled
+        // Approve (→ PendingAccounting) then complete accounting (NF + confirm) → Scheduled
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payablePrefixedId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payablePrefixedId); // → Scheduled
 
         return new SweepEndpointSeed(companyId, bankAccount.Id, payableId);
     }

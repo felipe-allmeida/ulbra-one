@@ -69,7 +69,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
     }
 
     /// <summary>Creates a single-installment payable of the given amount and (optionally) approves it.</summary>
-    private static async Task<string> CreatePayableAsync(HttpClient client, Seed seed, decimal amount, bool approve = true)
+    private static async Task<string> CreatePayableAsync(ApiFactory factory, HttpClient client, Seed seed, decimal amount, bool approve = true)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -87,6 +87,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         {
             var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
             approveRes.EnsureSuccessStatusCode();
+            await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
         }
         return payableId;
     }
@@ -109,7 +110,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -136,7 +137,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -161,7 +162,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client, autoApprovalLimit: 1000m);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
         // Above the auto-approval limit → stays PendingApproval (not approved).
-        var payableId = await CreatePayableAsync(client, seed, 9000m, approve: false);
+        var payableId = await CreatePayableAsync(factory, client, seed, 9000m, approve: false);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -183,7 +184,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
         var otherSeed = await SeedAsync(client);
         var otherBankId = await CreateBankAccountAsync(client, otherSeed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -204,7 +205,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -225,7 +226,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
 
         var nonExistentInstallmentId = $"installment_{Guid.NewGuid():N}";
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{nonExistentInstallmentId}/payments", new
@@ -246,7 +247,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var first = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -280,7 +281,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var payRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -311,7 +312,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var payRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -337,7 +338,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/payments/payment_{Guid.NewGuid():N}/reverse", new { reason = "x" });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
@@ -380,7 +381,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
         var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
 
@@ -398,7 +399,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
         var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
 
@@ -422,7 +423,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
 
         using var content = FileContent(ValidPdf(), "comprovante.pdf", "application/pdf");
         var res = await client.PostAsync($"/api/payables/{payableId}/payments/payment_{Guid.NewGuid():N}/proof", content);
@@ -437,7 +438,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
         var paymentId = await RegisterPaymentAsync(client, payableId, installmentId, bankId, 1500m);
 
@@ -512,6 +513,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var payableId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
 
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
@@ -550,7 +552,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
+        var payableId = await CreatePayableAsync(factory, client, seed, 1500m);
         var (_, installmentId) = await FirstInstallmentAsync(client, payableId);
 
         var payRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
@@ -604,6 +606,7 @@ public class PaymentEndpointsTests(PostgresFixture fixture)
             (WithholdingTaxType.Irrf, BaseAmount: grossAmount, Rate: null, Amount: withholdingAmount)
         ]);
         payable.Approve("test-user", clock.GetUtcNow());
+        payable.CompleteAccounting("test-user", clock.GetUtcNow(), hasFiscalDocument: true); // → Scheduled
 
         await uow.AddAsync(payable, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);

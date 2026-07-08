@@ -107,6 +107,7 @@ public class ListPayablesRailTests(PostgresFixture fixture)
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
         (await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { })).EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
 
         var listRes = await client.GetAsync($"/api/payables?companyId={companyId}&status=Scheduled");
         Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
@@ -138,6 +139,7 @@ public class ListPayablesRailTests(PostgresFixture fixture)
         createRes.EnsureSuccessStatusCode();
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
         (await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { })).EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
 
         var listRes = await client.GetAsync($"/api/payables?companyId={companyId}&status=Scheduled");
         Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);

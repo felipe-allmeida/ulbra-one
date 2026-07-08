@@ -131,6 +131,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
         var payableAPrefixedId = (await ReadJson(payableARes)).GetProperty("id").GetString()!;
         var approveARes = await client.PostAsJsonAsync($"/api/payables/{payableAPrefixedId}/approve", new { });
         approveARes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableAPrefixedId); // → Scheduled
         var payableAId = Guid.Parse(payableAPrefixedId[(payableAPrefixedId.LastIndexOf('_') + 1)..]);
 
         // 8. Payable B — Vendor B (PIX), Scheduled with Open installment due in the past.
@@ -149,6 +150,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
         var payableBPrefixedId = (await ReadJson(payableBRes)).GetProperty("id").GetString()!;
         var approveBRes = await client.PostAsJsonAsync($"/api/payables/{payableBPrefixedId}/approve", new { });
         approveBRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableBPrefixedId); // → Scheduled
         var payableBId = Guid.Parse(payableBPrefixedId[(payableBPrefixedId.LastIndexOf('_') + 1)..]);
 
         // 9. Payable C — Vendor C (no bank data), Scheduled. Should be skipped.
@@ -165,6 +167,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
         var payableCPrefixedId = (await ReadJson(payableCRes)).GetProperty("id").GetString()!;
         var approveCRes = await client.PostAsJsonAsync($"/api/payables/{payableCPrefixedId}/approve", new { });
         approveCRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableCPrefixedId); // → Scheduled
         var payableCId = Guid.Parse(payableCPrefixedId[(payableCPrefixedId.LastIndexOf('_') + 1)..]);
 
         return new SeedResult(companyId, bankAccount.Id, vendorAId, vendorBId, vendorCId,
@@ -425,6 +428,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
         var payablePrefixedId = (await ReadJson(payableRes)).GetProperty("id").GetString()!;
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payablePrefixedId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payablePrefixedId); // → Scheduled
         var payableId = Guid.Parse(payablePrefixedId[(payablePrefixedId.LastIndexOf('_') + 1)..]);
 
         await using var scope = factory.Services.CreateAsyncScope();

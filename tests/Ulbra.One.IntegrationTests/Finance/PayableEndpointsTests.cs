@@ -260,7 +260,8 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         Assert.Equal(HttpStatusCode.OK, approveRes.StatusCode);
         var body = await ReadJson(approveRes);
-        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
+        // Approval now routes to the accounting stage, not straight to Scheduled.
+        Assert.Equal("PendingAccounting", body.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -288,7 +289,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var getRes = await client.GetAsync($"/api/payables/{payableId}");
         Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
         var body = await ReadJson(getRes);
-        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
+        Assert.Equal("PendingAccounting", body.GetProperty("status").GetString());
         Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("approvedBy").GetString()));
         Assert.NotEqual(default, body.GetProperty("approvedAt").GetDateTimeOffset());
         Assert.Equal(JsonValueKind.Null, body.GetProperty("rejectedBy").ValueKind);
