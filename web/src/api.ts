@@ -69,7 +69,10 @@ type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & 
 export type SimplesAnexoValue = 'I' | 'II' | 'III' | 'IV' | 'V';
 // INSS fields the backend already returns/accepts, but the committed openapi.json is stale — hand-augment until
 // the spec is refreshed (a separate chore). Optional on the response for back-compat with existing fixtures.
-type VendorInssFields = { cprbForeseen: boolean | null; simplesAnexo: SimplesAnexoValue | null };
+interface VendorInssFields {
+  cprbForeseen: boolean | null;
+  simplesAnexo: SimplesAnexoValue | null;
+}
 export type Vendor = WithNullableAddress<Schemas['VendorResponse']> & Partial<VendorInssFields>;
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
