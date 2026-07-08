@@ -51,7 +51,7 @@ vi.mock('../queries', async (orig) => {
     useVendors: () => ({ data: { items: [] }, isLoading: false }),
     useCostCenters: () => ({ data: [] }),
     useExpenseCategories: () => ({ data: [] }),
-    useChartAccounts: () => ({ data: [] }),
+    useLedgerAccounts: () => ({ data: [] }),
     useCreatePayable: noopMut,
     useUpdatePayable: noopMut,
     useUploadPayableAttachment: noopMut,

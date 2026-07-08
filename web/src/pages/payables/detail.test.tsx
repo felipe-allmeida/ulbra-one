@@ -17,7 +17,7 @@ vi.mock('../../queries', () => ({
   useDeletePayableAttachment: () => ({ mutate: vi.fn() }),
   useCostCenters: () => ({ data: [] }),
   useExpenseCategories: () => ({ data: [] }),
-  useChartAccounts: () => ({ data: [] }),
+  useLedgerAccounts: () => ({ data: [] }),
 }));
 
 import { PayableDetailPage } from './detail';

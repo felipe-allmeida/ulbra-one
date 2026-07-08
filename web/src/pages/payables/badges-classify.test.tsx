@@ -147,7 +147,7 @@ const payableWithSuggestion = {
   rejectedAt: null,
   accountingAccountId: null,
   isClassified: false,
-  suggestedAccountingAccountId: 'acc_1',
+  suggestedAccountingAccountId: 'ledgacct_1',
   classificationConfidence: 0.75,
   classificationRationale: 'Baseado em histórico de lançamentos similares.',
   createdAt: '2025-06-01T00:00:00Z',
