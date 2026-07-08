@@ -65,15 +65,14 @@ export type Address = Schemas['AddressResponse'];
 // The DTOs declare `AddressResponse? Address` (nullable), but Swashbuckle can't express the nullability
 // of a nested complex member, so it emits `address` as non-null. Restore the honest `Address | null`.
 type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
-/** LC123 Simples annex. Mirrors the backend `SimplesAnexo` enum. */
-export type SimplesAnexoValue = 'I' | 'II' | 'III' | 'IV' | 'V';
-// INSS fields the backend already returns/accepts, but the committed openapi.json is stale — hand-augment until
-// the spec is refreshed (a separate chore). Optional on the response for back-compat with existing fixtures.
-interface VendorInssFields {
-  cprbForeseen: boolean | null;
+/** LC123 Simples annex (serialised as string). */
+export type SimplesAnexoValue = Schemas['SimplesAnexo'];
+// `simplesAnexo` is a nullable enum on the backend (`SimplesAnexo?`); Swashbuckle can't express nullable enums, so
+// the generated type is non-null — restore the honest nullability. `cprbForeseen` (a nullable bool) generates
+// correctly and flows through untouched.
+export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
   simplesAnexo: SimplesAnexoValue | null;
-}
-export type Vendor = WithNullableAddress<Schemas['VendorResponse']> & Partial<VendorInssFields>;
+};
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
@@ -100,9 +99,11 @@ export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
 // ---------- Payables (Contas a Pagar) ----------
-// `type` (Service/Product — drives the withholding) isn't in the generated OpenAPI schema yet;
-// augment it until the next `pnpm gen:api`. The value already comes in the JSON at runtime.
-export type Payable = Schemas['PayableResponse'] & { type?: 'Service' | 'Product' | null };
+/** Payable type (Service/Product — drives the withholding). */
+export type PayableType = Schemas['PayableType'];
+// `type` is a nullable enum on the backend (`PayableType?`); Swashbuckle emits it non-null (nullable-enum quirk),
+// so restore the honest nullability. Kept optional for back-compat with existing test fixtures.
+export type Payable = Omit<Schemas['PayableResponse'], 'type'> & { type?: PayableType | null };
 export type PayableListItem = Schemas['PayableListItemResponse'];
 export type Installment = Schemas['InstallmentResponse'];
 export type PayableAttachment = Schemas['PayableAttachmentResponse'];
@@ -120,11 +121,10 @@ export type WithholdingTaxType = Schemas['WithholdingTaxType'];
 export type PayableWithholding = Schemas['PayableWithholdingResponse'];
 
 // ---------- Withholding rules (Regras de Retenção) ----------
-// The generated WithholdingRuleRequest/Response omit cprb/simplesAnexo and emit vendorRegime as non-null
-// (Swashbuckle can't express nullable enums). Hand-augment both until the next `pnpm gen:api`.
-export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime'> & {
+// `vendorRegime` / `simplesAnexo` are nullable enums on the backend; Swashbuckle emits them non-null (nullable-enum
+// quirk), so restore the honest nullability. `cprb` (a nullable bool) generates correctly and flows through.
+export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime' | 'simplesAnexo'> & {
   vendorRegime: TaxRegime | null;
-  cprb: boolean | null;
   simplesAnexo: SimplesAnexoValue | null;
 };
 export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
@@ -507,7 +507,7 @@ export interface BankInfoInput {
 export type VendorInput = Omit<Vendor, 'id' | 'active' | 'bankInfo' | 'taxRegime'> & {
   bankInfo: BankInfoInput | null;
   taxRegime: TaxRegime;
-} & VendorInssFields;
+};
 export type CustomerInput = Omit<Customer, 'id' | 'active'>;
 export type EmployeeInput = Omit<Employee, 'id' | 'active'>;
 
