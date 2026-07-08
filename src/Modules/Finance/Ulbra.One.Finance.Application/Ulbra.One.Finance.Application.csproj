@@ -8,6 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
+    <!-- Read-only: classification reads the global chart of accounts (LedgerAccount) via uow.ReadSet<T>(). -->
+    <ProjectReference Include="../../Accounting/Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
     <ProjectReference Include="../../Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
     <ProjectReference Include="../../Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
   </ItemGroup>

@@ -15,7 +15,7 @@ import {
 import { useApp } from '../../store';
 import {
   useBankAccounts,
-  useChartAccounts,
+  useLedgerAccounts,
   useCreatePayable,
   usePayable,
   useUpdatePayable,
@@ -38,7 +38,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const { t } = useTranslation();
   const { centros } = useNames(empresaId);
   const accountingAccounts =
-    useChartAccounts({ chartType: 'Accounting', kind: 'Analytical', activeOnly: true }).data ?? [];
+    useLedgerAccounts({ kind: 'Analytical', activeOnly: true }).data ?? [];
   const accountItems = (accs: typeof accountingAccounts) =>
     [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const bankAccountsList = useBankAccounts(empresaId, false).data ?? [];

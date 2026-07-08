@@ -12,7 +12,6 @@ import { EstruturaPage } from './pages/estrutura';
 import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { BankAccountsPage } from './pages/bank-accounts';
-import { PlanoDeContasPage } from './pages/plano-de-contas';
 import { ContabilPlanoPage } from './pages/contabil-plano';
 import { ContabilLancamentosPage } from './pages/contabil-lancamentos';
 import { ContabilBalancetePage } from './pages/contabil-balancete';
@@ -59,7 +58,6 @@ export default function App() {
         <Route path='expense-categories' element={<ExpenseCategoriesPage />} />
         <Route path='bank-accounts' element={<BankAccountsPage />} />
         <Route path='remittances' element={<RemessasPage />} />
-        <Route path='chart-of-accounts' element={<PlanoDeContasPage />} />
         <Route path='accounting/chart-of-accounts' element={<ContabilPlanoPage />} />
         <Route path='accounting/journal-entries' element={<ContabilLancamentosPage />} />
         <Route path='accounting/trial-balance' element={<ContabilBalancetePage />} />

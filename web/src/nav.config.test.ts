@@ -10,9 +10,10 @@ describe('itemForPath', () => {
     expect(itemForPath('/app/payables/123/edit')?.labelKey).toBe('nav.accountsPayable');
   });
 
-  it('disambiguates finance vs accounting "chart of accounts"', () => {
-    expect(itemForPath('/app/chart-of-accounts')?.labelKey).toBe('nav.chartAccounts');
+  it('resolves the single global chart of accounts under accounting (AEL-684)', () => {
     expect(itemForPath('/app/accounting/chart-of-accounts')?.labelKey).toBe('nav.ledgerAccounts');
+    // The old Finance chart-of-accounts route was removed when ChartAccount was consolidated.
+    expect(itemForPath('/app/chart-of-accounts')).toBeNull();
   });
 
   it('returns null for an unknown route', () => {

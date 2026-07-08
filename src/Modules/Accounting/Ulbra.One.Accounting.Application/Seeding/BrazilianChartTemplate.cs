@@ -52,18 +52,18 @@ public static class BrazilianChartTemplate
         ]),
     ];
 
-    /// <summary>Materializes the template into ledger accounts for a company. Returns roots followed by
+    /// <summary>Materializes the template into ledger accounts (global). Returns roots followed by
     /// their children (parent ids wired). The caller persists and audits them.</summary>
-    public static IReadOnlyList<LedgerAccount> Build(Guid companyId)
+    public static IReadOnlyList<LedgerAccount> Build()
     {
         var accounts = new List<LedgerAccount>();
         foreach (var root in Roots)
         {
-            var rootAccount = new LedgerAccount(companyId, root.Code, root.Name, root.Group, LedgerAccountKind.Synthetic);
+            var rootAccount = new LedgerAccount(root.Code, root.Name, root.Group, LedgerAccountKind.Synthetic);
             accounts.Add(rootAccount);
             foreach (var leaf in root.Children)
             {
-                var child = new LedgerAccount(companyId, leaf.Code, leaf.Name, root.Group, LedgerAccountKind.Analytical);
+                var child = new LedgerAccount(leaf.Code, leaf.Name, root.Group, LedgerAccountKind.Analytical);
                 child.Reparent(rootAccount);
                 accounts.Add(child);
             }

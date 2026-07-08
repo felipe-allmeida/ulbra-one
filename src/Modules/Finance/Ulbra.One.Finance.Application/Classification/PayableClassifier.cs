@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Accounting.Domain;
+using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application.Ai;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
-using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
 namespace Ulbra.One.Finance.Application.Classification;
@@ -13,10 +14,9 @@ public sealed class PayableClassifier(IAiCompletion ai, IUnitOfWork uow) : IPaya
 
     public async Task<PayableClassificationResult> ClassifyAsync(Payable payable, CancellationToken ct)
     {
-        // Analytical accounting accounts (chart of accounts is global reference data).
-        var accounts = await uow.ReadSet<ChartAccount>()
-            .Where(c => c.Kind == AccountKind.Analytical && c.IsActive && c.DeletedAt == null
-                        && c.ChartType == ChartType.Accounting)
+        // Analytical ledger accounts (the chart of accounts is global reference data).
+        var accounts = await uow.ReadSet<LedgerAccount>()
+            .Where(c => c.Kind == LedgerAccountKind.Analytical && c.IsActive && c.DeletedAt == null)
             .ToListAsync(ct);
 
         var fiscalDoc = await uow.ReadSet<FiscalDocument>()
@@ -31,7 +31,7 @@ public sealed class PayableClassifier(IAiCompletion ai, IUnitOfWork uow) : IPaya
         var aiResult = await ai.CompleteAsync<PayableClassificationSuggestion>(prompt, ct: ct);
         if (aiResult.IsSuccess && aiResult.Value.Confidence >= SuggestThreshold)
         {
-            var catalog = accounts.Select(c => new AiChartAccountRef(c.Id, c.Code)).ToList();
+            var catalog = accounts.Select(c => new AiAccountRef(c.Id, c.Code)).ToList();
             var acc = AiClassificationResolver.Resolve(aiResult.Value, catalog);
             if (acc is not null)
                 return new PayableClassificationResult(acc, aiResult.Value.Confidence, aiResult.Value.Rationale, "ai");

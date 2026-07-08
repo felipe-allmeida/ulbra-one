@@ -38,11 +38,8 @@ public sealed class ApprovePayable : IEndpoint
         catch (InvalidOperationException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 409, title: "Payable.InvalidState"); }
         if (p.Status == PayableStatus.Scheduled)
         {
-            var code = p.AccountingAccountId is { } acc
-                ? await uow.ReadSet<ChartAccount>().Where(c => c.Id == acc).Select(c => c.Code).FirstOrDefaultAsync(ct)
-                : null;
             var withholdings = p.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-            await publish.Publish(new PayableScheduled(p.Id, p.CompanyId, p.TotalAmount, code, withholdings), ct);
+            await publish.Publish(new PayableScheduled(p.Id, p.CompanyId, p.TotalAmount, p.AccountingAccountId, withholdings), ct);
         }
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));

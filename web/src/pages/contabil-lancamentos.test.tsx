@@ -9,7 +9,6 @@ import type { LedgerAccount } from '../api';
 const accounts: LedgerAccount[] = [
   {
     id: 'a1',
-    companyId: 'c1',
     code: '1.01.01',
     name: 'Caixa',
     accountGroup: 'Asset',
@@ -20,7 +19,6 @@ const accounts: LedgerAccount[] = [
   },
   {
     id: 'a2',
-    companyId: 'c1',
     code: '4.01.01',
     name: 'Receita de serviços',
     accountGroup: 'Revenue',

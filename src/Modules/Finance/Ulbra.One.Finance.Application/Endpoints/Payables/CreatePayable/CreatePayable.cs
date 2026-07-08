@@ -35,7 +35,7 @@ public sealed class CreatePayable : IEndpoint
         public DateOnly? IssueDate { get; set; }
         public List<InstallmentInput>? Installments { get; set; }
         public GenerateInput? Generate { get; set; }
-        public ChartAccountId? AccountingAccountId { get; set; }
+        public LedgerAccountId? AccountingAccountId { get; set; }
         public BankAccountId? PaymentBankAccountId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
         // Optional type for a manual payable (no fiscal document): Service = subject to source withholding.

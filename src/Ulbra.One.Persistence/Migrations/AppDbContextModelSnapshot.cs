@@ -410,10 +410,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("code");
 
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("company_id");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -463,16 +459,13 @@ namespace Ulbra.One.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_ledger_accounts");
 
-                    b.HasIndex("CompanyId")
-                        .HasDatabaseName("ix_ledger_accounts_company_id");
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ledger_accounts_code")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_ledger_accounts_parent_id");
-
-                    b.HasIndex("CompanyId", "Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_ledger_accounts_company_id_code")
-                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("ledger_accounts", "accounting");
                 });
@@ -1083,80 +1076,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasDatabaseName("ix_bank_transactions_company_id_match_status");
 
                     b.ToTable("bank_transactions", "finance");
-                });
-
-            modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ChartAccount", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("ChartType")
-                        .HasColumnType("integer")
-                        .HasColumnName("chart_type");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer")
-                        .HasColumnName("kind");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<int?>("Nature")
-                        .HasColumnType("integer")
-                        .HasColumnName("nature");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("parent_id");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_chart_accounts");
-
-                    b.HasIndex("ChartType", "Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_chart_accounts_chart_type_code")
-                        .HasFilter("deleted_at IS NULL");
-
-                    b.ToTable("chart_accounts", "finance");
                 });
 
             modelBuilder.Entity("Ulbra.One.Finance.Domain.Entities.ClassificationPolicy", b =>

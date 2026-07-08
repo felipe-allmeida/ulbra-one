@@ -47,6 +47,9 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         return companyId;
     }
 
+    private static async Task<Guid> AccountIdAsync(IUnitOfWork uow, string code) =>
+        (await uow.ReadSet<LedgerAccount>().FirstAsync(a => a.Code == code)).Id;
+
     /// <summary>
     /// Case 1 — Split: gross 1000, IRRF 150 → 3-line entry:
     ///   Dr 4.02.02.01.05 = 1000 (expense, gross)
@@ -68,7 +71,8 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
 
         var withholdings = new List<(string TaxType, decimal Amount)> { ("Irrf", 150m) };
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, ExpenseCode, withholdings, CancellationToken.None);
+        var expenseId = await AccountIdAsync(uow, ExpenseCode);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No pending posting.
@@ -85,8 +89,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
 
         // Resolve account ids by code for assertion.
         var accountIds = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (
-                a.Code == ExpenseCode || a.Code == LiabilityCode || a.Code == IrrfCode))
+            .Where(a => a.Code == ExpenseCode || a.Code == LiabilityCode || a.Code == IrrfCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         Assert.Equal(3, entry.Lines.Count);
@@ -124,7 +127,8 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         // "Other" is intentionally NOT in WithholdingCodes → unresolvable.
         var withholdings = new List<(string TaxType, decimal Amount)> { ("Other", 50m) };
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, ExpenseCode, withholdings, CancellationToken.None);
+        var expenseId = await AccountIdAsync(uow, ExpenseCode);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No journal entry.
@@ -157,7 +161,8 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, ExpenseCode, [], CancellationToken.None);
+        var expenseId = await AccountIdAsync(uow, ExpenseCode);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var entry = await uow.ReadSet<JournalEntry>()
@@ -168,7 +173,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         Assert.Equal(2, entry.Lines.Count);
 
         var accountIds = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == ExpenseCode || a.Code == LiabilityCode))
+            .Where(a => a.Code == ExpenseCode || a.Code == LiabilityCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var drLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Debit);

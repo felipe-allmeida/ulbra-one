@@ -2,14 +2,13 @@ using Ulbra.One.Common.Domain.Auditing;
 
 namespace Ulbra.One.Accounting.Domain.Entities;
 
-/// <summary>A node in a company's double-entry chart of accounts (plano de contas contábil).
+/// <summary>A node in the global double-entry chart of accounts (plano de contas contábil).
+/// The chart is shared by all companies; bookkeeping stays per company via <see cref="JournalEntry.CompanyId"/>.
 /// Synthetic accounts form the hierarchy; only active analytical accounts receive journal lines.</summary>
 public sealed class LedgerAccount : IAuditable, ISoftDeletable
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
 
-    /// <summary>Owning company — bookkeeping is per legal entity (CNPJ).</summary>
-    public Guid CompanyId { get; private set; }
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public AccountGroup AccountGroup { get; private set; }
@@ -29,13 +28,11 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
 
     private LedgerAccount() { }
 
-    public LedgerAccount(Guid companyId, string code, string name, AccountGroup accountGroup,
+    public LedgerAccount(string code, string name, AccountGroup accountGroup,
         LedgerAccountKind kind, Guid? parentId = null, NormalBalance? normalBalance = null)
     {
-        if (companyId == Guid.Empty) throw new ArgumentException("CompanyId required", nameof(companyId));
         Code = NormalizeRequired(code, nameof(code));
         Name = NormalizeRequired(name, nameof(name));
-        CompanyId = companyId;
         AccountGroup = accountGroup;
         Kind = kind;
         ParentId = parentId;
@@ -60,13 +57,12 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
 
     public void Rename(string name) => Name = NormalizeRequired(name, nameof(name));
 
-    /// <summary>Reparents under a synthetic account of the same company and group (or clears the parent when null).</summary>
+    /// <summary>Reparents under a synthetic account of the same group (or clears the parent when null).</summary>
     public void Reparent(LedgerAccount? parent)
     {
         if (parent is null) { ParentId = null; return; }
         if (parent.Id == Id) throw new InvalidOperationException("Account cannot be its own parent.");
         if (parent.Kind != LedgerAccountKind.Synthetic) throw new InvalidOperationException("Parent must be a synthetic account.");
-        if (parent.CompanyId != CompanyId) throw new InvalidOperationException("Parent must belong to the same company.");
         if (parent.AccountGroup != AccountGroup) throw new InvalidOperationException("Parent must belong to the same account group.");
         ParentId = parent.Id;
     }

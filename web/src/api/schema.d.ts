@@ -1092,38 +1092,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/chart-accounts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ListChartAccounts"];
-        put?: never;
-        post: operations["CreateChartAccount"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/chart-accounts/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["UpdateChartAccount"];
-        post?: never;
-        delete: operations["DeleteChartAccount"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/statement-imports": {
         parameters: {
             query?: never;
@@ -1642,10 +1610,6 @@ export interface components {
     schemas: {
         /** @enum {string} */
         AccountGroup: "Asset" | "Liability" | "Equity" | "Revenue" | "Expense";
-        /** @enum {string} */
-        AccountKind: "Synthetic" | "Analytical";
-        /** @enum {string} */
-        AccountNature: "Debit" | "Credit";
         AddressRequest: {
             cep: string | null;
             street: string | null;
@@ -1738,7 +1702,7 @@ export interface components {
             byCostCenter: components["schemas"]["AgingByCostCenterRow"][];
         };
         AiClassificationSuggestionResponse: {
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** Format: double */
             confidence: number;
@@ -1969,22 +1933,8 @@ export interface components {
             city: string;
             state: string;
         };
-        ChartAccountResponse: {
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            id: string;
-            chartType: components["schemas"]["ChartType"];
-            code: string;
-            name: string;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            parentId: string | null;
-            kind: components["schemas"]["AccountKind"];
-            nature: components["schemas"]["AccountNature"];
-            isActive: boolean;
-        };
         /** @enum {string} */
         ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
-        /** @enum {string} */
-        ChartType: "Accounting";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -1992,18 +1942,18 @@ export interface components {
             requireToPay: boolean;
         };
         ClassificationSuggestionResponse: {
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example payable_3fa85f64571742199730000000000000 */
             basedOnPayableId: string | null;
         };
         ClassifyPayableBatchRequest: {
             payableIds: string[];
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
         };
         ClassifyPayableRequest: {
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
         };
         CnpjAddress: {
@@ -2056,15 +2006,6 @@ export interface components {
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
             cnabAgreementCode: string;
         };
-        CreateChartAccountRequest: {
-            chartType: components["schemas"]["ChartType"];
-            code: string;
-            name: string;
-            kind: components["schemas"]["AccountKind"];
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            parentId: string | null;
-            nature: components["schemas"]["AccountNature"];
-        };
         CreateCompanyRequest: {
             legalName: string;
             cnpj: string;
@@ -2093,8 +2034,6 @@ export interface components {
             lines: components["schemas"]["JournalLineInput"][];
         };
         CreateLedgerAccountRequest: {
-            /** @example company_3fa85f64571742199730000000000000 */
-            companyId: string;
             code: string;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
@@ -2119,7 +2058,7 @@ export interface components {
             issueDate: string | null;
             installments: components["schemas"]["InstallmentInput"][] | null;
             generate: components["schemas"]["GenerateInput"];
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
@@ -2473,8 +2412,6 @@ export interface components {
         LedgerAccountResponse: {
             /** @example ledgacct_3fa85f64571742199730000000000000 */
             id: string;
-            /** @example company_3fa85f64571742199730000000000000 */
-            companyId: string;
             code: string;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
@@ -2639,10 +2576,10 @@ export interface components {
             rejectedByName: string | null;
             /** Format: date-time */
             rejectedAt: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             isClassified: boolean;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             suggestedAccountingAccountId: string | null;
             /** Format: double */
             classificationConfidence: number | null;
@@ -3093,8 +3030,6 @@ export interface components {
             asOf: string | null;
         };
         SeedLedgerAccountsRequest: {
-            /** @example company_3fa85f64571742199730000000000000 */
-            companyId: string;
             template: components["schemas"]["ChartTemplate"];
         };
         SetReconciledBalanceRequest: {
@@ -3250,13 +3185,6 @@ export interface components {
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
             cnabAgreementCode: string;
         };
-        UpdateChartAccountRequest: {
-            name: string;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            parentId: string | null;
-            nature: components["schemas"]["AccountNature"];
-            isActive: boolean;
-        };
         UpdateClassificationPolicyRequest: {
             requireToApprove: boolean;
             requireToPay: boolean;
@@ -3307,7 +3235,7 @@ export interface components {
             issueDate: string | null;
             installments: components["schemas"]["InstallmentInput"][] | null;
             generate: components["schemas"]["GenerateInput"];
-            /** @example chart_account_3fa85f64571742199730000000000000 */
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
@@ -3488,7 +3416,6 @@ export interface operations {
     ListLedgerAccounts: {
         parameters: {
             query?: {
-                companyId?: string;
                 accountGroup?: components["schemas"]["AccountGroup"];
                 kind?: components["schemas"]["LedgerAccountKind"];
                 activeOnly?: boolean;
@@ -6528,154 +6455,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CashFlowItemResponse"][];
-                };
-            };
-        };
-    };
-    ListChartAccounts: {
-        parameters: {
-            query?: {
-                chartType?: components["schemas"]["ChartType"];
-                kind?: components["schemas"]["AccountKind"];
-                activeOnly?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChartAccountResponse"][];
-                };
-            };
-        };
-    };
-    CreateChartAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateChartAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChartAccountResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateChartAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateChartAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChartAccountResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    DeleteChartAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

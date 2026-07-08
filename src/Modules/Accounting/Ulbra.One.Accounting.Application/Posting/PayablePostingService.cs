@@ -13,12 +13,21 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         await uow.ReadSet<JournalEntry>()
             .AnyAsync(e => e.CompanyId == companyId && e.SourceKey == sourceKey && e.DeletedAt == null, ct);
 
-    // ── Resolve an active analytical ledger account by code; null if not found ──
-    private async Task<LedgerAccount?> ResolveAsync(Guid companyId, string? code, CancellationToken ct)
+    // ── Resolve an active analytical ledger account by code (global chart); null if not found ──
+    private async Task<LedgerAccount?> ResolveAsync(string? code, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code)) return null;
         var a = await uow.ReadSet<LedgerAccount>()
-            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Code == code && a.DeletedAt == null, ct);
+            .FirstOrDefaultAsync(a => a.Code == code && a.DeletedAt == null, ct);
+        return a is { } acct && acct.CanReceiveEntry ? acct : null;
+    }
+
+    // ── Resolve an active analytical ledger account by id (global chart); null if not found ──
+    private async Task<LedgerAccount?> ResolveByIdAsync(Guid? id, CancellationToken ct)
+    {
+        if (id is not { } accountId) return null;
+        var a = await uow.ReadSet<LedgerAccount>()
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.DeletedAt == null, ct);
         return a is { } acct && acct.CanReceiveEntry ? acct : null;
     }
 
@@ -42,7 +51,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         string firstMissingLabel = string.Empty;
         foreach (var (code, side, amount) in lines)
         {
-            var account = await ResolveAsync(companyId, code, ct);
+            var account = await ResolveAsync(code, ct);
             if (account is null)
             {
                 if (!anyUnresolvable)
@@ -80,21 +89,26 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public Task PostIncurralAsync(
-        Guid companyId, string sourceKey, decimal amount, string? expenseCode,
+    public async Task PostIncurralAsync(
+        Guid companyId, string sourceKey, decimal amount, Guid? expenseAccountId,
         IReadOnlyList<(string TaxType, decimal Amount)> withholdings, CancellationToken ct)
     {
+        // The expense line comes from the payable's classified global ledger account (resolved by id);
+        // liability/cash/withholding lines are Accounting-internal config codes. An unresolvable expense
+        // account leaves a null code, which PostEntryAsync parks as a PendingAccountingPosting.
+        //
         // Build the multi-line plan:
-        //   Dr expenseCode         = gross amount
+        //   Dr expenseAccount      = gross amount
         //   Cr PayablesLiability   = gross − Σwithholdings  (net)
         //   Cr WithholdingCode[t]  = each withholding.Amount  (one line per withholding)
         // When withholdings is empty the net == gross → exactly the classic 2-line entry.
+        var expenseAccount = await ResolveByIdAsync(expenseAccountId, ct);
         var totalWithheld = withholdings.Sum(w => w.Amount);
         var netAmount = amount - totalWithheld;
 
         var lineList = new List<(string? Code, EntrySide Side, decimal Amount)>(2 + withholdings.Count)
         {
-            (expenseCode, EntrySide.Debit, amount),
+            (expenseAccount?.Code, EntrySide.Debit, amount),
             (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount),
         };
 
@@ -104,7 +118,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             lineList.Add((withholdingCode, EntrySide.Credit, w.Amount));
         }
 
-        return PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
+        await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
     }
 
     public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, CancellationToken ct) =>

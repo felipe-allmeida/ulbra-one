@@ -6,14 +6,12 @@ namespace Ulbra.One.UnitTests.Accounting;
 
 public class ReferentialChartIntegrityTests
 {
-    private static readonly Guid Company = Guid.NewGuid();
-
     [Theory]
     [InlineData(ChartTemplate.RfbImunesIsentas, 515)]
     [InlineData(ChartTemplate.RfbPjLucroReal, 1104)]
     public void Real_template_is_internally_consistent(ChartTemplate template, int expectedCount)
     {
-        var accounts = ChartTemplates.Build(Company, template);
+        var accounts = ChartTemplates.Build(template);
         var byId = accounts.ToDictionary(a => a.Id);
 
         Assert.Equal(expectedCount, accounts.Count);
@@ -36,7 +34,7 @@ public class ReferentialChartIntegrityTests
     [Fact]
     public void Imunes_isentas_pl_is_equity_root()
     {
-        var accounts = ChartTemplates.Build(Company, ChartTemplate.RfbImunesIsentas);
+        var accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas);
         var pl = accounts.Single(a => a.Code == "2.05");
         Assert.Equal(AccountGroup.Equity, pl.AccountGroup);
         Assert.Null(pl.ParentId); // parent "2" is Liability → detached to root
@@ -45,7 +43,7 @@ public class ReferentialChartIntegrityTests
     [Fact]
     public void Imunes_isentas_subvencao_is_revenue_with_credit_balance()
     {
-        var accounts = ChartTemplates.Build(Company, ChartTemplate.RfbImunesIsentas);
+        var accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas);
         var subvencao = accounts.Single(a => a.Code == "4.01.01.01.01");
         Assert.Equal(AccountGroup.Revenue, subvencao.AccountGroup);
         Assert.Equal(NormalBalance.Credit, subvencao.NormalBalance);
@@ -56,7 +54,7 @@ public class ReferentialChartIntegrityTests
     {
         // Guards DevDataSeeder.SeedAccountingAsync against KeyNotFoundException at startup:
         // every code it posts journal lines to / classifies payables with must exist and be analytical.
-        var accounts = ChartTemplates.Build(Company, ChartTemplate.RfbImunesIsentas)
+        var accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas)
             .ToDictionary(a => a.Code);
         string[] seederCodes =
         [

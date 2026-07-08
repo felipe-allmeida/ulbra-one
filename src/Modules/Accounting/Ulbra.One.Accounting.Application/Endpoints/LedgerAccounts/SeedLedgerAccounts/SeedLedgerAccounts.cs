@@ -12,11 +12,11 @@ using Ulbra.One.Common.Application.Persistence;
 
 namespace Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.SeedLedgerAccounts;
 
-/// <summary>Seeds the selected chart-of-accounts template for a company (defaults to Demo).
-/// Idempotent: a no-op (returns the existing chart) when the company already has ledger accounts.</summary>
+/// <summary>Seeds the selected chart-of-accounts template (global, shared by all companies; defaults to Demo).
+/// Idempotent: a no-op (returns the existing chart) when any ledger accounts already exist.</summary>
 public sealed class SeedLedgerAccounts : IEndpoint
 {
-    public sealed record Request(CompanyId CompanyId, ChartTemplate Template = ChartTemplate.Demo);
+    public sealed record Request(ChartTemplate Template = ChartTemplate.Demo);
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/seed", Handle).WithName("SeedLedgerAccounts").WithTags("Accounting")
@@ -27,23 +27,18 @@ public sealed class SeedLedgerAccounts : IEndpoint
 
     private static async Task<IResult> Handle(Request req, IUnitOfWork uow, CancellationToken ct)
     {
-        var companyId = req.CompanyId.Value;
-        if (companyId == Guid.Empty)
-            return TypedResults.Problem(detail: "CompanyId is required.", statusCode: 400, title: "LedgerAccount.Invalid");
-
         var existing = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId)
             .OrderBy(a => a.Code)
             .ToListAsync(ct);
         if (existing.Count > 0)
             return TypedResults.Ok(existing.Select(LedgerAccountResponse.From).ToList());
 
-        var accounts = ChartTemplates.Build(companyId, req.Template);
+        var accounts = ChartTemplates.Build(req.Template);
         foreach (var account in accounts)
             await uow.AddAsync(account, ct);
         await uow.SaveChangesAsync(ct);
 
         var body = accounts.OrderBy(a => a.Code).Select(LedgerAccountResponse.From).ToList();
-        return TypedResults.Created($"/api/ledger-accounts?companyId={req.CompanyId}", body);
+        return TypedResults.Created("/api/ledger-accounts", body);
     }
 }
