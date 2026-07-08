@@ -32,6 +32,12 @@ describe('domainForPath', () => {
     expect(domainForPath('/app/vendors').key).toBe('registry');
   });
 
+  it('resolves Centro de Custo and Classificação under the accounting domain (AEL-678 menu move)', () => {
+    expect(domainForPath('/app/accounting/cost-centers').key).toBe('accounting');
+    expect(domainForPath('/app/accounting/cost-centers/123').key).toBe('accounting');
+    expect(domainForPath('/app/accounting/classification').key).toBe('accounting');
+  });
+
   it('resolves the home domain via its domain-level route', () => {
     expect(domainForPath('/app/home').key).toBe('home');
   });

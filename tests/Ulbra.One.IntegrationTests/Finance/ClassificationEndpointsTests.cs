@@ -92,22 +92,20 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task Classify_With_Valid_Analytical_Accounts_Returns_200_And_Sets_Both_Ids()
+    public async Task Classify_With_Valid_Analytical_Account_Returns_200_And_Sets_Id()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var payableId = await CreatePayableAsync(client, seed, 1500m);
         var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-        var (_, finId) = await CreateAnalyticalAsync(client, "Financial");
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
         Assert.Equal(accId, body.GetProperty("accountingAccountId").GetString());
-        Assert.Equal(finId, body.GetProperty("financialAccountId").GetString());
         Assert.True(body.GetProperty("isClassified").GetBoolean());
     }
 
@@ -121,24 +119,9 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var (syntheticAccId, _) = await CreateAnalyticalAsync(client, "Accounting");
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = syntheticAccId, financialAccountId = (string?)null });
+            new { accountingAccountId = syntheticAccId });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("ChartAccount.NotAnalytical", (await ReadJson(res)).GetProperty("title").GetString());
-    }
-
-    [Fact]
-    public async Task Classify_With_Accounting_Id_In_Financial_Slot_Returns_400_WrongType()
-    {
-        await using var factory = new ApiFactory(fixture.ConnectionString);
-        var client = await factory.CreateAdminClientAsync();
-        var seed = await SeedAsync(client);
-        var payableId = await CreatePayableAsync(client, seed, 1500m);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-
-        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = (string?)null, financialAccountId = accId });
-        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        Assert.Equal("ChartAccount.WrongType", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     // ---------------------------------------------------------------------------
@@ -154,10 +137,9 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var pa = await CreatePayableAsync(client, seed, 1000m);
         var pb = await CreatePayableAsync(client, seed, 2000m);
         var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-        var (_, finId) = await CreateAnalyticalAsync(client, "Financial");
 
         var res = await client.PostAsJsonAsync("/api/payables/classify-batch",
-            new { payableIds = new[] { pa, pb }, accountingAccountId = accId, financialAccountId = finId });
+            new { payableIds = new[] { pa, pb }, accountingAccountId = accId });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         Assert.Equal(2, (await ReadJson(res)).GetProperty("classifiedCount").GetInt32());
 
@@ -178,17 +160,15 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-        var (_, finId) = await CreateAnalyticalAsync(client, "Financial");
 
         var classified = await CreatePayableAsync(client, seed, 1000m);
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{classified}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         classifyRes.EnsureSuccessStatusCode();
 
         var fresh = await CreatePayableAsync(client, seed, 2000m);
         var sugg = await ReadJson(await client.GetAsync($"/api/payables/{fresh}/classification-suggestion"));
         Assert.Equal(accId, sugg.GetProperty("accountingAccountId").GetString());
-        Assert.Equal(finId, sugg.GetProperty("financialAccountId").GetString());
         Assert.Equal(classified, sugg.GetProperty("basedOnPayableId").GetString());
     }
 
@@ -203,7 +183,6 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client, autoApprovalLimit: 1000m);
         var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-        var (_, finId) = await CreateAnalyticalAsync(client, "Financial");
 
         var policyRes = await client.PutAsJsonAsync($"/api/classification-policies/{seed.CompanyId}",
             new { requireToApprove = true, requireToPay = false });
@@ -217,7 +196,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         Assert.Equal("Payable.NotClassified", (await ReadJson(blocked)).GetProperty("title").GetString());
 
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         classifyRes.EnsureSuccessStatusCode();
 
         var allowed = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
@@ -235,12 +214,11 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
-        var (_, finId) = await CreateAnalyticalAsync(client, "Financial");
 
         var classified = await CreatePayableAsync(client, seed, 1000m);
         var unclassified = await CreatePayableAsync(client, seed, 2000m);
         (await client.PostAsJsonAsync($"/api/payables/{classified}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId })).EnsureSuccessStatusCode();
+            new { accountingAccountId = accId })).EnsureSuccessStatusCode();
 
         var list = await ReadJson(await client.GetAsync($"/api/payables?companyId={seed.CompanyId}&classified=false&pageSize=100"));
         var payableIds = list.GetProperty("items").EnumerateArray()

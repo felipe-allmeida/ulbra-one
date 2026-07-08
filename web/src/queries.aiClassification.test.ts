@@ -24,7 +24,6 @@ import { api } from './api';
 
 const mockResponse: AiClassificationSuggestion = {
   accountingAccountId: 'chart_account_acc123',
-  financialAccountId: 'chart_account_fin456',
   confidence: 0.87,
   rationale: 'Vendor historically classifies here.',
   source: 'ai',
@@ -60,7 +59,6 @@ describe('useAiClassificationSuggestion', () => {
     expect(data?.confidence).toBe(0.87);
     expect(data?.rationale).toBe('Vendor historically classifies here.');
     expect(data?.accountingAccountId).toBe('chart_account_acc123');
-    expect(data?.financialAccountId).toBe('chart_account_fin456');
   });
 
   it('surfaces errors from the endpoint', async () => {
@@ -79,7 +77,6 @@ describe('useAiClassificationSuggestion', () => {
   it('exposes source="heuristic" when AI is unavailable', async () => {
     const heuristicResponse: AiClassificationSuggestion = {
       accountingAccountId: 'chart_account_heur',
-      financialAccountId: null,
       confidence: 0,
       rationale: 'Based on prior classifications for this vendor.',
       source: 'heuristic',
@@ -95,6 +92,5 @@ describe('useAiClassificationSuggestion', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.source).toBe('heuristic');
     expect(result.current.data?.accountingAccountId).toBe('chart_account_heur');
-    expect(result.current.data?.financialAccountId).toBeNull();
   });
 });

@@ -39,8 +39,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const { centros } = useNames(empresaId);
   const accountingAccounts =
     useChartAccounts({ chartType: 'Accounting', kind: 'Analytical', activeOnly: true }).data ?? [];
-  const financialAccounts =
-    useChartAccounts({ chartType: 'Financial', kind: 'Analytical', activeOnly: true }).data ?? [];
   const accountItems = (accs: typeof accountingAccounts) =>
     [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const bankAccountsList = useBankAccounts(empresaId, false).data ?? [];
@@ -64,7 +62,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
         costCenterId: '',
         categoryId: null,
         accountingAccountId: null,
-        financialAccountId: null,
         description: '',
         documentNumber: '',
         issueDate: '',
@@ -88,7 +85,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
       costCenterId: initial.costCenterId,
       categoryId: initial.categoryId ?? null,
       accountingAccountId: initial.accountingAccountId ?? null,
-      financialAccountId: initial.financialAccountId ?? null,
       description: initial.description,
       documentNumber: initial.documentNumber ?? '',
       issueDate: initial.issueDate ?? '',
@@ -244,7 +240,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
       costCenterId: v.costCenterId,
       categoryId: v.categoryId || null,
       accountingAccountId: v.accountingAccountId || null,
-      financialAccountId: v.financialAccountId || null,
       description: v.description.trim(),
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
@@ -435,20 +430,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
                         value={field.value ?? null}
                         onChange={(id) => field.onChange(id)}
                         items={accountItems(accountingAccounts)}
-                        placeholder={t('payables.fields.accountNone')}
-                      />
-                    )}
-                  />
-                </Field>
-                <Field label={t('payables.financialAccount')}>
-                  <Controller
-                    control={control}
-                    name='financialAccountId'
-                    render={({ field }) => (
-                      <Combobox
-                        value={field.value ?? null}
-                        onChange={(id) => field.onChange(id)}
-                        items={accountItems(financialAccounts)}
                         placeholder={t('payables.fields.accountNone')}
                       />
                     )}

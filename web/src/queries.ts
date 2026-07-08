@@ -1120,7 +1120,7 @@ export function useClassifyPayable(
   options?: UseMutationOptions<
     Payable,
     unknown,
-    { id: string; body: { accountingAccountId?: string | null; financialAccountId?: string | null } }
+    { id: string; body: { accountingAccountId?: string | null } }
   >,
 ) {
   return useInvalidatingMutation(

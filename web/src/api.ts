@@ -434,7 +434,6 @@ export interface PayableInput {
   installments?: { dueDate: string; amount: number }[];
   generate?: { totalAmount: number; count: number; firstDueDate: string; intervalMonths?: number };
   accountingAccountId?: string | null;
-  financialAccountId?: string | null;
   /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
   paymentBankAccountId?: string | null;
   paymentMethod?: PaymentMethod | null;
@@ -908,12 +907,11 @@ export const api = {
   deleteChartAccount: (id: string) => request<void>(`/chart-accounts/${id}`, { method: 'DELETE' }),
 
   // ---------- Classification ----------
-  classifyPayable: (id: string, body: { accountingAccountId?: string | null; financialAccountId?: string | null }) =>
+  classifyPayable: (id: string, body: { accountingAccountId?: string | null }) =>
     request<Payable>(`/payables/${id}/classify`, { method: 'POST', body: JSON.stringify(body) }),
   classifyBatch: (body: {
     payableIds: string[];
     accountingAccountId?: string | null;
-    financialAccountId?: string | null;
   }) =>
     request<{ classifiedCount: number }>('/payables/classify-batch', { method: 'POST', body: JSON.stringify(body) }),
   classificationSuggestion: (payableId: string) =>

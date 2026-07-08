@@ -26,7 +26,7 @@ export function CentrosListPage() {
         sub='Áreas funcionais da empresa. Um centro de custo (ex.: Marketing) pode atuar em várias unidades.'
       >
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/cost-centers/new')}>
+        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/accounting/cost-centers/new')}>
           Novo centro de custo
         </Button>
       </PageHeader>
@@ -61,7 +61,7 @@ export function CentrosListPage() {
                 const pct = orcamentoTotal > 0 ? Math.round((c.annualBudget / orcamentoTotal) * 100) : 0;
                 const todas = unidades.length > 0 && c.unitIds.length >= unidades.length;
                 return (
-                  <div className='cc-card' key={c.id} onClick={() => nav(`/app/cost-centers/${c.id}`)} title='Abrir'>
+                  <div className='cc-card' key={c.id} onClick={() => nav(`/app/accounting/cost-centers/${c.id}`)} title='Abrir'>
                     <div className='cc-card-top'>
                       <div>
                         <div className='cc-name'>{c.name}</div>
@@ -95,7 +95,7 @@ export function CentrosListPage() {
                   </div>
                 );
               })}
-              <button className='add-card' onClick={() => nav('/app/cost-centers/new')}>
+              <button className='add-card' onClick={() => nav('/app/accounting/cost-centers/new')}>
                 <Plus /> Novo centro de custo
               </button>
             </div>
@@ -133,7 +133,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   if (modo === 'novo') {
     return (
       <>
-        <button className='backlink' onClick={() => nav('/app/cost-centers')}>
+        <button className='backlink' onClick={() => nav('/app/accounting/cost-centers')}>
           <ChevronLeft /> Centros de custo
         </button>
         <div className='detail-head'>
@@ -147,8 +147,8 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
             <CentroForm
               empresa={empresa}
               unidades={unidades}
-              onSaved={(cc) => nav(`/app/cost-centers/${cc.id}`)}
-              onCancel={() => nav('/app/cost-centers')}
+              onSaved={(cc) => nav(`/app/accounting/cost-centers/${cc.id}`)}
+              onCancel={() => nav('/app/accounting/cost-centers')}
             />
           </div>
         ) : (
@@ -177,7 +177,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
 
   return (
     <>
-      <button className='backlink' onClick={() => nav('/app/cost-centers')}>
+      <button className='backlink' onClick={() => nav('/app/accounting/cost-centers')}>
         <ChevronLeft /> Centros de custo
       </button>
       <div className='detail-head'>

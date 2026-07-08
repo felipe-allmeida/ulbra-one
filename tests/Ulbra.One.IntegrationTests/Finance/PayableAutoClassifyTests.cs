@@ -110,8 +110,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     {
         // Arrange: stub returns ≥0.8 confidence with valid account ids; cost center limit is 500m.
         var accId = Guid.NewGuid();
-        var finId = Guid.NewGuid();
-        var result = new PayableClassificationResult(accId, finId, 0.9, "high confidence", "ai");
+        var result = new PayableClassificationResult(accId, 0.9, "high confidence", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -142,8 +141,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     {
         // Arrange: stub returns 0.6 confidence (mid-band: below 0.8 threshold).
         var accId = Guid.NewGuid();
-        var finId = Guid.NewGuid();
-        var result = new PayableClassificationResult(accId, finId, 0.6, "maybe", "ai");
+        var result = new PayableClassificationResult(accId, 0.6, "maybe", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -174,8 +172,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     {
         // Arrange: stub returns high confidence.
         var accId = Guid.NewGuid();
-        var finId = Guid.NewGuid();
-        var result = new PayableClassificationResult(accId, finId, 0.9, "confident", "ai");
+        var result = new PayableClassificationResult(accId, 0.9, "confident", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -254,8 +251,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     {
         // Arrange: stub returns 0.6 confidence → parks at PendingClassification.
         var suggestedAccId = Guid.NewGuid();
-        var suggestedFinId = Guid.NewGuid();
-        var midResult = new PayableClassificationResult(suggestedAccId, suggestedFinId, 0.6, "mid-band", "ai");
+        var midResult = new PayableClassificationResult(suggestedAccId, 0.6, "mid-band", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -278,13 +274,12 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         Assert.Equal("PendingClassification",
             (await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"))).GetProperty("status").GetString());
 
-        // Seed real chart accounts for the classify call.
+        // Seed a real accounting chart account for the classify call.
         var accId = await SeedChartAccountAsync(client, "Accounting");
-        var finId = await SeedChartAccountAsync(client, "Financial");
 
         // Act: classify via endpoint — amount ≤ limit → should auto-approve to Scheduled.
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{prefixedId}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         Assert.Equal(HttpStatusCode.OK, classifyRes.StatusCode);
         var body = await ReadJson(classifyRes);
 
@@ -293,7 +288,6 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         Assert.True(body.GetProperty("isClassified").GetBoolean());
         // Suggestion fields must be cleared after classify.
         Assert.Equal(JsonValueKind.Null, body.GetProperty("suggestedAccountingAccountId").ValueKind);
-        Assert.Equal(JsonValueKind.Null, body.GetProperty("suggestedFinancialAccountId").ValueKind);
         Assert.Equal(JsonValueKind.Null, body.GetProperty("classificationConfidence").ValueKind);
         Assert.Equal(JsonValueKind.Null, body.GetProperty("classificationRationale").ValueKind);
     }
@@ -306,7 +300,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     public async Task Classify_Endpoint_Over_Limit_Parks_To_PendingApproval()
     {
         // Arrange: mid-band → PendingClassification; autoApprovalLimit = 500m; amount = 1000m (over limit).
-        var midResult = new PayableClassificationResult(Guid.NewGuid(), Guid.NewGuid(), 0.6, "mid-band", "ai");
+        var midResult = new PayableClassificationResult(Guid.NewGuid(), 0.6, "mid-band", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -329,11 +323,10 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
             (await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"))).GetProperty("status").GetString());
 
         var accId = await SeedChartAccountAsync(client, "Accounting");
-        var finId = await SeedChartAccountAsync(client, "Financial");
 
         // Act: classify via endpoint — amount > limit → PendingApproval.
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{prefixedId}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         Assert.Equal(HttpStatusCode.OK, classifyRes.StatusCode);
         var body = await ReadJson(classifyRes);
 
@@ -350,8 +343,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     {
         // Arrange: mid-band → parked with suggestion.
         var suggestedAccId = Guid.NewGuid();
-        var suggestedFinId = Guid.NewGuid();
-        var midResult = new PayableClassificationResult(suggestedAccId, suggestedFinId, 0.65, "maybe office supplies", "ai");
+        var midResult = new PayableClassificationResult(suggestedAccId, 0.65, "maybe office supplies", "ai");
 
         await using var factory = new ApiFactory(fixture.ConnectionString)
             .WithWebHostBuilder(b => b.ConfigureServices(s =>
@@ -380,7 +372,6 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         Assert.False(body.GetProperty("isClassified").GetBoolean());
         // The suggested ids are stored as prefixed strings (chart_account_<guid>).
         Assert.NotEqual(JsonValueKind.Null, body.GetProperty("suggestedAccountingAccountId").ValueKind);
-        Assert.NotEqual(JsonValueKind.Null, body.GetProperty("suggestedFinancialAccountId").ValueKind);
         Assert.Equal(0.65, body.GetProperty("classificationConfidence").GetDouble(), precision: 5);
         Assert.Equal("maybe office supplies", body.GetProperty("classificationRationale").GetString());
     }

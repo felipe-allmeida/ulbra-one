@@ -110,28 +110,6 @@ public class ChartAccountEndpointsTests(PostgresFixture fixture)
     }
 
     // ---------------------------------------------------------------------------
-    // Parent of a different chart type → 400 InvalidParent
-    // ---------------------------------------------------------------------------
-
-    [Fact]
-    public async Task Create_Child_With_DifferentChartType_Parent_Returns_400_InvalidParent()
-    {
-        await using var factory = new ApiFactory(fixture.ConnectionString);
-        var client = await factory.CreateAdminClientAsync();
-
-        var rootCode = UniqueCode("P");
-        var accountingRoot = await ReadJson(await client.PostAsJsonAsync("/api/chart-accounts",
-            NewSynthetic("Accounting", rootCode, "Receitas")));
-        var accountingRootId = accountingRoot.GetProperty("id").GetString()!;
-
-        // Financial child pointing at an Accounting parent.
-        var res = await client.PostAsJsonAsync("/api/chart-accounts",
-            NewAnalytical("Financial", $"{rootCode}.1", "Filho inválido", accountingRootId, "Credit"));
-        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        Assert.Equal("ChartAccount.InvalidParent", (await ReadJson(res)).GetProperty("title").GetString());
-    }
-
-    // ---------------------------------------------------------------------------
     // Duplicate (chartType, code) → 409 DuplicateCode
     // ---------------------------------------------------------------------------
 

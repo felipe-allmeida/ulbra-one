@@ -241,20 +241,18 @@ public static class DevDataSeeder
         await finance.SaveChangesAsync(ct);
 
         // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
-        // Look up seeded analytical accounts by code; classify energy payables (accounting 4.1.01 + financial 76.100)
-        // and the cleaning/services payable (4.1.03 + 76.300). Idempotent: only classify when not yet classified.
+        // Look up seeded analytical accounting accounts by code; classify the energy payable (4.02.02.01.05)
+        // and the cleaning/services payable (4.02.02.01.02). Idempotent: only classify when not yet classified.
         var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.05", ct);
-        var finEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.100", ct);
         var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.02", ct);
-        var finServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Financial && c.Code == "76.300", ct);
 
         if (pEnergiaGravatai.AccountingAccountId == null)
-            pEnergiaGravatai.Classify(accEnergia.Id, finEnergia.Id);
+            pEnergiaGravatai.Classify(accEnergia.Id);
         // pLimpeza: classify first (IsClassified gate), then re-run auto-approval so it advances to Scheduled.
         // ApplyAutoApproval called at create-time was a silent no-op because IsClassified was false then.
         if (pLimpeza.AccountingAccountId == null)
         {
-            pLimpeza.Classify(accServicos.Id, finServicos.Id);
+            pLimpeza.Classify(accServicos.Id);
             pLimpeza.ApplyAutoApproval(infra.AutoApprovalLimit, time.GetUtcNow()); // → Scheduled (1 800 ≤ 2 000 limit)
         }
         await finance.SaveChangesAsync(ct);
@@ -470,16 +468,9 @@ public static class DevDataSeeder
             .ToList();
         var contabil = ReferentialPayableChartBuilder.BuildAccounting(despesaRows);
 
-        // Financial chart (financeiro) — esquema gerencial interno, intocado
-        var despesasFinanceiro = new ChartAccount(ChartType.Financial, "76", "Despesas operacionais", AccountKind.Synthetic);
-        var energiaFinanceiro = new ChartAccount(ChartType.Financial, "76.100", "Energia", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
-        var aluguelFinanceiro = new ChartAccount(ChartType.Financial, "76.200", "Aluguel", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
-        var servicosFinanceiro = new ChartAccount(ChartType.Financial, "76.300", "Serviços", AccountKind.Analytical, despesasFinanceiro.Id, AccountNature.Debit);
-
         finance.ChartAccounts.AddRange(contabil);
-        finance.ChartAccounts.AddRange(despesasFinanceiro, energiaFinanceiro, aluguelFinanceiro, servicosFinanceiro);
         await finance.SaveChangesAsync(ct);
-        logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting + 4 financial chart accounts).", contabil.Count);
+        logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting chart accounts).", contabil.Count);
     }
 
     /// <summary>

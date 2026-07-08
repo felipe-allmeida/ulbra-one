@@ -18,10 +18,10 @@ public class ChartAccountTests
     public void Constructor_sets_all_properties()
     {
         var parentId = Guid.NewGuid();
-        var account = new ChartAccount(ChartType.Financial, " 2.1 ", " Despesas ", AccountKind.Analytical,
+        var account = new ChartAccount(ChartType.Accounting, " 2.1 ", " Despesas ", AccountKind.Analytical,
             parentId, AccountNature.Debit);
 
-        Assert.Equal(ChartType.Financial, account.ChartType);
+        Assert.Equal(ChartType.Accounting, account.ChartType);
         Assert.Equal("2.1", account.Code);
         Assert.Equal("Despesas", account.Name);
         Assert.Equal(AccountKind.Analytical, account.Kind);
@@ -127,15 +127,6 @@ public class ChartAccountTests
         child.Reparent(null);
 
         Assert.Null(child.ParentId);
-    }
-
-    [Fact]
-    public void Reparent_to_different_chart_type_throws()
-    {
-        var parent = NewSynthetic(ChartType.Financial);
-        var child = NewAnalytical(ChartType.Accounting);
-
-        Assert.Throws<InvalidOperationException>(() => child.Reparent(parent));
     }
 
     [Fact]

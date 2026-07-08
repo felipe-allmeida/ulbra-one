@@ -852,6 +852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payables/withholdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetWithholdingsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/receivables": {
         parameters: {
             query?: never;
@@ -1364,6 +1380,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/withholding-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListWithholdingRules"];
+        put?: never;
+        post: operations["CreateWithholdingRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/withholding-rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateWithholdingRule"];
+        post?: never;
+        delete: operations["DeleteWithholdingRule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -1692,8 +1740,6 @@ export interface components {
         AiClassificationSuggestionResponse: {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** Format: double */
             confidence: number;
             rationale: string;
@@ -1830,6 +1876,8 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        /** @enum {string} */
+        BaseRule: "Full" | "Reduced";
         CancelPayableCancelRequest: {
             reason: string | null;
         };
@@ -1936,7 +1984,7 @@ export interface components {
         /** @enum {string} */
         ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
         /** @enum {string} */
-        ChartType: "Accounting" | "Financial";
+        ChartType: "Accounting";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -1946,8 +1994,6 @@ export interface components {
         ClassificationSuggestionResponse: {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example payable_3fa85f64571742199730000000000000 */
             basedOnPayableId: string | null;
         };
@@ -1955,14 +2001,10 @@ export interface components {
             payableIds: string[];
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
         };
         ClassifyPayableRequest: {
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
         };
         CnpjAddress: {
             cep: string;
@@ -2079,11 +2121,10 @@ export interface components {
             generate: components["schemas"]["GenerateInput"];
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
+            type: components["schemas"]["PayableType"];
         };
         CreateReceivableCreateReceivableRequest: {
             /** @example company_3fa85f64571742199730000000000000 */
@@ -2462,6 +2503,8 @@ export interface components {
             isAdmin: boolean;
         };
         /** @enum {string} */
+        NonRetentionReason: "None" | "RegimeExemption" | "NoMunicipalSubstitution" | "BelowMinimum";
+        /** @enum {string} */
         NormalBalance: "Debit" | "Credit";
         ParseFiscalDocumentRequest: {
             key: string;
@@ -2495,6 +2538,12 @@ export interface components {
             rpsSeries: string | null;
             serviceDescription: string | null;
             cnaeCode: string | null;
+            lc116Subitem: string | null;
+            municipalServiceCode: string | null;
+            serviceMunicipalityIbge: string | null;
+            /** Format: double */
+            invoiceIssRate: number | null;
+            issWithheldOnInvoice: boolean | null;
             issuerPhone: string | null;
             issuerAddress: components["schemas"]["ParsedAddress"];
             fiscal: components["schemas"]["FiscalSummary"];
@@ -2536,28 +2585,15 @@ export interface components {
             amount: number;
             installmentStatus: components["schemas"]["InstallmentStatus"];
             payableStatus: components["schemas"]["PayableStatus"];
-            /**
-             * Format: date
-             * @description Date the daily sweep will process this installment (defaults to DueDate at creation).
-             */
+            /** Format: date */
             scheduledPaymentDate: string;
-            /** @description True when this installment has been manually paused from the remittance sweep. */
             isHeld: boolean;
-            /** @description The reason provided when holding this installment, or null if not held. */
             holdReason: string | null;
-            /**
-             * @description Id of the remittance this installment belongs to, or null if not in a remittance.
-             * @example remittance_3fa85f64571742199730000000000000
-             */
+            /** @example remittance_3fa85f64571742199730000000000000 */
             remittanceId: string | null;
-            /**
-             * Format: int32
-             * @description 1-based sequence number of this installment within its remittance, or null if not in a remittance.
-             */
+            /** Format: int32 */
             remittanceSequence: number | null;
-            /** @description "Remittance" when the installment can ride the automatic CNAB rail; "Manual" otherwise. */
             rail: string;
-            /** @description The reason the installment cannot use the remittance rail, or null when Rail is "Remittance". */
             manualReason: string | null;
         };
         PayableListItemResponsePaginatedResponse: {
@@ -2605,16 +2641,13 @@ export interface components {
             rejectedAt: string | null;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             isClassified: boolean;
             /** @example chart_account_3fa85f64571742199730000000000000 */
             suggestedAccountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            suggestedFinancialAccountId: string | null;
             /** Format: double */
             classificationConfidence: number | null;
             classificationRationale: string | null;
+            type: components["schemas"]["PayableType"];
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
@@ -2665,6 +2698,8 @@ export interface components {
         };
         /** @enum {string} */
         PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
+        /** @enum {string} */
+        PayableType: "Service" | "Product";
         PayableWithholdingResponse: {
             /** @example withholding_3fa85f64571742199730000000000000 */
             id: string;
@@ -2746,6 +2781,8 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** @enum {string} */
+        RateSource: "Fixed" | "FromNota";
         ReceiptResponse: {
             /** @example receipt_3fa85f64571742199730000000000000 */
             id: string;
@@ -3272,8 +3309,6 @@ export interface components {
             generate: components["schemas"]["GenerateInput"];
             /** @example chart_account_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
-            /** @example chart_account_3fa85f64571742199730000000000000 */
-            financialAccountId: string | null;
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
@@ -3364,8 +3399,83 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        WithholdingByTaxRow: {
+            taxType: components["schemas"]["WithholdingTaxType"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            amount: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
+        WithholdingPayableRow: {
+            /** @example payable_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            counterpartyName: string;
+            documentNumber: string | null;
+            status: components["schemas"]["PayableStatus"];
+            /** Format: double */
+            totalAmount: number;
+            /** Format: double */
+            totalWithheld: number;
+            /** Format: double */
+            netTotal: number;
+            lines: components["schemas"]["PayableWithholdingResponse"][];
+        };
+        WithholdingRuleRequest: {
+            /** Format: uuid */
+            companyId: string | null;
+            taxType: components["schemas"]["WithholdingTaxType"];
+            lc116Subitem: string | null;
+            vendorRegime: components["schemas"]["TaxRegime"];
+            municipalityIbge: string | null;
+            retains: boolean;
+            reason: components["schemas"]["NonRetentionReason"];
+            rateSource: components["schemas"]["RateSource"];
+            /** Format: double */
+            rate: number | null;
+            baseRule: components["schemas"]["BaseRule"];
+            /** Format: double */
+            minimumAmount: number | null;
+        };
+        WithholdingRuleResponse: {
+            /** @example whrule_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            taxType: components["schemas"]["WithholdingTaxType"];
+            lc116Subitem: string | null;
+            vendorRegime: components["schemas"]["TaxRegime"];
+            municipalityIbge: string | null;
+            retains: boolean;
+            reason: components["schemas"]["NonRetentionReason"];
+            rateSource: components["schemas"]["RateSource"];
+            /** Format: double */
+            rate: number | null;
+            baseRule: components["schemas"]["BaseRule"];
+            /** Format: double */
+            minimumAmount: number | null;
+            active: boolean;
+        };
         /** @enum {string} */
         WithholdingTaxType: "Irrf" | "Iss" | "Inss" | "Pis" | "Cofins" | "Csll" | "Other";
+        WithholdingsReportResponse: {
+            totals: components["schemas"]["WithholdingsTotals"];
+            byTax: components["schemas"]["WithholdingByTaxRow"][];
+            byPayable: components["schemas"]["WithholdingPayableRow"][];
+        };
+        WithholdingsTotals: {
+            /** Format: double */
+            grossTotal: number;
+            /** Format: double */
+            withheldTotal: number;
+            /** Format: double */
+            netTotal: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -4938,6 +5048,15 @@ export interface operations {
                     "application/json": components["schemas"]["PayableResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Not Found */
             404: {
                 headers: {
@@ -5716,6 +5835,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgingItemResponse"][];
+                };
+            };
+        };
+    };
+    GetWithholdingsReport: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingsReportResponse"];
                 };
             };
         };
@@ -7197,6 +7338,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RemittanceSweepResult"];
+                };
+            };
+        };
+    };
+    ListWithholdingRules: {
+        parameters: {
+            query?: {
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingRuleResponse"][];
+                };
+            };
+        };
+    };
+    CreateWithholdingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithholdingRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingRuleResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateWithholdingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithholdingRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingRuleResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteWithholdingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

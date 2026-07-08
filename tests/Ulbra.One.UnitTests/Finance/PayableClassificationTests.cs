@@ -13,46 +13,35 @@ public class PayableClassificationTests
             Payable.GenerateInstallments(100m, 1, new DateOnly(2026, 7, 10), 1));
 
     [Fact]
-    public void Classify_sets_both_accounts()
+    public void Classify_sets_the_accounting_account()
     {
         var p = NewPayable();
         var acc = Guid.NewGuid();
-        var fin = Guid.NewGuid();
 
-        p.Classify(acc, fin);
+        p.Classify(acc);
 
         Assert.Equal(acc, p.AccountingAccountId);
-        Assert.Equal(fin, p.FinancialAccountId);
         Assert.True(p.IsClassified);
     }
 
     [Fact]
-    public void Classify_with_nulls_clears_accounts()
+    public void Classify_with_null_clears_the_account()
     {
         var p = NewPayable();
-        p.Classify(Guid.NewGuid(), Guid.NewGuid());
+        p.Classify(Guid.NewGuid());
 
-        p.Classify(null, null);
+        p.Classify(null);
 
         Assert.Null(p.AccountingAccountId);
-        Assert.Null(p.FinancialAccountId);
         Assert.False(p.IsClassified);
     }
 
     [Fact]
-    public void IsClassified_is_false_when_only_accounting_set()
+    public void IsClassified_is_true_when_accounting_set()
     {
         var p = NewPayable();
-        p.Classify(Guid.NewGuid(), null);
-        Assert.False(p.IsClassified);
-    }
-
-    [Fact]
-    public void IsClassified_is_false_when_only_financial_set()
-    {
-        var p = NewPayable();
-        p.Classify(null, Guid.NewGuid());
-        Assert.False(p.IsClassified);
+        p.Classify(Guid.NewGuid());
+        Assert.True(p.IsClassified);
     }
 
     [Fact]

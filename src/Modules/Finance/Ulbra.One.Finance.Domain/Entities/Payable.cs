@@ -28,11 +28,9 @@ public class Payable : IAuditable, ISoftDeletable
     public string? RejectedBy { get; private set; }
     public DateTimeOffset? RejectedAt { get; private set; }
     public Guid? AccountingAccountId { get; private set; }
-    public Guid? FinancialAccountId { get; private set; }
     public Guid? PaymentBankAccountId { get; private set; }
     public PaymentMethod? PaymentMethod { get; private set; }
     public Guid? SuggestedAccountingAccountId { get; private set; }
-    public Guid? SuggestedFinancialAccountId { get; private set; }
     public double? ClassificationConfidence { get; private set; }
     public string? ClassificationRationale { get; private set; }
     // Whether this payable is a Service (subject to source withholding) or a Product; null = undetermined
@@ -44,7 +42,7 @@ public class Payable : IAuditable, ISoftDeletable
     public bool? CprbOnInvoice { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
-    public bool IsClassified => AccountingAccountId is not null && FinancialAccountId is not null;
+    public bool IsClassified => AccountingAccountId is not null;
 
     public DateTimeOffset CreatedAt { get; private set; }
     public string CreatedBy { get; private set; } = string.Empty;
@@ -227,10 +225,9 @@ public class Payable : IAuditable, ISoftDeletable
     public void MarkPendingApproval() => Status = PayableStatus.PendingApproval;
 
     /// <summary>Persists the AI's suggestion for the human-review band; cleared once classified.</summary>
-    public void SetSuggestion(Guid? accountingAccountId, Guid? financialAccountId, double confidence, string? rationale)
+    public void SetSuggestion(Guid? accountingAccountId, double confidence, string? rationale)
     {
         SuggestedAccountingAccountId = accountingAccountId;
-        SuggestedFinancialAccountId = financialAccountId;
         ClassificationConfidence = confidence;
         ClassificationRationale = rationale;
     }
@@ -259,13 +256,11 @@ public class Payable : IAuditable, ISoftDeletable
         CprbOnInvoice = cprbOnInvoice;
     }
 
-    /// <summary>Sets (or clears) the accounting + financial chart accounts that classify this payable.</summary>
-    public void Classify(Guid? accountingAccountId, Guid? financialAccountId)
+    /// <summary>Sets (or clears) the accounting chart account that classifies this payable.</summary>
+    public void Classify(Guid? accountingAccountId)
     {
         AccountingAccountId = accountingAccountId;
-        FinancialAccountId = financialAccountId;
         SuggestedAccountingAccountId = null;
-        SuggestedFinancialAccountId = null;
         ClassificationConfidence = null;
         ClassificationRationale = null;
     }

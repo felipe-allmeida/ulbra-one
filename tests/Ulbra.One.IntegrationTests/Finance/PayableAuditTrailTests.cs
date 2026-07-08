@@ -25,9 +25,9 @@ public class PayableAuditTrailTests(PostgresFixture fixture)
         var payableId = await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
 
         // Classify (requires valid ChartAccounts of the right type).
-        var (accId, finId) = await FinanceSeed.CreateChartAccountPairAsync(client);
+        var accId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
-            new { accountingAccountId = accId, financialAccountId = finId });
+            new { accountingAccountId = accId });
         classifyRes.EnsureSuccessStatusCode();
 
         // Approve after classification.

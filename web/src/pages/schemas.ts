@@ -180,7 +180,6 @@ export const payableSchema = z
     costCenterId: z.string().min(1, { message: 'validation.costCenterRequired' }),
     categoryId: z.string().nullable(),
     accountingAccountId: z.string().nullable(),
-    financialAccountId: z.string().nullable(),
     description: z
       .string()
       .trim()
