@@ -296,92 +296,20 @@ export interface JournalEntryInput {
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
 
-// ---------- Relatório de Retenções ----------
-// Manual types: this endpoint is not yet in the generated OpenAPI schema. Reuses the existing string enums.
-export interface WithholdingReportLine {
-  id: string;
-  taxType: WithholdingTaxType;
-  baseAmount: number;
-  rate: number | null;
-  amount: number;
-}
-export interface WithholdingByTaxRow {
-  taxType: WithholdingTaxType;
-  baseAmount: number;
-  amount: number;
-  payableCount: number;
-}
-export interface WithholdingPayableRow {
-  id: string;
-  vendorId: string;
-  counterpartyName: string;
-  documentNumber: string | null;
-  status: PayableStatus;
-  totalAmount: number;
-  totalWithheld: number;
-  netTotal: number;
-  lines: WithholdingReportLine[];
-}
-export interface WithholdingsReport {
-  totals: { grossTotal: number; withheldTotal: number; netTotal: number; payableCount: number };
-  byTax: WithholdingByTaxRow[];
-  byPayable: WithholdingPayableRow[];
-}
+// ---------- Relatório de Retenções (retencoes) ----------
+export type WithholdingReportLine = Schemas['PayableWithholdingResponse'];
+export type WithholdingByTaxRow = Schemas['WithholdingByTaxRow'];
+export type WithholdingPayableRow = Schemas['WithholdingPayableRow'];
+export type WithholdingsReport = Schemas['WithholdingsReportResponse'];
 
-// Manual types: the fiscal assessment (apuração de retenções) endpoint is not yet in the generated OpenAPI schema.
-// Guia de recolhimento (collection group): PIS+COFINS+CSLL fold into CSRF.
-export type RetentionGroup = 'Irrf' | 'Csrf' | 'Inss' | 'Iss' | 'Other';
-export interface WithholdingFactRow {
-  payableId: string;
-  counterpartyName: string;
-  documentNumber: string | null;
-  companyId: string;
-  costCenterId: string;
-  vendorId: string;
-  vendorDocument: string;
-  taxType: WithholdingTaxType;
-  group: RetentionGroup;
-  baseAmount: number;
-  amount: number;
-}
-export interface CompanyAssessmentRow {
-  companyId: string;
-  companyName: string;
-  cnpj: string;
-  baseAmount: number;
-  withheldAmount: number;
-  payableCount: number;
-}
-export interface RetentionGroupRow {
-  group: RetentionGroup;
-  baseAmount: number;
-  withheldAmount: number;
-  payableCount: number;
-}
-export interface TaxTypeAssessmentRow {
-  taxType: WithholdingTaxType;
-  group: RetentionGroup;
-  baseAmount: number;
-  withheldAmount: number;
-  payableCount: number;
-}
-export interface CostCenterAssessmentRow {
-  costCenterId: string;
-  code: string;
-  name: string;
-  withheldAmount: number;
-  payableCount: number;
-}
-export interface FiscalAssessment {
-  perApur: string;
-  companyId: string | null;
-  totals: { baseTotal: number; withheldTotal: number; payableCount: number };
-  byCompany: CompanyAssessmentRow[];
-  byRetentionGroup: RetentionGroupRow[];
-  byTaxType: TaxTypeAssessmentRow[];
-  byCostCenter: CostCenterAssessmentRow[];
-  facts: WithholdingFactRow[];
-}
+// Apuração de retenções (Obrigações Acessórias). Guia de recolhimento: PIS+COFINS+CSLL viram CSRF.
+export type RetentionGroup = Schemas['RetentionGroup'];
+export type WithholdingFactRow = Schemas['WithholdingFactResponse'];
+export type CompanyAssessmentRow = Schemas['CompanyAssessmentRowResponse'];
+export type RetentionGroupRow = Schemas['RetentionGroupRowResponse'];
+export type TaxTypeAssessmentRow = Schemas['TaxTypeRowResponse'];
+export type CostCenterAssessmentRow = Schemas['CostCenterAssessmentRowResponse'];
+export type FiscalAssessment = Schemas['WithholdingAssessmentResponse'];
 
 export type AgingBucket = Schemas['AgingBucket'];
 
