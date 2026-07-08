@@ -34,7 +34,7 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         string? AccountingAccountId,
         double Confidence, string Rationale, string Source);
 
-    private sealed record ChartAccountDto(string Id, string Code, string ChartType, string Kind, bool IsActive);
+    private sealed record LedgerAccountDto(string Id, string Code, string Kind, bool IsActive);
 
     private sealed record Seed(string CompanyId, string CostCenterId, string VendorId);
 
@@ -105,9 +105,9 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         await using var setupFactory = new ApiFactory(fixture.ConnectionString);
         var setupClient = await setupFactory.CreateAdminClientAsync();
 
-        // Pick a seeded analytical accounting + financial account code to feed the stub.
-        var accounts = await setupClient.GetFromJsonAsync<List<ChartAccountDto>>("/api/chart-accounts");
-        var acc = accounts!.First(a => a.ChartType == "Accounting" && a.Kind == "Analytical" && a.IsActive);
+        // Pick a seeded analytical ledger account code to feed the stub.
+        var accounts = await setupClient.GetFromJsonAsync<List<LedgerAccountDto>>("/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        var acc = accounts!.First();
 
         // Wire up a factory with the stub IAiCompletion replacing the default Fake provider.
         await using var aiFactory = new ApiFactory(fixture.ConnectionString)
@@ -150,9 +150,9 @@ public class AiClassificationEndpointTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString); // default Fake provider
         var client = await factory.CreateAdminClientAsync();
 
-        // Fetch chart accounts to pick valid analytical account ids for classification.
-        var accounts = await client.GetFromJsonAsync<List<ChartAccountDto>>("/api/chart-accounts");
-        var acc = accounts!.First(a => a.ChartType == "Accounting" && a.Kind == "Analytical" && a.IsActive);
+        // Fetch ledger accounts to pick a valid analytical account id for classification.
+        var accounts = await client.GetFromJsonAsync<List<LedgerAccountDto>>("/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        var acc = accounts!.First();
 
         var seed = await SeedAsync(client);
 

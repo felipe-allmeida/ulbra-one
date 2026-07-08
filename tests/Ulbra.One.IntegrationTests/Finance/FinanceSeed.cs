@@ -217,35 +217,16 @@ public static class FinanceSeed
         res.EnsureSuccessStatusCode();
     }
 
+    private sealed record AccountRef(string Id, string Code, string Kind);
+
     /// <summary>
-    /// Creates one Accounting analytical account (synthetic root + analytical child) and returns
-    /// the analytical account id. Used to classify a payable in tests.
+    /// Returns an analytical account id from the global ledger chart (auto-seeded on startup).
+    /// Used to classify a payable in tests.
     /// </summary>
     public static async Task<string> CreateAccountingAccountAsync(HttpClient client)
     {
-        var suffix = Random.Shared.Next(100_000, 999_999);
-
-        // Accounting: synthetic root + analytical child.
-        var accRoot = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType = "Accounting",
-            code = $"A.{suffix}",
-            name = $"Despesas Seed {suffix}",
-            kind = "Synthetic",
-        });
-        accRoot.EnsureSuccessStatusCode();
-        var accRootId = (await ReadJson(accRoot)).GetProperty("id").GetString()!;
-
-        var accChild = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType = "Accounting",
-            code = $"A.{suffix}.01",
-            name = $"Despesas Seed Analitica {suffix}",
-            kind = "Analytical",
-            parentId = accRootId,
-            nature = "Debit",
-        });
-        accChild.EnsureSuccessStatusCode();
-        return (await ReadJson(accChild)).GetProperty("id").GetString()!;
+        var accounts = await client.GetFromJsonAsync<List<AccountRef>>(
+            "/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        return accounts!.First().Id;
     }
 }

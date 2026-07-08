@@ -212,34 +212,17 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     // Task 4: classify endpoint runs auto-approval + PayableResponse suggestion fields
     // ---------------------------------------------------------------------------
 
+    private sealed record AccountRef(string Id, string Code, string Kind);
+
     /// <summary>
-    /// Seeds a synthetic + analytical chart account of the given type via the public API.
-    /// Returns the prefixed id of the analytical (leaf) account.
+    /// Returns the prefixed id of an analytical account from the global ledger chart
+    /// (auto-seeded on startup).
     /// </summary>
     private static async Task<string> SeedChartAccountAsync(HttpClient client, string chartType)
     {
-        var code = Random.Shared.Next(100_000, 999_999).ToString();
-        var syntheticRes = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType,
-            code,
-            name = $"Root {chartType} {code}",
-            kind = "Synthetic",
-        });
-        syntheticRes.EnsureSuccessStatusCode();
-        var syntheticId = (await ReadJson(syntheticRes)).GetProperty("id").GetString()!;
-
-        var analyticalRes = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType,
-            code = $"{code}.1",
-            name = $"Leaf {chartType} {code}",
-            kind = "Analytical",
-            parentId = syntheticId,
-            nature = "Debit",
-        });
-        analyticalRes.EnsureSuccessStatusCode();
-        return (await ReadJson(analyticalRes)).GetProperty("id").GetString()!;
+        var accounts = await client.GetFromJsonAsync<List<AccountRef>>(
+            "/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        return accounts!.First().Id;
     }
 
     /// <summary>
