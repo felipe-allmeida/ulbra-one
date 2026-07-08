@@ -52,10 +52,11 @@ public class AccountingReportEndpointsTests(PostgresFixture fixture)
     {
         var companyId = await SeedCompanyAsync(client);
         var acc = await SeedChartAsync(client, companyId);
-        await PostEntryAsync(client, companyId, "2026-01-02", "1.01.01", "3.01.01", acc, 100_000m); // capital
-        await PostEntryAsync(client, companyId, "2026-01-10", "1.01.02", "4.01.01", acc, 50_000m);  // revenue
-        await PostEntryAsync(client, companyId, "2026-01-20", "5.01.01", "1.01.02", acc, 30_000m);  // payroll
-        await PostEntryAsync(client, companyId, "2026-01-25", "5.01.02", "2.01.01", acc, 8_000m);   // energy
+        // RFB Imunes e Isentas analytical codes (Asset / Equity / Revenue / Expense / Liability).
+        await PostEntryAsync(client, companyId, "2026-01-02", "1.01.01.01.01", "2.05.01.01.01", acc, 100_000m); // capital
+        await PostEntryAsync(client, companyId, "2026-01-10", "1.01.01.02.01", "4.01.01.01.01", acc, 50_000m);  // revenue
+        await PostEntryAsync(client, companyId, "2026-01-20", "4.02.01.01.01", "1.01.01.02.01", acc, 30_000m);  // payroll
+        await PostEntryAsync(client, companyId, "2026-01-25", "4.02.02.01.05", "2.01.01.03.01", acc, 8_000m);   // energy
         return companyId;
     }
 
