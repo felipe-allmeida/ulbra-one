@@ -8,6 +8,7 @@ namespace Ulbra.One.Accounting.Application.Contracts;
 public sealed record LedgerAccountResponse(
     LedgerAccountId Id,
     string Code,
+    string? ReducedCode,
     string Name,
     AccountGroup AccountGroup,
     NormalBalance NormalBalance,
@@ -18,6 +19,7 @@ public sealed record LedgerAccountResponse(
     public static LedgerAccountResponse From(LedgerAccount a) => new(
         new LedgerAccountId(a.Id),
         a.Code,
+        a.ReducedCode,
         a.Name,
         a.AccountGroup,
         a.NormalBalance,

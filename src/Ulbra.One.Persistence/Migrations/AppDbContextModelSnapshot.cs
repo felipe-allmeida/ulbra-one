@@ -446,6 +446,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("parent_id");
 
+                    b.Property<string>("ReducedCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reduced_code");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -466,6 +471,11 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_ledger_accounts_parent_id");
+
+                    b.HasIndex("ReducedCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ledger_accounts_reduced_code")
+                        .HasFilter("reduced_code IS NOT NULL AND deleted_at IS NULL");
 
                     b.ToTable("ledger_accounts", "accounting");
                 });

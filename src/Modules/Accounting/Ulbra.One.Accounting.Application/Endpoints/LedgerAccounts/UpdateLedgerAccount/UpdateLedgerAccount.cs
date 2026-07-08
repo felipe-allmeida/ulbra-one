@@ -18,6 +18,8 @@ public sealed class UpdateLedgerAccount : IEndpoint
     public sealed record Request
     {
         [NormalizeText] public string Name { get; set; } = string.Empty;
+        /// <summary>Optional short numeric alias ("código reduzido"); unique when present.</summary>
+        [NormalizeText] public string? ReducedCode { get; set; }
         public AccountGroup AccountGroup { get; set; }
         public LedgerAccountKind Kind { get; set; }
         public NormalBalance NormalBalance { get; set; }
@@ -39,7 +41,7 @@ public sealed class UpdateLedgerAccount : IEndpoint
         if (string.IsNullOrWhiteSpace(req.Name))
             return TypedResults.Problem(detail: "Name is required.", statusCode: 400, title: "LedgerAccount.Invalid");
 
-        try { account.Update(req.Name, req.AccountGroup, req.Kind, req.NormalBalance); }
+        try { account.Update(req.Name, req.AccountGroup, req.Kind, req.NormalBalance, req.ReducedCode); }
         catch (ArgumentException ex) { return TypedResults.Problem(detail: ex.Message, statusCode: 400, title: "LedgerAccount.Invalid"); }
 
         if (req.ParentId is { } parentId)

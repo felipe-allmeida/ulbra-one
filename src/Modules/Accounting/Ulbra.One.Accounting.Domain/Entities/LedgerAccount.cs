@@ -10,6 +10,8 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
     public Guid Id { get; private set; } = Guid.NewGuid();
 
     public string Code { get; private set; } = string.Empty;
+    /// <summary>Optional short numeric alias ("código reduzido") used for quick data entry; unique when present.</summary>
+    public string? ReducedCode { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public AccountGroup AccountGroup { get; private set; }
     public NormalBalance NormalBalance { get; private set; }
@@ -29,7 +31,8 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
     private LedgerAccount() { }
 
     public LedgerAccount(string code, string name, AccountGroup accountGroup,
-        LedgerAccountKind kind, Guid? parentId = null, NormalBalance? normalBalance = null)
+        LedgerAccountKind kind, Guid? parentId = null, NormalBalance? normalBalance = null,
+        string? reducedCode = null)
     {
         Code = NormalizeRequired(code, nameof(code));
         Name = NormalizeRequired(name, nameof(name));
@@ -37,6 +40,7 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
         Kind = kind;
         ParentId = parentId;
         NormalBalance = normalBalance ?? DefaultNormalBalance(accountGroup);
+        ReducedCode = NormalizeOptional(reducedCode);
     }
 
     /// <summary>The natural balance side for an account group (Asset/Expense → Debit; otherwise Credit).</summary>
@@ -46,13 +50,15 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
     /// <summary>True when this account may receive a journal line: analytical, active and not soft-deleted.</summary>
     public bool CanReceiveEntry => Kind == LedgerAccountKind.Analytical && IsActive && DeletedAt is null;
 
-    /// <summary>Updates the editable attributes (group/natureza/kind). Reparenting is a separate operation.</summary>
-    public void Update(string name, AccountGroup accountGroup, LedgerAccountKind kind, NormalBalance normalBalance)
+    /// <summary>Updates the editable attributes (group/natureza/kind/reduced code). Reparenting is a separate operation.</summary>
+    public void Update(string name, AccountGroup accountGroup, LedgerAccountKind kind, NormalBalance normalBalance,
+        string? reducedCode = null)
     {
         Name = NormalizeRequired(name, nameof(name));
         AccountGroup = accountGroup;
         Kind = kind;
         NormalBalance = normalBalance;
+        ReducedCode = NormalizeOptional(reducedCode);
     }
 
     public void Rename(string name) => Name = NormalizeRequired(name, nameof(name));
@@ -79,5 +85,11 @@ public sealed class LedgerAccount : IAuditable, ISoftDeletable
         var trimmed = value?.Trim() ?? throw new ArgumentNullException(paramName);
         if (trimmed.Length == 0) throw new ArgumentException($"{paramName} required", paramName);
         return trimmed;
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        var trimmed = value?.Trim();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
     }
 }
