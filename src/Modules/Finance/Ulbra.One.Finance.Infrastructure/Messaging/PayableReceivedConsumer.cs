@@ -65,11 +65,8 @@ public sealed class PayableReceivedConsumer(
 
         if (payable.Status == PayableStatus.Scheduled)
         {
-            var code = payable.AccountingAccountId is { } acc
-                ? await uow.ReadSet<ChartAccount>().Where(c => c.Id == acc).Select(c => c.Code).FirstOrDefaultAsync(ct)
-                : null;
             var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, code, withholdings), ct);
+            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, payable.AccountingAccountId, withholdings), ct);
         }
 
         // Payable carries an xmin rowversion. If a human mutated the payable between create and async

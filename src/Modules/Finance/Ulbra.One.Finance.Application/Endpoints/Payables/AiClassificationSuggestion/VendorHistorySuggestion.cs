@@ -9,7 +9,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSugge
 /// preferring the same cost center. Shared by the heuristic and AI-fallback endpoints.</summary>
 public static class VendorHistorySuggestion
 {
-    public static async Task<(ChartAccountId? Accounting, PayableId? BasedOn)> FindAsync(
+    public static async Task<(LedgerAccountId? Accounting, PayableId? BasedOn)> FindAsync(
         IUnitOfWork uow, Payable target, CancellationToken ct)
     {
         var match = await uow.ReadSet<Payable>()
@@ -20,6 +20,6 @@ public static class VendorHistorySuggestion
             .FirstOrDefaultAsync(ct);
 
         if (match is null) return (null, null);
-        return (new ChartAccountId(match.AccountingAccountId!.Value), new PayableId(match.Id));
+        return (new LedgerAccountId(match.AccountingAccountId!.Value), new PayableId(match.Id));
     }
 }

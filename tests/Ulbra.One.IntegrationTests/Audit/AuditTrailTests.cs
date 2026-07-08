@@ -23,9 +23,9 @@ public class AuditTrailTests(PostgresFixture fixture)
 
     private static string UniqueCode(string prefix) => $"{prefix}.{Random.Shared.Next(100_000, 999_999)}";
 
-    // The API returns the prefixed id ("chart_account_<guid:N>"); the audit_log.primary_key stores the
+    // The API returns the prefixed id ("ledgacct_<guid:N>"); the audit_log.primary_key stores the
     // raw Guid in its default string form. Bridge the two so the trail can be looked up by API id.
-    private static string PrimaryKeyOf(string apiId) => ChartAccountId.Parse(apiId, null).Value.ToString();
+    private static string PrimaryKeyOf(string apiId) => LedgerAccountId.Parse(apiId, null).Value.ToString();
 
     private static List<AuditLog> LogsFor(ApiFactory factory, string entityType, string primaryKey)
     {
@@ -38,26 +38,26 @@ public class AuditTrailTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Create_ChartAccount_WritesAuditRow()
+    public async Task Create_LedgerAccount_WritesAuditRow()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
 
         var code = UniqueCode("AUD");
-        var res = await client.PostAsJsonAsync("/api/chart-accounts",
-            new { chartType = "Accounting", code, name = "Conta auditada", kind = "Synthetic" });
+        var res = await client.PostAsJsonAsync("/api/ledger-accounts",
+            new { code, name = "Conta auditada", accountGroup = "Asset", kind = "Synthetic" });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
         var id = (await ReadJson(res)).GetProperty("id").GetString()!;
 
         // The audit row is written synchronously in SavedChanges (separate AuditContext write after the
         // business commit), so it is already present by the time the 201 response is returned.
-        var logs = LogsFor(factory, "ChartAccount", PrimaryKeyOf(id));
+        var logs = LogsFor(factory, "LedgerAccount", PrimaryKeyOf(id));
         var create = Assert.Single(logs);
 
         Assert.Equal(AuditAction.Create, create.Action);
-        Assert.Equal("ChartAccount", create.EntityType);
-        Assert.Equal("finance", create.Schema);
-        Assert.Equal("chart_accounts", create.TableName);
+        Assert.Equal("LedgerAccount", create.EntityType);
+        Assert.Equal("accounting", create.Schema);
+        Assert.Equal("ledger_accounts", create.TableName);
         Assert.Null(create.OldValues);
         Assert.NotNull(create.NewValues);
         Assert.Contains(code, create.NewValues!);
@@ -66,22 +66,22 @@ public class AuditTrailTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Update_ChartAccount_WritesUpdateRow_WithAffectedColumns_ExcludingTimestamps()
+    public async Task Update_LedgerAccount_WritesUpdateRow_WithAffectedColumns_ExcludingTimestamps()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
 
         var code = UniqueCode("AUD");
-        var createRes = await client.PostAsJsonAsync("/api/chart-accounts",
-            new { chartType = "Accounting", code, name = "Antes", kind = "Synthetic" });
+        var createRes = await client.PostAsJsonAsync("/api/ledger-accounts",
+            new { code, name = "Antes", accountGroup = "Asset", kind = "Synthetic" });
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
         var id = (await ReadJson(createRes)).GetProperty("id").GetString()!;
 
-        var updateRes = await client.PutAsJsonAsync($"/api/chart-accounts/{id}",
-            new { name = "Depois", parentId = (string?)null, nature = (string?)null, isActive = true });
+        var updateRes = await client.PutAsJsonAsync($"/api/ledger-accounts/{id}",
+            new { name = "Depois", accountGroup = "Asset", kind = "Synthetic", normalBalance = "Debit", parentId = (string?)null, isActive = true });
         Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
 
-        var logs = LogsFor(factory, "ChartAccount", PrimaryKeyOf(id));
+        var logs = LogsFor(factory, "LedgerAccount", PrimaryKeyOf(id));
         var update = Assert.Single(logs, l => l.Action == AuditAction.Update);
 
         Assert.NotNull(update.AffectedColumns);
@@ -97,17 +97,17 @@ public class AuditTrailTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
 
         var code = UniqueCode("AUD");
-        var createRes = await client.PostAsJsonAsync("/api/chart-accounts",
-            new { chartType = "Accounting", code, name = "Antes", kind = "Synthetic" });
+        var createRes = await client.PostAsJsonAsync("/api/ledger-accounts",
+            new { code, name = "Antes", accountGroup = "Asset", kind = "Synthetic" });
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
         var id = (await ReadJson(createRes)).GetProperty("id").GetString()!;
 
-        var updateRes = await client.PutAsJsonAsync($"/api/chart-accounts/{id}",
-            new { name = "Depois", parentId = (string?)null, nature = (string?)null, isActive = true });
+        var updateRes = await client.PutAsJsonAsync($"/api/ledger-accounts/{id}",
+            new { name = "Depois", accountGroup = "Asset", kind = "Synthetic", normalBalance = "Debit", parentId = (string?)null, isActive = true });
         Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
 
         var entityId = PrimaryKeyOf(id);
-        var listRes = await client.GetAsync($"/api/audit-logs?entityType=ChartAccount&entityId={entityId}");
+        var listRes = await client.GetAsync($"/api/audit-logs?entityType=LedgerAccount&entityId={entityId}");
         Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
 
         var body = await ReadJson(listRes);

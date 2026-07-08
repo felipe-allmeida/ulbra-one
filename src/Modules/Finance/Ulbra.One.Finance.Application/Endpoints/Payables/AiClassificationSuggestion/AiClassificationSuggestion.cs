@@ -31,7 +31,7 @@ public sealed class AiClassificationSuggestion : IEndpoint
         var result = await classifier.ClassifyAsync(payable, ct);
 
         return TypedResults.Ok(new AiClassificationSuggestionResponse(
-            result.AccountingAccountId is { } acc ? new ChartAccountId(acc) : null,
+            result.AccountingAccountId is { } acc ? new LedgerAccountId(acc) : null,
             result.Confidence,
             result.Rationale ?? string.Empty,
             result.Source));

@@ -18,7 +18,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
 public sealed class ClassifyPayableBatch : IEndpoint
 {
     public sealed record Request(
-        IReadOnlyList<PayableId> PayableIds, ChartAccountId? AccountingAccountId);
+        IReadOnlyList<PayableId> PayableIds, LedgerAccountId? AccountingAccountId);
 
     public sealed record Response(int ClassifiedCount);
 
@@ -31,17 +31,11 @@ public sealed class ClassifyPayableBatch : IEndpoint
         IUnitOfWork uow, IPublishEndpoint publish, TimeProvider clock, IAutoWithholdingService autoWithholding, CancellationToken ct)
     {
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, ct);
-        if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+        if (err is not null) return TypedResults.Problem(detail: "Invalid ledger account.", statusCode: 400, title: err);
 
         var ids = req.PayableIds.Select(p => p.Value).ToList();
         var payables = await uow.Set<Payable>().Where(p => ids.Contains(p.Id)).ToListAsync(ct);
         var now = clock.GetUtcNow();
-
-        // Resolve the accounting code once (all payables in a batch share the same account).
-        string? accountingCode = null;
-        if (req.AccountingAccountId is { } acctId)
-            accountingCode = await uow.ReadSet<ChartAccount>()
-                .Where(c => c.Id == acctId.Value).Select(c => c.Code).FirstOrDefaultAsync(ct);
 
         foreach (var payable in payables)
         {
@@ -56,7 +50,7 @@ public sealed class ClassifyPayableBatch : IEndpoint
             if (payable.Status == PayableStatus.Scheduled)
             {
                 var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-                await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, accountingCode, withholdings), ct);
+                await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, payable.AccountingAccountId, withholdings), ct);
             }
         }
 

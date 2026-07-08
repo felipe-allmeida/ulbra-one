@@ -7,7 +7,7 @@ public sealed record AccountingPostingOptions(
 
 public interface IPayablePostingService
 {
-    Task PostIncurralAsync(Guid companyId, string sourceKey, decimal amount, string? expenseCode,
+    Task PostIncurralAsync(Guid companyId, string sourceKey, decimal amount, Guid? expenseAccountId,
         IReadOnlyList<(string TaxType, decimal Amount)> withholdings, CancellationToken ct);
     Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, CancellationToken ct);
     Task ReverseAsync(Guid companyId, string sourceKey, string reason, CancellationToken ct);

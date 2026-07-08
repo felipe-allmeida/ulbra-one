@@ -28,7 +28,7 @@ public sealed class UpdatePayable : IEndpoint
         public DateOnly? IssueDate { get; set; }
         public List<CPCreatePayable.InstallmentInput>? Installments { get; set; }
         public CPCreatePayable.GenerateInput? Generate { get; set; }
-        public ChartAccountId? AccountingAccountId { get; set; }
+        public LedgerAccountId? AccountingAccountId { get; set; }
         public BankAccountId? PaymentBankAccountId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
     }

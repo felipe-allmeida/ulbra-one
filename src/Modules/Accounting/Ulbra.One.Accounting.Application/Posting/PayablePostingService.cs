@@ -22,6 +22,15 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         return a is { } acct && acct.CanReceiveEntry ? acct : null;
     }
 
+    // ── Resolve an active analytical ledger account by id (global chart); null if not found ──
+    private async Task<LedgerAccount?> ResolveByIdAsync(Guid? id, CancellationToken ct)
+    {
+        if (id is not { } accountId) return null;
+        var a = await uow.ReadSet<LedgerAccount>()
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.DeletedAt == null, ct);
+        return a is { } acct && acct.CanReceiveEntry ? acct : null;
+    }
+
     // ── Next per-company sequential entry number ──────────────────────────────
     private async Task<int> NextNumberAsync(Guid companyId, CancellationToken ct) =>
         (await uow.ReadSet<JournalEntry>()
@@ -80,21 +89,26 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public Task PostIncurralAsync(
-        Guid companyId, string sourceKey, decimal amount, string? expenseCode,
+    public async Task PostIncurralAsync(
+        Guid companyId, string sourceKey, decimal amount, Guid? expenseAccountId,
         IReadOnlyList<(string TaxType, decimal Amount)> withholdings, CancellationToken ct)
     {
+        // The expense line comes from the payable's classified global ledger account (resolved by id);
+        // liability/cash/withholding lines are Accounting-internal config codes. An unresolvable expense
+        // account leaves a null code, which PostEntryAsync parks as a PendingAccountingPosting.
+        //
         // Build the multi-line plan:
-        //   Dr expenseCode         = gross amount
+        //   Dr expenseAccount      = gross amount
         //   Cr PayablesLiability   = gross − Σwithholdings  (net)
         //   Cr WithholdingCode[t]  = each withholding.Amount  (one line per withholding)
         // When withholdings is empty the net == gross → exactly the classic 2-line entry.
+        var expenseAccount = await ResolveByIdAsync(expenseAccountId, ct);
         var totalWithheld = withholdings.Sum(w => w.Amount);
         var netAmount = amount - totalWithheld;
 
         var lineList = new List<(string? Code, EntrySide Side, decimal Amount)>(2 + withholdings.Count)
         {
-            (expenseCode, EntrySide.Debit, amount),
+            (expenseAccount?.Code, EntrySide.Debit, amount),
             (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount),
         };
 
@@ -104,7 +118,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             lineList.Add((withholdingCode, EntrySide.Credit, w.Amount));
         }
 
-        return PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
+        await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
     }
 
     public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, CancellationToken ct) =>

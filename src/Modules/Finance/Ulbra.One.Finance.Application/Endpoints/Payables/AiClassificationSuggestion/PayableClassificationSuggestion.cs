@@ -6,5 +6,5 @@ public sealed record PayableClassificationSuggestion(
     double Confidence,
     string Rationale);
 
-/// <summary>Lightweight projection of an analytical chart account for prompt + resolution.</summary>
-public sealed record AiChartAccountRef(Guid Id, string Code);
+/// <summary>Lightweight projection of an analytical ledger account for prompt + resolution.</summary>
+public sealed record AiAccountRef(Guid Id, string Code);
