@@ -25,6 +25,7 @@ beforeEach(() => {
       entry: { count: 2, totalAmount: 100 },
       classification: { count: 0, totalAmount: 0 },
       approval: { count: 1, totalAmount: 50 },
+      accounting: { count: 1, totalAmount: 75 },
       payment: { count: 0, totalAmount: 0 },
       reconciled: { count: 9, totalAmount: 900 },
     },

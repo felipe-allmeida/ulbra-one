@@ -82,6 +82,7 @@ export const queryKeys = {
   payableStageSummary: (companyId: string) => ['payableStageSummary', companyId] as const,
   payableStageItems: (params: PayableStageItemsParams) => ['payableStageItems', params] as const,
   payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
+  payableAccountingView: (id: string) => ['payableAccountingView', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
   receivableStageSummary: (companyId: string) => ['receivableStageSummary', companyId] as const,
@@ -345,6 +346,14 @@ export function usePayableAuditTrail(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payableAuditTrail(id ?? ''),
     queryFn: () => api.payableAuditTrail(id!),
+    enabled: !!id,
+  });
+}
+
+export function usePayableAccountingView(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableAccountingView(id ?? ''),
+    queryFn: () => api.payableAccountingView(id!),
     enabled: !!id,
   });
 }
@@ -658,6 +667,20 @@ export function useUpdatePayable(
 
 export function useApprovePayable(options?: UseMutationOptions<Payable, unknown, { id: string }>) {
   return useInvalidatingMutation(({ id }) => api.approvePayable(id), invalidatePayable, options);
+}
+
+export function useConfirmAccounting(options?: UseMutationOptions<Payable, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.confirmAccounting(id),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
+    },
+    options,
+  );
 }
 
 export function useRejectPayable(options?: UseMutationOptions<Payable, unknown, { id: string; reason: string }>) {

@@ -181,6 +181,7 @@ export type PaymentMethod = Schemas['PaymentMethod'];
 
 // ---------- Payable / Receivable stage items (payable-grain, one row per title) ----------
 export type PayableStageItem = Schemas['PayableStageItemResponse'];
+export type PayableAccountingView = Schemas['PayableAccountingViewResponse'];
 export type ReceivableStageItem = Schemas['ReceivableStageItemResponse'];
 
 // ---------- Receivables (Contas a Receber) ----------
@@ -561,6 +562,8 @@ export const api = {
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
   },
   getPayable: (id: string) => request<Payable>(`/payables/${id}`),
+  payableAccountingView: (id: string) => request<PayableAccountingView>(`/payables/${id}/accounting-view`),
+  confirmAccounting: (id: string) => request<Payable>(`/payables/${id}/accounting/confirm`, { method: 'POST' }),
   payableStageSummary: (companyId: string): Promise<PayableStageSummaryResponse> => {
     const q = new URLSearchParams({ companyId });
     return request<PayableStageSummaryResponse>(`/payables/stage-summary?${q}`);
