@@ -441,7 +441,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("8360128", p.RpsNumber);
         Assert.Equal("001", p.RpsSeries);
         Assert.Null(p.CnaeCode);                   // national has no CNAE
-        Assert.Equal("01.07", p.Lc116Subitem);     // derived from cTribNac 010701 (item 01, subitem 07)
+        Assert.Equal("1.07", p.Lc116Subitem);      // derived from cTribNac 010701 → canonical LC 116 (item 1, subitem 07)
         Assert.Equal("5133785980", p.IssuerPhone);
         Assert.NotNull(p.IssuerAddress);
         Assert.Equal("RS", p.IssuerAddress!.State);
