@@ -31,7 +31,8 @@ public sealed class UpdateWithholdingRule : IEndpoint
                 statusCode: 400, title: "WithholdingRule.RateRequired");
 
         rule.Update(req.TaxType, req.Retains, req.RateSource, req.Rate, req.Lc116Subitem, req.VendorRegime,
-            req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount, req.Reason);
+            req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount, req.Reason,
+            req.Cprb, req.SimplesAnexo);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(WithholdingRuleResponse.From(rule));
     }

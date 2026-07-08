@@ -7,8 +7,9 @@ namespace Ulbra.One.Fiscal.Domain.Entities;
 /// <summary>
 /// Editable withholding rule applied by the resolver PER TAX. The key is a set of optional dimensions
 /// (null = "any"): <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>, <see cref="MunicipalityIbge"/>,
-/// <see cref="CompanyId"/>. The outcome is <see cref="Retains"/> + rate/base/minimum. Specificity
-/// (which rule wins when several match) is COMPUTED during resolution, not stored.
+/// <see cref="CompanyId"/>, and the INSS-specific <see cref="Cprb"/> / <see cref="SimplesAnexo"/>. The outcome
+/// is <see cref="Retains"/> + rate/base/minimum. Specificity (which rule wins when several match) is COMPUTED
+/// during resolution, not stored.
 /// </summary>
 public class WithholdingRule : IAuditable, ISoftDeletable
 {
@@ -70,7 +71,8 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     /// <summary>Replaces all rule fields (CRUD update).</summary>
     public void Update(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
         string? lc116Subitem, TaxRegime? vendorRegime, string? municipalityIbge, Guid? companyId,
-        BaseRule baseRule, decimal? minimumAmount, NonRetentionReason reason)
+        BaseRule baseRule, decimal? minimumAmount, NonRetentionReason reason,
+        bool? cprb, SimplesAnexo? simplesAnexo)
     {
         TaxType = taxType;
         Retains = retains;
@@ -83,6 +85,8 @@ public class WithholdingRule : IAuditable, ISoftDeletable
         BaseRule = baseRule;
         MinimumAmount = minimumAmount;
         Reason = reason;
+        Cprb = cprb;
+        SimplesAnexo = simplesAnexo;
     }
 
     public void Activate() => Active = true;

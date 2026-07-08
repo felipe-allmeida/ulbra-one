@@ -25,7 +25,8 @@ public sealed class CreateWithholdingRule : IEndpoint
                 statusCode: 400, title: "WithholdingRule.RateRequired");
 
         var rule = new WithholdingRule(req.TaxType, req.Retains, req.RateSource, req.Rate,
-            req.Lc116Subitem, req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount, req.Reason);
+            req.Lc116Subitem, req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule, req.MinimumAmount,
+            req.Reason, req.Cprb, req.SimplesAnexo);
         await uow.AddAsync(rule, ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/withholding-rules/{new WithholdingRuleId(rule.Id)}", WithholdingRuleResponse.From(rule));
