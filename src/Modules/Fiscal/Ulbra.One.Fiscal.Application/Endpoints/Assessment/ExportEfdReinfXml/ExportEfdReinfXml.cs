@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
+using Ulbra.One.Common.Domain.Validation;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Fiscal.Application.Assessment;
 using Ulbra.One.Fiscal.Domain.EfdReinf;
@@ -39,7 +40,7 @@ public sealed class ExportEfdReinfXml : IEndpoint
         var facts = await WithholdingFactLoader.LoadAsync(uow, new AssessmentFilter(period, cid.Value), ct);
 
         // Contribuinte root: first 8 digits of the CNPJ (no mask — nrInsc in the XSD is \d{8}).
-        var root = new string(company.Cnpj.Where(char.IsDigit).Take(8).ToArray());
+        var root = new string(DocumentValidator.Normalize(company.Cnpj).Take(8).ToArray());
         var taxpayer = new ReinfTaxpayer(root, company.LegalName);
         var ambiente = tpAmb ?? 2;
         var r4020 = new ReinfR4020Input(period.PerApur, ambiente, taxpayer, ReinfR4020Projection.FromFacts(facts));

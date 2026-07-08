@@ -17,10 +17,8 @@ import {
   type WithholdingRuleValues,
 } from './schemas';
 import { FormActions } from './registry-forms';
+import { fractionToPercent, percentToFraction } from '../lib';
 import type { WithholdingRule, WithholdingRuleInput } from '../api';
-
-/** Percent (form) ⇄ fraction (domain). Round to 4 decimals to avoid float noise (0.035×100 = 3.5). */
-const toPercentString = (fraction: number) => String(Math.round(fraction * 1_000_000) / 10_000);
 
 /**
  * Create/edit form for a WithholdingRule (Regra de Retenção). Mirrors VendorForm (RHF + Controller + resolver).
@@ -48,7 +46,7 @@ export function WithholdingRuleForm({
       retains: initial?.retains ?? true,
       reason: initial?.reason ?? 'None',
       rateSource: initial?.rateSource ?? 'Fixed',
-      rate: initial?.rate != null ? toPercentString(initial.rate) : '',
+      rate: initial?.rate != null ? String(fractionToPercent(initial.rate)) : '',
       baseRule: initial?.baseRule ?? 'Full',
       minimumAmount: initial?.minimumAmount != null ? String(initial.minimumAmount) : '',
       lc116Subitem: initial?.lc116Subitem ?? '',
@@ -85,7 +83,7 @@ export function WithholdingRuleForm({
       reason: v.retains ? 'None' : v.reason, // motivo só se aplica quando NÃO retém
       rateSource: v.rateSource,
       // Alíquota fixa (fração) só quando retém e a origem é fixa; senão a alíquota vem da nota ou não há.
-      rate: v.rateSource === 'Fixed' && v.retains ? Number(v.rate) / 100 : null,
+      rate: v.rateSource === 'Fixed' && v.retains ? percentToFraction(Number(v.rate)) : null,
       baseRule: v.baseRule,
       minimumAmount: v.minimumAmount.trim() ? Number(v.minimumAmount) : null,
       cprb: v.cprb,

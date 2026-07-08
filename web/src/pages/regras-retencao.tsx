@@ -6,10 +6,11 @@ import { getErrorMessage } from '../apiError';
 import { useCompanies, useDeleteWithholdingRule, useWithholdingRules } from '../queries';
 import { Button, ConfirmDialog, Drawer, PageHeader, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
+import { fractionToPercent } from '../lib';
 import { WithholdingRuleForm } from './withholding-rule-form';
 
-/** Percent display for a stored fraction (0.11 → "11%"); rounds to 4 decimals to avoid float noise. */
-const ratePercent = (fraction: number) => `${Math.round(fraction * 1_000_000) / 10_000}%`;
+/** Percent display for a stored fraction (0.11 → "11%"). */
+const ratePercent = (fraction: number) => `${fractionToPercent(fraction)}%`;
 
 /**
  * Regras de Retenção (Cadastros) — CRUD of the WithholdingRule set the auto-retention engine resolves against.
