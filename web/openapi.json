@@ -203,16 +203,6 @@
           "Accounting"
         ],
         "operationId": "SeedLedgerAccounts",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SeedLedgerAccountsRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "201": {
             "description": "Created",
@@ -7745,14 +7735,6 @@
         },
         "additionalProperties": false
       },
-      "ChartTemplate": {
-        "enum": [
-          "Demo",
-          "RfbImunesIsentas",
-          "RfbPjLucroReal"
-        ],
-        "type": "string"
-      },
       "ClassificationPolicyResponse": {
         "required": [
           "companyId",
@@ -8186,6 +8168,7 @@
       "CreateLedgerAccountRequest": {
         "required": [
           "code",
+          "reducedCode",
           "name",
           "accountGroup",
           "kind",
@@ -8196,6 +8179,10 @@
         "properties": {
           "code": {
             "type": "string"
+          },
+          "reducedCode": {
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -9472,6 +9459,7 @@
         "required": [
           "id",
           "code",
+          "reducedCode",
           "name",
           "accountGroup",
           "normalBalance",
@@ -9487,6 +9475,10 @@
           },
           "code": {
             "type": "string"
+          },
+          "reducedCode": {
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -11587,18 +11579,6 @@
         },
         "additionalProperties": false
       },
-      "SeedLedgerAccountsRequest": {
-        "required": [
-          "template"
-        ],
-        "type": "object",
-        "properties": {
-          "template": {
-            "$ref": "#/components/schemas/ChartTemplate"
-          }
-        },
-        "additionalProperties": false
-      },
       "SetReconciledBalanceRequest": {
         "required": [
           "balance",
@@ -12253,6 +12233,7 @@
       "UpdateLedgerAccountRequest": {
         "required": [
           "name",
+          "reducedCode",
           "accountGroup",
           "kind",
           "normalBalance",
@@ -12263,6 +12244,10 @@
         "properties": {
           "name": {
             "type": "string"
+          },
+          "reducedCode": {
+            "type": "string",
+            "nullable": true
           },
           "accountGroup": {
             "$ref": "#/components/schemas/AccountGroup"

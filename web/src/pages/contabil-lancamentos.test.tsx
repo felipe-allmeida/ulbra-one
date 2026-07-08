@@ -10,6 +10,7 @@ const accounts: LedgerAccount[] = [
   {
     id: 'a1',
     code: '1.01.01',
+    reducedCode: null,
     name: 'Caixa',
     accountGroup: 'Asset',
     normalBalance: 'Debit',
@@ -20,6 +21,7 @@ const accounts: LedgerAccount[] = [
   {
     id: 'a2',
     code: '4.01.01',
+    reducedCode: null,
     name: 'Receita de serviços',
     accountGroup: 'Revenue',
     normalBalance: 'Credit',
