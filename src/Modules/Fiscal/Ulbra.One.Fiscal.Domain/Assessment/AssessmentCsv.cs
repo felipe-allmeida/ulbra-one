@@ -27,6 +27,11 @@ public static class AssessmentCsv
 
     private static string Money(decimal v) => v.ToString("0.00", CultureInfo.InvariantCulture).Replace('.', ',');
 
-    private static string Field(string v) =>
-        v.IndexOfAny([';', '"', '\n', '\r']) >= 0 ? "\"" + v.Replace("\"", "\"\"") + "\"" : v;
+    private static string Field(string v)
+    {
+        // CSV formula injection: a leading = + - @ (or a control char) makes Excel/Sheets evaluate the cell as a
+        // formula. Prefix a single quote so it stays text (OWASP). Numeric columns use Money(), not Field.
+        if (v.Length > 0 && "=+-@\t\r".IndexOf(v[0]) >= 0) v = "'" + v;
+        return v.IndexOfAny([';', '"', '\n', '\r']) >= 0 ? "\"" + v.Replace("\"", "\"\"") + "\"" : v;
+    }
 }

@@ -53,4 +53,16 @@ public class AssessmentCsvTests
         // null document → empty field between the two semicolons
         Assert.Contains(";;", row);
     }
+
+    [Fact]
+    public void Fields_starting_with_a_formula_char_are_defanged()
+    {
+        // A name/document beginning with = + - @ must not be evaluated as a formula in Excel/Sheets.
+        var csv = AssessmentCsv.Build(
+            "2026-07", [Fact(company: "+SUM(A1)", counterparty: "=HYPERLINK(\"http://x\",\"y\")", document: "@cmd")]);
+        var row = csv.Split('\n')[1].TrimEnd('\r');
+        Assert.Contains("'+SUM(A1)", row); // defanged, no special char → not quoted
+        Assert.Contains("'@cmd", row);
+        Assert.Contains("\"'=HYPERLINK(", row); // defanged AND quoted (contains a quote)
+    }
 }
