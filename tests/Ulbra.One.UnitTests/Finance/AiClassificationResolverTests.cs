@@ -6,9 +6,9 @@ public class AiClassificationResolverTests
 {
     private static readonly Guid AccId = Guid.NewGuid();
 
-    private static readonly IReadOnlyList<AiChartAccountRef> Catalog = new[]
+    private static readonly IReadOnlyList<AiAccountRef> Catalog = new[]
     {
-        new AiChartAccountRef(AccId, "3.1.1"),
+        new AiAccountRef(AccId, "3.1.1"),
     };
 
     [Fact]

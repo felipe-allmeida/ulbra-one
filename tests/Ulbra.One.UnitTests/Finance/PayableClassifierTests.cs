@@ -1,5 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
+using Ulbra.One.Accounting.Domain;
+using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application.Ai;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -61,11 +63,11 @@ public class PayableClassifierTests
 
     private static readonly Guid AccId = Guid.NewGuid();
 
-    // Helper to build a ChartAccount with a specific Id via reflection (private set).
-    private static ChartAccount AccountWithId(Guid id, ChartType type, string code, string name)
+    // Helper to build a LedgerAccount with a specific Id via reflection (private set).
+    private static LedgerAccount AccountWithId(Guid id, string code, string name)
     {
-        var account = new ChartAccount(type, code, name, AccountKind.Analytical);
-        typeof(ChartAccount).GetProperty(nameof(ChartAccount.Id))!
+        var account = new LedgerAccount(code, name, AccountGroup.Expense, LedgerAccountKind.Analytical);
+        typeof(LedgerAccount).GetProperty(nameof(LedgerAccount.Id))!
             .SetValue(account, id);
         return account;
     }
@@ -126,7 +128,7 @@ public class PayableClassifierTests
     [Fact]
     public async Task High_confidence_ai_returns_source_ai_with_resolved_account_id()
     {
-        var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
+        var accAccount = AccountWithId(AccId, "3.1.1", "Software expense");
 
         var uow = new StubUow(accAccount);
         var ai = new StubAi(confidence: 0.9, accCode: "3.1.1");
@@ -142,7 +144,7 @@ public class PayableClassifierTests
     [Fact]
     public async Task Low_confidence_ai_falls_through_to_none_when_no_vendor_history()
     {
-        var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
+        var accAccount = AccountWithId(AccId, "3.1.1", "Software expense");
 
         var uow = new StubUow(accAccount); // no prior payables → no vendor history
         var ai = new StubAi(confidence: 0.3, accCode: "3.1.1"); // below threshold
@@ -158,7 +160,7 @@ public class PayableClassifierTests
     [Fact]
     public async Task Disabled_ai_falls_through_to_heuristic_when_vendor_history_exists()
     {
-        var accAccount = AccountWithId(AccId, ChartType.Accounting, "3.1.1", "Software expense");
+        var accAccount = AccountWithId(AccId, "3.1.1", "Software expense");
 
         // Build a classified prior payable with the same VendorId.
         var vendorId = Guid.NewGuid();

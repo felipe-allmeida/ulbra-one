@@ -197,10 +197,7 @@ export type ReceivableOrigin = Schemas['ReceivableOrigin'];
 export type ReceivableStatus = Schemas['ReceivableStatus'];
 export type ReceivableInstallmentStatus = Schemas['ReceivableInstallmentStatus'];
 
-// ---------- Chart of Accounts (Plano de Contas) ----------
-export type ChartAccount = Schemas['ChartAccountResponse'];
-export type ChartType = Schemas['ChartType'];
-export type AccountKind = Schemas['AccountKind'];
+// ---------- Classification ----------
 export type ClassificationSuggestion = Schemas['ClassificationSuggestionResponse'];
 export type AiClassificationSuggestion = Schemas['AiClassificationSuggestionResponse'];
 export type ClassificationPolicy = Schemas['ClassificationPolicyResponse'];
@@ -240,9 +237,8 @@ export interface CreateRemittanceInput {
   dueCutoff?: string | null;
 }
 
-/** Request body for creating a ledger account. */
+/** Request body for creating a ledger account (global chart — no companyId). */
 export interface LedgerAccountInput {
-  companyId: string;
   code: string;
   name: string;
   accountGroup: AccountGroup;
@@ -877,35 +873,6 @@ export const api = {
   ignoreTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/ignore`, { method: 'POST' }),
   unmatchTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/unmatch`, { method: 'POST' }),
 
-  // ---------- Chart of Accounts (Plano de Contas) ----------
-  listChartAccounts: (params: { chartType?: ChartType; kind?: AccountKind; activeOnly?: boolean }) => {
-    const q = new URLSearchParams();
-    if (params.chartType) q.set('chartType', params.chartType);
-    if (params.kind) q.set('kind', params.kind);
-    if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
-    return request<ChartAccount[]>(`/chart-accounts?${q}`);
-  },
-  createChartAccount: (body: {
-    chartType: ChartType;
-    code: string;
-    name: string;
-    parentId?: string | null;
-    kind: AccountKind;
-    nature: Schemas['AccountNature'] | null;
-  }) => request<ChartAccount>('/chart-accounts', { method: 'POST', body: JSON.stringify(body) }),
-  updateChartAccount: (
-    id: string,
-    body: {
-      code?: string;
-      name?: string;
-      parentId?: string | null;
-      kind?: AccountKind;
-      nature?: Schemas['AccountNature'] | null;
-      isActive?: boolean;
-    },
-  ) => request<ChartAccount>(`/chart-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteChartAccount: (id: string) => request<void>(`/chart-accounts/${id}`, { method: 'DELETE' }),
-
   // ---------- Classification ----------
   classifyPayable: (id: string, body: { accountingAccountId?: string | null }) =>
     request<Payable>(`/payables/${id}/classify`, { method: 'POST', body: JSON.stringify(body) }),
@@ -1032,13 +999,11 @@ export const api = {
 
   // ---------- Accounting: Ledger accounts (plano de contas contábil) ----------
   listLedgerAccounts: (params: {
-    companyId?: string;
     accountGroup?: AccountGroup;
     kind?: LedgerAccountKind;
     activeOnly?: boolean;
   }) => {
     const q = new URLSearchParams();
-    if (params.companyId) q.set('companyId', params.companyId);
     if (params.accountGroup) q.set('accountGroup', params.accountGroup);
     if (params.kind) q.set('kind', params.kind);
     if (params.activeOnly != null) q.set('activeOnly', String(params.activeOnly));
@@ -1049,8 +1014,8 @@ export const api = {
     request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
   updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
     request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  seedLedgerAccounts: (companyId: string) =>
-    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ companyId }) }),
+  seedLedgerAccounts: (template?: string) =>
+    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ template }) }),
 
   // ---------- Accounting: Journal entries (lançamentos) ----------
   listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {

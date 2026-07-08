@@ -18,7 +18,7 @@ namespace Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
 
 public sealed class ClassifyPayable : IEndpoint
 {
-    public sealed record Request(ChartAccountId? AccountingAccountId);
+    public sealed record Request(LedgerAccountId? AccountingAccountId);
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/classify", Handle).WithName("ClassifyPayable").WithTags("Finance")
@@ -32,7 +32,7 @@ public sealed class ClassifyPayable : IEndpoint
         if (payable is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
         var err = await ClassificationValidation.ValidateAsync(uow, req.AccountingAccountId?.Value, ct);
-        if (err is not null) return TypedResults.Problem(detail: "Invalid chart account.", statusCode: 400, title: err);
+        if (err is not null) return TypedResults.Problem(detail: "Invalid ledger account.", statusCode: 400, title: err);
 
         payable.Classify(req.AccountingAccountId?.Value);
 
@@ -46,11 +46,8 @@ public sealed class ClassifyPayable : IEndpoint
 
         if (payable.Status == PayableStatus.Scheduled)
         {
-            var code = payable.AccountingAccountId is { } acc
-                ? await uow.ReadSet<ChartAccount>().Where(c => c.Id == acc).Select(c => c.Code).FirstOrDefaultAsync(ct)
-                : null;
             var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, code, withholdings), ct);
+            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, payable.AccountingAccountId, withholdings), ct);
         }
 
         await uow.SaveChangesAsync(ct);

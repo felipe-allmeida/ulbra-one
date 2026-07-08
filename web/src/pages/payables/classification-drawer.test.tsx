@@ -7,11 +7,8 @@ const { mockUsePayable, mockClassify } = vi.hoisted(() => ({ mockUsePayable: vi.
 vi.mock('../../queries', () => ({
   usePayable: mockUsePayable,
   useClassifyPayable: () => ({ mutate: mockClassify, isPending: false }),
-  useChartAccounts: ({ chartType }: { chartType: string }) => ({
-    data:
-      chartType === 'Accounting'
-        ? [{ id: 'acc_1', code: '3.1', name: 'Despesas' }]
-        : [{ id: 'fin_1', code: 'F1', name: 'Caixa' }],
+  useLedgerAccounts: () => ({
+    data: [{ id: 'ledgacct_1', code: '3.1', name: 'Despesas' }],
   }),
 }));
 
@@ -23,7 +20,7 @@ beforeEach(() => {
       id: 'payable_1',
       companyId: 'company_1',
       counterpartyName: 'ACME',
-      suggestedAccountingAccountId: 'acc_1',
+      suggestedAccountingAccountId: 'ledgacct_1',
       classificationRationale: 'Fornecedor recorrente de TI',
       accountingAccountId: null,
     },

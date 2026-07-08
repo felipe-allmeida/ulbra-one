@@ -6,8 +6,6 @@ namespace Ulbra.One.UnitTests.Accounting;
 
 public class ReferentialChartImporterTests
 {
-    private static readonly Guid Company = Guid.NewGuid();
-
     // Mini fixture exercising: Asset leaf, PL nested under Passivo, result split.
     private static IReadOnlyList<ReferentialAccountRow> Fixture() =>
     [
@@ -29,7 +27,7 @@ public class ReferentialChartImporterTests
     [Fact]
     public void Maps_natureza_to_account_group()
     {
-        var a = ReferentialChartImporter.Build(Company, Fixture());
+        var a = ReferentialChartImporter.Build(Fixture());
         Assert.Equal(AccountGroup.Asset, Get(a, "1").AccountGroup);
         Assert.Equal(AccountGroup.Liability, Get(a, "2").AccountGroup);
         Assert.Equal(AccountGroup.Equity, Get(a, "2.05").AccountGroup);
@@ -40,7 +38,7 @@ public class ReferentialChartImporterTests
     [Fact]
     public void Maps_tipo_to_kind()
     {
-        var a = ReferentialChartImporter.Build(Company, Fixture());
+        var a = ReferentialChartImporter.Build(Fixture());
         Assert.Equal(LedgerAccountKind.Synthetic, Get(a, "1").Kind);
         Assert.Equal(LedgerAccountKind.Analytical, Get(a, "1.01").Kind);
     }
@@ -48,7 +46,7 @@ public class ReferentialChartImporterTests
     [Fact]
     public void Wires_parent_only_within_same_group()
     {
-        var a = ReferentialChartImporter.Build(Company, Fixture());
+        var a = ReferentialChartImporter.Build(Fixture());
         // same-group child wires to parent
         Assert.Equal(Get(a, "1").Id, Get(a, "1.01").ParentId);
         Assert.Equal(Get(a, "2.05").Id, Get(a, "2.05.01").ParentId);
@@ -63,8 +61,7 @@ public class ReferentialChartImporterTests
     [Fact]
     public void Produces_one_account_per_row()
     {
-        var a = ReferentialChartImporter.Build(Company, Fixture());
+        var a = ReferentialChartImporter.Build(Fixture());
         Assert.Equal(10, a.Count);
-        Assert.All(a, x => Assert.Equal(Company, x.CompanyId));
     }
 }

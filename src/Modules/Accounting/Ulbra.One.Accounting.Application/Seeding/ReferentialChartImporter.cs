@@ -3,14 +3,14 @@ using Ulbra.One.Accounting.Domain.Entities;
 
 namespace Ulbra.One.Accounting.Application.Seeding;
 
-/// <summary>Builds a company's ledger chart from RFB referencial rows. Group comes from
+/// <summary>Builds the global ledger chart from RFB referencial rows. Group comes from
 /// <c>natureza</c> (resolving PL nested under "2"); kind from <c>tipo</c>; parents are wired
 /// from "conta superior" but only when the parent shares the same group and is synthetic —
 /// otherwise the node becomes a group root, preserving <see cref="LedgerAccount.Reparent"/>'s
 /// same-group invariant without touching the domain.</summary>
 public static class ReferentialChartImporter
 {
-    public static IReadOnlyList<LedgerAccount> Build(Guid companyId, IReadOnlyList<ReferentialAccountRow> rows)
+    public static IReadOnlyList<LedgerAccount> Build(IReadOnlyList<ReferentialAccountRow> rows)
     {
         var byCode = new Dictionary<string, LedgerAccount>(rows.Count);
         var ordered = new List<LedgerAccount>(rows.Count);
@@ -18,7 +18,7 @@ public static class ReferentialChartImporter
         {
             var group = GroupOf(row);
             var kind = row.Tipo == "S" ? LedgerAccountKind.Synthetic : LedgerAccountKind.Analytical;
-            var account = new LedgerAccount(companyId, row.Code, row.Name, group, kind);
+            var account = new LedgerAccount(row.Code, row.Name, group, kind);
             byCode[row.Code] = account;
             ordered.Add(account);
         }

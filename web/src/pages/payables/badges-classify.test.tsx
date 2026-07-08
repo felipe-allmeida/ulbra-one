@@ -55,15 +55,17 @@ vi.mock('../../queries', async (orig) => {
     ...actual,
     usePayable: mockUsePayable,
     usePayables: mockUsePayables,
-    useChartAccounts: () => ({
+    useLedgerAccounts: () => ({
       data: [
         {
-          id: 'acc_1',
+          id: 'ledgacct_1',
           code: '1.1.01',
           name: 'Despesas gerais',
           kind: 'Analytical',
+          accountGroup: 'Expense',
+          normalBalance: 'Debit',
           isActive: true,
-          chartType: 'Accounting',
+          parentId: null,
         },
       ],
       isLoading: false,
@@ -145,7 +147,7 @@ const payableWithSuggestion = {
   rejectedAt: null,
   accountingAccountId: null,
   isClassified: false,
-  suggestedAccountingAccountId: 'acc_1',
+  suggestedAccountingAccountId: 'ledgacct_1',
   classificationConfidence: 0.75,
   classificationRationale: 'Baseado em histórico de lançamentos similares.',
   createdAt: '2025-06-01T00:00:00Z',

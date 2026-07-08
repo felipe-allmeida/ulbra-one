@@ -108,10 +108,6 @@ export const NAV_DOMAINS: NavDomain[] = [
           { labelKey: 'nav.documents', icon: <FileBox />, soon: true },
         ],
       },
-      {
-        labelKey: 'nav.subgroups.configuration',
-        items: [{ labelKey: 'nav.chartAccounts', to: '/app/chart-of-accounts', icon: <ListTree /> }],
-      },
     ],
   },
   {

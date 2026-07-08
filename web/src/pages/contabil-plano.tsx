@@ -3,11 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Plus, ListTree, Pencil, Sparkles } from 'lucide-react';
 import { type AccountGroup, type LedgerAccount, type LedgerAccountKind, type NormalBalance } from '../api';
 import { useCreateLedgerAccount, useLedgerAccounts, useSeedLedgerAccounts, useUpdateLedgerAccount } from '../queries';
-import { useApp } from '../store';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select } from '../ui';
-import { EmpresaPicker } from './shared';
 
 const GROUPS: AccountGroup[] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
 
@@ -18,13 +16,11 @@ function naturalBalance(group: AccountGroup): NormalBalance {
 
 /* ============ Create / edit form ============ */
 function LedgerAccountForm({
-  companyId,
   accounts,
   initial,
   onSaved,
   onCancel,
 }: {
-  companyId: string;
   accounts: LedgerAccount[];
   initial?: LedgerAccount;
   onSaved: () => void;
@@ -71,7 +67,6 @@ function LedgerAccountForm({
       });
     } else {
       create.mutate({
-        companyId,
         code: trimmedCode,
         name: trimmedName,
         accountGroup: group,
@@ -164,8 +159,7 @@ function LedgerAccountForm({
 export function ContabilPlanoPage() {
   const { t } = useTranslation();
   const toast = useToast();
-  const { empresa, empresaId } = useApp();
-  const list = useLedgerAccounts({ companyId: empresaId || undefined }, { enabled: !!empresaId });
+  const list = useLedgerAccounts({});
   const accounts = list.data ?? [];
 
   const seed = useSeedLedgerAccounts({
@@ -219,26 +213,17 @@ export function ContabilPlanoPage() {
   return (
     <>
       <PageHeader title={t('accounting.ledger.title')} sub={t('accounting.ledger.subtitle')}>
-        <EmpresaPicker />
-        {empresa && accounts.length === 0 && !list.isLoading && (
-          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate({ companyId: empresaId })}>
+        {accounts.length === 0 && !list.isLoading && (
+          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate({})}>
             {seed.isPending ? t('accounting.ledger.seeding') : t('accounting.ledger.seed')}
           </Button>
         )}
-        {empresa && (
-          <Button variant='brand' icon={<Plus />} onClick={openCreate}>
-            {t('accounting.ledger.new')}
-          </Button>
-        )}
+        <Button variant='brand' icon={<Plus />} onClick={openCreate}>
+          {t('accounting.ledger.new')}
+        </Button>
       </PageHeader>
 
-      {!empresa ? (
-        <EmptyState
-          icon={<ListTree />}
-          title={t('accounting.ledger.empty.noCompanyTitle')}
-          sub={t('accounting.ledger.empty.noCompanySub')}
-        />
-      ) : accounts.length === 0 ? (
+      {accounts.length === 0 ? (
         <EmptyState
           icon={<ListTree />}
           title={t('accounting.ledger.empty.title')}
@@ -292,7 +277,6 @@ export function ContabilPlanoPage() {
       >
         {formOpen && (
           <LedgerAccountForm
-            companyId={empresaId}
             accounts={accounts}
             initial={editing ?? undefined}
             onSaved={() => setFormOpen(false)}

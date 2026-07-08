@@ -15,10 +15,6 @@ using Ulbra.One.Finance.Application.Endpoints.Conciliation.ListStatementImports;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.DeleteBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.ListBankAccounts;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.UpdateBankAccount;
-using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.CreateChartAccount;
-using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.DeleteChartAccount;
-using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.ListChartAccounts;
-using Ulbra.One.Finance.Application.Endpoints.ChartAccounts.UpdateChartAccount;
 using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.GetClassificationPolicy;
 using Ulbra.One.Finance.Application.Endpoints.ClassificationPolicies.UpdateClassificationPolicy;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCategory;
@@ -162,12 +158,6 @@ public static class FinanceEndpoints
         var cashFlow = builder.MapGroup("/cash-flow");
         cashFlow.MapEndpoint<GetCashFlow>();
         cashFlow.MapEndpoint<GetCashFlowItems>();
-
-        var chartAccounts = builder.MapGroup("/chart-accounts");
-        chartAccounts.MapEndpoint<ListChartAccounts>();
-        chartAccounts.MapEndpoint<CreateChartAccount>();
-        chartAccounts.MapEndpoint<UpdateChartAccount>();
-        chartAccounts.MapEndpoint<DeleteChartAccount>();
 
         var statementImports = builder.MapGroup("/statement-imports");
         statementImports.MapEndpoint<ImportStatement>();

@@ -65,8 +65,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
 
         // Draft: debit energy, credit bank.
         var draft = await CreateDraftAsync(client, companyId, "2026-01-15",
-            Line(acc["5.01.02"], "Debit", 1_000m),
-            Line(acc["1.01.02"], "Credit", 1_000m));
+            Line(acc["4.02.02.01.05"], "Debit", 1_000m),
+            Line(acc["1.01.01.02.01"], "Credit", 1_000m));
         var id = draft.GetProperty("id").GetString()!;
         Assert.Equal("Draft", draft.GetProperty("status").GetString());
         Assert.True(draft.GetProperty("number").ValueKind == JsonValueKind.Null);
@@ -78,8 +78,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
             description = "Energia elétrica - janeiro",
             lines = new[]
             {
-                Line(acc["5.01.02"], "Debit", 1_500m),
-                Line(acc["1.01.02"], "Credit", 1_500m),
+                Line(acc["4.02.02.01.05"], "Debit", 1_500m),
+                Line(acc["1.01.01.02.01"], "Credit", 1_500m),
             },
         });
         Assert.Equal(HttpStatusCode.OK, editRes.StatusCode);
@@ -100,8 +100,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
             description = "tentativa",
             lines = new[]
             {
-                Line(acc["5.01.02"], "Debit", 999m),
-                Line(acc["1.01.02"], "Credit", 999m),
+                Line(acc["4.02.02.01.05"], "Debit", 999m),
+                Line(acc["1.01.01.02.01"], "Credit", 999m),
             },
         });
         Assert.Equal(HttpStatusCode.Conflict, editAfterPost.StatusCode);
@@ -115,7 +115,7 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
         Assert.Equal(id, reversal.GetProperty("reversalOfEntryId").GetString());
         // Mirrored: the account that was debited is now credited.
         var debitLine = reversal.GetProperty("lines").EnumerateArray()
-            .First(l => l.GetProperty("ledgerAccountId").GetString() == acc["5.01.02"]);
+            .First(l => l.GetProperty("ledgerAccountId").GetString() == acc["4.02.02.01.05"]);
         Assert.Equal("Credit", debitLine.GetProperty("side").GetString());
         Assert.Equal(reversal.GetProperty("totalDebit").GetDecimal(), reversal.GetProperty("totalCredit").GetDecimal());
 
@@ -137,8 +137,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
         var acc = await SeedChartAsync(client, companyId);
 
         var draft = await CreateDraftAsync(client, companyId, "2026-02-01",
-            Line(acc["5.01.02"], "Debit", 1_000m),
-            Line(acc["1.01.02"], "Credit", 900m));
+            Line(acc["4.02.02.01.05"], "Debit", 1_000m),
+            Line(acc["1.01.01.02.01"], "Credit", 900m));
         var id = draft.GetProperty("id").GetString()!;
 
         var postRes = await client.PostAsync($"/api/journal-entries/{id}/post", null);
@@ -159,7 +159,7 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
             companyId,
             competenceDate = "2026-02-01",
             description = "uma linha só",
-            lines = new[] { Line(acc["5.01.02"], "Debit", 100m) },
+            lines = new[] { Line(acc["4.02.02.01.05"], "Debit", 100m) },
         });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("JournalEntry.TooFewLines", (await ReadJson(res)).GetProperty("title").GetString());
@@ -180,8 +180,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
             description = "valor não positivo",
             lines = new[]
             {
-                Line(acc["5.01.02"], "Debit", 0m),
-                Line(acc["1.01.02"], "Credit", 100m),
+                Line(acc["4.02.02.01.05"], "Debit", 0m),
+                Line(acc["1.01.01.02.01"], "Credit", 100m),
             },
         });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -196,7 +196,9 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
         var companyId = await SeedCompanyAsync(client);
         var acc = await SeedChartAsync(client, companyId);
 
-        // "5" is the synthetic Expense root — not postable.
+        // A synthetic account is not postable.
+        var syntheticList = await ReadJson(await client.GetAsync("/api/ledger-accounts?kind=Synthetic"));
+        var syntheticId = syntheticList.EnumerateArray().First().GetProperty("id").GetString()!;
         var res = await client.PostAsJsonAsync("/api/journal-entries", new
         {
             companyId,
@@ -204,38 +206,12 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
             description = "conta sintética",
             lines = new[]
             {
-                Line(acc["5"], "Debit", 100m),
-                Line(acc["1.01.02"], "Credit", 100m),
+                Line(syntheticId, "Debit", 100m),
+                Line(acc["1.01.01.02.01"], "Credit", 100m),
             },
         });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("JournalEntry.NonPostableAccount", (await ReadJson(res)).GetProperty("title").GetString());
-    }
-
-    [Fact]
-    public async Task Create_With_CrossCompany_Account_Line_Returns_400()
-    {
-        await using var factory = new ApiFactory(fixture.ConnectionString);
-        var client = await factory.CreateAdminClientAsync();
-        var companyA = await SeedCompanyAsync(client);
-        var companyB = await SeedCompanyAsync(client);
-        var accA = await SeedChartAsync(client, companyA);
-        var accB = await SeedChartAsync(client, companyB);
-
-        // Entry for company A referencing a company B account.
-        var res = await client.PostAsJsonAsync("/api/journal-entries", new
-        {
-            companyId = companyA,
-            competenceDate = "2026-02-01",
-            description = "cross company",
-            lines = new[]
-            {
-                Line(accA["5.01.02"], "Debit", 100m),
-                Line(accB["1.01.02"], "Credit", 100m),
-            },
-        });
-        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        Assert.Equal("JournalEntry.CrossCompanyAccount", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     [Fact]
@@ -250,8 +226,8 @@ public class JournalEntryEndpointsTests(PostgresFixture fixture)
         for (var i = 0; i < 3; i++)
         {
             var draft = await CreateDraftAsync(client, companyId, "2026-03-01",
-                Line(acc["5.01.02"], "Debit", 10m),
-                Line(acc["1.01.02"], "Credit", 10m));
+                Line(acc["4.02.02.01.05"], "Debit", 10m),
+                Line(acc["1.01.01.02.01"], "Credit", 10m));
             var id = draft.GetProperty("id").GetString()!;
             var posted = await ReadJson(await client.PostAsync($"/api/journal-entries/{id}/post", null));
             numbers.Add(posted.GetProperty("number").GetInt32());

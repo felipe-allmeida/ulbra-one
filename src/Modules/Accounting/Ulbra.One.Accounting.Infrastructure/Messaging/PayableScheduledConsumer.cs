@@ -18,7 +18,7 @@ public sealed class PayableScheduledConsumer(IPayablePostingService posting, IUn
             m.CompanyId,
             $"payable-incurral:{m.PayableId}",
             m.Amount,
-            m.AccountingAccountCode,
+            m.AccountingAccountId,
             withholdings,
             ctx.CancellationToken);
         await uow.SaveChangesAsync(ctx.CancellationToken);

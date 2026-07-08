@@ -8,7 +8,6 @@ import {
 import {
   api,
   type AccountGroup,
-  type AccountKind,
   type AgingBucket,
   type AiClassificationSuggestion,
   type AuditTrailEvent,
@@ -24,8 +23,6 @@ import {
   type BankAccountUpdateInput,
   type BankTransaction,
   type CashFlowGranularity,
-  type ChartAccount,
-  type ChartType,
   type ClassificationPolicy,
   type Company,
   type CostCenter,
@@ -96,7 +93,6 @@ export const queryKeys = {
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
   bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
-  chartAccounts: (params: ChartAccountsParams) => ['chartAccounts', params] as const,
   classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
   aging: (companyId: string, asOf?: string) => ['aging', companyId, asOf ?? ''] as const,
   agingItems: (params: AgingItemsParams) => ['agingItems', params] as const,
@@ -116,7 +112,6 @@ export const queryKeys = {
 };
 
 export interface LedgerAccountsParams {
-  companyId?: string;
   accountGroup?: AccountGroup;
   kind?: LedgerAccountKind;
   activeOnly?: boolean;
@@ -234,12 +229,6 @@ export interface TransactionsParams {
   costCenterId?: string;
   page?: number;
   pageSize?: number;
-}
-
-export interface ChartAccountsParams {
-  chartType?: ChartType;
-  kind?: AccountKind;
-  activeOnly?: boolean;
 }
 
 export interface AgingItemsParams {
@@ -1002,15 +991,6 @@ export function useUnmatchTransaction(options?: UseMutationOptions<BankTransacti
   );
 }
 
-/* ---------- Chart of Accounts (Plano de Contas) ---------- */
-export function useChartAccounts(params: ChartAccountsParams, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: queryKeys.chartAccounts(params),
-    queryFn: () => api.listChartAccounts(params),
-    enabled: options?.enabled ?? true,
-  });
-}
-
 export function useAging(companyId: string | undefined, asOf?: string) {
   return useQuery({
     queryKey: queryKeys.aging(companyId ?? '', asOf),
@@ -1063,44 +1043,12 @@ export function useSetReconciledBalance(
   );
 }
 
-export function useCreateChartAccount(
-  options?: UseMutationOptions<ChartAccount, unknown, Parameters<typeof api.createChartAccount>[0]>,
-) {
-  return useInvalidatingMutation(
-    (body) => api.createChartAccount(body),
-    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
-    options,
-  );
-}
-
-export function useUpdateChartAccount(
-  options?: UseMutationOptions<
-    ChartAccount,
-    unknown,
-    { id: string; body: Parameters<typeof api.updateChartAccount>[1] }
-  >,
-) {
-  return useInvalidatingMutation(
-    ({ id, body }) => api.updateChartAccount(id, body),
-    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
-    options,
-  );
-}
-
 export function useReverseReceipt(
   options?: UseMutationOptions<Receivable, unknown, { receivableId: string; receiptId: string; reason: string }>,
 ) {
   return useInvalidatingMutation(
     ({ receivableId, receiptId, reason }) => api.reverseReceipt(receivableId, receiptId, reason),
     (qc, _data, vars) => invalidateReceivableReceipt(qc, vars.receivableId),
-    options,
-  );
-}
-
-export function useDeleteChartAccount(options?: UseMutationOptions<void, unknown, { id: string }>) {
-  return useInvalidatingMutation(
-    ({ id }) => api.deleteChartAccount(id),
-    (qc) => void qc.invalidateQueries({ queryKey: ['chartAccounts'] }),
     options,
   );
 }
@@ -1127,7 +1075,6 @@ export function useClassifyPayable(
     ({ id, body }) => api.classifyPayable(id, body),
     (qc) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
-      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
     },
     options,
   );
@@ -1140,7 +1087,6 @@ export function useClassifyBatch(
     (body) => api.classifyBatch(body),
     (qc) => {
       void qc.invalidateQueries({ queryKey: ['payables'] });
-      void qc.invalidateQueries({ queryKey: ['chartAccounts'] });
     },
     options,
   );
@@ -1213,9 +1159,9 @@ export function useUpdateLedgerAccount(
   );
 }
 
-export function useSeedLedgerAccounts(options?: UseMutationOptions<LedgerAccount[], unknown, { companyId: string }>) {
+export function useSeedLedgerAccounts(options?: UseMutationOptions<LedgerAccount[], unknown, { template?: string } | void>) {
   return useInvalidatingMutation(
-    ({ companyId }) => api.seedLedgerAccounts(companyId),
+    (vars) => api.seedLedgerAccounts(vars?.template),
     (qc) => void qc.invalidateQueries({ queryKey: ['ledgerAccounts'] }),
     options,
   );

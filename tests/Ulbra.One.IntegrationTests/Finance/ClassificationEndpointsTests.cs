@@ -45,24 +45,15 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         return new Seed(companyId, costCenterId, vendorId);
     }
 
-    /// <summary>Creates one synthetic root + one analytical child of the given chart type; returns the analytical id.</summary>
-    private static async Task<(string SyntheticId, string AnalyticalId)> CreateAnalyticalAsync(HttpClient client, string chartType)
-    {
-        var rootCode = UniqueCode(chartType == "Accounting" ? "A" : "F");
-        var rootRes = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType, code = rootCode, name = "Raiz", kind = "Synthetic",
-        });
-        rootRes.EnsureSuccessStatusCode();
-        var rootId = (await ReadJson(rootRes)).GetProperty("id").GetString()!;
+    private sealed record AccountRef(string Id, string Code, string Kind);
 
-        var childRes = await client.PostAsJsonAsync("/api/chart-accounts", new
-        {
-            chartType, code = $"{rootCode}.01", name = "Analítica", kind = "Analytical", parentId = rootId, nature = "Debit",
-        });
-        childRes.EnsureSuccessStatusCode();
-        var childId = (await ReadJson(childRes)).GetProperty("id").GetString()!;
-        return (rootId, childId);
+    /// <summary>Returns one synthetic and one analytical account id from the global ledger chart
+    /// (auto-seeded on startup).</summary>
+    private static async Task<(string SyntheticId, string AnalyticalId)> CreateAnalyticalAsync(HttpClient client)
+    {
+        var synthetic = await client.GetFromJsonAsync<List<AccountRef>>("/api/ledger-accounts?kind=Synthetic");
+        var analytical = await client.GetFromJsonAsync<List<AccountRef>>("/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        return (synthetic!.First().Id, analytical!.First().Id);
     }
 
     private static async Task<string> CreatePayableAsync(HttpClient client, Seed seed, decimal amount, bool approve = true)
@@ -98,7 +89,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var payableId = await CreatePayableAsync(client, seed, 1500m);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
+        var (_, accId) = await CreateAnalyticalAsync(client);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
             new { accountingAccountId = accId });
@@ -116,12 +107,12 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var payableId = await CreatePayableAsync(client, seed, 1500m);
-        var (syntheticAccId, _) = await CreateAnalyticalAsync(client, "Accounting");
+        var (syntheticAccId, _) = await CreateAnalyticalAsync(client);
 
         var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/classify",
             new { accountingAccountId = syntheticAccId });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        Assert.Equal("ChartAccount.NotAnalytical", (await ReadJson(res)).GetProperty("title").GetString());
+        Assert.Equal("LedgerAccount.NotPostable", (await ReadJson(res)).GetProperty("title").GetString());
     }
 
     // ---------------------------------------------------------------------------
@@ -136,7 +127,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
         var pa = await CreatePayableAsync(client, seed, 1000m);
         var pb = await CreatePayableAsync(client, seed, 2000m);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
+        var (_, accId) = await CreateAnalyticalAsync(client);
 
         var res = await client.PostAsJsonAsync("/api/payables/classify-batch",
             new { payableIds = new[] { pa, pb }, accountingAccountId = accId });
@@ -159,7 +150,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
+        var (_, accId) = await CreateAnalyticalAsync(client);
 
         var classified = await CreatePayableAsync(client, seed, 1000m);
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{classified}/classify",
@@ -182,7 +173,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client, autoApprovalLimit: 1000m);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
+        var (_, accId) = await CreateAnalyticalAsync(client);
 
         var policyRes = await client.PutAsJsonAsync($"/api/classification-policies/{seed.CompanyId}",
             new { requireToApprove = true, requireToPay = false });
@@ -213,7 +204,7 @@ public class ClassificationEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
-        var (_, accId) = await CreateAnalyticalAsync(client, "Accounting");
+        var (_, accId) = await CreateAnalyticalAsync(client);
 
         var classified = await CreatePayableAsync(client, seed, 1000m);
         var unclassified = await CreatePayableAsync(client, seed, 2000m);

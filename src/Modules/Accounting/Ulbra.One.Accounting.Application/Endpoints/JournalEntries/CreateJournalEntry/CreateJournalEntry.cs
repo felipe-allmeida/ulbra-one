@@ -46,7 +46,7 @@ public sealed class CreateJournalEntry : IEndpoint
 
         var structuralProblem = JournalLineValidation.ValidateDraftComposition(entry);
         if (structuralProblem is not null) return structuralProblem;
-        var problem = await JournalLineValidation.ValidateAsync(req.CompanyId.Value, req.Lines, uow, ct);
+        var problem = await JournalLineValidation.ValidateAsync(req.Lines, uow, ct);
         if (problem is not null) return problem;
 
         await uow.AddAsync(entry, ct);

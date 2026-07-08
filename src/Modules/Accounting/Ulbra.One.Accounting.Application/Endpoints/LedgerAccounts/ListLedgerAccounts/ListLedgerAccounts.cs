@@ -19,11 +19,10 @@ public sealed class ListLedgerAccounts : IEndpoint
             .RequireAuthorization().Produces<List<LedgerAccountResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
-        IUnitOfWork uow, CompanyId? companyId, AccountGroup? accountGroup, LedgerAccountKind? kind,
+        IUnitOfWork uow, AccountGroup? accountGroup, LedgerAccountKind? kind,
         bool? activeOnly, CancellationToken ct)
     {
         var q = uow.ReadSet<LedgerAccount>();
-        if (companyId is { } cid) q = q.Where(a => a.CompanyId == cid.Value);
         if (accountGroup is { } g) q = q.Where(a => a.AccountGroup == g);
         if (kind is { } k) q = q.Where(a => a.Kind == k);
         if (activeOnly == true) q = q.Where(a => a.IsActive);

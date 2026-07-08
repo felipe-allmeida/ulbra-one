@@ -6,16 +6,16 @@ using Ulbra.One.Common.Application.Persistence;
 namespace Ulbra.One.Accounting.Application.Endpoints.JournalEntries;
 
 /// <summary>Shared validation of the I/O-dependent properties of a draft journal entry's lines:
-/// every line must reference an active analytical account of the same company. The structural
-/// invariants (≥2 lines, positive amounts, balanced) are NOT checked here — they are owned by the
-/// domain (<see cref="JournalEntry.ValidateStructure"/>), the single source of truth, called by the
-/// create/update endpoints after building the aggregate (and again at Post time).</summary>
+/// every line must reference an active analytical account (the chart of accounts is global). The
+/// structural invariants (≥2 lines, positive amounts, balanced) are NOT checked here — they are owned
+/// by the domain (<see cref="JournalEntry.ValidateStructure"/>), the single source of truth, called by
+/// the create/update endpoints after building the aggregate (and again at Post time).</summary>
 internal static class JournalLineValidation
 {
     /// <summary>Returns a Problem result on the first I/O violation, or null when every referenced
     /// account is valid.</summary>
     public static async Task<IResult?> ValidateAsync(
-        Guid companyId, IReadOnlyList<JournalLineInput> lines, IUnitOfWork uow, CancellationToken ct)
+        IReadOnlyList<JournalLineInput> lines, IUnitOfWork uow, CancellationToken ct)
     {
         var accountIds = (lines ?? []).Select(l => l.LedgerAccountId.Value).Distinct().ToList();
         var accounts = await uow.ReadSet<LedgerAccount>()
@@ -27,8 +27,6 @@ internal static class JournalLineValidation
         {
             if (!byId.TryGetValue(accountId, out var account))
                 return TypedResults.Problem(detail: $"Ledger account not found.", statusCode: 400, title: "JournalEntry.AccountNotFound");
-            if (account.CompanyId != companyId)
-                return TypedResults.Problem(detail: "All lines must reference accounts of the entry's company.", statusCode: 400, title: "JournalEntry.CrossCompanyAccount");
             if (!account.CanReceiveEntry)
                 return TypedResults.Problem(detail: "Lines may only reference active analytical accounts.", statusCode: 400, title: "JournalEntry.NonPostableAccount");
         }

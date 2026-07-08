@@ -6,7 +6,7 @@ import { type Installment, type PayableAttachment } from '../../api';
 import {
   useApprovePayable,
   useCancelPayable,
-  useChartAccounts,
+  useLedgerAccounts,
   useCostCenters,
   useDeletePayableAttachment,
   useExpenseCategories,
@@ -36,7 +36,7 @@ export function PayableDetailPage() {
 
   const centros = useCostCenters(p?.companyId ?? '').data ?? [];
   const categorias = useExpenseCategories(true).data ?? [];
-  const accountingAccounts = useChartAccounts({ chartType: 'Accounting' }).data ?? [];
+  const accountingAccounts = useLedgerAccounts({}).data ?? [];
 
   const approve = useApprovePayable();
   const reject = useRejectPayable();

@@ -43,6 +43,9 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         return companyId;
     }
 
+    private static async Task<Guid> AccountIdAsync(IUnitOfWork uow, string code) =>
+        (await uow.ReadSet<LedgerAccount>().FirstAsync(a => a.Code == code)).Id;
+
     [Fact]
     public async Task PostIncurral_CreatesPostedJournalEntry_BalancedDrExpenseCrLiability()
     {
@@ -55,7 +58,8 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
+        var expenseId = await AccountIdAsync(uow, ExpenseCode);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var entry = await uow.ReadSet<JournalEntry>()
@@ -67,7 +71,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
 
         // Find accounts by code to assert sides.
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == ExpenseCode || a.Code == "2.01.01.03.01"))
+            .Where(a => a.Code == ExpenseCode || a.Code == "2.01.01.03.01")
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;
@@ -112,7 +116,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         Assert.Equal(entry.TotalDebit, entry.TotalCredit);
 
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.CompanyId == companyId && (a.Code == "2.01.01.03.01" || a.Code == "1.01.01.02.01"))
+            .Where(a => a.Code == "2.01.01.03.01" || a.Code == "1.01.01.02.01")
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;
@@ -138,13 +142,13 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var companyId = await SeedCompanyWithRfbChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
-        const string unknownCode = "9.99.99.99.99";
+        var unknownAccountId = Guid.NewGuid(); // not present in the chart → unresolvable
 
         await using var scope = factory.Services.CreateAsyncScope();
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownCode, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownAccountId, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No journal entry created.
@@ -173,11 +177,12 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
+        var expenseId = await AccountIdAsync(uow, ExpenseCode);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Second call with same key — must be idempotent.
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, ExpenseCode, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var count = await uow.ReadSet<JournalEntry>()

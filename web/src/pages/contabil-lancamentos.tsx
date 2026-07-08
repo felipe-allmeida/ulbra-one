@@ -359,7 +359,7 @@ export function ContabilLancamentosPage() {
     { companyId: empresaId || undefined, status: status || undefined, from: from || undefined, to: to || undefined },
     { enabled: !!empresaId },
   );
-  const accountsQuery = useLedgerAccounts({ companyId: empresaId || undefined }, { enabled: !!empresaId });
+  const accountsQuery = useLedgerAccounts({});
   const accounts = accountsQuery.data ?? [];
   const entries = list.data ?? [];
 

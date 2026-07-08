@@ -10,22 +10,18 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
     private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
         JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
 
-    private static async Task<string> SeedCompanyAsync(HttpClient client)
-    {
-        var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
-        var res = await client.PostAsJsonAsync("/api/companies", new { legalName = "ULBRA Contábil Teste", cnpj });
-        res.EnsureSuccessStatusCode();
-        return (await ReadJson(res)).GetProperty("id").GetString()!;
-    }
+    // The chart of accounts is global with a unique code index. Use a unique, non-RFB prefix so tests
+    // don't collide with the startup-seeded RFB chart or with each other on the shared DB.
+    private static string UniqueCode() => $"T{Random.Shared.Next(1_000_000, 9_999_999)}";
 
-    private static object NewSynthetic(string companyId, string code, string name, string group) => new
+    private static object NewSynthetic(string code, string name, string group) => new
     {
-        companyId, code, name, accountGroup = group, kind = "Synthetic",
+        code, name, accountGroup = group, kind = "Synthetic",
     };
 
-    private static object NewAnalytical(string companyId, string code, string name, string group, string parentId) => new
+    private static object NewAnalytical(string code, string name, string group, string parentId) => new
     {
-        companyId, code, name, accountGroup = group, kind = "Analytical", parentId,
+        code, name, accountGroup = group, kind = "Analytical", parentId,
     };
 
     [Fact]
@@ -42,18 +38,19 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyAsync(client);
 
+        var rootCode = UniqueCode();
         var rootRes = await client.PostAsJsonAsync("/api/ledger-accounts",
-            NewSynthetic(companyId, "5", "Despesas", "Expense"));
+            NewSynthetic(rootCode, "Despesas", "Expense"));
         Assert.Equal(HttpStatusCode.Created, rootRes.StatusCode);
         var root = await ReadJson(rootRes);
         var rootId = root.GetProperty("id").GetString()!;
         // Expense → default normal balance Debit.
         Assert.Equal("Debit", root.GetProperty("normalBalance").GetString());
 
+        var childCode = $"{rootCode}.01";
         var childRes = await client.PostAsJsonAsync("/api/ledger-accounts",
-            NewAnalytical(companyId, "5.01.01", "Energia elétrica", "Expense", rootId));
+            NewAnalytical(childCode, "Energia elétrica", "Expense", rootId));
         Assert.Equal(HttpStatusCode.Created, childRes.StatusCode);
         var child = await ReadJson(childRes);
         var childId = child.GetProperty("id").GetString()!;
@@ -64,12 +61,12 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
         Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
         Assert.Equal("Energia elétrica", (await ReadJson(getRes)).GetProperty("name").GetString());
 
-        // List by company — ordered by code
-        var list = await ReadJson(await client.GetAsync($"/api/ledger-accounts?companyId={companyId}"));
+        // List (global) — ordered by code; contains the two created accounts in order.
+        var list = await ReadJson(await client.GetAsync("/api/ledger-accounts"));
         var codes = list.EnumerateArray().Select(a => a.GetProperty("code").GetString()!).ToList();
-        Assert.Contains("5", codes);
-        Assert.Contains("5.01.01", codes);
-        Assert.True(codes.IndexOf("5") < codes.IndexOf("5.01.01"));
+        Assert.Contains(rootCode, codes);
+        Assert.Contains(childCode, codes);
+        Assert.True(codes.IndexOf(rootCode) < codes.IndexOf(childCode));
 
         // Update (rename + keep parent + active)
         var updateRes = await client.PutAsJsonAsync($"/api/ledger-accounts/{childId}", new
@@ -90,12 +87,12 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyAsync(client);
 
-        var first = await client.PostAsJsonAsync("/api/ledger-accounts", NewSynthetic(companyId, "1", "Ativo", "Asset"));
+        var code = UniqueCode();
+        var first = await client.PostAsJsonAsync("/api/ledger-accounts", NewSynthetic(code, "Ativo", "Asset"));
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
-        var second = await client.PostAsJsonAsync("/api/ledger-accounts", NewSynthetic(companyId, "1", "Ativo dup", "Asset"));
+        var second = await client.PostAsJsonAsync("/api/ledger-accounts", NewSynthetic(code, "Ativo dup", "Asset"));
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
         Assert.Equal("LedgerAccount.DuplicateCode", (await ReadJson(second)).GetProperty("title").GetString());
     }
@@ -111,14 +108,14 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Seed_Is_Idempotent_And_Creates_Standard_Chart()
+    public async Task Seed_Is_Idempotent_And_Chart_Has_The_Five_Groups()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyAsync(client);
 
-        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { companyId });
-        Assert.Equal(HttpStatusCode.Created, seedRes.StatusCode);
+        // The global chart is seeded once at startup; seed is idempotent → returns 200 with the existing chart.
+        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { });
+        Assert.Equal(HttpStatusCode.OK, seedRes.StatusCode);
         var seeded = await ReadJson(seedRes);
         var count = seeded.GetArrayLength();
         Assert.True(count >= 15, $"expected a populated chart, got {count}");
@@ -135,8 +132,8 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
         Assert.Contains("Revenue", groups);
         Assert.Contains("Expense", groups);
 
-        // Second call is a no-op returning the same chart (200, same count).
-        var second = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { companyId });
+        // Second call is also a no-op returning the same chart (200, same count).
+        var second = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { });
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
         Assert.Equal(count, (await ReadJson(second)).GetArrayLength());
     }

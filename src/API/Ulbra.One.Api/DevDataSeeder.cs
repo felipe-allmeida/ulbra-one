@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Ulbra.One.Accounting.Application.Seeding;
 using Ulbra.One.Accounting.Domain;
-using Ulbra.One.Finance.Application.Seeding;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Domain;
@@ -34,7 +33,7 @@ public static class DevDataSeeder
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
 
         await SeedExpenseCategoriesAsync(finance, logger, ct);
-        await SeedChartOfAccountsAsync(finance, logger, ct);
+        await SeedGlobalChartAsync(finance, logger, ct);
         await SeedWithholdingRulesAsync(finance, logger, ct);
 
         var existing = await core.Companies.CountAsync(ct);
@@ -240,11 +239,15 @@ public static class DevDataSeeder
 
         await finance.SaveChangesAsync(ct);
 
+        // ---------- Accounting (núcleo contábil): global chart template + a few posted journal entries ----------
+        // Seed the global ledger before classifying payables (classification targets the ledger chart).
+        await SeedAccountingAsync(db, ulbra.Id, time, logger, ct);
+
         // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
-        // Look up seeded analytical accounting accounts by code; classify the energy payable (4.02.02.01.05)
+        // Look up seeded analytical ledger accounts by code; classify the energy payable (4.02.02.01.05)
         // and the cleaning/services payable (4.02.02.01.02). Idempotent: only classify when not yet classified.
-        var accEnergia = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.05", ct);
-        var accServicos = await finance.ChartAccounts.FirstAsync(c => c.ChartType == ChartType.Accounting && c.Code == "4.02.02.01.02", ct);
+        var accEnergia = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.02.02.01.05", ct);
+        var accServicos = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.02.02.01.02", ct);
 
         if (pEnergiaGravatai.AccountingAccountId == null)
             pEnergiaGravatai.Classify(accEnergia.Id);
@@ -319,9 +322,6 @@ public static class DevDataSeeder
             logger.LogInformation("Dev seed: 1 statement import + 2 bank transactions seeded (1 suggested debit, 1 unmatched credit).");
         }
 
-        // ---------- Accounting (núcleo contábil): BR chart template + a few posted journal entries ----------
-        await SeedAccountingAsync(db, ulbra.Id, time, logger, ct);
-
         // ---------- Receivables (accounts-receivable aggregate, for cash-flow inflows) ----------
         // Spread due dates so the cash-flow projection has inflows across several future months,
         // plus one overdue installment to populate the "a receber em atraso" line.
@@ -363,19 +363,20 @@ public static class DevDataSeeder
             2, 4, 6, 6, 4, 5, 9, 5);
     }
 
-    /// <summary>Seeds the RFB Imunes e Isentas chart of accounts for the company plus a handful of posted
-    /// journal entries so the trial balance, DRE and balance sheet come up populated. Idempotent per company.</summary>
+    /// <summary>Seeds the global RFB Imunes e Isentas chart of accounts (once, shared by all companies) plus
+    /// a handful of posted journal entries for the given company so the trial balance, DRE and balance sheet
+    /// come up populated. Chart seed is idempotent globally; the journal entries are idempotent per company.</summary>
     private static async Task SeedAccountingAsync(AppDbContext db, Guid companyId, TimeProvider time, ILogger logger, CancellationToken ct)
     {
-        if (await db.LedgerAccounts.AnyAsync(a => a.CompanyId == companyId, ct))
+        // Global chart of accounts (shared by all companies): seed once when empty.
+        var accounts = await SeedGlobalChartAsync(db, logger, ct);
+
+        // Per-company posted entries: skip when this company already has journal entries.
+        if (await db.JournalEntries.AnyAsync(e => e.CompanyId == companyId, ct))
         {
-            logger.LogInformation("Dev seed: ledger accounts already present — skipping accounting seed.");
+            logger.LogInformation("Dev seed: journal entries already present for company — skipping accounting entries.");
             return;
         }
-
-        var accounts = ChartTemplates.Build(companyId, ChartTemplate.RfbImunesIsentas);
-        db.LedgerAccounts.AddRange(accounts);
-        await db.SaveChangesAsync(ct);
 
         var byCode = accounts.ToDictionary(a => a.Code);
         var now = time.GetUtcNow();
@@ -440,37 +441,34 @@ public static class DevDataSeeder
     }
 
     /// <summary>
-    /// Seeds ONLY the chart of accounts (contábil + financeiro) — the reference data the payable
-    /// classifier needs. No mock business data (companies/vendors/payables). Idempotent.
+    /// Seeds ONLY the global chart of accounts (LedgerAccount) — the reference data the payable
+    /// classifier + posting need. No mock business data (companies/vendors/payables). Idempotent.
     /// </summary>
-    public static async Task SeedChartOfAccountsAsync(IServiceProvider services, CancellationToken ct = default)
+    public static async Task SeedLedgerChartAsync(IServiceProvider services, CancellationToken ct = default)
     {
         using var scope = services.CreateScope();
         var sp = scope.ServiceProvider;
-        var finance = sp.GetRequiredService<AppDbContext>();
+        var db = sp.GetRequiredService<AppDbContext>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
-        await SeedChartOfAccountsAsync(finance, logger, ct);
+        await SeedGlobalChartAsync(db, logger, ct);
     }
 
-    private static async Task SeedChartOfAccountsAsync(AppDbContext finance, ILogger logger, CancellationToken ct)
+    /// <summary>Seeds the global RFB Imunes e Isentas chart of accounts once (idempotent), returning the
+    /// current chart. The chart is shared by all companies; bookkeeping stays per company via the journal.</summary>
+    private static async Task<List<LedgerAccount>> SeedGlobalChartAsync(AppDbContext db, ILogger logger, CancellationToken ct)
     {
-        if (await finance.ChartAccounts.AnyAsync(ct))
+        var accounts = await db.LedgerAccounts.OrderBy(a => a.Code).ToListAsync(ct);
+        if (accounts.Count > 0)
         {
-            logger.LogInformation("Dev seed: chart of accounts already present — skipping.");
-            return;
+            logger.LogInformation("Dev seed: ledger chart already present — skipping.");
+            return accounts;
         }
 
-        // Accounting chart (contábil) — ramo de despesas (4.02*) do Referencial RFB Imunes e Isentas
-        var imunesRows = ReferentialChartData.Load("referencial-rfb-imunes-isentas.json");
-        var despesaRows = imunesRows
-            .Where(r => r.Code == "4.02" || r.Code.StartsWith("4.02.", StringComparison.Ordinal))
-            .Select(r => new ReferentialPayableRow(r.Code, r.Name, r.Tipo == "S", r.Parent))
-            .ToList();
-        var contabil = ReferentialPayableChartBuilder.BuildAccounting(despesaRows);
-
-        finance.ChartAccounts.AddRange(contabil);
-        await finance.SaveChangesAsync(ct);
-        logger.LogInformation("Dev seed: chart of accounts seeded ({AccountingCount} accounting chart accounts).", contabil.Count);
+        accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas).ToList();
+        db.LedgerAccounts.AddRange(accounts);
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Dev seed: global ledger chart seeded ({Count} accounts).", accounts.Count);
+        return accounts;
     }
 
     /// <summary>
