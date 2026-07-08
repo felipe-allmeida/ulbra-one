@@ -116,6 +116,19 @@ export type AuditTrailEvent = Schemas['AuditTrailEventResponse'];
 export type WithholdingTaxType = Schemas['WithholdingTaxType'];
 export type PayableWithholding = Schemas['PayableWithholdingResponse'];
 
+// ---------- Withholding rules (Regras de Retenção) ----------
+// The generated WithholdingRuleRequest/Response omit cprb/simplesAnexo and emit vendorRegime as non-null
+// (Swashbuckle can't express nullable enums). Hand-augment both until the next `pnpm gen:api`.
+export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime'> & {
+  vendorRegime: TaxRegime | null;
+  cprb: boolean | null;
+  simplesAnexo: SimplesAnexoValue | null;
+};
+export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
+export type RateSource = Schemas['RateSource'];
+export type BaseRule = Schemas['BaseRule'];
+export type NonRetentionReason = Schemas['NonRetentionReason'];
+
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
 
@@ -961,6 +974,15 @@ export const api = {
   updateExpenseCategory: (id: string, name: string, active: boolean) =>
     request<ExpenseCategory>(`/expense-categories/${id}`, { method: 'PUT', body: JSON.stringify({ name, active }) }),
   deleteExpenseCategory: (id: string) => request<void>(`/expense-categories/${id}`, { method: 'DELETE' }),
+
+  // ---------- Withholding rules (Regras de Retenção) ----------
+  listWithholdingRules: (includeInactive?: boolean) =>
+    request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
+  createWithholdingRule: (body: WithholdingRuleInput) =>
+    request<WithholdingRule>('/withholding-rules', { method: 'POST', body: JSON.stringify(body) }),
+  updateWithholdingRule: (id: string, body: WithholdingRuleInput) =>
+    request<WithholdingRule>(`/withholding-rules/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteWithholdingRule: (id: string) => request<void>(`/withholding-rules/${id}`, { method: 'DELETE' }),
 
   // ---------- Registry: Vendors ----------
   listVendors: (companyId: string, search?: string, page?: number, pageSize?: number) =>

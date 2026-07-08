@@ -32,6 +32,8 @@ import {
   type EmployeeInput,
   type ExpenseCategory,
   type FiscalDocument,
+  type WithholdingRule,
+  type WithholdingRuleInput,
   type MatchStatus,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
@@ -89,6 +91,7 @@ export const queryKeys = {
   receivableStageItems: (params: ReceivableStageItemsParams) => ['receivableStageItems', params] as const,
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
+  withholdingRules: (includeInactive = false) => ['withholdingRules', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
@@ -405,6 +408,13 @@ export function useExpenseCategories(includeInactive = false) {
   return useQuery({
     queryKey: queryKeys.expenseCategories(includeInactive),
     queryFn: () => api.listExpenseCategories(includeInactive),
+  });
+}
+
+export function useWithholdingRules(includeInactive = false) {
+  return useQuery({
+    queryKey: queryKeys.withholdingRules(includeInactive),
+    queryFn: () => api.listWithholdingRules(includeInactive),
   });
 }
 
@@ -815,6 +825,25 @@ export function useDeleteExpenseCategory(options?: UseMutationOptions<void, unkn
   return useInvalidatingMutation(
     ({ id }) => api.deleteExpenseCategory(id),
     (qc) => void qc.invalidateQueries({ queryKey: ['expenseCategories'] }),
+    options,
+  );
+}
+
+/* ---------- Withholding rules (Regras de Retenção) ---------- */
+export function useSaveWithholdingRule(
+  options?: UseMutationOptions<WithholdingRule, unknown, { id?: string; body: WithholdingRuleInput }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => (id ? api.updateWithholdingRule(id, body) : api.createWithholdingRule(body)),
+    (qc) => void qc.invalidateQueries({ queryKey: ['withholdingRules'] }),
+    options,
+  );
+}
+
+export function useDeleteWithholdingRule(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteWithholdingRule(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['withholdingRules'] }),
     options,
   );
 }
