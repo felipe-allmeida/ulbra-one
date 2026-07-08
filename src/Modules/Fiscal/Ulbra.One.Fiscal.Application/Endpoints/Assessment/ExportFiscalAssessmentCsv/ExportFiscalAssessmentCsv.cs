@@ -26,7 +26,8 @@ public sealed class ExportFiscalAssessmentCsv : IEndpoint
         IUnitOfWork uow, CancellationToken ct)
     {
         if (!AssessmentPeriodParser.TryParse(perApur, out var period))
-            return TypedResults.BadRequest("perApur inválido — use o formato YYYY-MM.");
+            return TypedResults.Problem(detail: "Invalid perApur — expected the format YYYY-MM.",
+                statusCode: 400, title: "Assessment.InvalidPeriod");
 
         var filter = new AssessmentFilter(period, companyId?.Value, costCenterId?.Value, taxType, retentionGroup);
         var facts = await WithholdingFactLoader.LoadAsync(uow, filter, ct);

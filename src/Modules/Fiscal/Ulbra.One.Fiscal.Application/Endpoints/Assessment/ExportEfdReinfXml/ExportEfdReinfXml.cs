@@ -27,9 +27,11 @@ public sealed class ExportEfdReinfXml : IEndpoint
         string perApur, CompanyId? companyId, int? tpAmb, IUnitOfWork uow, CancellationToken ct)
     {
         if (!AssessmentPeriodParser.TryParse(perApur, out var period))
-            return TypedResults.BadRequest("perApur inválido — use o formato YYYY-MM.");
+            return TypedResults.Problem(detail: "Invalid perApur — expected the format YYYY-MM.",
+                statusCode: 400, title: "Assessment.InvalidPeriod");
         if (companyId is not { } cid)
-            return TypedResults.BadRequest("Selecione a empresa (contribuinte) para exportar o XML.");
+            return TypedResults.Problem(detail: "Select the company (taxpayer) to export the XML.",
+                statusCode: 400, title: "Assessment.CompanyRequired");
 
         var company = await uow.ReadSet<Company>().FirstOrDefaultAsync(c => c.Id == cid.Value, ct);
         if (company is null) return TypedResults.NotFound();
