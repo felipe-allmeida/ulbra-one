@@ -7,11 +7,8 @@
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Seeding/Resources/referencial-rfb-imunes-isentas.json">
-      <LogicalName>referencial-rfb-imunes-isentas.json</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Seeding/Resources/referencial-rfb-pj-lucro-real.json">
-      <LogicalName>referencial-rfb-pj-lucro-real.json</LogicalName>
+    <EmbeddedResource Include="Seeding/Resources/aelbra-plano-contabil-sa.json">
+      <LogicalName>aelbra-plano-contabil-sa.json</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 </Project>

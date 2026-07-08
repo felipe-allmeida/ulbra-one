@@ -59,7 +59,7 @@ public class PendingPostingEndpointTests(PostgresFixture fixture)
         // Resolved posting — must NOT appear in results.
         var resolved = new PendingAccountingPosting(
             companyId, $"payable-incurral:{Guid.NewGuid()}", PostingKind.Settlement,
-            200m, "Conta bancária não mapeada", "1.01.01.02.01");
+            200m, "Conta bancária não mapeada", "1.2.05.15.015");
         resolved.Stamp(now.AddMinutes(-5));
         resolved.MarkResolved(now);
 

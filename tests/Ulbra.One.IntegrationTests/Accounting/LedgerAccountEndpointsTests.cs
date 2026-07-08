@@ -10,8 +10,8 @@ public class LedgerAccountEndpointsTests(PostgresFixture fixture)
     private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
         JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
 
-    // The chart of accounts is global with a unique code index. Use a unique, non-RFB prefix so tests
-    // don't collide with the startup-seeded RFB chart or with each other on the shared DB.
+    // The chart of accounts is global with a unique code index. Use a unique, alpha-prefixed code so tests
+    // don't collide with the startup-seeded AELBRA chart (numeric dotted codes) or with each other on the shared DB.
     private static string UniqueCode() => $"T{Random.Shared.Next(1_000_000, 9_999_999)}";
 
     private static object NewSynthetic(string code, string name, string group) => new

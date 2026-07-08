@@ -14,23 +14,23 @@ namespace Ulbra.One.IntegrationTests.Accounting;
 /// Integration tests for the multi-line withholding incurral split:
 /// Dr despesa (bruto) / Cr fornecedores (líquido) / Cr impostos (Σ retenções).
 /// Driven by calling <see cref="IPayablePostingService.PostIncurralAsync"/> directly
-/// (broker-free) against the real seeded RFB Imunes e Isentas chart.
+/// (broker-free) against the real seeded AELBRA chart.
 /// </summary>
 [Collection("Postgres")]
 public class PayableWithholdingPostingTests(PostgresFixture fixture)
 {
-    // RFB Imunes e Isentas codes from AccountingModule defaults (🔶 contábil-validate):
-    //   4.02.02.01.05 = Despesas de Consumo  (expense — Dr side)
-    //   2.01.01.03.01 = Fornecedores         (payables liability — Cr side)
-    //   2.01.01.09.01 = Tributos Federais a Recolher (IRRF/PIS/COFINS/CSLL)
-    //   2.01.01.01.02 = INSS a Recolher
-    //   2.01.01.09.03 = Tributos Municipais a Recolher (ISS)
+    // AELBRA "Modelo de Planos" codes from AccountingModule defaults (🔶 contábil-validate):
+    //   4.2.15.05.020 = Energia Elétrica       (expense — Dr side)
+    //   2.2.05.15.020 = Fornecedores de Func.  (payables liability — Cr side)
+    //   2.2.05.30.020 = IRRF Retenção          (Cr side)
+    //   2.2.05.30.080 = INSS Retenção
+    //   2.2.05.30.060 = ISS Retenção
 
-    private const string ExpenseCode = "4.02.02.01.05";
-    private const string LiabilityCode = "2.01.01.03.01";
-    private const string IrrfCode = "2.01.01.09.01";
+    private const string ExpenseCode = "4.2.15.05.020";
+    private const string LiabilityCode = "2.2.05.15.020";
+    private const string IrrfCode = "2.2.05.30.020";
 
-    private static async Task<Guid> SeedCompanyWithRfbChartAsync(HttpClient client)
+    private static async Task<Guid> SeedCompanyAndChartAsync(HttpClient client)
     {
         var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
         var companyRes = await client.PostAsJsonAsync("/api/companies",
@@ -40,8 +40,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
             .GetProperty("id").GetString()!;
         var companyId = CompanyId.Parse(prefixedId, null).Value;
 
-        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed",
-            new { companyId = prefixedId, template = "RfbImunesIsentas" });
+        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { });
         seedRes.EnsureSuccessStatusCode();
 
         return companyId;
@@ -52,9 +51,9 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
 
     /// <summary>
     /// Case 1 — Split: gross 1000, IRRF 150 → 3-line entry:
-    ///   Dr 4.02.02.01.05 = 1000 (expense, gross)
-    ///   Cr 2.01.01.03.01 = 850  (fornecedores, net)
-    ///   Cr 2.01.01.09.01 = 150  (IRRF a recolher)
+    ///   Dr 4.2.15.05.020 = 1000 (expense, gross)
+    ///   Cr 2.2.05.15.020 = 850  (fornecedores, net)
+    ///   Cr 2.2.05.30.020 = 150  (IRRF retenção)
     /// Balanced, Posted, no PendingAccountingPosting.
     /// </summary>
     [Fact]
@@ -62,7 +61,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
@@ -117,7 +116,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
@@ -154,7 +153,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
