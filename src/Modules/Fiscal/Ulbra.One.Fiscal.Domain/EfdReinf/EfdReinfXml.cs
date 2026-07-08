@@ -69,8 +69,8 @@ public static class ReinfR4020Projection
 /// per título. The <c>ds:Signature</c> (required by the event XSD) is added at signing — a deferred step.</summary>
 public static class EfdReinfXmlBuilder
 {
-    // Lote-envelope schema (not covered by the event XSD) × the R-4020 event schema.
-    private const string EnvNs = "http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_05_01";
+    // Lote-envelope schema (shared with R-2010) × the R-4020 event schema.
+    internal const string EnvNs = "http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_05_01";
     private const string EvtNs = "http://www.reinf.esocial.gov.br/schemas/evt4020PagtoBeneficiarioPJ/v2_01_02";
 
     public static string Build(ReinfR4020Input input)
@@ -78,73 +78,77 @@ public static class EfdReinfXmlBuilder
         ArgumentNullException.ThrowIfNull(input);
 
         var sb = new StringBuilder();
-        var settings = new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true };
-        using (var w = XmlWriter.Create(sb, settings))
+        using (var w = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
         {
             w.WriteStartElement("Reinf", EnvNs);
             w.WriteStartElement("loteEventos", EnvNs);
-
             var seq = 1;
-            foreach (var evt in input.Payments
-                .GroupBy(p => (p.EstabCnpj, p.BeneficiaryCnpj))
-                .OrderBy(g => g.Key.EstabCnpj, StringComparer.Ordinal)
-                .ThenBy(g => g.Key.BeneficiaryCnpj, StringComparer.Ordinal))
-            {
-                var id = EventId(evt.Key.EstabCnpj, seq++);
-
-                w.WriteStartElement("evento", EnvNs);
-                w.WriteAttributeString("id", id);
-                w.WriteStartElement("Reinf", EvtNs); // root of the event document (event namespace)
-                w.WriteStartElement("evtRetPJ", EvtNs);
-                w.WriteAttributeString("id", id);
-
-                w.WriteStartElement("ideEvento", EvtNs);
-                w.WriteElementString("indRetif", EvtNs, "1");
-                w.WriteElementString("perApur", EvtNs, input.PerApur);
-                w.WriteElementString("tpAmb", EvtNs, input.TpAmb.ToString(CultureInfo.InvariantCulture));
-                w.WriteElementString("procEmi", EvtNs, "1");
-                w.WriteElementString("verProc", EvtNs, "UlbraOne");
-                w.WriteEndElement(); // ideEvento
-
-                w.WriteStartElement("ideContri", EvtNs);
-                w.WriteElementString("tpInsc", EvtNs, "1");
-                w.WriteElementString("nrInsc", EvtNs, input.Taxpayer.Root);
-                w.WriteEndElement(); // ideContri
-
-                w.WriteStartElement("ideEstab", EvtNs);
-                w.WriteElementString("tpInscEstab", EvtNs, "1");
-                w.WriteElementString("nrInscEstab", EvtNs, evt.Key.EstabCnpj);
-
-                w.WriteStartElement("ideBenef", EvtNs);
-                w.WriteElementString("cnpjBenef", EvtNs, evt.Key.BeneficiaryCnpj);
-
-                foreach (var nat in evt.GroupBy(p => p.NatRend).OrderBy(g => g.Key, StringComparer.Ordinal))
-                {
-                    w.WriteStartElement("idePgto", EvtNs);
-                    w.WriteElementString("natRend", EvtNs, nat.Key);
-
-                    foreach (var pay in nat.OrderBy(p => p.Dtfg).ThenBy(p => p.Gross))
-                    {
-                        w.WriteStartElement("infoPgto", EvtNs);
-                        w.WriteElementString("dtFG", EvtNs, pay.Dtfg.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-                        w.WriteElementString("vlrBruto", EvtNs, Money(pay.Gross));
-                        WriteRetencoes(w, pay);
-                        w.WriteEndElement(); // infoPgto
-                    }
-                    w.WriteEndElement(); // idePgto
-                }
-
-                w.WriteEndElement(); // ideBenef
-                w.WriteEndElement(); // ideEstab
-                w.WriteEndElement(); // evtRetPJ
-                w.WriteEndElement(); // Reinf (evento)
-                w.WriteEndElement(); // evento
-            }
-
+            WriteEventos(w, input, ref seq);
             w.WriteEndElement(); // loteEventos
             w.WriteEndElement(); // Reinf (lote)
         }
         return sb.ToString();
+    }
+
+    /// <summary>Writes the R-4020 <c>evento</c> blocks (one per estabelecimento × beneficiário) into an already-open
+    /// lote. Shared by the standalone <see cref="Build"/> and the combined R-4020+R-2010 export.</summary>
+    internal static void WriteEventos(XmlWriter w, ReinfR4020Input input, ref int seq)
+    {
+        foreach (var evt in input.Payments
+            .GroupBy(p => (p.EstabCnpj, p.BeneficiaryCnpj))
+            .OrderBy(g => g.Key.EstabCnpj, StringComparer.Ordinal)
+            .ThenBy(g => g.Key.BeneficiaryCnpj, StringComparer.Ordinal))
+        {
+            var id = EventId(evt.Key.EstabCnpj, seq++);
+
+            w.WriteStartElement("evento", EnvNs);
+            w.WriteAttributeString("id", id);
+            w.WriteStartElement("Reinf", EvtNs); // root of the event document (event namespace)
+            w.WriteStartElement("evtRetPJ", EvtNs);
+            w.WriteAttributeString("id", id);
+
+            w.WriteStartElement("ideEvento", EvtNs);
+            w.WriteElementString("indRetif", EvtNs, "1");
+            w.WriteElementString("perApur", EvtNs, input.PerApur);
+            w.WriteElementString("tpAmb", EvtNs, input.TpAmb.ToString(CultureInfo.InvariantCulture));
+            w.WriteElementString("procEmi", EvtNs, "1");
+            w.WriteElementString("verProc", EvtNs, "UlbraOne");
+            w.WriteEndElement(); // ideEvento
+
+            w.WriteStartElement("ideContri", EvtNs);
+            w.WriteElementString("tpInsc", EvtNs, "1");
+            w.WriteElementString("nrInsc", EvtNs, input.Taxpayer.Root);
+            w.WriteEndElement(); // ideContri
+
+            w.WriteStartElement("ideEstab", EvtNs);
+            w.WriteElementString("tpInscEstab", EvtNs, "1");
+            w.WriteElementString("nrInscEstab", EvtNs, evt.Key.EstabCnpj);
+
+            w.WriteStartElement("ideBenef", EvtNs);
+            w.WriteElementString("cnpjBenef", EvtNs, evt.Key.BeneficiaryCnpj);
+
+            foreach (var nat in evt.GroupBy(p => p.NatRend).OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                w.WriteStartElement("idePgto", EvtNs);
+                w.WriteElementString("natRend", EvtNs, nat.Key);
+
+                foreach (var pay in nat.OrderBy(p => p.Dtfg).ThenBy(p => p.Gross))
+                {
+                    w.WriteStartElement("infoPgto", EvtNs);
+                    w.WriteElementString("dtFG", EvtNs, pay.Dtfg.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    w.WriteElementString("vlrBruto", EvtNs, Money(pay.Gross));
+                    WriteRetencoes(w, pay);
+                    w.WriteEndElement(); // infoPgto
+                }
+                w.WriteEndElement(); // idePgto
+            }
+
+            w.WriteEndElement(); // ideBenef
+            w.WriteEndElement(); // ideEstab
+            w.WriteEndElement(); // evtRetPJ
+            w.WriteEndElement(); // Reinf (evento)
+            w.WriteEndElement(); // evento
+        }
     }
 
     /// <summary>Emits <c>retencoes</c> in XSD order, only the (base + withheld) pairs that apply. <c>retencoes</c>
@@ -167,7 +171,7 @@ public static class EfdReinfXmlBuilder
 
     /// <summary>Event id in the XSD pattern (<c>I{1}D{1}[0-9]{34}</c>): ID + tpInscr(1) + estab CNPJ(14) +
     /// timestamp (14-zero placeholder — to compose at transmissão/assinatura, deferred) + sequential(5).</summary>
-    private static string EventId(string estabCnpj, int seq)
+    internal static string EventId(string estabCnpj, int seq)
     {
         var digits = new string(estabCnpj.Where(char.IsDigit).ToArray());
         var cnpj14 = digits.Length >= 14 ? digits[..14] : digits.PadLeft(14, '0');
@@ -175,5 +179,5 @@ public static class EfdReinfXmlBuilder
     }
 
     // Monetary values in the leiaute format: comma decimal, 2 places ([0-9]{1,12}[,][0-9]{2}).
-    private static string Money(decimal v) => v.ToString("0.00", CultureInfo.InvariantCulture).Replace('.', ',');
+    internal static string Money(decimal v) => v.ToString("0.00", CultureInfo.InvariantCulture).Replace('.', ',');
 }
