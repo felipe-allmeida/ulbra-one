@@ -223,7 +223,8 @@ public class PayableWithholdingTests
     public void SetWithholdings_throws_when_payable_already_scheduled()
     {
         var p = NewPayable(1000m, 1);
-        p.Approve("contador", At); // → Scheduled (incurral event fires here)
+        p.Approve("contador", At); // → PendingAccounting
+        p.CompleteAccounting("contador", At, hasFiscalDocument: true); // → Scheduled (incurral event fires here)
 
         var ex = Assert.Throws<InvalidOperationException>(
             () => p.SetWithholdings([(WithholdingTaxType.Irrf, 1000m, 0.15m, 150m)]));

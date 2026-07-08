@@ -12,13 +12,13 @@ public class PayableClassifyDecisionTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
 
     [Fact]
-    public void Confident_under_limit_auto_schedules()
+    public void Confident_under_limit_auto_approves_to_accounting()
     {
         var p = P(100m);
-        p.SetType(PayableType.Service); // type must be determined before auto-scheduling
+        p.SetType(PayableType.Service); // type must be determined before auto-approving
         PayableReceivedConsumer.Apply(p, new(Guid.NewGuid(), 0.9, "r", "ai"), 500m, Now);
         Assert.True(p.IsClassified);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, p.Status); // auto-approval now routes through accounting
     }
 
     [Fact]

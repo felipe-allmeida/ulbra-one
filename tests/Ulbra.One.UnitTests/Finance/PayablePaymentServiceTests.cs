@@ -113,6 +113,8 @@ public class PayablePaymentServiceTests
 
         payable.Classify(Guid.NewGuid());
         payable.Approve("test-user", FixedNow);
+        // Approval now parks in PendingAccounting; completing the accounting review (NF registered) schedules it.
+        payable.CompleteAccounting("test-user", FixedNow, hasFiscalDocument: true);
 
         var installment = payable.Installments[0];
         return (payable, installment);

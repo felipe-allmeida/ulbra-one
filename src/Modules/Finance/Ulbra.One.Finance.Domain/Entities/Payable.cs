@@ -27,6 +27,8 @@ public class Payable : IAuditable, ISoftDeletable
     public DateTimeOffset? ApprovedAt { get; private set; }
     public string? RejectedBy { get; private set; }
     public DateTimeOffset? RejectedAt { get; private set; }
+    public string? AccountedBy { get; private set; }
+    public DateTimeOffset? AccountedAt { get; private set; }
     public Guid? AccountingAccountId { get; private set; }
     public Guid? PaymentBankAccountId { get; private set; }
     public PaymentMethod? PaymentMethod { get; private set; }
@@ -185,12 +187,29 @@ public class Payable : IAuditable, ISoftDeletable
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled or PayableStatus.Paid)
             throw new InvalidOperationException("Cannot approve a rejected, cancelled or paid payable.");
-        Status = PayableStatus.Scheduled;
+        // Approval no longer means "ready to pay" — the payable now enters the accounting stage, where the
+        // accountant verifies retentions/vendor data and registers the Nota Fiscal before it can be scheduled.
+        Status = PayableStatus.PendingAccounting;
         RejectionReason = null;
         ApprovedBy = approvedBy;
         ApprovedAt = at;
         RejectedBy = null;
         RejectedAt = null;
+    }
+
+    /// <summary>Accountant confirms the accounting review (retentions, ledger classification) and releases the
+    /// payable for payment. Requires a registered fiscal document (Nota Fiscal) — checked by the caller, since the
+    /// <c>FiscalDocument</c> is a separate aggregate — enforced here as an invariant. Only valid from
+    /// <see cref="PayableStatus.PendingAccounting"/>.</summary>
+    public void CompleteAccounting(string bookedBy, DateTimeOffset at, bool hasFiscalDocument)
+    {
+        if (Status != PayableStatus.PendingAccounting)
+            throw new InvalidOperationException("Only a payable pending accounting can be booked (scheduled).");
+        if (!hasFiscalDocument)
+            throw new InvalidOperationException("A registered fiscal document (Nota Fiscal) is required before accounting can be completed.");
+        Status = PayableStatus.Scheduled;
+        AccountedBy = bookedBy;
+        AccountedAt = at;
     }
 
     public void Reject(string? reason, string rejectedBy, DateTimeOffset at)
