@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tags, Check, Lightbulb, Sparkles } from 'lucide-react';
-import { api, type AiClassificationSuggestion, type ChartAccount, type PayableListItem } from '../api';
+import { api, type AiClassificationSuggestion, type LedgerAccount, type PayableListItem } from '../api';
 import { useApp } from '../store';
 import {
   useAiClassificationSuggestion,
-  useChartAccounts,
+  useLedgerAccounts,
   useClassifyBatch,
   useClassifyPayable,
   usePayable,
@@ -19,7 +19,7 @@ import { EmpresaPicker } from './shared';
 import { fmtDate } from '../datetime';
 
 /** Builds the `code — name` option list of analytical accounts. */
-function useAccountItems(accounts: ChartAccount[]) {
+function useAccountItems(accounts: LedgerAccount[]) {
   return useMemo(
     () =>
       [...accounts]
@@ -358,10 +358,7 @@ export function ClassificacaoPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const accounting = useChartAccounts(
-    { chartType: 'Accounting', kind: 'Analytical', activeOnly: true },
-    { enabled: !!empresaId },
-  );
+  const accounting = useLedgerAccounts({ kind: 'Analytical', activeOnly: true });
   const accountingItems = useAccountItems(accounting.data ?? []);
   const accountsLoading = accounting.isLoading;
 

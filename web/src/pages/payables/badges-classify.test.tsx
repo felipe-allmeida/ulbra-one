@@ -55,15 +55,17 @@ vi.mock('../../queries', async (orig) => {
     ...actual,
     usePayable: mockUsePayable,
     usePayables: mockUsePayables,
-    useChartAccounts: () => ({
+    useLedgerAccounts: () => ({
       data: [
         {
-          id: 'acc_1',
+          id: 'ledgacct_1',
           code: '1.1.01',
           name: 'Despesas gerais',
           kind: 'Analytical',
+          accountGroup: 'Expense',
+          normalBalance: 'Debit',
           isActive: true,
-          chartType: 'Accounting',
+          parentId: null,
         },
       ],
       isLoading: false,
