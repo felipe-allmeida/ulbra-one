@@ -179,13 +179,18 @@ public static class FinanceSeed
     /// </summary>
     public static async Task CompleteAccountingAsync(ApiFactory factory, HttpClient client, string payableId)
     {
+        await RegisterFiscalDocAsync(factory, client, payableId);
+        var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
+        confirmRes.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Registers a minimal NF-e against the payable (satisfies the fiscal-document gate) without confirming.</summary>
+    public static async Task RegisterFiscalDocAsync(ApiFactory factory, HttpClient client, string payableId)
+    {
         var key = await SeedBlobAsync(factory, NfeXml, "nf.xml");
         var uploadRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
             new { key, fileName = "nf.xml", contentType = "application/xml", sizeBytes = (long)Encoding.UTF8.GetByteCount(NfeXml) });
         uploadRes.EnsureSuccessStatusCode();
-
-        var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
-        confirmRes.EnsureSuccessStatusCode();
     }
 
     /// <summary>Saves a blob directly via <see cref="IFileStorageService"/> (the presigned-URL path is not
