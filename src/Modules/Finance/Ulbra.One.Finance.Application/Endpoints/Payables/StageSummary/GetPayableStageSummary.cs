@@ -36,6 +36,7 @@ public sealed class GetPayableStageSummary : IEndpoint
             Entry: Bucket(PayableStatus.Received),
             Classification: Bucket(PayableStatus.PendingClassification),
             Approval: Bucket(PayableStatus.PendingApproval),
+            Accounting: Bucket(PayableStatus.PendingAccounting),
             Payment: Bucket(PayableStatus.Scheduled),
             Reconciled: Bucket(PayableStatus.Paid)));
     }

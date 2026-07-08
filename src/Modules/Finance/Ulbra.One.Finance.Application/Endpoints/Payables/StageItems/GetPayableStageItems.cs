@@ -33,6 +33,9 @@ public sealed class GetPayableStageItems : IEndpoint
         var q = uow.ReadSet<Payable>().Where(p => p.CompanyId == companyId.Value);
         if (status is { } st) q = q.Where(p => p.Status == st);
 
+        // Correlated EXISTS for the "Nota Fiscal pendente" tag on the accounting stage (translated to SQL).
+        var fiscalDocs = uow.ReadSet<FiscalDocument>();
+
         // Project primitives first so the query + pagination translate to SQL; wrap typed IDs in memory.
         var rows = q.Select(p => new
         {
@@ -45,12 +48,13 @@ public sealed class GetPayableStageItems : IEndpoint
             InstallmentCount = p.Installments.Count,
             p.TotalAmount,
             p.Status,
+            HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id),
         });
 
         var page = await rows.OrderBy(x => x.FirstDueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
             new PayableId(x.Id), x.CounterpartyName, x.Description, new CostCenterId(x.CostCenterId),
             x.CategoryId == null ? null : new ExpenseCategoryId(x.CategoryId.Value),
-            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status)));
+            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status, x.HasFiscalDocument)));
     }
 }

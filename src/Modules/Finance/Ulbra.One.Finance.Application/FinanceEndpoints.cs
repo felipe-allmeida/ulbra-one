@@ -21,6 +21,7 @@ using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCat
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AccountingView;
 using Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
@@ -108,6 +109,7 @@ public static class FinanceEndpoints
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
         payables.MapEndpoint<CompleteAccounting>();
+        payables.MapEndpoint<GetPayableAccountingView>();
         payables.MapEndpoint<RejectPayable>();
         payables.MapEndpoint<UploadAttachment>();
         payables.MapEndpoint<DownloadAttachment>();
