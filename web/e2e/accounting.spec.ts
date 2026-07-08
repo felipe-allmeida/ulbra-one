@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Accounting (núcleo contábil) smoke E2E — a happy-path that exercises the
- * Contábil section end-to-end: dev-auth, the seeded BR chart + posted journal
+ * Contábil section end-to-end: dev-auth, the seeded AELBRA chart + posted journal
  * entries, the trial balance / DRE / balance-sheet proofs, and the Draft → Post
  * journal-entry write flow.
  *
@@ -51,7 +51,7 @@ test('login -> plano de contas contábil renders the seeded chart tree', async (
   await expect(page.getByRole('heading', { name: 'Plano de contas contábil' })).toBeVisible();
 
   // The chart is company-scoped: pick ULBRA, which the dev seed populated with the
-  // BR template (synthetic roots 1..5 + analytical leaves).
+  // AELBRA chart (synthetic roots 1..5 + analytical leaves).
   await pickUlbra(page);
 
   // The tree renders the seeded synthetic roots. Assert the five group roots by
@@ -59,8 +59,8 @@ test('login -> plano de contas contábil renders the seeded chart tree', async (
   for (const code of ['1', '2', '3', '4', '5']) {
     await expect(page.locator('.t-mono', { hasText: new RegExp(`^${code}$`) }).first()).toBeVisible();
   }
-  // And an analytical leaf is present (Caixa under Ativo).
-  await expect(page.locator('.t-mono', { hasText: /^1\.01\.01$/ }).first()).toBeVisible();
+  // And an analytical leaf is present (Caixa Unidades under Ativo).
+  await expect(page.locator('.t-mono', { hasText: /^1\.2\.05\.05\.020$/ }).first()).toBeVisible();
 });
 
 test('login -> balancete proves débito == crédito', async ({ page }) => {
@@ -140,7 +140,7 @@ test('login -> lançamentos: create a balanced Draft, then Post it', async ({ pa
   // The form starts with two lines (Debit + Credit). Each line's account is a Radix
   // combobox (aria-haspopup=listbox). The cost-center combobox in the same row is
   // also aria-haspopup=listbox, so scope to the row's FIRST trigger (the account
-  // cell). Line 1 (Debit) -> Caixa (1.01.01); Line 2 (Credit) -> Receita (4.01.01).
+  // cell). Line 1 (Debit) -> Caixa (1.2.05.05.020); Line 2 (Credit) -> Receita (3.2.05.10.020).
   // Open one at a time so only one listbox is mounted.
   const line1Account = drawer
     .locator('table.journal-lines tbody tr')
@@ -163,8 +163,8 @@ test('login -> lançamentos: create a balanced Draft, then Post it', async ({ pa
     await expect(listbox).toBeHidden();
   };
 
-  await pickInRow(line1Account, /1\.01\.01/);
-  await pickInRow(line2Account, /4\.01\.01/);
+  await pickInRow(line1Account, /1\.2\.05\.05\.020/);
+  await pickInRow(line2Account, /3\.2\.05\.10\.020/);
 
   // Amounts: enter the same value on both lines so Σdébitos = Σcréditos. The amount
   // input is type=number in each line.

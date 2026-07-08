@@ -953,8 +953,8 @@ export const api = {
     request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
   updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
     request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  seedLedgerAccounts: (template?: string) =>
-    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ template }) }),
+  seedLedgerAccounts: () =>
+    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST' }),
 
   // ---------- Accounting: Journal entries (lançamentos) ----------
   listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {

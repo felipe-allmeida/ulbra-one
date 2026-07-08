@@ -214,7 +214,7 @@ export function ContabilPlanoPage() {
     <>
       <PageHeader title={t('accounting.ledger.title')} sub={t('accounting.ledger.subtitle')}>
         {accounts.length === 0 && !list.isLoading && (
-          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate({})}>
+          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate()}>
             {seed.isPending ? t('accounting.ledger.seeding') : t('accounting.ledger.seed')}
           </Button>
         )}

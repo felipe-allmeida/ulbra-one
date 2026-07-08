@@ -1149,9 +1149,9 @@ export function useUpdateLedgerAccount(
   );
 }
 
-export function useSeedLedgerAccounts(options?: UseMutationOptions<LedgerAccount[], unknown, { template?: string } | void>) {
+export function useSeedLedgerAccounts(options?: UseMutationOptions<LedgerAccount[], unknown, void>) {
   return useInvalidatingMutation(
-    (vars) => api.seedLedgerAccounts(vars?.template),
+    () => api.seedLedgerAccounts(),
     (qc) => void qc.invalidateQueries({ queryKey: ['ledgerAccounts'] }),
     options,
   );
