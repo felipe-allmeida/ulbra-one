@@ -65,7 +65,14 @@ export type Address = Schemas['AddressResponse'];
 // The DTOs declare `AddressResponse? Address` (nullable), but Swashbuckle can't express the nullability
 // of a nested complex member, so it emits `address` as non-null. Restore the honest `Address | null`.
 type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
-export type Vendor = WithNullableAddress<Schemas['VendorResponse']>;
+/** LC123 Simples annex (serialised as string). */
+export type SimplesAnexoValue = Schemas['SimplesAnexo'];
+// `simplesAnexo` is a nullable enum on the backend (`SimplesAnexo?`); Swashbuckle can't express nullable enums, so
+// the generated type is non-null — restore the honest nullability. `cprbForeseen` (a nullable bool) generates
+// correctly and flows through untouched.
+export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
+  simplesAnexo: SimplesAnexoValue | null;
+};
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
 
@@ -92,9 +99,11 @@ export type TransactionType = Schemas['TransactionType'];
 export type TransactionStatus = Schemas['TransactionStatus'];
 
 // ---------- Payables (Contas a Pagar) ----------
-// `type` (Service/Product — drives the withholding) isn't in the generated OpenAPI schema yet;
-// augment it until the next `pnpm gen:api`. The value already comes in the JSON at runtime.
-export type Payable = Schemas['PayableResponse'] & { type?: 'Service' | 'Product' | null };
+/** Payable type (Service/Product — drives the withholding). */
+export type PayableType = Schemas['PayableType'];
+// `type` is a nullable enum on the backend (`PayableType?`); Swashbuckle emits it non-null (nullable-enum quirk),
+// so restore the honest nullability. Kept optional for back-compat with existing test fixtures.
+export type Payable = Omit<Schemas['PayableResponse'], 'type'> & { type?: PayableType | null };
 export type PayableListItem = Schemas['PayableListItemResponse'];
 export type Installment = Schemas['InstallmentResponse'];
 export type PayableAttachment = Schemas['PayableAttachmentResponse'];
@@ -110,6 +119,18 @@ export type AuditTrailEvent = Schemas['AuditTrailEventResponse'];
 // ---------- Withholdings (Retenções) ----------
 export type WithholdingTaxType = Schemas['WithholdingTaxType'];
 export type PayableWithholding = Schemas['PayableWithholdingResponse'];
+
+// ---------- Withholding rules (Regras de Retenção) ----------
+// `vendorRegime` / `simplesAnexo` are nullable enums on the backend; Swashbuckle emits them non-null (nullable-enum
+// quirk), so restore the honest nullability. `cprb` (a nullable bool) generates correctly and flows through.
+export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime' | 'simplesAnexo'> & {
+  vendorRegime: TaxRegime | null;
+  simplesAnexo: SimplesAnexoValue | null;
+};
+export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
+export type RateSource = Schemas['RateSource'];
+export type BaseRule = Schemas['BaseRule'];
+export type NonRetentionReason = Schemas['NonRetentionReason'];
 
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
@@ -275,37 +296,21 @@ export interface JournalEntryInput {
 export type AgingReport = Schemas['AgingReportResponse'];
 export type AgingItem = Schemas['AgingItemResponse'];
 
-// ---------- Relatório de Retenções ----------
-// Manual types: this endpoint is not yet in the generated OpenAPI schema. Reuses the existing string enums.
-export interface WithholdingReportLine {
-  id: string;
-  taxType: WithholdingTaxType;
-  baseAmount: number;
-  rate: number | null;
-  amount: number;
-}
-export interface WithholdingByTaxRow {
-  taxType: WithholdingTaxType;
-  baseAmount: number;
-  amount: number;
-  payableCount: number;
-}
-export interface WithholdingPayableRow {
-  id: string;
-  vendorId: string;
-  counterpartyName: string;
-  documentNumber: string | null;
-  status: PayableStatus;
-  totalAmount: number;
-  totalWithheld: number;
-  netTotal: number;
-  lines: WithholdingReportLine[];
-}
-export interface WithholdingsReport {
-  totals: { grossTotal: number; withheldTotal: number; netTotal: number; payableCount: number };
-  byTax: WithholdingByTaxRow[];
-  byPayable: WithholdingPayableRow[];
-}
+// ---------- Relatório de Retenções (retencoes) ----------
+export type WithholdingReportLine = Schemas['PayableWithholdingResponse'];
+export type WithholdingByTaxRow = Schemas['WithholdingByTaxRow'];
+export type WithholdingPayableRow = Schemas['WithholdingPayableRow'];
+export type WithholdingsReport = Schemas['WithholdingsReportResponse'];
+
+// Apuração de retenções (Obrigações Acessórias). Guia de recolhimento: PIS+COFINS+CSLL viram CSRF.
+export type RetentionGroup = Schemas['RetentionGroup'];
+export type WithholdingFactRow = Schemas['WithholdingFactResponse'];
+export type CompanyAssessmentRow = Schemas['CompanyAssessmentRowResponse'];
+export type RetentionGroupRow = Schemas['RetentionGroupRowResponse'];
+export type TaxTypeAssessmentRow = Schemas['TaxTypeRowResponse'];
+export type CostCenterAssessmentRow = Schemas['CostCenterAssessmentRowResponse'];
+export type FiscalAssessment = Schemas['WithholdingAssessmentResponse'];
+
 export type AgingBucket = Schemas['AgingBucket'];
 
 // ---------- Cash flow (Fluxo de caixa) ----------
@@ -901,6 +906,15 @@ export const api = {
     request<ExpenseCategory>(`/expense-categories/${id}`, { method: 'PUT', body: JSON.stringify({ name, active }) }),
   deleteExpenseCategory: (id: string) => request<void>(`/expense-categories/${id}`, { method: 'DELETE' }),
 
+  // ---------- Withholding rules (Regras de Retenção) ----------
+  listWithholdingRules: (includeInactive?: boolean) =>
+    request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
+  createWithholdingRule: (body: WithholdingRuleInput) =>
+    request<WithholdingRule>('/withholding-rules', { method: 'POST', body: JSON.stringify(body) }),
+  updateWithholdingRule: (id: string, body: WithholdingRuleInput) =>
+    request<WithholdingRule>(`/withholding-rules/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteWithholdingRule: (id: string) => request<void>(`/withholding-rules/${id}`, { method: 'DELETE' }),
+
   // ---------- Registry: Vendors ----------
   listVendors: (companyId: string, search?: string, page?: number, pageSize?: number) =>
     request<Paginated<Vendor>>(`/vendors?${registryQuery(companyId, search, page, pageSize)}`),
@@ -1009,6 +1023,46 @@ export const api = {
     const q = new URLSearchParams();
     if (companyId) q.set('companyId', companyId);
     return request<WithholdingsReport>(`/payables/withholdings?${q}`);
+  },
+
+  // ---------- Fiscal: apuração de retenções (base do painel de Obrigações Acessórias) ----------
+  fiscalAssessment: (params: {
+    perApur: string;
+    companyId?: string;
+    costCenterId?: string;
+    taxType?: WithholdingTaxType;
+    retentionGroup?: RetentionGroup;
+  }) => {
+    const q = new URLSearchParams({ perApur: params.perApur });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.taxType) q.set('taxType', params.taxType);
+    if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
+    return request<FiscalAssessment>(`/fiscal/assessment?${q}`);
+  },
+  /** Direct URL do export CSV (text/csv). Requer Bearer → baixe via downloadAssessmentCsv (fetch+blob). */
+  fiscalAssessmentCsvUrl: (params: {
+    perApur: string;
+    companyId?: string;
+    costCenterId?: string;
+    taxType?: WithholdingTaxType;
+    retentionGroup?: RetentionGroup;
+  }) => {
+    const q = new URLSearchParams({ perApur: params.perApur });
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.taxType) q.set('taxType', params.taxType);
+    if (params.retentionGroup) q.set('retentionGroup', params.retentionGroup);
+    return `${BASE_URL}/fiscal/assessment/csv?${q}`;
+  },
+  /** Direct URL do XML da EFD-Reinf (R-4020). Requer empresa (contribuinte) + Bearer → baixe via downloadEfdReinfXml. */
+  efdReinfXmlUrl: (params: { perApur: string; companyId: string; tpAmb?: number }) => {
+    const q = new URLSearchParams({ perApur: params.perApur });
+    // Só envia companyId quando presente (mesmo padrão do CSV/assessment). Um `companyId=` vazio faria o
+    // binding do CompanyId? no endpoint devolver 400 opaco; ausente cai no guard limpo "Selecione a empresa".
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.tpAmb != null) q.set('tpAmb', String(params.tpAmb));
+    return `${BASE_URL}/fiscal/assessment/efd-reinf.xml?${q}`;
   },
 
   // ---------- Registry: Lookups ----------

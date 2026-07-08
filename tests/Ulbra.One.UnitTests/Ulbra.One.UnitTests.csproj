@@ -9,6 +9,10 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903;NU1902</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Official EFD-Reinf R-4020 (evt4020) XSDs, vendored to validate the generated XML at test time. -->
+    <Content Include="Fiscal\schemas\*.xsd" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
@@ -23,6 +27,7 @@
     <ProjectReference Include="../../src/Modules/Registry/Ulbra.One.Registry.Application/Ulbra.One.Registry.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Fiscal/Ulbra.One.Fiscal.Domain/Ulbra.One.Fiscal.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Fiscal/Ulbra.One.Fiscal.Application/Ulbra.One.Fiscal.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Modules/Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />

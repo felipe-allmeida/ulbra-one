@@ -16,6 +16,11 @@ export const roundCents = (v: number) => Math.round((v + Number.EPSILON) * 100) 
 export const fmtPct = (fraction: number) =>
   fraction.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Withholding rate stored as a fraction (0.11) ⇄ percent for entry/display (11). Rounds to 4 decimals to avoid
+ *  float noise (0.035 × 100 = 3.5, not 3.4999…). */
+export const fractionToPercent = (fraction: number) => Math.round(fraction * 1_000_000) / 10_000;
+export const percentToFraction = (percent: number) => percent / 100;
+
 export const brlCompact = (v: number) =>
   v >= 1_000_000
     ? `R$ ${(v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}M`
