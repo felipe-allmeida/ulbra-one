@@ -13,13 +13,6 @@
         "operationId": "ListLedgerAccounts",
         "parameters": [
           {
-            "name": "companyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "accountGroup",
             "in": "query",
             "schema": {
@@ -4401,201 +4394,6 @@
         }
       }
     },
-    "/api/chart-accounts": {
-      "get": {
-        "tags": [
-          "Finance"
-        ],
-        "operationId": "ListChartAccounts",
-        "parameters": [
-          {
-            "name": "chartType",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/ChartType"
-            }
-          },
-          {
-            "name": "kind",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/AccountKind"
-            }
-          },
-          {
-            "name": "activeOnly",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ChartAccountResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Finance"
-        ],
-        "operationId": "CreateChartAccount",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateChartAccountRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartAccountResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/chart-accounts/{id}": {
-      "put": {
-        "tags": [
-          "Finance"
-        ],
-        "operationId": "UpdateChartAccount",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateChartAccountRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartAccountResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Finance"
-        ],
-        "operationId": "DeleteChartAccount",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/statement-imports": {
       "post": {
         "tags": [
@@ -6682,20 +6480,6 @@
         ],
         "type": "string"
       },
-      "AccountKind": {
-        "enum": [
-          "Synthetic",
-          "Analytical"
-        ],
-        "type": "string"
-      },
-      "AccountNature": {
-        "enum": [
-          "Debit",
-          "Credit"
-        ],
-        "type": "string"
-      },
       "AddressRequest": {
         "required": [
           "cep",
@@ -7008,7 +6792,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "confidence": {
             "type": "number",
@@ -7791,60 +7575,11 @@
         },
         "additionalProperties": false
       },
-      "ChartAccountResponse": {
-        "required": [
-          "id",
-          "chartType",
-          "code",
-          "name",
-          "parentId",
-          "kind",
-          "nature",
-          "isActive"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "chartType": {
-            "$ref": "#/components/schemas/ChartType"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/AccountKind"
-          },
-          "nature": {
-            "$ref": "#/components/schemas/AccountNature"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
       "ChartTemplate": {
         "enum": [
           "Demo",
           "RfbImunesIsentas",
           "RfbPjLucroReal"
-        ],
-        "type": "string"
-      },
-      "ChartType": {
-        "enum": [
-          "Accounting"
         ],
         "type": "string"
       },
@@ -7879,7 +7614,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "basedOnPayableId": {
             "type": "string",
@@ -7906,7 +7641,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
@@ -7920,7 +7655,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
@@ -8110,40 +7845,6 @@
         },
         "additionalProperties": false
       },
-      "CreateChartAccountRequest": {
-        "required": [
-          "chartType",
-          "code",
-          "name",
-          "kind",
-          "parentId",
-          "nature"
-        ],
-        "type": "object",
-        "properties": {
-          "chartType": {
-            "$ref": "#/components/schemas/ChartType"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/AccountKind"
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "nature": {
-            "$ref": "#/components/schemas/AccountNature"
-          }
-        },
-        "additionalProperties": false
-      },
       "CreateCompanyRequest": {
         "required": [
           "legalName",
@@ -8247,7 +7948,6 @@
       },
       "CreateLedgerAccountRequest": {
         "required": [
-          "companyId",
           "code",
           "name",
           "accountGroup",
@@ -8257,10 +7957,6 @@
         ],
         "type": "object",
         "properties": {
-          "companyId": {
-            "type": "string",
-            "example": "company_3fa85f64571742199730000000000000"
-          },
           "code": {
             "type": "string"
           },
@@ -8348,7 +8044,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "paymentBankAccountId": {
             "type": "string",
@@ -9538,7 +9234,6 @@
       "LedgerAccountResponse": {
         "required": [
           "id",
-          "companyId",
           "code",
           "name",
           "accountGroup",
@@ -9552,10 +9247,6 @@
           "id": {
             "type": "string",
             "example": "ledgacct_3fa85f64571742199730000000000000"
-          },
-          "companyId": {
-            "type": "string",
-            "example": "company_3fa85f64571742199730000000000000"
           },
           "code": {
             "type": "string"
@@ -10168,7 +9859,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "isClassified": {
             "type": "boolean"
@@ -10176,7 +9867,7 @@
           "suggestedAccountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "classificationConfidence": {
             "type": "number",
@@ -11624,15 +11315,10 @@
       },
       "SeedLedgerAccountsRequest": {
         "required": [
-          "companyId",
           "template"
         ],
         "type": "object",
         "properties": {
-          "companyId": {
-            "type": "string",
-            "example": "company_3fa85f64571742199730000000000000"
-          },
           "template": {
             "$ref": "#/components/schemas/ChartTemplate"
           }
@@ -12138,32 +11824,6 @@
         },
         "additionalProperties": false
       },
-      "UpdateChartAccountRequest": {
-        "required": [
-          "name",
-          "parentId",
-          "nature",
-          "isActive"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
-          },
-          "nature": {
-            "$ref": "#/components/schemas/AccountNature"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
       "UpdateClassificationPolicyRequest": {
         "required": [
           "requireToApprove",
@@ -12363,7 +12023,7 @@
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
-            "example": "chart_account_3fa85f64571742199730000000000000"
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           },
           "paymentBankAccountId": {
             "type": "string",
