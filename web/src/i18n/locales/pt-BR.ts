@@ -752,6 +752,8 @@ const ptBR = {
     deleteTitle: 'Remover anexo',
     deleteMessage: 'Tem certeza que deseja remover "{{name}}"?',
     downloadError: 'Não foi possível baixar o anexo.',
+    view: 'Visualizar',
+    viewError: 'Não foi possível abrir o anexo.',
   },
 
   expenseCategories: {
