@@ -51,4 +51,48 @@ public class PayableStageItemsTests(PostgresFixture fixture)
         var listBody = JsonDocument.Parse(await list.Content.ReadAsStringAsync()).RootElement;
         Assert.Equal(3, listBody.GetProperty("items").GetArrayLength());
     }
+
+    [Fact]
+    public async Task StageItems_filters_by_hasFiscalDocument()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // Two approved payables parked in PendingAccounting: one still missing its NF, one that already has it.
+        var withoutNf = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withoutNf);
+
+        var withNf = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 200m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withNf);
+        await FinanceSeed.RegisterFiscalDocAsync(factory, client, withNf);
+
+        // hasFiscalDocument=false => only the payable still pending a NF (this is the Pendências "Nota Fiscal" tab).
+        Assert.Equal([withoutNf], await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: false));
+
+        // hasFiscalDocument=true => only the payable that already has a NF.
+        Assert.Equal([withNf], await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: true));
+
+        // Absent filter => both PendingAccounting payables (previous behavior preserved for the payables tabs).
+        var all = await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: null);
+        Assert.Equal(2, all.Count);
+        Assert.Contains(withoutNf, all);
+        Assert.Contains(withNf, all);
+    }
+
+    private static async Task<List<string>> StageItemIds(HttpClient client, string companyId, string status, bool? hasFiscalDocument)
+    {
+        var url = $"/api/payables/stage-items?companyId={companyId}&status={status}";
+        if (hasFiscalDocument is { } h) url += $"&hasFiscalDocument={(h ? "true" : "false")}";
+        var res = await client.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var body = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+        return body.GetProperty("items").EnumerateArray()
+            .Select(x => x.GetProperty("payableId").GetString()!)
+            .ToList();
+    }
 }

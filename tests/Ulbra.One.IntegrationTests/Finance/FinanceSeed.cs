@@ -184,6 +184,13 @@ public static class FinanceSeed
         confirmRes.EnsureSuccessStatusCode();
     }
 
+    /// <summary>Approves a payable, parking it in <c>PendingAccounting</c> (no NF registered, accounting not confirmed).</summary>
+    public static async Task ApproveAsync(HttpClient client, string payableId)
+    {
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        res.EnsureSuccessStatusCode();
+    }
+
     /// <summary>Registers a minimal NF-e against the payable (satisfies the fiscal-document gate) without confirming.</summary>
     public static async Task RegisterFiscalDocAsync(ApiFactory factory, HttpClient client, string payableId)
     {

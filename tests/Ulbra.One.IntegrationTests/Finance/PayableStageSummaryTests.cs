@@ -38,4 +38,54 @@ public class PayableStageSummaryTests(PostgresFixture fixture)
         Assert.Equal(0, body.GetProperty("classification").GetProperty("count").GetInt32());
         Assert.Equal(0m, body.GetProperty("reconciled").GetProperty("totalAmount").GetDecimal());
     }
+
+    [Fact]
+    public async Task StageSummary_reports_fiscalDocumentPending_bucket()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // PendingAccounting WITHOUT NF -> counts toward fiscalDocumentPending.
+        var pendingA = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
+        await FinanceSeed.ApproveAsync(client, pendingA);
+        var pendingB = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 200m, approve: false);
+        await FinanceSeed.ApproveAsync(client, pendingB);
+
+        // PendingAccounting WITH NF -> in the Accounting bucket but NOT in fiscalDocumentPending.
+        var pendingWithNf = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 400m, approve: false);
+        await FinanceSeed.ApproveAsync(client, pendingWithNf);
+        await FinanceSeed.RegisterFiscalDocAsync(factory, client, pendingWithNf);
+
+        // Received (not approved) and Scheduled (fully accounted) -> neither counts toward fiscalDocumentPending.
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 50m, approve: false);
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 500m, approve: true);
+
+        var body = JsonDocument.Parse(await (await client.GetAsync($"/api/payables/stage-summary?companyId={companyId}")).Content.ReadAsStringAsync()).RootElement;
+
+        // fiscalDocumentPending = the two PendingAccounting titles without a NF (100 + 200).
+        var fiscalPending = body.GetProperty("fiscalDocumentPending");
+        Assert.Equal(2, fiscalPending.GetProperty("count").GetInt32());
+        Assert.Equal(300m, fiscalPending.GetProperty("totalAmount").GetDecimal());
+
+        // Accounting bucket still counts ALL PendingAccounting (with + without NF): 100 + 200 + 400.
+        var accounting = body.GetProperty("accounting");
+        Assert.Equal(3, accounting.GetProperty("count").GetInt32());
+        Assert.Equal(700m, accounting.GetProperty("totalAmount").GetDecimal());
+
+        // Controls: the Received one in Entry, the fully-accounted one in Payment.
+        Assert.Equal(1, body.GetProperty("entry").GetProperty("count").GetInt32());
+        Assert.Equal(1, body.GetProperty("payment").GetProperty("count").GetInt32());
+        Assert.Equal(500m, body.GetProperty("payment").GetProperty("totalAmount").GetDecimal());
+
+        // A company with no such payables reports the zero bucket, not null.
+        var emptyCompany = await FinanceSeed.CreateCompanyAsync(client);
+        var emptyBody = JsonDocument.Parse(await (await client.GetAsync($"/api/payables/stage-summary?companyId={emptyCompany}")).Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(0, emptyBody.GetProperty("fiscalDocumentPending").GetProperty("count").GetInt32());
+        Assert.Equal(0m, emptyBody.GetProperty("fiscalDocumentPending").GetProperty("totalAmount").GetDecimal());
+    }
 }
