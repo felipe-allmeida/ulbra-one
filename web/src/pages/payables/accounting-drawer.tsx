@@ -17,7 +17,7 @@ import { WithholdingSection } from './withholding-section';
 import { FiscalXmlReader } from './fiscal-xml-reader';
 
 /** "Registro de Despesa" — the accountant reviews vendor tax data, retentions and ledger account, registers
- * the Nota Fiscal, then contabiliza (→ Scheduled). Gated: cannot contabilizar without a registered NF. */
+ * the Nota Fiscal, then completes accounting (→ Scheduled). Gated: cannot complete accounting without a registered NF. */
 export function AccountingDrawer({ payableId, onClose }: { payableId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -52,7 +52,7 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
           variant='brand'
           icon={<Calculator />}
           disabled={!hasNf || confirm.isPending}
-          title={!hasNf ? t('payables.accounting.contabilizarBlockedNoNf') : undefined}
+          title={!hasNf ? t('payables.accounting.confirmBlockedNoNf') : undefined}
           onClick={() =>
             confirm.mutate(
               { id: payableId },
@@ -127,7 +127,7 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
             </div>
           </Panel>
 
-          {/* Nota Fiscal — required before contabilizar. Reuses the fiscal reader; persists on upload. */}
+          {/* Nota Fiscal — required before completing accounting. Reuses the fiscal reader; persists on upload. */}
           <Panel title={t('payables.accounting.fiscalTitle')}>
             {!hasNf && <div className='create-err'>{t('payables.accounting.fiscalMissing')}</div>}
             <FiscalXmlReader

@@ -549,7 +549,7 @@ const ptBR = {
       reclassifyTitle: 'Conta contábil',
       reclassify: 'Reclassificar',
       reclassifySuccess: 'Conta contábil atualizada.',
-      contabilizarBlockedNoNf: 'Registre a Nota Fiscal para habilitar a contabilização.',
+      confirmBlockedNoNf: 'Registre a Nota Fiscal para habilitar a contabilização.',
       taxRegime: {
         Unknown: 'Não informado',
         Mei: 'MEI',
