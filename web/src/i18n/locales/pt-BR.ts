@@ -501,6 +501,7 @@ const ptBR = {
     upload: {
       label: 'Anexar NF',
       help: 'PDF, PNG ou JPG.',
+      fromReader: 'Já adicionada a partir do documento lido acima.',
     },
     cards: {
       totalAmount: 'Valor total',
