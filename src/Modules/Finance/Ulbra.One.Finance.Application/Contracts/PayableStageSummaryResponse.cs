@@ -10,4 +10,5 @@ public sealed record PayableStageSummaryResponse(
     StageBucket Approval,
     StageBucket Accounting,
     StageBucket Payment,
-    StageBucket Reconciled);
+    StageBucket Reconciled,
+    StageBucket FiscalDocumentPending);

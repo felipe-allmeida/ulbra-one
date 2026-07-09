@@ -26,6 +26,7 @@ public sealed class GetPayableStageItems : IEndpoint
     private static async Task<IResult> Handle(
         CompanyId companyId,
         PayableStatus? status,
+        bool? hasFiscalDocument,
         IUnitOfWork uow,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
@@ -50,6 +51,10 @@ public sealed class GetPayableStageItems : IEndpoint
             p.Status,
             HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id),
         });
+
+        // Optional pendency filter (e.g. Pendências "Nota Fiscal" tab: PendingAccounting + no NF). EF
+        // translates HasFiscalDocument to WHERE [NOT] EXISTS. Absent => unchanged behavior for all stages.
+        if (hasFiscalDocument is { } hasNf) rows = rows.Where(x => x.HasFiscalDocument == hasNf);
 
         var page = await rows.OrderBy(x => x.FirstDueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
