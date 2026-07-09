@@ -270,8 +270,11 @@ function PayableForm({ initial }: { initial?: Payable }) {
     try {
       const p =
         editing && initial ? await update.mutateAsync({ id: initial.id, body }) : await create.mutateAsync(body);
-      // Persist the fiscal document of record (NF) using the key from the presigned upload, then any generic attachment, then navigate.
+      // The NF used to read the data: persist the parsed fiscal document (key from the presigned upload) AND
+      // attach the file to the payable so it shows in Anexos and counts as the registered NF. Then any extra
+      // generic attachment. Then navigate.
       if (fiscalUpload) await uploadFiscal.mutateAsync({ id: p.id, ...fiscalUpload });
+      if (!editing && fiscalFile) await upload.mutateAsync({ id: p.id, file: fiscalFile });
       if (!editing && file) await upload.mutateAsync({ id: p.id, file });
       nav(`/app/payables/${p.id}`);
     } catch {
