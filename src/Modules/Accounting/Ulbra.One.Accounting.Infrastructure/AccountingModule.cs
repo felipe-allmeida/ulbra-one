@@ -7,8 +7,8 @@ public static class AccountingModule
 {
     public static IServiceCollection AddAccountingModule(this IServiceCollection services, IConfiguration configuration)
     {
-        // AELBRA "Modelo de Planos" defaults (analytical leaves in the seeded chart):
-        //   PayablesLiabilityCode: "2.2.05.15.020" = Fornecedores de Funcionamento
+        // AELBRA "Modelo de Planos" defaults (analytical leaves active in the seeded chart):
+        //   PayablesLiabilityCode: "2.2.05.15.080" = Fornecedores a Pagar (ativa; movimento/saldo em 2026)
         //   CashCode: "1.2.05.15.015" = Bco Banrisul CC 060289920-4 (conta movimento)
         //
         // Withholding defaults — supplier retention accounts (2.2.05.30.* RETENÇÃO — 🔶 contábil-validate):
@@ -40,7 +40,7 @@ public static class AccountingModule
         }
 
         var opts = new Ulbra.One.Accounting.Application.Posting.AccountingPostingOptions(
-            configuration["Accounting:PayablesLiabilityCode"] ?? "2.2.05.15.020",
+            configuration["Accounting:PayablesLiabilityCode"] ?? "2.2.05.15.080",
             configuration["Accounting:CashCode"] ?? "1.2.05.15.015",
             withholdingCodes);
         services.AddSingleton(opts);

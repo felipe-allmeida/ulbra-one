@@ -56,7 +56,7 @@ public class AccountingReportEndpointsTests(PostgresFixture fixture)
         await PostEntryAsync(client, companyId, "2026-01-02", "1.2.05.05.020", "2.6.05.05.020", acc, 100_000m); // capital
         await PostEntryAsync(client, companyId, "2026-01-10", "1.2.05.15.015", "3.2.05.10.020", acc, 50_000m);  // revenue
         await PostEntryAsync(client, companyId, "2026-01-20", "4.2.05.05.020", "1.2.05.15.015", acc, 30_000m);  // payroll
-        await PostEntryAsync(client, companyId, "2026-01-25", "4.2.15.05.020", "2.2.05.15.020", acc, 8_000m);   // energy
+        await PostEntryAsync(client, companyId, "2026-01-25", "4.2.15.05.020", "2.2.05.15.080", acc, 8_000m);   // energy
         return companyId;
     }
 

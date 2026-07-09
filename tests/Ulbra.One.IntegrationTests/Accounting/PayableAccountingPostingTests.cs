@@ -18,12 +18,12 @@ namespace Ulbra.One.IntegrationTests.Accounting;
 public class PayableAccountingPostingTests(PostgresFixture fixture)
 {
     // AELBRA "Modelo de Planos" codes used by AccountingModule defaults (analytical leaves):
-    //   2.2.05.15.020 = Fornecedores de Funcionamento          (Liability, Analytical)
+    //   2.2.05.15.080 = Fornecedores a Pagar                   (Liability, Analytical, ativa)
     //   1.2.05.15.015 = Bco Banrisul CC 060289920-4            (Asset, Analytical)
     // Expense code (also used in the dev journal-entry seed):
     //   4.2.15.05.020 = Energia Elétrica
     private const string ExpenseCode = "4.2.15.05.020";
-    private const string LiabilityCode = "2.2.05.15.020";
+    private const string LiabilityCode = "2.2.05.15.080";
     private const string CashCode = "1.2.05.15.015";
 
     private static async Task<Guid> SeedCompanyAndChartAsync(HttpClient client)
@@ -107,7 +107,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Settlement resolved → a real entry must exist (not pending).
-        // This also validates that both 2.2.05.15.020 (Fornecedores) and 1.2.05.15.015 (Bancos) exist in the chart.
+        // This also validates that both 2.2.05.15.080 (Fornecedores) and 1.2.05.15.015 (Bancos) exist in the chart.
         var entry = await uow.ReadSet<JournalEntry>()
             .FirstOrDefaultAsync(e => e.CompanyId == companyId && e.SourceKey == sourceKey);
 

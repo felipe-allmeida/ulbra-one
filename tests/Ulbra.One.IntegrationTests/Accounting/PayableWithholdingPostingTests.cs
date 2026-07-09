@@ -21,13 +21,13 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
 {
     // AELBRA "Modelo de Planos" codes from AccountingModule defaults (🔶 contábil-validate):
     //   4.2.15.05.020 = Energia Elétrica       (expense — Dr side)
-    //   2.2.05.15.020 = Fornecedores de Func.  (payables liability — Cr side)
+    //   2.2.05.15.080 = Fornecedores a Pagar   (payables liability — Cr side)
     //   2.2.05.30.020 = IRRF Retenção          (Cr side)
     //   2.2.05.30.080 = INSS Retenção
     //   2.2.05.30.060 = ISS Retenção
 
     private const string ExpenseCode = "4.2.15.05.020";
-    private const string LiabilityCode = "2.2.05.15.020";
+    private const string LiabilityCode = "2.2.05.15.080";
     private const string IrrfCode = "2.2.05.30.020";
 
     private static async Task<Guid> SeedCompanyAndChartAsync(HttpClient client)
@@ -52,7 +52,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
     /// <summary>
     /// Case 1 — Split: gross 1000, IRRF 150 → 3-line entry:
     ///   Dr 4.2.15.05.020 = 1000 (expense, gross)
-    ///   Cr 2.2.05.15.020 = 850  (fornecedores, net)
+    ///   Cr 2.2.05.15.080 = 850  (fornecedores, net)
     ///   Cr 2.2.05.30.020 = 150  (IRRF retenção)
     /// Balanced, Posted, no PendingAccountingPosting.
     /// </summary>

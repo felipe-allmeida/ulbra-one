@@ -14,15 +14,20 @@ namespace Ulbra.One.Accounting.Application.Seeding;
 /// <item>Parents are wired from the code hierarchy, but only when the parent shares the same group
 /// and is synthetic — otherwise the node becomes a group root (this detaches "2.6" as an Equity root),
 /// preserving <see cref="LedgerAccount.Reparent"/>'s same-group invariant.</item>
+/// <item>Accounts listed in <c>aelbra-active-accounts.json</c> (movement/balance in 2026) stay active;
+/// all others are deactivated.</item>
 /// </list></summary>
 public static class AelbraChart
 {
     private const string ResourceName = "aelbra-plano-contabil-sa.json";
+    /// <summary>Codes of accounts with movement or balance in 2026 — these stay active; all others are deactivated.</summary>
+    private const string ActiveResourceName = "aelbra-active-accounts.json";
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
     public static IReadOnlyList<LedgerAccount> Build()
     {
         var rows = Load();
+        var active = LoadActiveCodes();
         var byCode = new Dictionary<string, LedgerAccount>(rows.Count);
         var ordered = new List<LedgerAccount>(rows.Count);
         foreach (var row in rows)
@@ -30,6 +35,7 @@ public static class AelbraChart
             var account = new LedgerAccount(
                 row.Code, row.Name, GroupOf(row.Code), KindOf(row.Tipo),
                 parentId: null, NormalBalanceOf(row.NormalBalance), row.ReducedCode, row.Natureza);
+            if (!active.Contains(row.Code)) account.Deactivate();
             byCode[row.Code] = account;
             ordered.Add(account);
         }
@@ -56,6 +62,16 @@ public static class AelbraChart
             ?? throw new InvalidOperationException($"Embedded resource not found: {ResourceName}");
         return JsonSerializer.Deserialize<List<AelbraAccountRow>>(stream, Options)
             ?? throw new InvalidOperationException($"Failed to parse resource: {ResourceName}");
+    }
+
+    private static HashSet<string> LoadActiveCodes()
+    {
+        var assembly = typeof(AelbraChart).Assembly;
+        using var stream = assembly.GetManifestResourceStream(ActiveResourceName)
+            ?? throw new InvalidOperationException($"Embedded resource not found: {ActiveResourceName}");
+        var codes = JsonSerializer.Deserialize<List<string>>(stream, Options)
+            ?? throw new InvalidOperationException($"Failed to parse resource: {ActiveResourceName}");
+        return new HashSet<string>(codes, StringComparer.Ordinal);
     }
 
     private static AccountGroup GroupOf(string code) => code[0] switch

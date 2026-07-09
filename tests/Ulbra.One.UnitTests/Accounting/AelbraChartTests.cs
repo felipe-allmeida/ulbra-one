@@ -96,23 +96,33 @@ public class AelbraChartTests
     }
 
     [Fact]
-    public void Contains_the_analytical_codes_the_dev_seeder_and_integration_tests_post_to()
+    public void Posting_target_codes_are_active_analytical_accounts()
     {
-        // Guards DevDataSeeder + the accounting integration tests against KeyNotFoundException:
-        // every code they post journal lines to / classify payables with must exist and be analytical.
+        // Guards DevDataSeeder + the accounting integration tests: every code they post journal lines to /
+        // classify payables with must exist AND be postable (analytical + active) — else CanReceiveEntry
+        // rejects the line. This catches an account being deactivated by the 2026 active-list filter.
         var byCode = Chart.ToDictionary(a => a.Code);
-        string[] seederCodes =
+        string[] postingCodes =
         [
             // DevDataSeeder journal entries + payable classification
             "1.2.05.05.020", "1.2.05.15.015", "2.6.05.05.020", "3.2.05.10.020",
             "4.2.05.05.020", "4.2.15.05.020", "4.2.15.10.200",
-            // AccountingModule posting defaults (fornecedores + withholding retention accounts)
-            "2.2.05.15.020", "2.2.05.30.020", "2.2.05.30.040", "2.2.05.30.060", "2.2.05.30.080",
+            // AccountingModule posting defaults (fornecedores a pagar + withholding retention accounts)
+            "2.2.05.15.080", "2.2.05.30.020", "2.2.05.30.040", "2.2.05.30.060", "2.2.05.30.080",
         ];
-        foreach (var code in seederCodes)
+        foreach (var code in postingCodes)
         {
-            Assert.True(byCode.ContainsKey(code), $"Seeder code missing from chart: {code}");
-            Assert.Equal(LedgerAccountKind.Analytical, byCode[code].Kind);
+            Assert.True(byCode.ContainsKey(code), $"Posting code missing from chart: {code}");
+            Assert.True(byCode[code].CanReceiveEntry, $"Posting code must be active + analytical: {code}");
         }
+    }
+
+    [Fact]
+    public void Active_accounts_match_the_2026_movement_list()
+    {
+        // Only accounts with movement/balance in 2026 (aelbra-active-accounts.json, 546) stay active;
+        // the remaining 573 are deactivated.
+        Assert.Equal(546, Chart.Count(a => a.IsActive));
+        Assert.Equal(573, Chart.Count(a => !a.IsActive));
     }
 }

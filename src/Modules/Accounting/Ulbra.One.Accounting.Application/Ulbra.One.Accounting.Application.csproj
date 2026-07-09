@@ -10,5 +10,8 @@
     <EmbeddedResource Include="Seeding/Resources/aelbra-plano-contabil-sa.json">
       <LogicalName>aelbra-plano-contabil-sa.json</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Seeding/Resources/aelbra-active-accounts.json">
+      <LogicalName>aelbra-active-accounts.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
