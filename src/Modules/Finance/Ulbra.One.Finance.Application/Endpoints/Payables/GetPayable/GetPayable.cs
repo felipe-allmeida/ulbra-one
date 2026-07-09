@@ -34,6 +34,7 @@ public sealed class GetPayable : IEndpoint
         var actors = new List<Guid>();
         if (Guid.TryParse(p.ApprovedBy, out var ag)) actors.Add(ag);
         if (Guid.TryParse(p.RejectedBy, out var rg)) actors.Add(rg);
+        if (Guid.TryParse(p.AccountedBy, out var acg)) actors.Add(acg);
         var names = await users.GetNamesAsync(actors, ct);
 
         // ── Batch-resolve rail context (no per-row DB hits) ──────────────────────────────────────

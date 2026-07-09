@@ -522,6 +522,7 @@ const ptBR = {
     rejectionReason: 'Motivo da rejeição: {{reason}}',
     cancelReason: 'Motivo do cancelamento: {{reason}}',
     approvedBy: 'Aprovado por {{user}} em {{date}}',
+    accountedBy: 'Contabilizado por {{user}} em {{date}}',
     rejectedBy: 'Rejeitado por {{user}} em {{date}}',
     empty: {
       noCompanyTitle: 'Nenhuma empresa',

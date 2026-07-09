@@ -2629,6 +2629,10 @@ export interface components {
             rejectedByName: string | null;
             /** Format: date-time */
             rejectedAt: string | null;
+            accountedBy: string | null;
+            accountedByName: string | null;
+            /** Format: date-time */
+            accountedAt: string | null;
             /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
             isClassified: boolean;

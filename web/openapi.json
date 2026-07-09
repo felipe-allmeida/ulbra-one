@@ -9935,6 +9935,9 @@
           "rejectedBy",
           "rejectedByName",
           "rejectedAt",
+          "accountedBy",
+          "accountedByName",
+          "accountedAt",
           "accountingAccountId",
           "isClassified",
           "suggestedAccountingAccountId",
@@ -10028,6 +10031,19 @@
             "nullable": true
           },
           "rejectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "accountedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true

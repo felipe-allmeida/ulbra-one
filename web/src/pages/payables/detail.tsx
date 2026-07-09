@@ -168,6 +168,11 @@ export function PayableDetailPage() {
           {t('payables.approvedBy', { user: p.approvedByName ?? p.approvedBy, date: fmtDateTime(p.approvedAt) })}
         </p>
       )}
+      {(p.status === 'Scheduled' || p.status === 'Paid') && p.accountedBy && p.accountedAt && (
+        <p className='detail-sub'>
+          {t('payables.accountedBy', { user: p.accountedByName ?? p.accountedBy, date: fmtDateTime(p.accountedAt) })}
+        </p>
+      )}
       {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
         <p className='detail-sub'>
           {t('payables.rejectedBy', { user: p.rejectedByName ?? p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
