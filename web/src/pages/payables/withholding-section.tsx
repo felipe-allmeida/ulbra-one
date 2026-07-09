@@ -76,7 +76,8 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
       {rows.length > 0 && (
-        <table>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
           <thead>
             <tr>
               <th>{t('payables.withholding.columns.taxType')}</th>
@@ -128,14 +129,14 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
                     icon={<Trash2 />}
                     onClick={() => removeRow(i)}
                     aria-label={t('payables.withholding.removeRow')}
-                  >
-                    {t('payables.withholding.removeRow')}
-                  </Button>
+                    title={t('payables.withholding.removeRow')}
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>

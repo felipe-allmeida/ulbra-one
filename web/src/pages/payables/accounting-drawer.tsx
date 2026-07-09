@@ -44,6 +44,7 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
     <Drawer
       open
       onClose={onClose}
+      width={720}
       title={t('payables.accounting.title')}
       sub={v?.counterpartyName ?? p?.counterpartyName}
       footer={
