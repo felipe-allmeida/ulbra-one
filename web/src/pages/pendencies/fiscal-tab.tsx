@@ -44,7 +44,7 @@ export function FiscalTab({ companyId }: { companyId: string }) {
         }}
       />
 
-      {toAttach && <AttachNfDrawer companyId={companyId} item={toAttach} onClose={() => setToAttach(null)} />}
+      {toAttach && <AttachNfDrawer item={toAttach} onClose={() => setToAttach(null)} />}
     </>
   );
 }

@@ -10,23 +10,20 @@ const { mockUseStageItems, mockUploadMutate, mockToastSuccess } = vi.hoisted(() 
 }));
 vi.mock('../../queries', () => ({
   usePayableStageItems: mockUseStageItems,
-  useUploadPayableFiscalDocument: () => ({ mutate: mockUploadMutate }),
+  useUploadPayableAttachment: () => ({ mutate: mockUploadMutate, isPending: false }),
 }));
 vi.mock('../payables/use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
 vi.mock('../../toast', () => ({ useToast: () => ({ success: mockToastSuccess, error: vi.fn() }) }));
-// Stub the fiscal reader so the drawer test doesn't pull in the presigned-upload/parse hooks; the stub
-// exposes a button that fires onUploadKey, mimicking a completed blob upload.
-vi.mock('../payables/fiscal-xml-reader', () => ({
-  FiscalXmlReader: ({
-    onUploadKey,
-  }: {
-    onUploadKey: (key: string, meta: { fileName: string; contentType: string; sizeBytes: number }) => void;
-  }) => (
-    <button onClick={() => onUploadKey('key_1', { fileName: 'nf.xml', contentType: 'application/xml', sizeBytes: 10 })}>
-      upload-nf
-    </button>
-  ),
-}));
+// Stub only the FilePicker (keep the real Drawer/Panel/Button/Field); its button fires onSelect with a fake file.
+vi.mock('../../ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../ui')>();
+  return {
+    ...actual,
+    FilePicker: ({ onSelect }: { onSelect: (f: File | null) => void }) => (
+      <button onClick={() => onSelect(new File(['x'], 'nf.pdf', { type: 'application/pdf' }))}>pick-file</button>
+    ),
+  };
+});
 
 import { FiscalTab } from './fiscal-tab';
 
@@ -74,14 +71,14 @@ describe('FiscalTab', () => {
     expect(screen.getByText('Anexar Nota Fiscal')).toBeInTheDocument();
   });
 
-  it('closes the drawer and toasts on a successful upload', () => {
+  it('uploads the picked file as an attachment and closes the drawer on success', () => {
     mockUploadMutate.mockImplementation((_vars, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
     renderTab();
-    fireEvent.click(screen.getByText('Anexar NF'));
-    expect(screen.getByText('Anexar Nota Fiscal')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('upload-nf'));
+    fireEvent.click(screen.getByText('Anexar NF')); // open drawer
+    fireEvent.click(screen.getByText('pick-file')); // select a file (stubbed FilePicker)
+    fireEvent.click(screen.getByText('Anexar')); // confirm (footer)
     expect(mockUploadMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'pay_1', key: 'key_1', fileName: 'nf.xml' }),
+      expect.objectContaining({ id: 'pay_1', file: expect.any(File) }),
       expect.anything(),
     );
     expect(mockToastSuccess).toHaveBeenCalled();

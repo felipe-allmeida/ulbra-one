@@ -719,8 +719,13 @@ export function useUploadPayableAttachment(
   return useInvalidatingMutation(
     ({ id, file }) => api.uploadPayableAttachment(id, file),
     (qc, _data, vars) => {
+      // An attached document can satisfy the NF gate (Pendências "Nota Fiscal" tab), so refresh the stage
+      // lists/counts and the accounting view too — not just the payable + list.
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
     },
     options,
   );
