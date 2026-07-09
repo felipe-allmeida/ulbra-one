@@ -7,14 +7,13 @@ import {
   useConfirmAccounting,
   useLedgerAccounts,
   useClassifyPayable,
-  useUploadPayableFiscalDocument,
+  useUploadPayableAttachment,
 } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
-import { Drawer, Button, Field, Combobox, Panel, type ComboboxItem } from '../../ui';
+import { Drawer, Button, Field, Combobox, Panel, FilePicker, type ComboboxItem } from '../../ui';
 import { fmtDoc } from '../../format';
 import { WithholdingSection } from './withholding-section';
-import { FiscalXmlReader } from './fiscal-xml-reader';
 
 /** "Registro de Despesa" — the accountant reviews vendor tax data, retentions and ledger account, registers
  * the Nota Fiscal, then completes accounting (→ Scheduled). Gated: cannot complete accounting without a registered NF. */
@@ -29,7 +28,7 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
   const accounts = useLedgerAccounts({ kind: 'Analytical', activeOnly: true }).data ?? [];
   const classify = useClassifyPayable();
   const confirm = useConfirmAccounting();
-  const uploadDoc = useUploadPayableFiscalDocument();
+  const uploadAttachment = useUploadPayableAttachment();
 
   const [accountingId, setAccountingId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -127,28 +126,28 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
             </div>
           </Panel>
 
-          {/* Nota Fiscal — required before completing accounting. Reuses the fiscal reader; persists on upload. */}
+          {/* Nota Fiscal — required before completing accounting. Attached as a document (no parsing/OCR);
+              shows up on the payable detail. */}
           <Panel title={t('payables.accounting.fiscalTitle')}>
             {!hasNf && <div className='create-err'>{t('payables.accounting.fiscalMissing')}</div>}
-            <FiscalXmlReader
-              companyId={p.companyId}
-              file={file}
-              onFile={setFile}
-              onApply={() => {}}
-              onClear={() => {}}
-              onUploadKey={(key, meta) =>
-                uploadDoc.mutate(
-                  { id: payableId, key, ...meta },
+            <FilePicker
+              accept='.xml,application/xml,text/xml,.pdf,application/pdf'
+              fileName={file?.name}
+              placeholder={t('common.noFileSelected')}
+              onSelect={(f) => {
+                setFile(f);
+                if (!f) return;
+                uploadAttachment.mutate(
+                  { id: payableId, file: f },
                   {
                     onSuccess: () => {
-                      toast.success(t('payables.fiscalReader.applied'));
+                      toast.success(t('pendencies.fiscal.attachSuccess'));
                       void view.refetch();
                     },
                     onError: (e) => toast.error(getErrorMessage(e)),
                   },
-                )
-              }
-              variant='band'
+                );
+              }}
             />
           </Panel>
         </>
