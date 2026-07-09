@@ -125,7 +125,9 @@ public class Payable : IAuditable, ISoftDeletable
         EnsureMutable();
         // Once scheduled, the accounting incurral (PayableScheduled → multi-line posting) has
         // already been booked against these withholdings; changing them now would desync the
-        // booked liability from the net actually paid. Withholdings are captured before approval.
+        // booked liability from the net actually paid. They stay editable through PendingAccounting
+        // (the accountant corrects them in "Registro de Despesa") and lock only when accounting is
+        // completed (CompleteAccounting → Scheduled).
         if (Status == PayableStatus.Scheduled)
             throw new InvalidOperationException("Cannot change withholdings after the payable is scheduled.");
         if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
@@ -295,6 +297,10 @@ public class Payable : IAuditable, ISoftDeletable
     public void RecomputeSettlement()
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled) return;
+        // Invariant: the canonical entry to Scheduled is CompleteAccounting (gates on the Nota Fiscal and
+        // publishes PayableScheduled → accounting incurral). This method only re-derives Paid⇄Scheduled after a
+        // payment or its reversal on an already-scheduled payable (reachable from Scheduled/Paid, never from
+        // PendingAccounting) — do NOT call it to schedule a payable, as it would skip the NF gate + the event.
         Status = _installments.All(i => i.Status == InstallmentStatus.Paid)
             ? PayableStatus.Paid
             : PayableStatus.Scheduled;
