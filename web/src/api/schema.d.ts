@@ -2783,6 +2783,10 @@ export interface components {
             email: string | null;
             phone: string | null;
             taxRegime: components["schemas"]["TaxRegime"];
+            simplesAnexo: components["schemas"]["SimplesAnexo"];
+            cprbForeseen: boolean | null;
+            city: string;
+            state: string;
         };
         PayableWithholdingResponse: {
             /** @example withholding_3fa85f64571742199730000000000000 */

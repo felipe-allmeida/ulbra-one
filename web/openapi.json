@@ -10512,7 +10512,11 @@
           "document",
           "email",
           "phone",
-          "taxRegime"
+          "taxRegime",
+          "simplesAnexo",
+          "cprbForeseen",
+          "city",
+          "state"
         ],
         "type": "object",
         "properties": {
@@ -10539,6 +10543,19 @@
           },
           "taxRegime": {
             "$ref": "#/components/schemas/TaxRegime"
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "cprbForeseen": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
           }
         },
         "additionalProperties": false

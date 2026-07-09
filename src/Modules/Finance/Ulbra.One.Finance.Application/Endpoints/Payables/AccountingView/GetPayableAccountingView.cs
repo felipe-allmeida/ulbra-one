@@ -39,7 +39,8 @@ public sealed class GetPayableAccountingView : IEndpoint
         var vendorBlock = vendor is null
             ? null
             : new PayableVendorTaxBlock(vendor.PersonType, vendor.Name, vendor.TradeName, vendor.Document,
-                vendor.Email, vendor.Phone, vendor.TaxRegime);
+                vendor.Email, vendor.Phone, vendor.TaxRegime,
+                vendor.SimplesAnexo, vendor.CprbForeseen, vendor.Address.City, vendor.Address.State);
 
         // Ledger account code/name from the global chart (Accounting module, single DbContext).
         string? accCode = null, accName = null;

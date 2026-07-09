@@ -45,6 +45,9 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
   const toItems = (xs: { id: string; code: string; name: string }[]): ComboboxItem[] =>
     xs.map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
 
+  const cprbLabel = (b?: boolean | null) =>
+    b == null ? '—' : b ? t('payables.accounting.cprbYes') : t('payables.accounting.cprbNo');
+
   return (
     <Drawer
       open
@@ -88,17 +91,26 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
               </Button>
             </div>
             <div className='form-grid'>
+              <ReadonlyField label={t('payables.accounting.fields.legalName')} value={dash(v.vendor?.name)} />
               <ReadonlyField
                 label={t('payables.accounting.fields.document')}
                 value={v.vendor?.document ? fmtDoc(v.vendor.document) : '—'}
               />
               <ReadonlyField label={t('payables.accounting.fields.tradeName')} value={dash(v.vendor?.tradeName)} />
+              <ReadonlyField label={t('payables.accounting.fields.email')} value={dash(v.vendor?.email)} />
               <ReadonlyField
                 label={t('payables.accounting.fields.taxRegime')}
                 value={v.vendor ? t(`payables.accounting.taxRegime.${v.vendor.taxRegime}`) : '—'}
               />
-              <ReadonlyField label={t('payables.accounting.fields.email')} value={dash(v.vendor?.email)} />
-              <ReadonlyField label={t('payables.accounting.fields.phone')} value={dash(v.vendor?.phone)} />
+              {v.vendor?.taxRegime === 'SimplesNacional' && (
+                <ReadonlyField
+                  label={t('payables.accounting.fields.simplesAnexo')}
+                  value={dash(v.vendor?.simplesAnexo)}
+                />
+              )}
+              <ReadonlyField label={t('payables.accounting.fields.cprb')} value={cprbLabel(v.vendor?.cprbForeseen)} />
+              <ReadonlyField label={t('payables.accounting.fields.city')} value={dash(v.vendor?.city)} />
+              <ReadonlyField label={t('payables.accounting.fields.uf')} value={dash(v.vendor?.state)} />
             </div>
           </div>
 

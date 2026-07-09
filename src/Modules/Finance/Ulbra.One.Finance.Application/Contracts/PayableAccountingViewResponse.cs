@@ -7,7 +7,8 @@ namespace Ulbra.One.Finance.Application.Contracts;
 /// <summary>Vendor tax/accounting data shown on the "Registro de Despesa" (accounting) screen.</summary>
 public sealed record PayableVendorTaxBlock(
     PersonType PersonType, string Name, string? TradeName, string Document,
-    string? Email, string? Phone, TaxRegime TaxRegime);
+    string? Email, string? Phone, TaxRegime TaxRegime,
+    SimplesAnexo? SimplesAnexo, bool? CprbForeseen, string City, string State);
 
 /// <summary>Composite read model for the accounting stage ("Registro de Despesa"): the payable's money
 /// picture (bruto/retido/líquido), its ledger classification, retentions, the vendor's tax data, and the
