@@ -61,21 +61,28 @@ public class PayableStageSummaryTests(PostgresFixture fixture)
         await FinanceSeed.ApproveAsync(client, pendingWithNf);
         await FinanceSeed.RegisterFiscalDocAsync(factory, client, pendingWithNf);
 
+        // PendingAccounting WITH an attached document (no parsed FiscalDocument) -> also counts as "has NF":
+        // NOT in fiscalDocumentPending, but IS in the Accounting bucket.
+        var pendingWithAttachment = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 300m, approve: false);
+        await FinanceSeed.ApproveAsync(client, pendingWithAttachment);
+        await FinanceSeed.AttachDocumentAsync(client, pendingWithAttachment);
+
         // Received (not approved) and Scheduled (fully accounted) -> neither counts toward fiscalDocumentPending.
         await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 50m, approve: false);
         await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 500m, approve: true);
 
         var body = JsonDocument.Parse(await (await client.GetAsync($"/api/payables/stage-summary?companyId={companyId}")).Content.ReadAsStringAsync()).RootElement;
 
-        // fiscalDocumentPending = the two PendingAccounting titles without a NF (100 + 200).
+        // fiscalDocumentPending = the two PendingAccounting titles with NO NF (100 + 200); the fiscal-doc one
+        // and the attachment one are both excluded.
         var fiscalPending = body.GetProperty("fiscalDocumentPending");
         Assert.Equal(2, fiscalPending.GetProperty("count").GetInt32());
         Assert.Equal(300m, fiscalPending.GetProperty("totalAmount").GetDecimal());
 
-        // Accounting bucket still counts ALL PendingAccounting (with + without NF): 100 + 200 + 400.
+        // Accounting bucket still counts ALL PendingAccounting (with + without NF): 100 + 200 + 400 + 300.
         var accounting = body.GetProperty("accounting");
-        Assert.Equal(3, accounting.GetProperty("count").GetInt32());
-        Assert.Equal(700m, accounting.GetProperty("totalAmount").GetDecimal());
+        Assert.Equal(4, accounting.GetProperty("count").GetInt32());
+        Assert.Equal(1000m, accounting.GetProperty("totalAmount").GetDecimal());
 
         // Controls: the Received one in Entry, the fully-accounted one in Payment.
         Assert.Equal(1, body.GetProperty("entry").GetProperty("count").GetInt32());

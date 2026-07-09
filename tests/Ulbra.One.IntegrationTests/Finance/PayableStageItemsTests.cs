@@ -71,17 +71,23 @@ public class PayableStageItemsTests(PostgresFixture fixture)
         await FinanceSeed.ApproveAsync(client, withNf);
         await FinanceSeed.RegisterFiscalDocAsync(factory, client, withNf);
 
-        // hasFiscalDocument=false => only the payable still pending a NF (this is the Pendências "Nota Fiscal" tab).
+        // A parsed FiscalDocument and a plain attached document BOTH count as "has NF".
+        var withAttachment = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 300m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withAttachment);
+        await FinanceSeed.AttachDocumentAsync(client, withAttachment);
+
+        // hasFiscalDocument=false => only the payable with no NF at all (the Pendências "Nota Fiscal" tab).
         Assert.Equal([withoutNf], await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: false));
 
-        // hasFiscalDocument=true => only the payable that already has a NF.
-        Assert.Equal([withNf], await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: true));
+        // hasFiscalDocument=true => the fiscal-doc one AND the attachment one (order by due date is not asserted).
+        var withNfSet = await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: true);
+        Assert.Equal(2, withNfSet.Count);
+        Assert.Contains(withNf, withNfSet);
+        Assert.Contains(withAttachment, withNfSet);
 
-        // Absent filter => both PendingAccounting payables (previous behavior preserved for the payables tabs).
+        // Absent filter => all three PendingAccounting payables (previous behavior preserved for the payables tabs).
         var all = await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: null);
-        Assert.Equal(2, all.Count);
-        Assert.Contains(withoutNf, all);
-        Assert.Contains(withNf, all);
+        Assert.Equal(3, all.Count);
     }
 
     private static async Task<List<string>> StageItemIds(HttpClient client, string companyId, string status, bool? hasFiscalDocument)

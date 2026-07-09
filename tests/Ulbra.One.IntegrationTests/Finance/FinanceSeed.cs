@@ -200,6 +200,17 @@ public static class FinanceSeed
         uploadRes.EnsureSuccessStatusCode();
     }
 
+    /// <summary>Attaches a document (e.g. the NF) to the payable via the multipart /attachments endpoint —
+    /// stored as a PayableAttachment (no parsing). Satisfies the "has NF" gate just like a fiscal document.</summary>
+    public static async Task AttachDocumentAsync(HttpClient client, string payableId, string fileName = "nf.xml")
+    {
+        using var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(Encoding.UTF8.GetBytes(NfeXml));
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/xml");
+        content.Add(file, "file", fileName);
+        (await client.PostAsync($"/api/payables/{payableId}/attachments", content)).EnsureSuccessStatusCode();
+    }
+
     /// <summary>Saves a blob directly via <see cref="IFileStorageService"/> (the presigned-URL path is not
     /// available with the LocalFileStorageService used in tests) and returns the storage key.</summary>
     private static async Task<string> SeedBlobAsync(ApiFactory factory, string xml, string fileName)

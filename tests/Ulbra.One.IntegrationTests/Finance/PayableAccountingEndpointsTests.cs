@@ -65,6 +65,25 @@ public class PayableAccountingEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Confirm_With_AttachedDocument_Schedules_Payable()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var (_, payableId) = await ApprovedPayableAsync(factory, client);
+
+        // No parsed FiscalDocument — just an attached NF document (PayableAttachment, the Pendências flow).
+        // It satisfies the "has NF" gate all the same.
+        await FinanceSeed.AttachDocumentAsync(client, payableId);
+
+        var view = await ReadJson(await client.GetAsync($"/api/payables/{payableId}/accounting-view"));
+        Assert.True(view.GetProperty("hasFiscalDocument").GetBoolean());
+
+        var confirm = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        Assert.Equal("Scheduled", (await ReadJson(confirm)).GetProperty("status").GetString());
+    }
+
+    [Fact]
     public async Task StageSummary_Counts_PendingAccounting_In_Accounting_Bucket()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
