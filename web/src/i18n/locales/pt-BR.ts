@@ -23,7 +23,7 @@ const ptBR = {
     accountsReceivable: 'Contas a receber',
     receivablesWorkflow: 'Contas a receber (esteira)',
     cashFlow: 'Fluxo de caixa',
-    approvals: 'Aprovações',
+    pendencies: 'Pendências',
     costCenters: 'Centros de custo',
     reports: 'Relatórios',
     documents: 'Documentos',
@@ -175,6 +175,18 @@ const ptBR = {
     footer: {
       tagline: 'O ERP moderno da ULBRA.',
       rights: '© {{year}} ULBRA — Universidade Luterana do Brasil. Uso interno.',
+    },
+  },
+
+  pendencies: {
+    title: 'Pendências',
+    subtitle: 'Pontos pendentes de ação: aprovações e notas fiscais.',
+    tabs: { approval: 'Aprovação', fiscal: 'Nota Fiscal' },
+    fiscal: {
+      actionHeader: 'Ação',
+      attach: 'Anexar NF',
+      drawerTitle: 'Anexar Nota Fiscal',
+      attachSuccess: 'Nota Fiscal anexada.',
     },
   },
 

@@ -215,6 +215,8 @@ export interface ReceivablesParams {
 export interface PayableStageItemsParams {
   companyId: string;
   status?: PayableStatus;
+  /** Filter by NF presence — e.g. the Pendências "Nota Fiscal" tab passes `false`. */
+  hasFiscalDocument?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -825,8 +827,13 @@ export function useUploadPayableFiscalDocument(
     ({ id, key, fileName, contentType, sizeBytes }) =>
       api.uploadPayableFiscalDocument(id, { key, fileName, contentType, sizeBytes }),
     (qc, _data, vars) => {
+      // Mirror useConfirmAccounting: an attached NF flips hasFiscalDocument, so the Pendências
+      // "Nota Fiscal" list/count and the accounting view must refresh too.
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
     },
     options,
   );

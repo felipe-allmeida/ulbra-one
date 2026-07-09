@@ -576,11 +576,13 @@ export const api = {
   payableStageItems: (params: {
     companyId: string;
     status?: PayableStatus;
+    hasFiscalDocument?: boolean;
     page?: number;
     pageSize?: number;
   }): Promise<Paginated<PayableStageItem>> => {
     const q = new URLSearchParams({ companyId: params.companyId });
     if (params.status) q.set('status', params.status);
+    if (params.hasFiscalDocument !== undefined) q.set('hasFiscalDocument', String(params.hasFiscalDocument));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableStageItem>>(`/payables/stage-items?${q}`);

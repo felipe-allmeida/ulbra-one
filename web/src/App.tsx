@@ -9,7 +9,7 @@ import { domainForPath, itemForPath } from './nav.config';
 import { DashboardPage } from './pages/dashboard';
 import { CentrosListPage, CentroDetailPage } from './pages/centros';
 import { EstruturaPage } from './pages/estrutura';
-import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage, AprovacoesPage } from './pages/lancamentos';
+import { LancamentosPage, NovoLancamentoPage, LancamentoDetailPage } from './pages/lancamentos';
 import { ExpenseCategoriesPage } from './pages/expense-categories';
 import { RegrasRetencaoPage } from './pages/regras-retencao';
 import { BankAccountsPage } from './pages/bank-accounts';
@@ -33,6 +33,7 @@ import { LoginPage } from './pages/login';
 import { RemessasPage } from './pages/remessas/list';
 import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 import { ReceivablesLayout, ReceivableDetailPage, NewReceivablePage, EditReceivablePage } from './pages/receivables';
+import { PendenciesPage } from './pages/pendencies';
 
 export default function App() {
   return (
@@ -75,7 +76,9 @@ export default function App() {
         <Route path='cash-flow' element={<CashFlowPage />} />
         <Route path='accounts-payable' element={<LancamentosPage tipo='Payable' />} />
         <Route path='accounts-receivable' element={<LancamentosPage tipo='Receivable' />} />
-        <Route path='approvals' element={<AprovacoesPage />} />
+        <Route path='pendencies' element={<PendenciesPage />} />
+        {/* Old Aprovações screen removed — folded into Pendências. */}
+        <Route path='approvals' element={<Navigate to='/app/pendencies' replace />} />
         <Route path='entries/new' element={<NovoLancamentoPage />} />
         <Route path='entries/:id' element={<LancamentoDetailPage />} />
         <Route path='accounting/cost-centers' element={<CentrosListPage />} />

@@ -8,6 +8,7 @@ const summary = {
   accounting: { count: 1, totalAmount: 5000 },
   payment: { count: 4, totalAmount: 22100 },
   reconciled: { count: 18, totalAmount: 134500 },
+  fiscalDocumentPending: { count: 1, totalAmount: 5000 },
 };
 
 describe('stages', () => {
