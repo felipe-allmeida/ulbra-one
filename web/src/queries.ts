@@ -1137,8 +1137,15 @@ export function useClassifyPayable(
 ) {
   return useInvalidatingMutation(
     ({ id, body }) => api.classifyPayable(id, body),
-    (qc) => {
+    (qc, _data, vars) => {
+      // ['payables'] prefix-matches the LIST keys but NOT ['payable', id] (usePayable). Invalidate the single
+      // payable explicitly so the accounting drawer's retentions/account (bound to `p`) refresh after reclassify,
+      // plus the accounting view and stage lists (classify can also auto-approve → status/bucket changes).
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
     },
     options,
   );

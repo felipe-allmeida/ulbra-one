@@ -34,8 +34,12 @@ public sealed class ClassifyPayable : IEndpoint
 
         payable.Classify(req.AccountingAccountId?.Value);
 
-        // Compute + apply withholdings before any auto-approval (they must be final before the payable schedules).
-        await autoWithholding.RecalculateAndApplyAsync(payable, ct);
+        // Compute + apply withholdings during the initial classification (before approval), so they're final
+        // before the payable schedules. Once it reaches the accounting stage, retentions are the accountant's to
+        // correct manually — reclassifying the ledger account there must NOT recompute/overwrite them (they only
+        // lock at CompleteAccounting → Scheduled).
+        if (payable.Status is not PayableStatus.PendingAccounting)
+            await autoWithholding.RecalculateAndApplyAsync(payable, ct);
 
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == payable.CostCenterId, ct);
         payable.ApplyAutoApproval(cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
