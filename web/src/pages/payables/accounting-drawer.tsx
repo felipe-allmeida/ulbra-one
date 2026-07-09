@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FileText, ExternalLink } from 'lucide-react';
+import { Calculator, FileText, ExternalLink, Eye, Paperclip } from 'lucide-react';
 import {
   usePayable,
   usePayableAccountingView,
@@ -15,6 +15,7 @@ import { useToast } from '../../toast';
 import { Drawer, Button, Field, Input, Combobox, FilePicker, type ComboboxItem } from '../../ui';
 import { fmtDoc } from '../../format';
 import { WithholdingSection } from './withholding-section';
+import { previewAttachment } from './download';
 
 /**
  * "Registro de Despesa" — the accountant reviews vendor tax data, retentions and the ledger account, attaches
@@ -155,6 +156,32 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
                 <FileText />
                 <div className='t'>{t('payables.accounting.fiscalEmptyTitle')}</div>
                 <div className='s'>{t('payables.accounting.fiscalEmptySub')}</div>
+              </div>
+            )}
+            {/* Saved NF document(s) — view inline without downloading. */}
+            {p.attachments.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                {p.attachments.map((att) => (
+                  <div
+                    key={att.id}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <Paperclip style={{ width: 14, height: 14, flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {att.fileName}
+                      </span>
+                    </span>
+                    <Button
+                      icon={<Eye />}
+                      onClick={() =>
+                        void previewAttachment(p.id, att).catch(() => toast.error(t('attachments.viewError')))
+                      }
+                    >
+                      {t('attachments.view')}
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
             <FilePicker
