@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calculator, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calculator, FileText, ExternalLink } from 'lucide-react';
 import {
   usePayable,
   usePayableAccountingView,
@@ -11,14 +12,18 @@ import {
 } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
-import { Drawer, Button, Field, Input, Combobox, Panel, FilePicker, type ComboboxItem } from '../../ui';
+import { Drawer, Button, Field, Input, Combobox, FilePicker, type ComboboxItem } from '../../ui';
 import { fmtDoc } from '../../format';
 import { WithholdingSection } from './withholding-section';
 
-/** "Registro de Despesa" — the accountant reviews vendor tax data, retentions and ledger account, registers
- * the Nota Fiscal, then completes accounting (→ Scheduled). Gated: cannot complete accounting without a registered NF. */
+/**
+ * "Registro de Despesa" — the accountant reviews vendor tax data, retentions and the ledger account, attaches
+ * the Nota Fiscal, then completes accounting (→ Scheduled). Gated: cannot complete accounting without a NF.
+ * Flat sections (title + content, separated by a divider), matching the app's other drawers.
+ */
 export function AccountingDrawer({ payableId, onClose }: { payableId: string; onClose: () => void }) {
   const { t } = useTranslation();
+  const nav = useNavigate();
   const toast = useToast();
   const { data: p } = usePayable(payableId);
   const view = usePayableAccountingView(payableId);
@@ -74,39 +79,38 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
         <div className='help'>{t('payables.loading')}</div>
       ) : (
         <>
-          {/* Vendor tax data — read-only labeled fields for quick review (no cards). */}
-          {v.vendor && (
-            <Panel title={t('payables.accounting.vendorTaxTitle')}>
-              <div className='form-grid'>
-                <ReadonlyField
-                  label={t('payables.accounting.fields.document')}
-                  value={v.vendor.document ? fmtDoc(v.vendor.document) : '—'}
-                />
-                {v.vendor.tradeName && (
-                  <ReadonlyField label={t('payables.accounting.fields.tradeName')} value={v.vendor.tradeName} />
-                )}
-                <ReadonlyField
-                  label={t('payables.accounting.fields.taxRegime')}
-                  value={t(`payables.accounting.taxRegime.${v.vendor.taxRegime}`)}
-                />
-                {v.vendor.email && (
-                  <ReadonlyField label={t('payables.accounting.fields.email')} value={v.vendor.email} />
-                )}
-                {v.vendor.phone && (
-                  <ReadonlyField label={t('payables.accounting.fields.phone')} value={v.vendor.phone} />
-                )}
-                {v.documentNumber && (
-                  <ReadonlyField label={t('payables.accounting.fields.documentNumber')} value={v.documentNumber} />
-                )}
-              </div>
-            </Panel>
-          )}
+          {/* Vendor tax data — read-only labeled fields; full record via "Ver fornecedor". */}
+          <div className='drawer-section'>
+            <div className='drawer-section-head'>
+              <span className='section-title'>{t('payables.accounting.vendorTaxTitle')}</span>
+              <Button icon={<ExternalLink />} onClick={() => void nav('/app/vendors')}>
+                {t('payables.accounting.viewVendor')}
+              </Button>
+            </div>
+            <div className='form-grid'>
+              <ReadonlyField
+                label={t('payables.accounting.fields.document')}
+                value={v.vendor?.document ? fmtDoc(v.vendor.document) : '—'}
+              />
+              <ReadonlyField label={t('payables.accounting.fields.tradeName')} value={dash(v.vendor?.tradeName)} />
+              <ReadonlyField
+                label={t('payables.accounting.fields.taxRegime')}
+                value={v.vendor ? t(`payables.accounting.taxRegime.${v.vendor.taxRegime}`) : '—'}
+              />
+              <ReadonlyField label={t('payables.accounting.fields.email')} value={dash(v.vendor?.email)} />
+              <ReadonlyField label={t('payables.accounting.fields.phone')} value={dash(v.vendor?.phone)} />
+            </div>
+          </div>
 
-          {/* Values (bruto/retido/líquido) + editable retentions — corrected here, in the accounting stage. */}
-          <WithholdingSection payable={p} editable />
+          {/* Retentions — editable, same behavior as the other screens (bare = no Panel card in the drawer). */}
+          <div className='drawer-section'>
+            <div className='section-title'>{t('payables.withholding.sectionTitle')}</div>
+            <WithholdingSection payable={p} editable bare />
+          </div>
 
-          {/* Reclassify the ledger account (conta contábil). */}
-          <Panel title={t('payables.accounting.reclassifyTitle')}>
+          {/* Ledger account (conta contábil) — reclassify. */}
+          <div className='drawer-section'>
+            <div className='section-title'>{t('payables.accounting.reclassifyTitle')}</div>
             <Field label={t('payables.accounting.fields.ledgerAccount')}>
               <Combobox value={accountingId} onChange={setAccountingId} items={toItems(accounts)} />
             </Field>
@@ -129,11 +133,11 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
                 {t('payables.accounting.reclassify')}
               </Button>
             </div>
-          </Panel>
+          </div>
 
-          {/* Nota Fiscal — required before completing accounting. Attached as a document (no parsing/OCR);
-              shows up on the payable detail. */}
-          <Panel title={t('payables.accounting.fiscalTitle')}>
+          {/* Nota Fiscal — attached as a document (no parse); required before completing accounting. */}
+          <div className='drawer-section'>
+            <div className='section-title'>{t('payables.accounting.fiscalTitle')}</div>
             {!hasNf && (
               <div className='empty-state' style={{ padding: '20px 16px', marginBottom: 12 }}>
                 <FileText />
@@ -160,12 +164,15 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
                 );
               }}
             />
-          </Panel>
+          </div>
         </>
       )}
     </Drawer>
   );
 }
+
+/** Non-empty string or an em-dash placeholder (handles null/undefined/blank). */
+const dash = (s?: string | null) => (s && s.trim() !== '' ? s : '—');
 
 function ReadonlyField({ label, value }: { label: string; value: string }) {
   return (

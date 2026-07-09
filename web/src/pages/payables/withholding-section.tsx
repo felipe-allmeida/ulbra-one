@@ -38,7 +38,7 @@ function rowToItem(r: Row) {
 }
 
 /* ============ Editable withholding section ============ */
-function WithholdingSectionEditable({ payable }: { payable: Payable }) {
+function WithholdingSectionEditable({ payable, bare }: { payable: Payable; bare?: boolean }) {
   const { t } = useTranslation();
   const toast = useToast();
 
@@ -73,8 +73,8 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
 
   const handleSave = () => save.mutate({ id: payable.id, items: rows.map(rowToItem) });
 
-  return (
-    <Panel title={t('payables.withholding.sectionTitle')}>
+  const body = (
+    <>
       {rows.length > 0 && (
         <div className='wh-rows'>
           <div className='wh-head'>
@@ -153,8 +153,13 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
           {save.isPending ? t('payables.withholding.saving') : t('payables.withholding.save')}
         </Button>
       </div>
-    </Panel>
+    </>
   );
+
+  // `bare` renders the content without the Panel card — for the accounting drawer, whose sections are flat
+  // (a section title + content) to match the other drawers.
+  if (bare) return body;
+  return <Panel title={t('payables.withholding.sectionTitle')}>{body}</Panel>;
 }
 
 /* ============ Read-only withholding section (2-column block) ============ */
@@ -204,7 +209,15 @@ function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
 }
 
 /* ============ Public façade ============ */
-export function WithholdingSection({ payable, editable }: { payable: Payable; editable: boolean }) {
-  if (editable) return <WithholdingSectionEditable payable={payable} />;
+export function WithholdingSection({
+  payable,
+  editable,
+  bare,
+}: {
+  payable: Payable;
+  editable: boolean;
+  bare?: boolean;
+}) {
+  if (editable) return <WithholdingSectionEditable payable={payable} bare={bare} />;
   return <WithholdingSectionReadOnly payable={payable} />;
 }
