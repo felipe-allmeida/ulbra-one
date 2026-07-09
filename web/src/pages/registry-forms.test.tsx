@@ -313,6 +313,8 @@ describe('VendorForm', () => {
         paymentTerms: null,
         bankInfo: { bankCode: '', branch: '', account: '', accountDigit: '', pixKey: '' },
         taxRegime: 'Unknown' as const,
+        cprbForeseen: null,
+        simplesAnexo: null,
         paymentScheduleMode: 'FixedDayOfMonth' as const,
         paymentScheduleDay: 20,
         active: true,

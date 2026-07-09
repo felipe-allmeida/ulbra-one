@@ -28,6 +28,7 @@ import {
   Landmark,
   Plug,
   ShieldCheck,
+  ScrollText,
 } from 'lucide-react';
 
 /**
@@ -141,6 +142,17 @@ export const NAV_DOMAINS: NavDomain[] = [
     ],
   },
   {
+    key: 'fiscal',
+    icon: <ScrollText />,
+    labelKey: 'nav.domains.fiscal',
+    groups: [
+      {
+        labelKey: 'nav.subgroups.obligations',
+        items: [{ labelKey: 'nav.obrigacoes', to: '/app/fiscal/obrigacoes', icon: <ScrollText /> }],
+      },
+    ],
+  },
+  {
     key: 'registry',
     icon: <Contact />,
     labelKey: 'nav.domains.registry',
@@ -151,6 +163,7 @@ export const NAV_DOMAINS: NavDomain[] = [
           { labelKey: 'nav.customers', to: '/app/customers', icon: <UserSquare /> },
           { labelKey: 'nav.employees', to: '/app/employees', icon: <Contact /> },
           { labelKey: 'nav.expenseCategories', to: '/app/expense-categories', icon: <Tag /> },
+          { labelKey: 'nav.retentionRules', to: '/app/retention-rules', icon: <Percent /> },
           { labelKey: 'nav.bankAccounts', to: '/app/bank-accounts', icon: <Landmark /> },
         ],
       },

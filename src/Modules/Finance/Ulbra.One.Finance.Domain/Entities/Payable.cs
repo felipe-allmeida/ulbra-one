@@ -39,6 +39,9 @@ public class Payable : IAuditable, ISoftDeletable
     // (no auto-calculation). This — not the LC116 subitem — is what triggers the automatic withholding.
     // Derived from the fiscal document (NFS-e=Service, NF-e=Product) or set on manual creation.
     public PayableType? Type { get; private set; }
+    // "CPRB destacado na NF?" confirmado no lançamento/conferência — alterna a retenção de INSS (3,5% × 11%) e
+    // vira o indCPRB do R-2010. null = ainda não confirmado (o cadastro do Fornecedor sugere o valor).
+    public bool? CprbOnInvoice { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public bool IsClassified => AccountingAccountId is not null;
@@ -262,6 +265,14 @@ public class Payable : IAuditable, ISoftDeletable
     {
         EnsureMutable();
         Type = type;
+    }
+
+    /// <summary>Confirma "CPRB destacado na NF?" (indCPRB do R-2010; alterna INSS 3,5% × 11%). Editável até agendar;
+    /// recalcular a retenção após alterar.</summary>
+    public void SetCprbOnInvoice(bool? cprbOnInvoice)
+    {
+        EnsureMutable();
+        CprbOnInvoice = cprbOnInvoice;
     }
 
     /// <summary>Sets (or clears) the accounting chart account that classifies this payable.</summary>

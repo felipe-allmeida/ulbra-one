@@ -1412,6 +1412,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/fiscal/assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetFiscalAssessment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fiscal/assessment/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ExportFiscalAssessmentCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fiscal/assessment/efd-reinf.xml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ExportEfdReinfXml"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -1741,6 +1789,14 @@ export interface components {
             rationale: string;
             source: string;
         };
+        AssessmentTotalsResponse: {
+            /** Format: double */
+            baseTotal: number;
+            /** Format: double */
+            withheldTotal: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
         /** @enum {string} */
         AuditAction: "Create" | "Update" | "Delete";
         AuditLogResponse: {
@@ -2001,12 +2057,34 @@ export interface components {
             nomeFantasia: string | null;
             address: components["schemas"]["CnpjAddress"];
         };
+        CompanyAssessmentRowResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            companyName: string;
+            cnpj: string;
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            withheldAmount: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
         CompanyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
             id: string;
             legalName: string;
             cnpj: string;
             active: boolean;
+        };
+        CostCenterAssessmentRowResponse: {
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            code: string;
+            name: string;
+            /** Format: double */
+            withheldAmount: number;
+            /** Format: int32 */
+            payableCount: number;
         };
         CostCenterResponse: {
             /** @example cost_center_3fa85f64571742199730000000000000 */
@@ -3079,6 +3157,17 @@ export interface components {
             /** Format: int32 */
             classifiedCount: number;
         };
+        /** @enum {string} */
+        RetentionGroup: "Irrf" | "Csrf" | "Inss" | "Iss" | "Other";
+        RetentionGroupRowResponse: {
+            group: components["schemas"]["RetentionGroup"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            withheldAmount: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
         ReturnRemittanceLineRequest: {
             reason: string;
         };
@@ -3119,6 +3208,8 @@ export interface components {
         SetWithholdingsRequest: {
             items: components["schemas"]["Item"][] | null;
         };
+        /** @enum {string} */
+        SimplesAnexo: "I" | "II" | "III" | "IV" | "V";
         SkippedInstallmentResponse: {
             /** Format: uuid */
             payableId: string;
@@ -3159,6 +3250,16 @@ export interface components {
         StatementSource: "OfxUpload" | "CsvUpload";
         /** @enum {string} */
         TaxRegime: "Unknown" | "Mei" | "SimplesNacional" | "LucroPresumido" | "LucroReal";
+        TaxTypeRowResponse: {
+            taxType: components["schemas"]["WithholdingTaxType"];
+            group: components["schemas"]["RetentionGroup"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            withheldAmount: number;
+            /** Format: int32 */
+            payableCount: number;
+        };
         /** @enum {string} */
         TransactionDirection: "Debit" | "Credit";
         TransactionResponse: {
@@ -3363,6 +3464,8 @@ export interface components {
             paymentScheduleMode: components["schemas"]["PaymentScheduleMode"];
             /** Format: int32 */
             paymentScheduleDay: number | null;
+            cprbForeseen: boolean | null;
+            simplesAnexo: components["schemas"]["SimplesAnexo"];
         };
         VendorResponse: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -3383,6 +3486,8 @@ export interface components {
             /** Format: int32 */
             paymentScheduleDay: number | null;
             active: boolean;
+            cprbForeseen: boolean | null;
+            simplesAnexo: components["schemas"]["SimplesAnexo"];
         };
         VendorResponsePaginatedResponse: {
             items: components["schemas"]["VendorResponse"][];
@@ -3395,6 +3500,17 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        WithholdingAssessmentResponse: {
+            perApur: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            totals: components["schemas"]["AssessmentTotalsResponse"];
+            byCompany: components["schemas"]["CompanyAssessmentRowResponse"][];
+            byRetentionGroup: components["schemas"]["RetentionGroupRowResponse"][];
+            byTaxType: components["schemas"]["TaxTypeRowResponse"][];
+            byCostCenter: components["schemas"]["CostCenterAssessmentRowResponse"][];
+            facts: components["schemas"]["WithholdingFactResponse"][];
+        };
         WithholdingByTaxRow: {
             taxType: components["schemas"]["WithholdingTaxType"];
             /** Format: double */
@@ -3403,6 +3519,25 @@ export interface components {
             amount: number;
             /** Format: int32 */
             payableCount: number;
+        };
+        WithholdingFactResponse: {
+            /** @example payable_3fa85f64571742199730000000000000 */
+            payableId: string;
+            counterpartyName: string;
+            documentNumber: string | null;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string;
+            /** @example vendor_3fa85f64571742199730000000000000 */
+            vendorId: string;
+            vendorDocument: string;
+            taxType: components["schemas"]["WithholdingTaxType"];
+            group: components["schemas"]["RetentionGroup"];
+            /** Format: double */
+            baseAmount: number;
+            /** Format: double */
+            amount: number;
         };
         WithholdingPayableRow: {
             /** @example payable_3fa85f64571742199730000000000000 */
@@ -3435,6 +3570,8 @@ export interface components {
             baseRule: components["schemas"]["BaseRule"];
             /** Format: double */
             minimumAmount: number | null;
+            cprb: boolean | null;
+            simplesAnexo: components["schemas"]["SimplesAnexo"];
         };
         WithholdingRuleResponse: {
             /** @example whrule_3fa85f64571742199730000000000000 */
@@ -3453,6 +3590,8 @@ export interface components {
             baseRule: components["schemas"]["BaseRule"];
             /** Format: double */
             minimumAmount: number | null;
+            cprb: boolean | null;
+            simplesAnexo: components["schemas"]["SimplesAnexo"];
             active: boolean;
         };
         /** @enum {string} */
@@ -7394,6 +7533,78 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
+            };
+        };
+    };
+    GetFiscalAssessment: {
+        parameters: {
+            query: {
+                perApur: string;
+                companyId?: string;
+                costCenterId?: string;
+                taxType?: components["schemas"]["WithholdingTaxType"];
+                retentionGroup?: components["schemas"]["RetentionGroup"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingAssessmentResponse"];
+                };
+            };
+        };
+    };
+    ExportFiscalAssessmentCsv: {
+        parameters: {
+            query: {
+                perApur: string;
+                companyId?: string;
+                costCenterId?: string;
+                taxType?: components["schemas"]["WithholdingTaxType"];
+                retentionGroup?: components["schemas"]["RetentionGroup"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ExportEfdReinfXml: {
+        parameters: {
+            query: {
+                perApur: string;
+                companyId?: string;
+                tpAmb?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

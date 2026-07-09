@@ -1,0 +1,1 @@
+export { ObrigacoesPage } from './layout';

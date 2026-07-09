@@ -6,14 +6,17 @@ namespace Ulbra.One.Fiscal.Domain.Withholdings;
 
 /// <summary>A service line of the invoice: the calculation base is the line, not the document. The caller only
 /// builds a line for a service (products are filtered upstream by service-nature). A null
-/// <paramref name="Lc116Subitem"/> means the specific subitem is unknown — the general federal taxes still apply;
-/// only INSS (labor supply) and ISS (by municipality) need the subitem/municipality to refine.</summary>
+/// <paramref name="Lc116Subitem"/> means the specific subitem is unknown — the general federal taxes and INSS
+/// (both keyed by regime) still apply; only ISS (by municipality) needs the municipality to refine.</summary>
 public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge, decimal? InvoiceIssRate, decimal Amount);
 
 /// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
-/// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.</summary>
+/// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.
+/// <para><paramref name="Cprb"/> (CPRB destacado na NF, confirmado no lançamento) e <paramref name="SimplesAnexo"/>
+/// (anexo do Simples) refinam a retenção de INSS: CPRB → 3,5%; Anexo IV → 11%; demais anexos → isento.</para></summary>
 public sealed record ResolutionContext(
-    Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines);
+    Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines,
+    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null);
 
 /// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
@@ -39,8 +42,8 @@ public static class WithholdingRuleResolver
         foreach (var line in context.Lines)
         {
             // Every line here is a service (the caller gates on service-nature). The LC116 subitem is a
-            // refinement, not a gate: a null subitem still matches the general federal rules (Lc116Subitem=null),
-            // while subitem-specific rules (INSS 11.02) only match when the line carries that subitem.
+            // refinement, not a gate: federal taxes and INSS key off the vendor regime and match any line
+            // (Lc116Subitem=null); only subitem-pinned rules (if seeded) need the line to carry that subitem.
             foreach (var tax in WithholdingTaxes)
             {
                 var rule = ResolveRule(rules, tax, line, context);
@@ -79,9 +82,15 @@ public static class WithholdingRuleResolver
                 && (r.CompanyId is null || r.CompanyId == ctx.CompanyId)
                 && (r.Lc116Subitem is null || r.Lc116Subitem == line.Lc116Subitem)
                 && (r.MunicipalityIbge is null || r.MunicipalityIbge == line.MunicipalityIbge)
-                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime))
+                && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime)
+                && (r.Cprb is null || r.Cprb == ctx.Cprb)
+                && (r.SimplesAnexo is null || r.SimplesAnexo == ctx.SimplesAnexo))
             .OrderByDescending(r => r.DimensionCount)
+            .ThenByDescending(r => r.SimplesAnexo is not null)
+            // VendorRegime antes de Cprb: CPRB é regime não-Simples, então num empate a regra do Simples
+            // (ex.: isenção do INSS) vence a regra de CPRB — um Simples marcado como CPRB continua pelo anexo.
             .ThenByDescending(r => r.VendorRegime is not null)
+            .ThenByDescending(r => r.Cprb is not null)
             .ThenByDescending(r => r.MunicipalityIbge is not null)
             .ThenByDescending(r => r.CompanyId is not null)
             .ThenBy(r => r.Id)

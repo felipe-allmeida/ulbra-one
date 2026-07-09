@@ -355,7 +355,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("6201501", p.CnaeCode);
         Assert.Contains("CT-2026-014", p.ServiceDescription);
         // LC 116 subitem is reliable (comes in the invoice); the other ISS fields are optional and absent in this sample.
-        Assert.Equal("01.04", p.Lc116Subitem);
+        Assert.Equal("1.04", p.Lc116Subitem);       // ItemListaServico "01.04" canonicalizado → "1.04" (Lc116)
         Assert.Null(p.MunicipalServiceCode);
         Assert.Null(p.ServiceMunicipalityIbge);
         Assert.Null(p.InvoiceIssRate);
@@ -441,7 +441,7 @@ public class FiscalDocumentParserTests
         Assert.Equal("8360128", p.RpsNumber);
         Assert.Equal("001", p.RpsSeries);
         Assert.Null(p.CnaeCode);                   // national has no CNAE
-        Assert.Equal("01.07", p.Lc116Subitem);     // derived from cTribNac 010701 (item 01, subitem 07)
+        Assert.Equal("1.07", p.Lc116Subitem);      // derived from cTribNac 010701 → canonical LC 116 (item 1, subitem 07)
         Assert.Equal("5133785980", p.IssuerPhone);
         Assert.NotNull(p.IssuerAddress);
         Assert.Equal("RS", p.IssuerAddress!.State);

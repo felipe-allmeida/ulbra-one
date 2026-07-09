@@ -32,6 +32,8 @@ import {
   type EmployeeInput,
   type ExpenseCategory,
   type FiscalDocument,
+  type WithholdingRule,
+  type WithholdingRuleInput,
   type MatchStatus,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
@@ -58,6 +60,7 @@ import {
   type Vendor,
   type VendorInput,
   type WithholdingTaxType,
+  type RetentionGroup,
   type Remittance,
   type RemittanceListItem,
   type RemittanceReturnOutcome,
@@ -89,6 +92,7 @@ export const queryKeys = {
   receivableStageItems: (params: ReceivableStageItemsParams) => ['receivableStageItems', params] as const,
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
+  withholdingRules: (includeInactive = false) => ['withholdingRules', includeInactive] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
@@ -103,6 +107,7 @@ export const queryKeys = {
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
   withholdingsReport: (companyId?: string) => ['withholdingsReport', companyId ?? ''] as const,
+  fiscalAssessment: (params: FiscalAssessmentParams) => ['fiscalAssessment', params] as const,
   cashFlow: (params: CashFlowParams) => ['cashFlow', params] as const,
   cashFlowItems: (params: CashFlowItemsParams) => ['cashFlowItems', params] as const,
   pendingPostings: (params: PendingPostingsParams) => ['pendingPostings', params] as const,
@@ -160,6 +165,14 @@ export interface RemittancesParams {
   companyId?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface FiscalAssessmentParams {
+  perApur: string;
+  companyId?: string;
+  costCenterId?: string;
+  taxType?: WithholdingTaxType;
+  retentionGroup?: RetentionGroup;
 }
 
 export interface BankTransactionsParams {
@@ -404,6 +417,13 @@ export function useExpenseCategories(includeInactive = false) {
   return useQuery({
     queryKey: queryKeys.expenseCategories(includeInactive),
     queryFn: () => api.listExpenseCategories(includeInactive),
+  });
+}
+
+export function useWithholdingRules(includeInactive = false) {
+  return useQuery({
+    queryKey: queryKeys.withholdingRules(includeInactive),
+    queryFn: () => api.listWithholdingRules(includeInactive),
   });
 }
 
@@ -828,6 +848,25 @@ export function useDeleteExpenseCategory(options?: UseMutationOptions<void, unkn
   return useInvalidatingMutation(
     ({ id }) => api.deleteExpenseCategory(id),
     (qc) => void qc.invalidateQueries({ queryKey: ['expenseCategories'] }),
+    options,
+  );
+}
+
+/* ---------- Withholding rules (Regras de Retenção) ---------- */
+export function useSaveWithholdingRule(
+  options?: UseMutationOptions<WithholdingRule, unknown, { id?: string; body: WithholdingRuleInput }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, body }) => (id ? api.updateWithholdingRule(id, body) : api.createWithholdingRule(body)),
+    (qc) => void qc.invalidateQueries({ queryKey: ['withholdingRules'] }),
+    options,
+  );
+}
+
+export function useDeleteWithholdingRule(options?: UseMutationOptions<void, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.deleteWithholdingRule(id),
+    (qc) => void qc.invalidateQueries({ queryKey: ['withholdingRules'] }),
     options,
   );
 }
@@ -1272,6 +1311,15 @@ export function useWithholdingsReport(companyId?: string, options?: { enabled?: 
     queryKey: queryKeys.withholdingsReport(companyId),
     queryFn: () => api.withholdingsReport(companyId),
     enabled: options?.enabled ?? true,
+  });
+}
+
+/* ---------- Fiscal: apuração de retenções (Obrigações Acessórias) ---------- */
+export function useFiscalAssessment(params: FiscalAssessmentParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.fiscalAssessment(params),
+    queryFn: () => api.fiscalAssessment(params),
+    enabled: (options?.enabled ?? true) && !!params.perApur,
   });
 }
 

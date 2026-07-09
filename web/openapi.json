@@ -5604,6 +5604,153 @@
         }
       }
     },
+    "/api/fiscal/assessment": {
+      "get": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "GetFiscalAssessment",
+        "parameters": [
+          {
+            "name": "perApur",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costCenterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/WithholdingTaxType"
+            }
+          },
+          {
+            "name": "retentionGroup",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RetentionGroup"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingAssessmentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fiscal/assessment/csv": {
+      "get": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "ExportFiscalAssessmentCsv",
+        "parameters": [
+          {
+            "name": "perApur",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costCenterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/WithholdingTaxType"
+            }
+          },
+          {
+            "name": "retentionGroup",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RetentionGroup"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fiscal/assessment/efd-reinf.xml": {
+      "get": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "ExportEfdReinfXml",
+        "parameters": [
+          {
+            "name": "perApur",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tpAmb",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/vendors": {
       "get": {
         "tags": [
@@ -6907,6 +7054,29 @@
         },
         "additionalProperties": false
       },
+      "AssessmentTotalsResponse": {
+        "required": [
+          "baseTotal",
+          "withheldTotal",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "baseTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "withheldTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "AuditAction": {
         "enum": [
           "Create",
@@ -7813,6 +7983,42 @@
         },
         "additionalProperties": false
       },
+      "CompanyAssessmentRowResponse": {
+        "required": [
+          "companyId",
+          "companyName",
+          "cnpj",
+          "baseAmount",
+          "withheldAmount",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "withheldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "CompanyResponse": {
         "required": [
           "id",
@@ -7834,6 +8040,37 @@
           },
           "active": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CostCenterAssessmentRowResponse": {
+        "required": [
+          "costCenterId",
+          "code",
+          "name",
+          "withheldAmount",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "withheldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -11483,6 +11720,43 @@
         },
         "additionalProperties": false
       },
+      "RetentionGroup": {
+        "enum": [
+          "Irrf",
+          "Csrf",
+          "Inss",
+          "Iss",
+          "Other"
+        ],
+        "type": "string"
+      },
+      "RetentionGroupRowResponse": {
+        "required": [
+          "group",
+          "baseAmount",
+          "withheldAmount",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "group": {
+            "$ref": "#/components/schemas/RetentionGroup"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "withheldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReturnRemittanceLineRequest": {
         "required": [
           "reason"
@@ -11627,6 +11901,16 @@
         },
         "additionalProperties": false
       },
+      "SimplesAnexo": {
+        "enum": [
+          "I",
+          "II",
+          "III",
+          "IV",
+          "V"
+        ],
+        "type": "string"
+      },
       "SkippedInstallmentResponse": {
         "required": [
           "payableId",
@@ -11750,6 +12034,37 @@
           "LucroReal"
         ],
         "type": "string"
+      },
+      "TaxTypeRowResponse": {
+        "required": [
+          "taxType",
+          "group",
+          "baseAmount",
+          "withheldAmount",
+          "payableCount"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "group": {
+            "$ref": "#/components/schemas/RetentionGroup"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "withheldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payableCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "TransactionDirection": {
         "enum": [
@@ -12429,7 +12744,9 @@
           "bankInfo",
           "taxRegime",
           "paymentScheduleMode",
-          "paymentScheduleDay"
+          "paymentScheduleDay",
+          "cprbForeseen",
+          "simplesAnexo"
         ],
         "type": "object",
         "properties": {
@@ -12478,6 +12795,13 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "cprbForeseen": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
           }
         },
         "additionalProperties": false
@@ -12498,7 +12822,9 @@
           "taxRegime",
           "paymentScheduleMode",
           "paymentScheduleDay",
-          "active"
+          "active",
+          "cprbForeseen",
+          "simplesAnexo"
         ],
         "type": "object",
         "properties": {
@@ -12554,6 +12880,13 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "cprbForeseen": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
           }
         },
         "additionalProperties": false
@@ -12593,6 +12926,63 @@
         },
         "additionalProperties": false
       },
+      "WithholdingAssessmentResponse": {
+        "required": [
+          "perApur",
+          "companyId",
+          "totals",
+          "byCompany",
+          "byRetentionGroup",
+          "byTaxType",
+          "byCostCenter",
+          "facts"
+        ],
+        "type": "object",
+        "properties": {
+          "perApur": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AssessmentTotalsResponse"
+          },
+          "byCompany": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanyAssessmentRowResponse"
+            }
+          },
+          "byRetentionGroup": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetentionGroupRowResponse"
+            }
+          },
+          "byTaxType": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxTypeRowResponse"
+            }
+          },
+          "byCostCenter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCenterAssessmentRowResponse"
+            }
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WithholdingFactResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "WithholdingByTaxRow": {
         "required": [
           "taxType",
@@ -12616,6 +13006,65 @@
           "payableCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingFactResponse": {
+        "required": [
+          "payableId",
+          "counterpartyName",
+          "documentNumber",
+          "companyId",
+          "costCenterId",
+          "vendorId",
+          "vendorDocument",
+          "taxType",
+          "group",
+          "baseAmount",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "payableId": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "costCenterId": {
+            "type": "string",
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "vendor_3fa85f64571742199730000000000000"
+          },
+          "vendorDocument": {
+            "type": "string"
+          },
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "group": {
+            "$ref": "#/components/schemas/RetentionGroup"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -12685,7 +13134,9 @@
           "rateSource",
           "rate",
           "baseRule",
-          "minimumAmount"
+          "minimumAmount",
+          "cprb",
+          "simplesAnexo"
         ],
         "type": "object",
         "properties": {
@@ -12729,6 +13180,13 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "cprb": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
           }
         },
         "additionalProperties": false
@@ -12747,6 +13205,8 @@
           "rate",
           "baseRule",
           "minimumAmount",
+          "cprb",
+          "simplesAnexo",
           "active"
         ],
         "type": "object",
@@ -12795,6 +13255,13 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "cprb": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
           },
           "active": {
             "type": "boolean"
