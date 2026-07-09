@@ -49,7 +49,7 @@ public static class DevDataSeeder
 
         // ---------- Companies (group CNPJs) ----------
         var celsp = new Company("Comunidade Evangélica Luterana São Paulo - CELSP", "88332466000103");
-        var ulbra = new Company("Universidade Luterana do Brasil - ULBRA", "88332466000294");
+        var ulbra = new Company("Ulbra S.A", "88332466000294");
         core.Companies.AddRange(celsp, ulbra);
 
         // ---------- Units (ULBRA campuses/poles) ----------
