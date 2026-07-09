@@ -2769,6 +2769,7 @@ export interface components {
             accounting: components["schemas"]["StageBucket"];
             payment: components["schemas"]["StageBucket"];
             reconciled: components["schemas"]["StageBucket"];
+            fiscalDocumentPending: components["schemas"]["StageBucket"];
         };
         /** @enum {string} */
         PayableStatus: "Received" | "PendingClassification" | "PendingApproval" | "PendingAccounting" | "Scheduled" | "Paid" | "Rejected" | "Cancelled";
@@ -5879,6 +5880,7 @@ export interface operations {
             query: {
                 companyId: string;
                 status?: components["schemas"]["PayableStatus"];
+                hasFiscalDocument?: boolean;
                 Page?: number;
                 PageSize?: number;
             };

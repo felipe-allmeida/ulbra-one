@@ -3141,6 +3141,13 @@
             }
           },
           {
+            "name": "hasFiscalDocument",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -10448,7 +10455,8 @@
           "approval",
           "accounting",
           "payment",
-          "reconciled"
+          "reconciled",
+          "fiscalDocumentPending"
         ],
         "type": "object",
         "properties": {
@@ -10468,6 +10476,9 @@
             "$ref": "#/components/schemas/StageBucket"
           },
           "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "fiscalDocumentPending": {
             "$ref": "#/components/schemas/StageBucket"
           }
         },
