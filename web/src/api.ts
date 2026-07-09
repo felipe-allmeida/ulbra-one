@@ -263,7 +263,8 @@ export interface LedgerAccountInput {
   normalBalance?: NormalBalance | null;
 }
 
-/** Request body for updating a ledger account (no companyId/code — both immutable). */
+/** Request body for updating a ledger account (no companyId/code — both immutable).
+ *  PUT is full-replace, so `reducedCode`/`natureza` must be echoed or they are cleared. */
 export interface LedgerAccountUpdateInput {
   name: string;
   accountGroup: AccountGroup;
@@ -271,6 +272,8 @@ export interface LedgerAccountUpdateInput {
   normalBalance: NormalBalance;
   parentId?: string | null;
   isActive: boolean;
+  reducedCode?: string | null;
+  natureza?: number | null;
 }
 
 /** One debit/credit line when creating or editing a draft journal entry. */

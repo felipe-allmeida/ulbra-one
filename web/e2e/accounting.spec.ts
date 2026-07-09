@@ -40,15 +40,14 @@ async function pickUlbra(page: Page) {
   }
 }
 
-test('login -> plano de contas contábil renders the seeded chart tree', async ({ page }) => {
+test('login -> plano de contas renders the seeded chart tree', async ({ page }) => {
   await devLogin(page);
 
-  // Navigate to the Contábil "Plano de contas contábil" nav item. (The Financeiro
-  // "Plano de Contas" item is distinct; match the accounting label exactly.)
+  // Navigate to the Contábil "Plano de Contas" nav item.
   const sidebar = page.locator('aside.sidebar');
-  await sidebar.getByRole('button', { name: 'Plano de contas contábil' }).click();
-  await expect(page).toHaveURL(/\/app\/contabil\/plano-de-contas$/);
-  await expect(page.getByRole('heading', { name: 'Plano de contas contábil' })).toBeVisible();
+  await sidebar.getByRole('button', { name: 'Plano de Contas', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/accounting\/chart-of-accounts$/);
+  await expect(page.getByRole('heading', { name: 'Plano de Contas', exact: true })).toBeVisible();
 
   // The chart is company-scoped: pick ULBRA, which the dev seed populated with the
   // AELBRA chart (synthetic roots 1..5 + analytical leaves).

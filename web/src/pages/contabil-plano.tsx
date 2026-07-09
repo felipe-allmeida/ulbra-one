@@ -5,7 +5,7 @@ import { type AccountGroup, type LedgerAccount, type LedgerAccountKind, type Nor
 import { useCreateLedgerAccount, useLedgerAccounts, useSeedLedgerAccounts, useUpdateLedgerAccount } from '../queries';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
-import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select } from '../ui';
+import { Button, Combobox, Drawer, EmptyState, Field, Input, Kpi, PageHeader, Panel, Select } from '../ui';
 
 const GROUPS: AccountGroup[] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
 
@@ -63,7 +63,17 @@ function LedgerAccountForm({
     if (isEditing) {
       update.mutate({
         id: initial.id,
-        body: { name: trimmedName, accountGroup: group, kind, normalBalance, parentId, isActive: initial.isActive },
+        body: {
+          name: trimmedName,
+          accountGroup: group,
+          kind,
+          normalBalance,
+          parentId,
+          isActive: initial.isActive,
+          // Preserve seed-managed fields (PUT is full-replace).
+          reducedCode: initial.reducedCode,
+          natureza: initial.natureza,
+        },
       });
     } else {
       create.mutate({
@@ -188,6 +198,16 @@ export function ContabilPlanoPage() {
     return [...accounts].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ account: a, depth: depthOf(a) }));
   }, [accounts]);
 
+  // Created / active / inactive counts (the list already includes inactive accounts).
+  const counts = useMemo(
+    () => ({
+      total: accounts.length,
+      active: accounts.filter((a) => a.isActive).length,
+      inactive: accounts.filter((a) => !a.isActive).length,
+    }),
+    [accounts],
+  );
+
   const openCreate = () => {
     setEditing(null);
     setFormOpen(true);
@@ -207,6 +227,9 @@ export function ContabilPlanoPage() {
         normalBalance: a.normalBalance,
         parentId: a.parentId,
         isActive: !a.isActive,
+        // Preserve seed-managed fields (PUT is full-replace).
+        reducedCode: a.reducedCode,
+        natureza: a.natureza,
       },
     });
 
@@ -222,6 +245,14 @@ export function ContabilPlanoPage() {
           {t('accounting.ledger.new')}
         </Button>
       </PageHeader>
+
+      {accounts.length > 0 && (
+        <div className='kpi-grid'>
+          <Kpi label={t('accounting.ledger.counts.total')} value={String(counts.total)} />
+          <Kpi label={t('accounting.ledger.counts.active')} value={String(counts.active)} />
+          <Kpi label={t('accounting.ledger.counts.inactive')} value={String(counts.inactive)} />
+        </div>
+      )}
 
       {accounts.length === 0 ? (
         <EmptyState
