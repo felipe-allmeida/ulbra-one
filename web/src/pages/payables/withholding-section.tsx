@@ -76,66 +76,52 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
   return (
     <Panel title={t('payables.withholding.sectionTitle')}>
       {rows.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table>
-          <thead>
-            <tr>
-              <th>{t('payables.withholding.columns.taxType')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.base')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.rate')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.amount')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={i}>
-                <td>
-                  <Select value={row.taxType} onChange={(e) => updateRow(i, 'taxType', e.target.value)}>
-                    {TAX_TYPES.map((tt) => (
-                      <option key={tt} value={tt}>
-                        {t(`payables.withholding.taxType.${tt}`)}
-                      </option>
-                    ))}
-                  </Select>
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <Input
-                    inputMode='numeric'
-                    value={row.baseAmount}
-                    onChange={(e) => updateRow(i, 'baseAmount', e.target.value)}
-                    style={{ textAlign: 'right' }}
-                  />
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <Input
-                    inputMode='numeric'
-                    value={row.ratePct}
-                    onChange={(e) => updateRow(i, 'ratePct', e.target.value)}
-                    style={{ textAlign: 'right' }}
-                    placeholder='%'
-                  />
-                </td>
-                {/* Withheld value is derived (base × rate) — locked, not editable. */}
-                <td
-                  className='amount-cell'
-                  style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
-                  title={t('payables.withholding.amountAuto')}
-                >
-                  {brlCents(computeAmount(row))}
-                </td>
-                <td className='td-action'>
-                  <Button
-                    icon={<Trash2 />}
-                    onClick={() => removeRow(i)}
-                    aria-label={t('payables.withholding.removeRow')}
-                    title={t('payables.withholding.removeRow')}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          </table>
+        <div className='wh-rows'>
+          <div className='wh-head'>
+            <span>{t('payables.withholding.columns.taxType')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.base')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.rate')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.amount')}</span>
+            <span />
+          </div>
+          {rows.map((row, i) => (
+            <div className='wh-row' key={i}>
+              <Select value={row.taxType} onChange={(e) => updateRow(i, 'taxType', e.target.value)}>
+                {TAX_TYPES.map((tt) => (
+                  <option key={tt} value={tt}>
+                    {t(`payables.withholding.taxType.${tt}`)}
+                  </option>
+                ))}
+              </Select>
+              <Input
+                inputMode='numeric'
+                value={row.baseAmount}
+                onChange={(e) => updateRow(i, 'baseAmount', e.target.value)}
+                style={{ textAlign: 'right' }}
+              />
+              <Input
+                inputMode='numeric'
+                value={row.ratePct}
+                onChange={(e) => updateRow(i, 'ratePct', e.target.value)}
+                style={{ textAlign: 'right' }}
+                placeholder='%'
+              />
+              {/* Withheld value is derived (base × rate) — locked, not editable. */}
+              <div
+                className='amount-cell'
+                style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
+                title={t('payables.withholding.amountAuto')}
+              >
+                {brlCents(computeAmount(row))}
+              </div>
+              <Button
+                icon={<Trash2 />}
+                onClick={() => removeRow(i)}
+                aria-label={t('payables.withholding.removeRow')}
+                title={t('payables.withholding.removeRow')}
+              />
+            </div>
+          ))}
         </div>
       )}
 

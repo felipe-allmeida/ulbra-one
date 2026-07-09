@@ -1,6 +1,6 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calculator } from 'lucide-react';
+import { Calculator, FileText } from 'lucide-react';
 import {
   usePayable,
   usePayableAccountingView,
@@ -11,7 +11,7 @@ import {
 } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
-import { Drawer, Button, Field, Combobox, Panel, FilePicker, type ComboboxItem } from '../../ui';
+import { Drawer, Button, Field, Input, Combobox, Panel, FilePicker, type ComboboxItem } from '../../ui';
 import { fmtDoc } from '../../format';
 import { WithholdingSection } from './withholding-section';
 
@@ -38,7 +38,7 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
 
   const hasNf = v?.hasFiscalDocument ?? false;
   const toItems = (xs: { id: string; code: string; name: string }[]): ComboboxItem[] =>
-    xs.map((a) => ({ id: a.id, label: a.name, sub: a.code }));
+    xs.map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
 
   return (
     <Drawer
@@ -74,25 +74,29 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
         <div className='help'>{t('payables.loading')}</div>
       ) : (
         <>
-          {/* Vendor tax data */}
+          {/* Vendor tax data — read-only labeled fields for quick review (no cards). */}
           {v.vendor && (
             <Panel title={t('payables.accounting.vendorTaxTitle')}>
-              <div className='info-grid'>
-                <InfoField
+              <div className='form-grid'>
+                <ReadonlyField
                   label={t('payables.accounting.fields.document')}
                   value={v.vendor.document ? fmtDoc(v.vendor.document) : '—'}
                 />
                 {v.vendor.tradeName && (
-                  <InfoField label={t('payables.accounting.fields.tradeName')} value={v.vendor.tradeName} />
+                  <ReadonlyField label={t('payables.accounting.fields.tradeName')} value={v.vendor.tradeName} />
                 )}
-                <InfoField
+                <ReadonlyField
                   label={t('payables.accounting.fields.taxRegime')}
                   value={t(`payables.accounting.taxRegime.${v.vendor.taxRegime}`)}
                 />
-                {v.vendor.email && <InfoField label={t('payables.accounting.fields.email')} value={v.vendor.email} />}
-                {v.vendor.phone && <InfoField label={t('payables.accounting.fields.phone')} value={v.vendor.phone} />}
+                {v.vendor.email && (
+                  <ReadonlyField label={t('payables.accounting.fields.email')} value={v.vendor.email} />
+                )}
+                {v.vendor.phone && (
+                  <ReadonlyField label={t('payables.accounting.fields.phone')} value={v.vendor.phone} />
+                )}
                 {v.documentNumber && (
-                  <InfoField label={t('payables.accounting.fields.documentNumber')} value={v.documentNumber} />
+                  <ReadonlyField label={t('payables.accounting.fields.documentNumber')} value={v.documentNumber} />
                 )}
               </div>
             </Panel>
@@ -130,7 +134,13 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
           {/* Nota Fiscal — required before completing accounting. Attached as a document (no parsing/OCR);
               shows up on the payable detail. */}
           <Panel title={t('payables.accounting.fiscalTitle')}>
-            {!hasNf && <div className='create-err'>{t('payables.accounting.fiscalMissing')}</div>}
+            {!hasNf && (
+              <div className='empty-state' style={{ padding: '20px 16px', marginBottom: 12 }}>
+                <FileText />
+                <div className='t'>{t('payables.accounting.fiscalEmptyTitle')}</div>
+                <div className='s'>{t('payables.accounting.fiscalEmptySub')}</div>
+              </div>
+            )}
             <FilePicker
               accept='.xml,application/xml,text/xml,.pdf,application/pdf'
               fileName={file?.name}
@@ -157,13 +167,10 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
   );
 }
 
-function InfoField({ label, value }: { label: string; value: ReactNode }) {
+function ReadonlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className='info-card'>
-      <div className='info-label'>{label}</div>
-      <div className='info-value' style={{ fontSize: 15 }}>
-        {value}
-      </div>
-    </div>
+    <Field label={label}>
+      <Input value={value} readOnly />
+    </Field>
   );
 }

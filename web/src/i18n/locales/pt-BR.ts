@@ -609,6 +609,8 @@ const ptBR = {
       valuesTitle: 'Valores',
       fiscalTitle: 'Nota Fiscal',
       fiscalMissing: 'Nenhuma nota fiscal registrada. Registre a NF para poder contabilizar.',
+      fiscalEmptyTitle: 'Nenhuma nota fiscal anexada',
+      fiscalEmptySub: 'Anexe a NF desta despesa para poder contabilizar.',
       reclassifyTitle: 'Conta contábil',
       reclassify: 'Reclassificar',
       reclassifySuccess: 'Conta contábil atualizada.',
