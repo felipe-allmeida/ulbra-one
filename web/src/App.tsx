@@ -21,6 +21,7 @@ import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { RetencoesPage } from './pages/retencoes';
 import { ObrigacoesPage } from './pages/fiscal/obrigacoes';
 import { ContabilPendentesPage } from './pages/contabil-pendentes';
+import { ContabilDespesasPage } from './pages/contabil-despesas';
 import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
@@ -70,6 +71,7 @@ export default function App() {
         <Route path='accounting/withholdings' element={<RetencoesPage />} />
         <Route path='fiscal/obrigacoes' element={<ObrigacoesPage />} />
         <Route path='accounting/pending' element={<ContabilPendentesPage />} />
+        <Route path='accounting/expense-recording' element={<ContabilDespesasPage />} />
         <Route path='accounting/classification' element={<ClassificacaoPage />} />
         <Route path='reconciliation' element={<ConciliacaoPage />} />
         <Route path='aging' element={<AgingPage />} />

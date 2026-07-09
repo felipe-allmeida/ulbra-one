@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard,
+  Calculator,
   Wallet,
   BookText,
   Contact,
@@ -118,6 +119,7 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.movement',
         items: [
+          { labelKey: 'nav.expenseRecording', to: '/app/accounting/expense-recording', icon: <Calculator /> },
           { labelKey: 'nav.journalEntries', to: '/app/accounting/journal-entries', icon: <BookOpen /> },
           { labelKey: 'nav.pendingPostings', to: '/app/accounting/pending', icon: <ClipboardCheck /> },
         ],

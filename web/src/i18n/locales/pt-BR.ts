@@ -41,6 +41,7 @@ const ptBR = {
     ledgerAccounts: 'Plano de Contas Contábil',
     journalEntries: 'Lançamentos contábeis',
     pendingPostings: 'Pendentes de contabilização',
+    expenseRecording: 'Registro de Despesa',
     remittances: 'Remessas CNAB240',
     trialBalance: 'Balancete',
     incomeStatement: 'DRE',
@@ -192,6 +193,13 @@ const ptBR = {
       confirm: 'Anexar',
       attachSuccess: 'Nota Fiscal anexada.',
     },
+  },
+
+  expenseRecording: {
+    title: 'Registro de Despesa',
+    subtitle: 'Despesas aprovadas aguardando contabilização — conferência fiscal e Nota Fiscal.',
+    noCompanyTitle: 'Selecione uma empresa',
+    noCompanySub: 'Escolha a empresa para ver as despesas a contabilizar.',
   },
 
   login: {
