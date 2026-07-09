@@ -9,8 +9,8 @@ namespace Ulbra.One.Accounting.Application.Seeding;
 /// <list type="bullet">
 /// <item>Group comes from the code's root digit (1→Asset, 2→Liability, 3→Revenue, 4/5→Expense),
 /// with the "2.6" Patrimônio Líquido subtree mapped to Equity.</item>
-/// <item>Kind from <c>tipo</c> (S/A); normal balance from the explicit <c>natureza</c> (D/C),
-/// so contra-accounts keep the correct side.</item>
+/// <item>Kind from <c>tipo</c> (S/A); normal balance from the explicit <c>normalBalance</c> (D/C),
+/// so contra-accounts keep the correct side; the <c>natureza</c> (1-5) classification is stored verbatim.</item>
 /// <item>Parents are wired from the code hierarchy, but only when the parent shares the same group
 /// and is synthetic — otherwise the node becomes a group root (this detaches "2.6" as an Equity root),
 /// preserving <see cref="LedgerAccount.Reparent"/>'s same-group invariant.</item>
@@ -29,7 +29,7 @@ public static class AelbraChart
         {
             var account = new LedgerAccount(
                 row.Code, row.Name, GroupOf(row.Code), KindOf(row.Tipo),
-                parentId: null, NormalBalanceOf(row.Natureza), row.Reduzida);
+                parentId: null, NormalBalanceOf(row.NormalBalance), row.ReducedCode, row.Natureza);
             byCode[row.Code] = account;
             ordered.Add(account);
         }
@@ -77,10 +77,10 @@ public static class AelbraChart
         _ => throw new InvalidOperationException($"Unknown tipo '{tipo}'.")
     };
 
-    private static NormalBalance NormalBalanceOf(string natureza) => natureza switch
+    private static NormalBalance NormalBalanceOf(string normalBalance) => normalBalance switch
     {
         "D" => NormalBalance.Debit,
         "C" => NormalBalance.Credit,
-        _ => throw new InvalidOperationException($"Unknown natureza '{natureza}'.")
+        _ => throw new InvalidOperationException($"Unknown normal balance '{normalBalance}'.")
     };
 }

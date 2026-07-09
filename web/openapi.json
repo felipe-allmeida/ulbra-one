@@ -8169,6 +8169,7 @@
         "required": [
           "code",
           "reducedCode",
+          "natureza",
           "name",
           "accountGroup",
           "kind",
@@ -8182,6 +8183,11 @@
           },
           "reducedCode": {
             "type": "string",
+            "nullable": true
+          },
+          "natureza": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "name": {
@@ -9460,6 +9466,7 @@
           "id",
           "code",
           "reducedCode",
+          "natureza",
           "name",
           "accountGroup",
           "normalBalance",
@@ -9478,6 +9485,11 @@
           },
           "reducedCode": {
             "type": "string",
+            "nullable": true
+          },
+          "natureza": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "name": {
@@ -12234,6 +12246,7 @@
         "required": [
           "name",
           "reducedCode",
+          "natureza",
           "accountGroup",
           "kind",
           "normalBalance",
@@ -12247,6 +12260,11 @@
           },
           "reducedCode": {
             "type": "string",
+            "nullable": true
+          },
+          "natureza": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "accountGroup": {

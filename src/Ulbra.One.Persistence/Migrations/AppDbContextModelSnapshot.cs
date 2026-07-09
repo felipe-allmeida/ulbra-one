@@ -438,6 +438,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<int?>("Natureza")
+                        .HasColumnType("integer")
+                        .HasColumnName("natureza");
+
                     b.Property<int>("NormalBalance")
                         .HasColumnType("integer")
                         .HasColumnName("normal_balance");

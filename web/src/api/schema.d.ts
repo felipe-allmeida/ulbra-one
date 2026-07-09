@@ -2112,6 +2112,8 @@ export interface components {
         CreateLedgerAccountRequest: {
             code: string;
             reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
             kind: components["schemas"]["LedgerAccountKind"];
@@ -2491,6 +2493,8 @@ export interface components {
             id: string;
             code: string;
             reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
             normalBalance: components["schemas"]["NormalBalance"];
@@ -3314,6 +3318,8 @@ export interface components {
         UpdateLedgerAccountRequest: {
             name: string;
             reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             accountGroup: components["schemas"]["AccountGroup"];
             kind: components["schemas"]["LedgerAccountKind"];
             normalBalance: components["schemas"]["NormalBalance"];

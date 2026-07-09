@@ -28,6 +28,18 @@ public class AelbraChartTests
     }
 
     [Fact]
+    public void Natureza_is_populated_1_to_5_verbatim_from_the_sheet()
+    {
+        // Natureza is read straight from the chart, independent of the account's group/code — so a group-1
+        // (Asset) account can carry any natureza 1–5. Just assert it's present and in range.
+        Assert.All(Chart, a =>
+        {
+            Assert.NotNull(a.Natureza);
+            Assert.InRange(a.Natureza!.Value, 1, 5);
+        });
+    }
+
+    [Fact]
     public void Has_the_five_roots_as_synthetic_group_heads()
     {
         (string code, AccountGroup group)[] roots =
