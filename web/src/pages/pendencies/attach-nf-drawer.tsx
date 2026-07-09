@@ -55,7 +55,7 @@ export function AttachNfDrawer({ item, onClose }: { item: PayableStageItem; onCl
       </div>
 
       <Panel title={t('pendencies.fiscal.docTitle')}>
-        <Field label={t('pendencies.fiscal.selectLabel')} help={t('pendencies.fiscal.selectHelp')}>
+        <Field label={t('pendencies.fiscal.selectLabel')}>
           <FilePicker
             accept='.xml,application/xml,text/xml,.pdf,application/pdf'
             fileName={file?.name}

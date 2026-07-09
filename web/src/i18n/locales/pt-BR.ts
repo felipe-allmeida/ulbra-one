@@ -189,7 +189,6 @@ const ptBR = {
       drawerTitle: 'Anexar Nota Fiscal',
       docTitle: 'Nota Fiscal',
       selectLabel: 'Arquivo da Nota Fiscal',
-      selectHelp: 'NF-e/NFS-e em XML ou PDF. O arquivo é anexado ao lançamento, sem leitura automática.',
       confirm: 'Anexar',
       attachSuccess: 'Nota Fiscal anexada.',
     },
