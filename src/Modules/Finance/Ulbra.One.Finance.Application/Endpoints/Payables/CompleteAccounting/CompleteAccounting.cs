@@ -33,9 +33,11 @@ public sealed class CompleteAccounting : IEndpoint
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
 
-        // Hard gate: a fiscal document (Nota Fiscal) must be registered before accounting can be completed.
-        // FiscalDocument is a separate aggregate (unique PayableId), so the check lives here (cf. ClassificationGate).
-        var hasFiscalDocument = await uow.ReadSet<FiscalDocument>().AnyAsync(d => d.PayableId == p.Id, ct);
+        // Hard gate: the Nota Fiscal must be registered before accounting completes — either a parsed
+        // FiscalDocument (XML) or an attached NF document (PayableAttachment, the Pendências attach flow).
+        // Both are separate from the aggregate, so the check lives here (cf. ClassificationGate).
+        var hasFiscalDocument = await uow.ReadSet<FiscalDocument>().AnyAsync(d => d.PayableId == p.Id, ct)
+            || await uow.ReadSet<PayableAttachment>().AnyAsync(a => a.PayableId == p.Id, ct);
         if (!hasFiscalDocument)
             return TypedResults.Problem(
                 detail: "A Nota Fiscal must be registered before the payable can be sent to payment.",

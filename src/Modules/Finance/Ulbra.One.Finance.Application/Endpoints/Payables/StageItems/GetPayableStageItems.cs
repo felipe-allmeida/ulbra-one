@@ -34,8 +34,10 @@ public sealed class GetPayableStageItems : IEndpoint
         var q = uow.ReadSet<Payable>().Where(p => p.CompanyId == companyId.Value);
         if (status is { } st) q = q.Where(p => p.Status == st);
 
-        // Correlated EXISTS for the "Nota Fiscal pendente" tag on the accounting stage (translated to SQL).
+        // "Has NF" = a parsed FiscalDocument (XML read at creation) OR an attached NF document (PayableAttachment —
+        // the Pendências attach flow, PDF/other, no parse). Correlated EXISTS, both translated to SQL.
         var fiscalDocs = uow.ReadSet<FiscalDocument>();
+        var attachments = uow.ReadSet<PayableAttachment>();
 
         // Project primitives first so the query + pagination translate to SQL; wrap typed IDs in memory.
         var rows = q.Select(p => new
@@ -49,7 +51,7 @@ public sealed class GetPayableStageItems : IEndpoint
             InstallmentCount = p.Installments.Count,
             p.TotalAmount,
             p.Status,
-            HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id),
+            HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id) || attachments.Any(a => a.PayableId == p.Id),
         });
 
         // Optional pendency filter (e.g. Pendências "Nota Fiscal" tab: PendingAccounting + no NF). EF

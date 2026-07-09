@@ -30,6 +30,10 @@ public sealed class GetPayableAccountingView : IEndpoint
         // Fiscal document of record (1:1 per payable, unique PayableId).
         var doc = await uow.ReadSet<FiscalDocument>().FirstOrDefaultAsync(d => d.PayableId == p.Id, ct);
 
+        // An attached NF document (PayableAttachment) also satisfies the "has NF" gate (Pendências attach flow),
+        // even without a parsed fiscal document.
+        var hasAttachment = await uow.ReadSet<PayableAttachment>().AnyAsync(a => a.PayableId == p.Id, ct);
+
         // Vendor tax block — cross-module read by loose Guid VendorId (same pattern as GetPayable).
         var vendor = await uow.ReadSet<VendorEntity>().FirstOrDefaultAsync(v => v.Id == p.VendorId, ct);
         var vendorBlock = vendor is null
@@ -63,6 +67,6 @@ public sealed class GetPayableAccountingView : IEndpoint
             p.Withholdings.Select(PayableWithholdingResponse.From).ToList(),
             vendorBlock,
             doc is null ? null : FiscalDocumentResponse.From(doc),
-            doc is not null));
+            doc is not null || hasAttachment));
     }
 }
