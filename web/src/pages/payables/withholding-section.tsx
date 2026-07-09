@@ -114,12 +114,13 @@ function WithholdingSectionEditable({ payable, bare }: { payable: Payable; bare?
               >
                 {brlCents(computeAmount(row))}
               </div>
-              <Button
-                icon={<Trash2 />}
-                onClick={() => removeRow(i)}
-                aria-label={t('payables.withholding.removeRow')}
-                title={t('payables.withholding.removeRow')}
-              />
+              <span className='wh-remove' data-tip={t('payables.withholding.removeRow')}>
+                <Button
+                  icon={<Trash2 />}
+                  onClick={() => removeRow(i)}
+                  aria-label={t('payables.withholding.removeRow')}
+                />
+              </span>
             </div>
           ))}
         </div>
