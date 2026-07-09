@@ -561,6 +561,23 @@ body {
   color: var(--muted-foreground);
   margin-top: 4px;
 }
+.kpi-card--clickable {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.kpi-card--clickable:hover {
+  border-color: var(--brand);
+}
+.kpi-card--selected {
+  border-color: var(--brand);
+  background: var(--brand-subtle);
+}
 
 /* ===== CC CARDS ===== */
 .cc-grid {

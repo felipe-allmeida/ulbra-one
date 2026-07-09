@@ -180,6 +180,7 @@ export function ContabilPlanoPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<LedgerAccount | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Sort by code, compute hierarchy depth via the parentId chain among loaded accounts.
   const rows = useMemo(() => {
@@ -206,6 +207,15 @@ export function ContabilPlanoPage() {
       inactive: accounts.filter((a) => !a.isActive).length,
     }),
     [accounts],
+  );
+
+  // The counts KPIs double as status filters: "all" shows everything, "active"/"inactive" narrow the list.
+  const visibleRows = useMemo(
+    () =>
+      statusFilter === 'all'
+        ? rows
+        : rows.filter(({ account }) => account.isActive === (statusFilter === 'active')),
+    [rows, statusFilter],
   );
 
   const openCreate = () => {
@@ -248,9 +258,24 @@ export function ContabilPlanoPage() {
 
       {accounts.length > 0 && (
         <div className='kpi-grid'>
-          <Kpi label={t('accounting.ledger.counts.total')} value={String(counts.total)} />
-          <Kpi label={t('accounting.ledger.counts.active')} value={String(counts.active)} />
-          <Kpi label={t('accounting.ledger.counts.inactive')} value={String(counts.inactive)} />
+          <Kpi
+            label={t('accounting.ledger.counts.total')}
+            value={String(counts.total)}
+            onClick={() => setStatusFilter('all')}
+            selected={statusFilter === 'all'}
+          />
+          <Kpi
+            label={t('accounting.ledger.counts.active')}
+            value={String(counts.active)}
+            onClick={() => setStatusFilter('active')}
+            selected={statusFilter === 'active'}
+          />
+          <Kpi
+            label={t('accounting.ledger.counts.inactive')}
+            value={String(counts.inactive)}
+            onClick={() => setStatusFilter('inactive')}
+            selected={statusFilter === 'inactive'}
+          />
         </div>
       )}
 
@@ -261,10 +286,10 @@ export function ContabilPlanoPage() {
           sub={t('accounting.ledger.empty.sub')}
         />
       ) : (
-        <Panel title={t('accounting.ledger.count', { count: accounts.length })}>
+        <Panel title={t('accounting.ledger.count', { count: visibleRows.length })}>
           <table>
             <tbody>
-              {rows.map(({ account, depth }) => (
+              {visibleRows.map(({ account, depth }) => (
                 <tr key={account.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: depth * 20 }}>
