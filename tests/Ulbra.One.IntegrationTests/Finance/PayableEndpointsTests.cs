@@ -274,6 +274,58 @@ public class PayableEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task List_Exposes_NetAmount_Per_Installment()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // 600 + 400 gross with a 100 IRRF withholding => proportional net rateio: 540.00 + 360.00
+        // (first = round(600 × 900/1000), the LAST installment absorbs rounding so Σ net == NetTotal).
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Parcelado com retenção",
+            installments = new[]
+            {
+                new { dueDate = "2026-08-10", amount = 600m },
+                new { dueDate = "2026-09-10", amount = 400m },
+            },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+        await FinanceSeed.SetWithholdingAsync(client, payableId, baseAmount: 1000m, amount: 100m);
+
+        // Control without withholding: net == gross.
+        var plainRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Sem retenção",
+            installments = new[] { new { dueDate = "2026-08-10", amount = 300m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, plainRes.StatusCode);
+        var plainId = (await ReadJson(plainRes)).GetProperty("id").GetString()!;
+
+        var list = await ReadJson(await client.GetAsync($"/api/payables?companyId={seed.CompanyId}&pageSize=100"));
+        var rows = list.GetProperty("items").EnumerateArray().ToList();
+
+        var withheldRows = rows.Where(r => r.GetProperty("payableId").GetString() == payableId)
+            .OrderBy(r => r.GetProperty("sequence").GetInt32()).ToList();
+        Assert.Equal(2, withheldRows.Count);
+        Assert.Equal(600m, withheldRows[0].GetProperty("amount").GetDecimal());
+        Assert.Equal(540m, withheldRows[0].GetProperty("netAmount").GetDecimal());
+        Assert.Equal(400m, withheldRows[1].GetProperty("amount").GetDecimal());
+        Assert.Equal(360m, withheldRows[1].GetProperty("netAmount").GetDecimal());
+
+        var plainRow = rows.Single(r => r.GetProperty("payableId").GetString() == plainId);
+        Assert.Equal(plainRow.GetProperty("amount").GetDecimal(), plainRow.GetProperty("netAmount").GetDecimal());
+    }
+
+    [Fact]
     public async Task Get_Returns_Payable_With_Installments()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

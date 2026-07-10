@@ -186,6 +186,15 @@ public static class FinanceSeed
         confirmRes.EnsureSuccessStatusCode();
     }
 
+    /// <summary>Sets a single IRRF withholding on the payable (allowed until accounting completes).
+    /// The aggregate re-rateia every installment's NetAmount proportionally.</summary>
+    public static async Task SetWithholdingAsync(HttpClient client, string payableId, decimal baseAmount, decimal amount)
+    {
+        var res = await client.PutAsJsonAsync($"/api/payables/{payableId}/withholdings",
+            new { items = new[] { new { taxType = "Irrf", baseAmount, rate = (decimal?)null, amount } } });
+        res.EnsureSuccessStatusCode();
+    }
+
     /// <summary>Approves a payable, parking it in <c>PendingAccounting</c> (no NF registered, accounting not confirmed).</summary>
     public static async Task ApproveAsync(HttpClient client, string payableId)
     {
