@@ -54,6 +54,10 @@ public sealed class GetPayableStageItems : IEndpoint
             FirstDueDate = p.Installments.Min(i => i.DueDate),
             InstallmentCount = p.Installments.Count,
             p.TotalAmount,
+            // Correlated scalar subquery on payable_withholding (FK-indexed); EF wraps the SUM in
+            // COALESCE(..., 0), so titles without withholdings project 0. NetTotal (a computed domain
+            // property that doesn't translate to SQL) is derived in the mapping below.
+            TotalWithheld = p.Withholdings.Sum(w => w.Amount),
             p.Status,
             HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id) || attachments.Any(a => a.PayableId == p.Id),
         });
@@ -71,6 +75,7 @@ public sealed class GetPayableStageItems : IEndpoint
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
             new PayableId(x.Id), x.CounterpartyName, x.Description, new CostCenterId(x.CostCenterId),
             x.CategoryId == null ? null : new ExpenseCategoryId(x.CategoryId.Value),
-            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status, x.Origin, x.HasFiscalDocument)));
+            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.TotalWithheld, x.TotalAmount - x.TotalWithheld,
+            x.Status, x.Origin, x.HasFiscalDocument)));
     }
 }

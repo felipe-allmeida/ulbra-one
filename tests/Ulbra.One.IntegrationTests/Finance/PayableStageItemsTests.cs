@@ -91,6 +91,34 @@ public class PayableStageItemsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task StageItems_exposes_totalWithheld_and_netTotal()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        var withheld = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 1000m, approve: false);
+        await FinanceSeed.SetWithholdingAsync(client, withheld, baseAmount: 1000m, amount: 150m);
+        var plain = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(20), 500m, approve: false);
+
+        var res = await client.GetAsync($"/api/payables/stage-items?companyId={companyId}");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var items = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement
+            .GetProperty("items").EnumerateArray()
+            .ToDictionary(x => x.GetProperty("payableId").GetString()!);
+
+        Assert.Equal(150m, items[withheld].GetProperty("totalWithheld").GetDecimal());
+        Assert.Equal(850m, items[withheld].GetProperty("netTotal").GetDecimal());
+        // No withholdings => the correlated SUM must coalesce to 0, and net == gross.
+        Assert.Equal(0m, items[plain].GetProperty("totalWithheld").GetDecimal());
+        Assert.Equal(500m, items[plain].GetProperty("netTotal").GetDecimal());
+    }
+
+    [Fact]
     public async Task StageItems_filters_by_origin_across_statuses_and_exposes_origin()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
