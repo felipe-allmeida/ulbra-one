@@ -17,4 +17,5 @@ public sealed record PayableStageItemResponse(
     DateOnly FirstDueDate,
     int InstallmentCount,
     decimal TotalAmount,
-    PayableStatus Status);
+    PayableStatus Status,
+    bool HasFiscalDocument);

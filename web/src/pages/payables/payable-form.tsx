@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Wallet } from 'lucide-react';
+import { ChevronLeft, Wallet, Paperclip } from 'lucide-react';
 import { PersonType, type Payable, type PayableInput, type ParsedFiscalDocument, type PaymentMethod } from '../../api';
 import {
   resolver,
@@ -270,8 +270,11 @@ function PayableForm({ initial }: { initial?: Payable }) {
     try {
       const p =
         editing && initial ? await update.mutateAsync({ id: initial.id, body }) : await create.mutateAsync(body);
-      // Persist the fiscal document of record (NF) using the key from the presigned upload, then any generic attachment, then navigate.
+      // The NF used to read the data: persist the parsed fiscal document (key from the presigned upload) AND
+      // attach the file to the payable so it shows in Anexos and counts as the registered NF. Then any extra
+      // generic attachment. Then navigate.
       if (fiscalUpload) await uploadFiscal.mutateAsync({ id: p.id, ...fiscalUpload });
+      if (!editing && fiscalFile) await upload.mutateAsync({ id: p.id, file: fiscalFile });
       if (!editing && file) await upload.mutateAsync({ id: p.id, file });
       nav(`/app/payables/${p.id}`);
     } catch {
@@ -698,13 +701,37 @@ function PayableForm({ initial }: { initial?: Payable }) {
 
               {!editing && (
                 <div style={{ marginTop: 14 }}>
-                  <Field label={t('payables.upload.label')} help={t('payables.upload.help')}>
-                    <FilePicker
-                      accept='application/pdf,image/png,image/jpeg'
-                      fileName={file?.name}
-                      placeholder={t('common.noFileSelected')}
-                      onSelect={setFile}
-                    />
+                  <Field
+                    label={t('payables.upload.label')}
+                    help={fiscalFile ? t('payables.upload.fromReader') : t('payables.upload.help')}
+                  >
+                    {fiscalFile ? (
+                      // The NF read at the top is attached on create — show it here (no second upload).
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          minWidth: 0,
+                          padding: '10px 12px',
+                          border: '1px solid var(--border)',
+                          borderRadius: 'var(--radius)',
+                          background: 'var(--surface)',
+                        }}
+                      >
+                        <Paperclip style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--brand)' }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {fiscalFile.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <FilePicker
+                        accept='application/pdf,image/png,image/jpeg'
+                        fileName={file?.name}
+                        placeholder={t('common.noFileSelected')}
+                        onSelect={setFile}
+                      />
+                    )}
                   </Field>
                 </div>
               )}

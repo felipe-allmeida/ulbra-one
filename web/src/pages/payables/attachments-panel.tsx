@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Trash2, Paperclip } from 'lucide-react';
+import { Download, Eye, Trash2, Paperclip } from 'lucide-react';
 import { type Payable, type PayableAttachment } from '../../api';
 import { Button, Panel } from '../../ui';
-import { downloadAttachment } from './download';
+import { downloadAttachment, previewAttachment } from './download';
 
 /** Attachments panel for the payable detail. `onDelete` opens the delete confirmation. */
 export function AttachmentsPanel({
@@ -14,7 +14,7 @@ export function AttachmentsPanel({
   onDelete: (att: PayableAttachment) => void;
 }) {
   const { t } = useTranslation();
-  const [downloadErr, setDownloadErr] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
   return (
     <Panel title={t('attachments.title')}>
       {p.attachments.length === 0 ? (
@@ -33,10 +33,19 @@ export function AttachmentsPanel({
                 <td className='td-action'>
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                     <Button
+                      icon={<Eye />}
+                      onClick={() => {
+                        setErr(null);
+                        previewAttachment(p.id, att).catch(() => setErr(t('attachments.viewError')));
+                      }}
+                    >
+                      {t('attachments.view')}
+                    </Button>
+                    <Button
                       icon={<Download />}
                       onClick={() => {
-                        setDownloadErr(null);
-                        downloadAttachment(p.id, att).catch(() => setDownloadErr(t('attachments.downloadError')));
+                        setErr(null);
+                        downloadAttachment(p.id, att).catch(() => setErr(t('attachments.downloadError')));
                       }}
                     >
                       {t('attachments.download')}
@@ -51,7 +60,7 @@ export function AttachmentsPanel({
           </tbody>
         </table>
       )}
-      {downloadErr && <p className='create-err'>{downloadErr}</p>}
+      {err && <p className='create-err'>{err}</p>}
     </Panel>
   );
 }

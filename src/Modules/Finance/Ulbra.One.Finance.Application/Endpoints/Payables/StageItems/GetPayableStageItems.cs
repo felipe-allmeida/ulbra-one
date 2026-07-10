@@ -26,12 +26,18 @@ public sealed class GetPayableStageItems : IEndpoint
     private static async Task<IResult> Handle(
         CompanyId companyId,
         PayableStatus? status,
+        bool? hasFiscalDocument,
         IUnitOfWork uow,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
     {
         var q = uow.ReadSet<Payable>().Where(p => p.CompanyId == companyId.Value);
         if (status is { } st) q = q.Where(p => p.Status == st);
+
+        // "Has NF" = a parsed FiscalDocument (XML read at creation) OR an attached NF document (PayableAttachment —
+        // the Pendências attach flow, PDF/other, no parse). Correlated EXISTS, both translated to SQL.
+        var fiscalDocs = uow.ReadSet<FiscalDocument>();
+        var attachments = uow.ReadSet<PayableAttachment>();
 
         // Project primitives first so the query + pagination translate to SQL; wrap typed IDs in memory.
         var rows = q.Select(p => new
@@ -45,12 +51,17 @@ public sealed class GetPayableStageItems : IEndpoint
             InstallmentCount = p.Installments.Count,
             p.TotalAmount,
             p.Status,
+            HasFiscalDocument = fiscalDocs.Any(d => d.PayableId == p.Id) || attachments.Any(a => a.PayableId == p.Id),
         });
+
+        // Optional pendency filter (e.g. Pendências "Nota Fiscal" tab: PendingAccounting + no NF). EF
+        // translates HasFiscalDocument to WHERE [NOT] EXISTS. Absent => unchanged behavior for all stages.
+        if (hasFiscalDocument is { } hasNf) rows = rows.Where(x => x.HasFiscalDocument == hasNf);
 
         var page = await rows.OrderBy(x => x.FirstDueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
             new PayableId(x.Id), x.CounterpartyName, x.Description, new CostCenterId(x.CostCenterId),
             x.CategoryId == null ? null : new ExpenseCategoryId(x.CategoryId.Value),
-            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status)));
+            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status, x.HasFiscalDocument)));
     }
 }

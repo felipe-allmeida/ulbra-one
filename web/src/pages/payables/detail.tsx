@@ -63,7 +63,10 @@ export function PayableDetailPage() {
     const a = accs.find((x) => x.id === accountId);
     return a ? `${a.code} — ${a.name}` : t('payables.notClassified');
   };
-  const editable = p.status === 'PendingApproval' || p.status === 'Received' || p.status === 'PendingClassification';
+  const canEdit = p.status === 'PendingApproval' || p.status === 'Received' || p.status === 'PendingClassification';
+  // Retentions are corrected in the accounting stage (Registro de Despesa), not on approval — so the
+  // withholding editor is enabled only while the payable is PendingAccounting; read-only elsewhere.
+  const withholdingsEditable = p.status === 'PendingAccounting';
 
   return (
     <>
@@ -99,12 +102,12 @@ export function PayableDetailPage() {
               {t('payables.actions.reject')}
             </Button>
           )}
-          {editable && (
+          {canEdit && (
             <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/edit`)}>
               {t('payables.actions.edit')}
             </Button>
           )}
-          {editable && (
+          {canEdit && (
             <Button icon={<X />} onClick={() => setCancelOpen(true)}>
               {t('payables.actions.cancel')}
             </Button>
@@ -165,6 +168,11 @@ export function PayableDetailPage() {
           {t('payables.approvedBy', { user: p.approvedByName ?? p.approvedBy, date: fmtDateTime(p.approvedAt) })}
         </p>
       )}
+      {(p.status === 'Scheduled' || p.status === 'Paid') && p.accountedBy && p.accountedAt && (
+        <p className='detail-sub'>
+          {t('payables.accountedBy', { user: p.accountedByName ?? p.accountedBy, date: fmtDateTime(p.accountedAt) })}
+        </p>
+      )}
       {p.status === 'Rejected' && p.rejectedBy && p.rejectedAt && (
         <p className='detail-sub'>
           {t('payables.rejectedBy', { user: p.rejectedByName ?? p.rejectedBy, date: fmtDateTime(p.rejectedAt) })}
@@ -174,7 +182,7 @@ export function PayableDetailPage() {
       <div className='detail-sections'>
         <InstallmentsTable payable={p} onRegister={setBaixaInstallment} />
 
-        <WithholdingSection payable={p} editable={editable} />
+        <WithholdingSection payable={p} editable={withholdingsEditable} />
 
         {[...p.installments]
           .sort((a, b) => a.sequence - b.sequence)

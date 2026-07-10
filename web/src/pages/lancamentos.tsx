@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Plus, ChevronLeft, ClipboardCheck, Check, X, Wallet } from 'lucide-react';
+import { Plus, ChevronLeft, Check, X, Wallet } from 'lucide-react';
 import { type TransactionType, type TransactionStatus } from '../api';
 import { resolver, fieldError, transactionSchema, type TransactionValues } from './schemas';
 import { useApp } from '../store';
@@ -124,71 +124,6 @@ export function LancamentosPage({ tipo }: { tipo: TransactionType }) {
             </tbody>
           </table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
-        </Panel>
-      )}
-    </>
-  );
-}
-
-/* ============ APPROVALS ============ */
-export function AprovacoesPage() {
-  const { empresa, empresaId } = useApp();
-  const nav = useNavigate();
-  const { unidadeNome, centroNome } = useNomes(empresaId);
-  const itens =
-    useTransactions({ companyId: empresaId, status: 'Pending' }, { enabled: !!empresaId }).data?.items ?? [];
-  const approve = useApproveTransaction();
-  const reject = useRejectTransaction();
-
-  return (
-    <>
-      <PageHeader title='Aprovações' sub='Lançamentos pendentes aguardando aprovação.'>
-        <EmpresaPicker />
-      </PageHeader>
-      {!empresa ? (
-        <EmptyState icon={<ClipboardCheck />} title='Nenhuma empresa' sub='Cadastre uma empresa em Estrutura.' />
-      ) : itens.length === 0 ? (
-        <EmptyState icon={<ClipboardCheck />} title='Tudo em dia' sub='Não há lançamentos pendentes de aprovação.' />
-      ) : (
-        <Panel title={`${itens.length} pendente(s)`}>
-          <table>
-            <thead>
-              <tr>
-                <th>Vencimento</th>
-                <th>Descrição</th>
-                <th>Centro de custo</th>
-                <th style={{ textAlign: 'right' }}>Valor</th>
-                <th className='td-action'></th>
-              </tr>
-            </thead>
-            <tbody>
-              {itens.map((l) => (
-                <tr key={l.id}>
-                  <td className='t-mono'>{fmtDate(l.dueDate)}</td>
-                  <td className='row-click' onClick={() => nav(`/app/entries/${l.id}`)}>
-                    {l.description} <span style={{ color: 'var(--muted-foreground)' }}>· {l.counterpartyName}</span>
-                  </td>
-                  <td>
-                    {centroNome[l.costCenterId] ?? '—'}{' '}
-                    <span style={{ color: 'var(--muted-foreground)' }}>({unidadeNome[l.unitId] ?? '—'})</span>
-                  </td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brl(l.amount)}
-                  </td>
-                  <td className='td-action'>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: l.id })}>
-                        Aprovar
-                      </Button>
-                      <Button icon={<X />} onClick={() => reject.mutate({ id: l.id, reason: 'Rejeitado na triagem' })}>
-                        Rejeitar
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </Panel>
       )}
     </>

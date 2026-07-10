@@ -30,7 +30,7 @@ public class InstallmentHoldEndpointTests(PostgresFixture fixture)
         var costCenterId = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC-HOLD1", "Hold Test");
         var vendorId = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor Hold");
 
-        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(
+        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, 
             client, companyId, vendorId, costCenterId, new DateOnly(2026, 8, 1), 500m, approve: true);
 
         // Act: hold the installment
@@ -60,7 +60,7 @@ public class InstallmentHoldEndpointTests(PostgresFixture fixture)
         var costCenterId = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC-HOLD2", "Release Test");
         var vendorId = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor Release");
 
-        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(
+        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, 
             client, companyId, vendorId, costCenterId, new DateOnly(2026, 8, 1), 500m, approve: true);
 
         // Hold first
@@ -95,7 +95,7 @@ public class InstallmentHoldEndpointTests(PostgresFixture fixture)
         var costCenterId = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC-HOLD3", "Remittance Test");
         var vendorId = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor Remessa");
 
-        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(
+        var (payableId, installmentId) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, 
             client, companyId, vendorId, costCenterId, new DateOnly(2026, 8, 1), 500m, approve: true);
 
         // Parse raw GUIDs from the prefixed ids (wire form: "<prefix>_<guidN>")
@@ -135,7 +135,7 @@ public class InstallmentHoldEndpointTests(PostgresFixture fixture)
         var costCenterId = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC-HOLD4", "NotFound Test");
         var vendorId = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor 404");
 
-        var (payableId, _) = await FinanceSeed.CreatePayableWithInstallmentAsync(
+        var (payableId, _) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, 
             client, companyId, vendorId, costCenterId, new DateOnly(2026, 8, 1), 500m, approve: true);
 
         var fakeInstallmentId = $"installment_{Guid.NewGuid():N}";

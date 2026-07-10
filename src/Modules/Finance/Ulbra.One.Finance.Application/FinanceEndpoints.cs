@@ -21,12 +21,14 @@ using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.CreateExpenseCat
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.DeleteExpenseCategory;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.ListExpenseCategories;
 using Ulbra.One.Finance.Application.Endpoints.ExpenseCategories.UpdateExpenseCategory;
+using Ulbra.One.Finance.Application.Endpoints.Payables.AccountingView;
 using Ulbra.One.Finance.Application.Endpoints.Payables.AiClassificationSuggestion;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ApprovePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CancelPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ClassificationSuggestion;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.ClassifyPayableBatch;
+using Ulbra.One.Finance.Application.Endpoints.Payables.CompleteAccounting;
 using Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DeleteAttachment;
 using Ulbra.One.Finance.Application.Endpoints.Payables.DownloadAttachment;
@@ -106,6 +108,8 @@ public static class FinanceEndpoints
         payables.MapEndpoint<SetWithholdings>();
         payables.MapEndpoint<CancelPayable>();
         payables.MapEndpoint<ApprovePayable>();
+        payables.MapEndpoint<CompleteAccounting>();
+        payables.MapEndpoint<GetPayableAccountingView>();
         payables.MapEndpoint<RejectPayable>();
         payables.MapEndpoint<UploadAttachment>();
         payables.MapEndpoint<DownloadAttachment>();

@@ -38,7 +38,7 @@ function rowToItem(r: Row) {
 }
 
 /* ============ Editable withholding section ============ */
-function WithholdingSectionEditable({ payable }: { payable: Payable }) {
+function WithholdingSectionEditable({ payable, bare }: { payable: Payable; bare?: boolean }) {
   const { t } = useTranslation();
   const toast = useToast();
 
@@ -73,69 +73,57 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
 
   const handleSave = () => save.mutate({ id: payable.id, items: rows.map(rowToItem) });
 
-  return (
-    <Panel title={t('payables.withholding.sectionTitle')}>
+  const body = (
+    <>
       {rows.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>{t('payables.withholding.columns.taxType')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.base')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.rate')}</th>
-              <th style={{ textAlign: 'right' }}>{t('payables.withholding.columns.amount')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={i}>
-                <td>
-                  <Select value={row.taxType} onChange={(e) => updateRow(i, 'taxType', e.target.value)}>
-                    {TAX_TYPES.map((tt) => (
-                      <option key={tt} value={tt}>
-                        {t(`payables.withholding.taxType.${tt}`)}
-                      </option>
-                    ))}
-                  </Select>
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <Input
-                    inputMode='numeric'
-                    value={row.baseAmount}
-                    onChange={(e) => updateRow(i, 'baseAmount', e.target.value)}
-                    style={{ textAlign: 'right' }}
-                  />
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <Input
-                    inputMode='numeric'
-                    value={row.ratePct}
-                    onChange={(e) => updateRow(i, 'ratePct', e.target.value)}
-                    style={{ textAlign: 'right' }}
-                    placeholder='%'
-                  />
-                </td>
-                {/* Withheld value is derived (base × rate) — locked, not editable. */}
-                <td
-                  className='amount-cell'
-                  style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
-                  title={t('payables.withholding.amountAuto')}
-                >
-                  {brlCents(computeAmount(row))}
-                </td>
-                <td className='td-action'>
-                  <Button
-                    icon={<Trash2 />}
-                    onClick={() => removeRow(i)}
-                    aria-label={t('payables.withholding.removeRow')}
-                  >
-                    {t('payables.withholding.removeRow')}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className='wh-rows'>
+          <div className='wh-head'>
+            <span>{t('payables.withholding.columns.taxType')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.base')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.rate')}</span>
+            <span style={{ textAlign: 'right' }}>{t('payables.withholding.columns.amount')}</span>
+            <span />
+          </div>
+          {rows.map((row, i) => (
+            <div className='wh-row' key={i}>
+              <Select value={row.taxType} onChange={(e) => updateRow(i, 'taxType', e.target.value)}>
+                {TAX_TYPES.map((tt) => (
+                  <option key={tt} value={tt}>
+                    {t(`payables.withholding.taxType.${tt}`)}
+                  </option>
+                ))}
+              </Select>
+              <Input
+                inputMode='numeric'
+                value={row.baseAmount}
+                onChange={(e) => updateRow(i, 'baseAmount', e.target.value)}
+                style={{ textAlign: 'right' }}
+              />
+              <Input
+                inputMode='numeric'
+                value={row.ratePct}
+                onChange={(e) => updateRow(i, 'ratePct', e.target.value)}
+                style={{ textAlign: 'right' }}
+                placeholder='%'
+              />
+              {/* Withheld value is derived (base × rate) — locked, not editable. */}
+              <div
+                className='amount-cell'
+                style={{ textAlign: 'right', color: 'var(--muted-foreground)' }}
+                title={t('payables.withholding.amountAuto')}
+              >
+                {brlCents(computeAmount(row))}
+              </div>
+              <span className='wh-remove' data-tip={t('payables.withholding.removeRow')}>
+                <Button
+                  icon={<Trash2 />}
+                  onClick={() => removeRow(i)}
+                  aria-label={t('payables.withholding.removeRow')}
+                />
+              </span>
+            </div>
+          ))}
+        </div>
       )}
 
       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
@@ -166,8 +154,13 @@ function WithholdingSectionEditable({ payable }: { payable: Payable }) {
           {save.isPending ? t('payables.withholding.saving') : t('payables.withholding.save')}
         </Button>
       </div>
-    </Panel>
+    </>
   );
+
+  // `bare` renders the content without the Panel card — for the accounting drawer, whose sections are flat
+  // (a section title + content) to match the other drawers.
+  if (bare) return body;
+  return <Panel title={t('payables.withholding.sectionTitle')}>{body}</Panel>;
 }
 
 /* ============ Read-only withholding section (2-column block) ============ */
@@ -217,7 +210,15 @@ function WithholdingSectionReadOnly({ payable }: { payable: Payable }) {
 }
 
 /* ============ Public façade ============ */
-export function WithholdingSection({ payable, editable }: { payable: Payable; editable: boolean }) {
-  if (editable) return <WithholdingSectionEditable payable={payable} />;
+export function WithholdingSection({
+  payable,
+  editable,
+  bare,
+}: {
+  payable: Payable;
+  editable: boolean;
+  bare?: boolean;
+}) {
+  if (editable) return <WithholdingSectionEditable payable={payable} bare={bare} />;
   return <WithholdingSectionReadOnly payable={payable} />;
 }

@@ -2189,6 +2189,106 @@
         }
       }
     },
+    "/api/payables/{id}/accounting/confirm": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "CompletePayableAccounting",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payables/{id}/accounting-view": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "operationId": "GetPayableAccountingView",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayableAccountingViewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payables/{id}/reject": {
       "post": {
         "tags": [
@@ -3028,6 +3128,13 @@
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/PayableStatus"
+            }
+          },
+          {
+            "name": "hasFiscalDocument",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -9803,6 +9910,82 @@
         },
         "additionalProperties": false
       },
+      "PayableAccountingViewResponse": {
+        "required": [
+          "id",
+          "status",
+          "counterpartyName",
+          "documentNumber",
+          "totalAmount",
+          "totalWithheld",
+          "netTotal",
+          "accountingAccountId",
+          "accountingAccountCode",
+          "accountingAccountName",
+          "withholdings",
+          "vendor",
+          "fiscalDocument",
+          "hasFiscalDocument"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "payable_3fa85f64571742199730000000000000"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PayableStatus"
+          },
+          "counterpartyName": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "accountingAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "accountingAccountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountingAccountName": {
+            "type": "string",
+            "nullable": true
+          },
+          "withholdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayableWithholdingResponse"
+            }
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/PayableVendorTaxBlock"
+          },
+          "fiscalDocument": {
+            "$ref": "#/components/schemas/FiscalDocumentResponse"
+          },
+          "hasFiscalDocument": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "PayableAttachmentResponse": {
         "required": [
           "id",
@@ -10000,6 +10183,9 @@
           "rejectedBy",
           "rejectedByName",
           "rejectedAt",
+          "accountedBy",
+          "accountedByName",
+          "accountedAt",
           "accountingAccountId",
           "isClassified",
           "suggestedAccountingAccountId",
@@ -10097,6 +10283,19 @@
             "format": "date-time",
             "nullable": true
           },
+          "accountedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "accountingAccountId": {
             "type": "string",
             "nullable": true,
@@ -10173,7 +10372,8 @@
           "firstDueDate",
           "installmentCount",
           "totalAmount",
-          "status"
+          "status",
+          "hasFiscalDocument"
         ],
         "type": "object",
         "properties": {
@@ -10210,6 +10410,9 @@
           },
           "status": {
             "$ref": "#/components/schemas/PayableStatus"
+          },
+          "hasFiscalDocument": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -10254,8 +10457,10 @@
           "entry",
           "classification",
           "approval",
+          "accounting",
           "payment",
-          "reconciled"
+          "reconciled",
+          "fiscalDocumentPending"
         ],
         "type": "object",
         "properties": {
@@ -10268,10 +10473,16 @@
           "approval": {
             "$ref": "#/components/schemas/StageBucket"
           },
+          "accounting": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
           "payment": {
             "$ref": "#/components/schemas/StageBucket"
           },
           "reconciled": {
+            "$ref": "#/components/schemas/StageBucket"
+          },
+          "fiscalDocumentPending": {
             "$ref": "#/components/schemas/StageBucket"
           }
         },
@@ -10282,6 +10493,7 @@
           "Received",
           "PendingClassification",
           "PendingApproval",
+          "PendingAccounting",
           "Scheduled",
           "Paid",
           "Rejected",
@@ -10295,6 +10507,62 @@
           "Product"
         ],
         "type": "string"
+      },
+      "PayableVendorTaxBlock": {
+        "required": [
+          "personType",
+          "name",
+          "tradeName",
+          "document",
+          "email",
+          "phone",
+          "taxRegime",
+          "simplesAnexo",
+          "cprbForeseen",
+          "city",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "personType": {
+            "$ref": "#/components/schemas/PersonType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tradeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "document": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRegime": {
+            "$ref": "#/components/schemas/TaxRegime"
+          },
+          "simplesAnexo": {
+            "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "cprbForeseen": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "PayableWithholdingResponse": {
         "required": [

@@ -18,6 +18,9 @@ vi.mock('../../queries', () => ({
   useCostCenters: () => ({ data: [] }),
   useExpenseCategories: () => ({ data: [] }),
   useLedgerAccounts: () => ({ data: [] }),
+  useSetPayableWithholdings: () => ({ mutate: vi.fn(), isPending: false }),
+  // BalanceForecastBanner (rendered on PendingApproval) uses this; loading short-circuits it harmlessly.
+  useCashFlow: () => ({ isLoading: true }),
 }));
 
 import { PayableDetailPage } from './detail';
@@ -89,5 +92,31 @@ describe('PayableDetailPage', () => {
     renderWithProviders(<PayableDetailPage />);
     expect(screen.getByText(/Aprovado por Carlos Silva/)).toBeInTheDocument();
     expect(screen.queryByText(/3fa85f64/)).not.toBeInTheDocument();
+  });
+
+  it('keeps retentions read-only on the approval detail (editor hidden)', () => {
+    mockUsePayable.mockReturnValue({
+      data: {
+        id: 'payable_1', companyId: 'company_1', counterpartyName: 'ACME', description: 'NF 1',
+        status: 'PendingApproval', totalAmount: 1000, costCenterId: 'cc_1', categoryId: null,
+        accountingAccountId: null, documentNumber: 'NF-1', issueDate: '2026-06-01',
+        installments: [], attachments: [], withholdings: [], totalWithheld: 0, netTotal: 1000,
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.queryByText('Adicionar retenção')).not.toBeInTheDocument();
+  });
+
+  it('enables the retentions editor in the accounting stage (PendingAccounting)', () => {
+    mockUsePayable.mockReturnValue({
+      data: {
+        id: 'payable_1', companyId: 'company_1', counterpartyName: 'ACME', description: 'NF 1',
+        status: 'PendingAccounting', totalAmount: 1000, costCenterId: 'cc_1', categoryId: null,
+        accountingAccountId: null, documentNumber: 'NF-1', issueDate: '2026-06-01',
+        installments: [], attachments: [], withholdings: [], totalWithheld: 0, netTotal: 1000,
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.getByText('Adicionar retenção')).toBeInTheDocument();
   });
 });

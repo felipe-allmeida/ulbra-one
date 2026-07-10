@@ -36,6 +36,9 @@ public static class PayableTestFactory
         p.MarkCreated(actorId, createdAt);
         p.Classify(accountingAccountId);
         p.Approve(actorId, approvedAt);
+        // Approval now parks the payable in PendingAccounting; completing the accounting review
+        // (with a registered fiscal document) is what schedules it.
+        p.CompleteAccounting(actorId, approvedAt, hasFiscalDocument: true);
         return p;
     }
 

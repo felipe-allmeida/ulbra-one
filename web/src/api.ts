@@ -202,6 +202,7 @@ export type PaymentMethod = Schemas['PaymentMethod'];
 
 // ---------- Payable / Receivable stage items (payable-grain, one row per title) ----------
 export type PayableStageItem = Schemas['PayableStageItemResponse'];
+export type PayableAccountingView = Schemas['PayableAccountingViewResponse'];
 export type ReceivableStageItem = Schemas['ReceivableStageItemResponse'];
 
 // ---------- Receivables (Contas a Receber) ----------
@@ -569,6 +570,8 @@ export const api = {
     return request<Paginated<PayableListItem>>(`/payables?${q}`);
   },
   getPayable: (id: string) => request<Payable>(`/payables/${id}`),
+  payableAccountingView: (id: string) => request<PayableAccountingView>(`/payables/${id}/accounting-view`),
+  confirmAccounting: (id: string) => request<Payable>(`/payables/${id}/accounting/confirm`, { method: 'POST' }),
   payableStageSummary: (companyId: string): Promise<PayableStageSummaryResponse> => {
     const q = new URLSearchParams({ companyId });
     return request<PayableStageSummaryResponse>(`/payables/stage-summary?${q}`);
@@ -576,11 +579,13 @@ export const api = {
   payableStageItems: (params: {
     companyId: string;
     status?: PayableStatus;
+    hasFiscalDocument?: boolean;
     page?: number;
     pageSize?: number;
   }): Promise<Paginated<PayableStageItem>> => {
     const q = new URLSearchParams({ companyId: params.companyId });
     if (params.status) q.set('status', params.status);
+    if (params.hasFiscalDocument !== undefined) q.set('hasFiscalDocument', String(params.hasFiscalDocument));
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableStageItem>>(`/payables/stage-items?${q}`);

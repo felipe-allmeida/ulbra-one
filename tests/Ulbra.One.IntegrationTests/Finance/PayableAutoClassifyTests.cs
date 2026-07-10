@@ -106,7 +106,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task Confident_under_limit_auto_schedules_after_process()
+    public async Task Confident_under_limit_auto_approves_to_accounting_after_process()
     {
         // Arrange: stub returns ≥0.8 confidence with valid account ids; cost center limit is 500m.
         var accId = Guid.NewGuid();
@@ -128,11 +128,11 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         var consumer = scope.ServiceProvider.GetRequiredService<PayableReceivedConsumer>();
         await consumer.ProcessAsync(rawId, CancellationToken.None);
 
-        // Assert: GET should show Scheduled (auto-approved: classified + under limit).
+        // Assert: GET should show PendingAccounting (auto-approved: classified + under limit → accounting stage).
         var getRes = await client.GetAsync($"/api/payables/{prefixedId}");
         Assert.Equal(HttpStatusCode.OK, getRes.StatusCode);
         var body = await ReadJson(getRes);
-        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
+        Assert.Equal("PendingAccounting", body.GetProperty("status").GetString());
         Assert.True(body.GetProperty("isClassified").GetBoolean());
     }
 
@@ -185,7 +185,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         var seed = await SeedAsync(client, autoApprovalLimit: 500m);
         var (prefixedId, rawId) = await CreatePayableAsync(client, seed, amount: 100m);
 
-        // First call — advances status to Scheduled.
+        // First call — advances status to PendingAccounting.
         await using (var scope1 = factory.Services.CreateAsyncScope())
         {
             var consumer1 = scope1.ServiceProvider.GetRequiredService<PayableReceivedConsumer>();
@@ -194,7 +194,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
 
         // Verify first call advanced the status.
         var afterFirst = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
-        Assert.Equal("Scheduled", afterFirst.GetProperty("status").GetString());
+        Assert.Equal("PendingAccounting", afterFirst.GetProperty("status").GetString());
 
         // Act: second call (simulates at-least-once redelivery).
         await using (var scope2 = factory.Services.CreateAsyncScope())
@@ -203,9 +203,9 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
             await consumer2.ProcessAsync(rawId, CancellationToken.None);
         }
 
-        // Assert: status is still Scheduled — idempotency guard (Status != Received) made it a no-op.
+        // Assert: status is still PendingAccounting — idempotency guard (Status != Received) made it a no-op.
         var afterSecond = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
-        Assert.Equal("Scheduled", afterSecond.GetProperty("status").GetString());
+        Assert.Equal("PendingAccounting", afterSecond.GetProperty("status").GetString());
     }
 
     // ---------------------------------------------------------------------------
@@ -230,7 +230,7 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
     /// then classifying via the endpoint should auto-approve when amount is under the cost-center limit.
     /// </summary>
     [Fact]
-    public async Task Classify_Endpoint_Under_Limit_Parks_To_Scheduled()
+    public async Task Classify_Endpoint_Under_Limit_Parks_To_PendingAccounting()
     {
         // Arrange: stub returns 0.6 confidence → parks at PendingClassification.
         var suggestedAccId = Guid.NewGuid();
@@ -260,14 +260,14 @@ public class PayableAutoClassifyTests(PostgresFixture fixture)
         // Seed a real accounting chart account for the classify call.
         var accId = await SeedChartAccountAsync(client, "Accounting");
 
-        // Act: classify via endpoint — amount ≤ limit → should auto-approve to Scheduled.
+        // Act: classify via endpoint — amount ≤ limit → auto-approve, routing to the accounting stage.
         var classifyRes = await client.PostAsJsonAsync($"/api/payables/{prefixedId}/classify",
             new { accountingAccountId = accId });
         Assert.Equal(HttpStatusCode.OK, classifyRes.StatusCode);
         var body = await ReadJson(classifyRes);
 
-        // Assert: auto-approved → Scheduled.
-        Assert.Equal("Scheduled", body.GetProperty("status").GetString());
+        // Assert: auto-approved → PendingAccounting.
+        Assert.Equal("PendingAccounting", body.GetProperty("status").GetString());
         Assert.True(body.GetProperty("isClassified").GetBoolean());
         // Suggestion fields must be cleared after classify.
         Assert.Equal(JsonValueKind.Null, body.GetProperty("suggestedAccountingAccountId").ValueKind);

@@ -37,9 +37,9 @@ public class PayableTests
     {
         var p = NewPayable(500m);
         p.Classify(Guid.NewGuid());
-        p.SetType(PayableType.Service); // type must be determined before auto-scheduling
+        p.SetType(PayableType.Service); // type must be determined before auto-approving
         p.ApplyAutoApproval(1000m, At);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, p.Status); // approval now routes through accounting
         Assert.Equal("system", p.ApprovedBy);
         Assert.Equal(At, p.ApprovedAt);
     }
@@ -56,14 +56,15 @@ public class PayableTests
     }
 
     [Fact]
-    public void Auto_approval_schedules_product_with_no_withholding()
+    public void Auto_approval_advances_product_with_no_withholding()
     {
-        // A determined product (Type=Product) has nothing to withhold, so it may schedule.
+        // A determined product (Type=Product) has nothing to withhold, so it may auto-approve
+        // (into the accounting stage) — unlike an undetermined type, which stays Received.
         var p = NewPayable(500m);
         p.Classify(Guid.NewGuid());
         p.SetType(PayableType.Product);
         p.ApplyAutoApproval(1000m, At);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, p.Status);
     }
 
     [Fact]
@@ -177,9 +178,9 @@ public class PayableTests
     {
         var p = NewPayable(100m);
         p.Approve("u1", At);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, p.Status);
         p.Approve("u1", At);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, p.Status);
     }
 
     [Fact]

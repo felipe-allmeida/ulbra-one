@@ -27,6 +27,8 @@ public class Payable : IAuditable, ISoftDeletable
     public DateTimeOffset? ApprovedAt { get; private set; }
     public string? RejectedBy { get; private set; }
     public DateTimeOffset? RejectedAt { get; private set; }
+    public string? AccountedBy { get; private set; }
+    public DateTimeOffset? AccountedAt { get; private set; }
     public Guid? AccountingAccountId { get; private set; }
     public Guid? PaymentBankAccountId { get; private set; }
     public PaymentMethod? PaymentMethod { get; private set; }
@@ -123,7 +125,9 @@ public class Payable : IAuditable, ISoftDeletable
         EnsureMutable();
         // Once scheduled, the accounting incurral (PayableScheduled → multi-line posting) has
         // already been booked against these withholdings; changing them now would desync the
-        // booked liability from the net actually paid. Withholdings are captured before approval.
+        // booked liability from the net actually paid. They stay editable through PendingAccounting
+        // (the accountant corrects them in "Registro de Despesa") and lock only when accounting is
+        // completed (CompleteAccounting → Scheduled).
         if (Status == PayableStatus.Scheduled)
             throw new InvalidOperationException("Cannot change withholdings after the payable is scheduled.");
         if (_installments.Any(i => i.Payments.Any(p => !p.IsReversed)))
@@ -188,12 +192,29 @@ public class Payable : IAuditable, ISoftDeletable
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled or PayableStatus.Paid)
             throw new InvalidOperationException("Cannot approve a rejected, cancelled or paid payable.");
-        Status = PayableStatus.Scheduled;
+        // Approval no longer means "ready to pay" — the payable now enters the accounting stage, where the
+        // accountant verifies retentions/vendor data and registers the Nota Fiscal before it can be scheduled.
+        Status = PayableStatus.PendingAccounting;
         RejectionReason = null;
         ApprovedBy = approvedBy;
         ApprovedAt = at;
         RejectedBy = null;
         RejectedAt = null;
+    }
+
+    /// <summary>Accountant confirms the accounting review (retentions, ledger classification) and releases the
+    /// payable for payment. Requires a registered fiscal document (Nota Fiscal) — checked by the caller, since the
+    /// <c>FiscalDocument</c> is a separate aggregate — enforced here as an invariant. Only valid from
+    /// <see cref="PayableStatus.PendingAccounting"/>.</summary>
+    public void CompleteAccounting(string bookedBy, DateTimeOffset at, bool hasFiscalDocument)
+    {
+        if (Status != PayableStatus.PendingAccounting)
+            throw new InvalidOperationException("Only a payable pending accounting can be booked (scheduled).");
+        if (!hasFiscalDocument)
+            throw new InvalidOperationException("A registered fiscal document (Nota Fiscal) is required before accounting can be completed.");
+        Status = PayableStatus.Scheduled;
+        AccountedBy = bookedBy;
+        AccountedAt = at;
     }
 
     public void Reject(string? reason, string rejectedBy, DateTimeOffset at)
@@ -276,6 +297,10 @@ public class Payable : IAuditable, ISoftDeletable
     public void RecomputeSettlement()
     {
         if (Status is PayableStatus.Rejected or PayableStatus.Cancelled) return;
+        // Invariant: the canonical entry to Scheduled is CompleteAccounting (gates on the Nota Fiscal and
+        // publishes PayableScheduled → accounting incurral). This method only re-derives Paid⇄Scheduled after a
+        // payment or its reversal on an already-scheduled payable (reachable from Scheduled/Paid, never from
+        // PendingAccounting) — do NOT call it to schedule a payable, as it would skip the NF gate + the event.
         Status = _installments.All(i => i.Status == InstallmentStatus.Paid)
             ? PayableStatus.Paid
             : PayableStatus.Scheduled;

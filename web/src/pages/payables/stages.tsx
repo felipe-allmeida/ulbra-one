@@ -1,16 +1,17 @@
 import { type ReactNode } from 'react';
-import { Inbox, Tags, CheckCircle2, Wallet, Archive } from 'lucide-react';
+import { Inbox, Tags, CheckCircle2, Calculator, Wallet, Archive } from 'lucide-react';
 import { type PayableStatus, type PayableStageSummaryResponse } from '../../api';
 import { type PendencyCard } from '../../components/workflow';
 
-export type StageKey = 'entry' | 'classification' | 'approval' | 'payment' | 'reconciled';
+export type StageKey = 'entry' | 'classification' | 'approval' | 'accounting' | 'payment' | 'reconciled';
 
-export const STAGE_ORDER: StageKey[] = ['entry', 'classification', 'approval', 'payment', 'reconciled'];
+export const STAGE_ORDER: StageKey[] = ['entry', 'classification', 'approval', 'accounting', 'payment', 'reconciled'];
 
 export const STAGE_STATUS: Record<StageKey, PayableStatus> = {
   entry: 'Received',
   classification: 'PendingClassification',
   approval: 'PendingApproval',
+  accounting: 'PendingAccounting',
   payment: 'Scheduled',
   reconciled: 'Paid',
 };
@@ -23,6 +24,8 @@ export function stageIcon(key: StageKey): ReactNode {
       return <Tags size={18} />;
     case 'approval':
       return <CheckCircle2 size={18} />;
+    case 'accounting':
+      return <Calculator size={18} />;
     case 'payment':
       return <Wallet size={18} />;
     case 'reconciled':

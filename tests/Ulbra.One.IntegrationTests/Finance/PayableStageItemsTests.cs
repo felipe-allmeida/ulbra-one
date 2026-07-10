@@ -51,4 +51,54 @@ public class PayableStageItemsTests(PostgresFixture fixture)
         var listBody = JsonDocument.Parse(await list.Content.ReadAsStringAsync()).RootElement;
         Assert.Equal(3, listBody.GetProperty("items").GetArrayLength());
     }
+
+    [Fact]
+    public async Task StageItems_filters_by_hasFiscalDocument()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // Two approved payables parked in PendingAccounting: one still missing its NF, one that already has it.
+        var withoutNf = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withoutNf);
+
+        var withNf = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 200m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withNf);
+        await FinanceSeed.RegisterFiscalDocAsync(factory, client, withNf);
+
+        // A parsed FiscalDocument and a plain attached document BOTH count as "has NF".
+        var withAttachment = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 300m, approve: false);
+        await FinanceSeed.ApproveAsync(client, withAttachment);
+        await FinanceSeed.AttachDocumentAsync(client, withAttachment);
+
+        // hasFiscalDocument=false => only the payable with no NF at all (the Pendências "Nota Fiscal" tab).
+        Assert.Equal([withoutNf], await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: false));
+
+        // hasFiscalDocument=true => the fiscal-doc one AND the attachment one (order by due date is not asserted).
+        var withNfSet = await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: true);
+        Assert.Equal(2, withNfSet.Count);
+        Assert.Contains(withNf, withNfSet);
+        Assert.Contains(withAttachment, withNfSet);
+
+        // Absent filter => all three PendingAccounting payables (previous behavior preserved for the payables tabs).
+        var all = await StageItemIds(client, companyId, "PendingAccounting", hasFiscalDocument: null);
+        Assert.Equal(3, all.Count);
+    }
+
+    private static async Task<List<string>> StageItemIds(HttpClient client, string companyId, string status, bool? hasFiscalDocument)
+    {
+        var url = $"/api/payables/stage-items?companyId={companyId}&status={status}";
+        if (hasFiscalDocument is { } h) url += $"&hasFiscalDocument={(h ? "true" : "false")}";
+        var res = await client.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var body = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+        return body.GetProperty("items").EnumerateArray()
+            .Select(x => x.GetProperty("payableId").GetString()!)
+            .ToList();
+    }
 }
