@@ -40,7 +40,7 @@ beforeEach(() => {
       documentNumber: 'NF-1',
       issueDate: '2026-06-01',
       installments: [
-        { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, status: 'Open', paidAmount: 0, payments: [] },
+        { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, netAmount: 1000, status: 'Open', paidAmount: 0, payments: [] },
       ],
       attachments: [],
       withholdings: [],
@@ -92,6 +92,42 @@ describe('PayableDetailPage', () => {
     renderWithProviders(<PayableDetailPage />);
     expect(screen.getByText(/Aprovado por Carlos Silva/)).toBeInTheDocument();
     expect(screen.queryByText(/3fa85f64/)).not.toBeInTheDocument();
+  });
+
+  it('shows the "Valor líquido" card and the per-installment net column once accounting completes', () => {
+    mockUsePayable.mockReturnValue({
+      data: {
+        id: 'payable_1', companyId: 'company_1', counterpartyName: 'ACME', description: 'NF 1',
+        status: 'Scheduled', totalAmount: 1000, costCenterId: 'cc_1', categoryId: null,
+        accountingAccountId: null, documentNumber: 'NF-1', issueDate: '2026-06-01',
+        installments: [
+          { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, netAmount: 940, status: 'Open', paidAmount: 0, payments: [] },
+        ],
+        attachments: [], withholdings: [{ id: 'w1', taxType: 'Irrf', baseAmount: 1000, rate: null, amount: 60 }],
+        totalWithheld: 60, netTotal: 940,
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    // Card next to "Valor total" (the label also exists inside the read-only WithholdingSection).
+    expect(screen.getAllByText('Valor líquido').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/R\$\s?940/).length).toBeGreaterThanOrEqual(2); // card + installment net cell
+    expect(screen.getByText('Valor bruto')).toBeInTheDocument(); // installments header switches
+  });
+
+  it('hides the net card and net column while the withholdings are not locked (PendingApproval)', () => {
+    mockUsePayable.mockReturnValue({
+      data: {
+        id: 'payable_1', companyId: 'company_1', counterpartyName: 'ACME', description: 'NF 1',
+        status: 'PendingApproval', totalAmount: 1000, costCenterId: 'cc_1', categoryId: null,
+        accountingAccountId: null, documentNumber: 'NF-1', issueDate: '2026-06-01',
+        installments: [
+          { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, netAmount: 1000, status: 'Open', paidAmount: 0, payments: [] },
+        ],
+        attachments: [], withholdings: [], totalWithheld: 0, netTotal: 1000,
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.queryByText('Valor bruto')).toBeNull(); // installments keep the single amount column
   });
 
   it('keeps retentions read-only on the approval detail (editor hidden)', () => {

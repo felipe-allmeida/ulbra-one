@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { TAB_ORDER, TAB_STATUS, dashboardCards, cardTargetTab, isTabKey } from './stages';
 
 const summary = {
-  entry: { count: 4, totalAmount: 1200 },
-  receipt: { count: 2, totalAmount: 800 },
-  reconciled: { count: 9, totalAmount: 5000 },
+  entry: { count: 4, totalAmount: 1200, netTotalAmount: null },
+  receipt: { count: 2, totalAmount: 800, netTotalAmount: null },
+  reconciled: { count: 9, totalAmount: 5000, netTotalAmount: null },
 };
 
 describe('receivable stages', () => {

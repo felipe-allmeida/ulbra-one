@@ -345,7 +345,10 @@ const ptBR = {
       AttachmentDeleted: 'Anexo removido',
     },
     payment: {
+      // weekSummary is shared with the receivables tab (neutral); weekSummaryToPay is the payables
+      // payment esteira, whose total is net of withholdings ("a pagar").
       weekSummary: 'Total: {{amount}} ({{count}} parcelas)',
+      weekSummaryToPay: 'A pagar: {{amount}} ({{count}} parcelas)',
       groupToday: 'Vence hoje',
       groupThisWeek: 'Esta semana',
       groupNextWeek: 'Próxima semana',
@@ -407,6 +410,9 @@ const ptBR = {
       costCenter: 'Centro de custo',
       category: 'Agrupamento (local)',
       amount: 'Valor',
+      grossAmount: 'Valor bruto',
+      netAmount: 'Valor líquido',
+      toPay: 'A pagar',
       status: 'Status',
     },
     fields: {
@@ -511,6 +517,7 @@ const ptBR = {
     },
     cards: {
       totalAmount: 'Valor total',
+      netTotal: 'Valor líquido',
       status: 'Status',
       costCenter: 'Centro de custo',
       category: 'Agrupamento (local)',
@@ -1623,6 +1630,7 @@ const ptBR = {
   errors: {
     generic: 'Algo deu errado. Tente novamente em instantes.',
     codes: {
+      'Payment.Overpay': 'O valor pago excede o saldo em aberto da parcela (valor líquido de retenções).',
       'Company.NotFound': 'Empresa não encontrada.',
       'CostCenter.UnitsInvalid': 'Uma ou mais unidades não pertencem a esta empresa.',
       'Transaction.CostCenterInvalid': 'Centro de custo inválido para esta empresa.',

@@ -25,6 +25,7 @@ export function AdvancesTab({ companyId }: { companyId: string }) {
       page={page}
       totalPages={data?.totalPages ?? 1}
       onPage={setPage}
+      showNet
       statusCell={(item) => (
         <>
           <PayableStatusBadge s={item.status} />

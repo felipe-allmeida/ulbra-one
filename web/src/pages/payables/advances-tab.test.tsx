@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
@@ -19,6 +19,8 @@ const items = [
     firstDueDate: '2026-07-20',
     installmentCount: 1,
     totalAmount: 1000,
+    totalWithheld: 0,
+    netTotal: 1000,
     status: 'PendingAccounting',
     origin: 'Advance',
     hasFiscalDocument: false,
@@ -32,6 +34,8 @@ const items = [
     firstDueDate: '2026-08-05',
     installmentCount: 1,
     totalAmount: 500,
+    totalWithheld: 50,
+    netTotal: 450,
     status: 'Paid',
     origin: 'Advance',
     hasFiscalDocument: false,
@@ -70,5 +74,18 @@ describe('AdvancesTab', () => {
     expect(screen.getByText('Paga')).toBeInTheDocument();
     // Every row is tagged as an Adiantamento.
     expect(screen.getAllByText('Adiantamento')).toHaveLength(2);
+  });
+
+  it('shows gross + net columns: net filled once locked (Paid), "—" while pre-accounting', () => {
+    renderTab();
+    expect(screen.getByText('Valor bruto')).toBeInTheDocument();
+    expect(screen.getByText('Valor líquido')).toBeInTheDocument();
+    // Paid advance → net cell shows 450; PendingAccounting → net cell shows '—'
+    // (each row also has one '—' in the unmapped cost-center cell).
+    const paidRow = screen.getByText('Adiantamento viagem').closest('tr')!;
+    expect(within(paidRow).getByText(/R\$\s?450/)).toBeInTheDocument();
+    expect(within(paidRow).getAllByText('—')).toHaveLength(1);
+    const pendingRow = screen.getByText('Adiantamento obra').closest('tr')!;
+    expect(within(pendingRow).getAllByText('—')).toHaveLength(2);
   });
 });

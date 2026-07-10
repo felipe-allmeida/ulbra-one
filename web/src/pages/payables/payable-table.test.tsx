@@ -65,6 +65,50 @@ describe('PayableTable', () => {
     );
     expect(screen.getByText(/Entrada/)).toBeInTheDocument();
   });
+  it('showNet renders gross + net columns; the net cell stays "—" until the withholdings lock', () => {
+    const mixed = [
+      { ...items[0], payableId: 'p_paid', status: 'Paid', totalAmount: 1000, netTotal: 940 },
+      { ...items[0], payableId: 'p_received', status: 'Received', totalAmount: 500, netTotal: 500 },
+    ] as any;
+    render(
+      <MemoryRouter>
+        <PayableTable
+          companyId='company_1'
+          stageLabel='Conciliado'
+          items={mixed}
+          total={2}
+          page={1}
+          totalPages={1}
+          onPage={() => {}}
+          showNet
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Valor bruto')).toBeInTheDocument();
+    expect(screen.getByText('Valor líquido')).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s?940/)).toBeInTheDocument(); // Paid → net shown
+    expect(screen.getByText('—')).toBeInTheDocument(); // Received → net not locked yet
+  });
+
+  it('without showNet the single "Valor" column renders and no net column exists', () => {
+    render(
+      <MemoryRouter>
+        <PayableTable
+          companyId='company_1'
+          stageLabel='Entrada'
+          items={items}
+          total={1}
+          page={1}
+          totalPages={1}
+          onPage={() => {}}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Valor')).toBeInTheDocument();
+    expect(screen.queryByText('Valor líquido')).toBeNull();
+    expect(screen.queryByText('Valor bruto')).toBeNull();
+  });
+
   it('tags advance rows with "Adiantamento" in the default status cell', () => {
     const mixed = [
       { ...items[0], payableId: 'p_advance', origin: 'Advance' },

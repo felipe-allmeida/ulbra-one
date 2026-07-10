@@ -56,7 +56,8 @@ function ManualMatchDrawer({
       .map((p) => ({
         id: p.installmentId,
         label: `${p.counterpartyName || '—'} · ${fmtDate(p.dueDate)}`,
-        sub: `${p.sequence}/${p.installmentCount} · ${brl(p.amount)}`,
+        // Net of withholdings — the value that actually matches the bank debit.
+        sub: `${p.sequence}/${p.installmentCount} · ${brl(p.netAmount)}`,
       }));
   }, [payables.data]);
 
