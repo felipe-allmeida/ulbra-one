@@ -27,12 +27,15 @@ public sealed class GetPayableStageItems : IEndpoint
         CompanyId companyId,
         PayableStatus? status,
         bool? hasFiscalDocument,
+        PayableOrigin? origin,
         IUnitOfWork uow,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
     {
         var q = uow.ReadSet<Payable>().Where(p => p.CompanyId == companyId.Value);
         if (status is { } st) q = q.Where(p => p.Status == st);
+        // Origin filter (e.g. the "Adiantamentos" tab of Registro de Despesa: origin=Advance, no status).
+        if (origin is { } og) q = q.Where(p => p.Origin == og);
 
         // "Has NF" = a parsed FiscalDocument (XML read at creation) OR an attached NF document (PayableAttachment —
         // the Pendências attach flow, PDF/other, no parse). Correlated EXISTS, both translated to SQL.
@@ -68,6 +71,6 @@ public sealed class GetPayableStageItems : IEndpoint
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
             new PayableId(x.Id), x.CounterpartyName, x.Description, new CostCenterId(x.CostCenterId),
             x.CategoryId == null ? null : new ExpenseCategoryId(x.CategoryId.Value),
-            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status, x.HasFiscalDocument)));
+            x.FirstDueDate, x.InstallmentCount, x.TotalAmount, x.Status, x.Origin, x.HasFiscalDocument)));
     }
 }

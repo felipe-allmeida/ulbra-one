@@ -90,6 +90,42 @@ public class PayableStageItemsTests(PostgresFixture fixture)
         Assert.Equal(3, all.Count);
     }
 
+    [Fact]
+    public async Task StageItems_filters_by_origin_across_statuses_and_exposes_origin()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // Two advances in different stages (Received and PendingAccounting) + one normal payable.
+        var advanceReceived = await FinanceSeed.CreatePayableAsync(
+            factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false, origin: "Advance");
+        var advanceAccounting = await FinanceSeed.CreatePayableAsync(
+            factory, client, companyId, vendor, cc, today.AddDays(20), 200m, approve: false, origin: "Advance");
+        await FinanceSeed.ApproveAsync(client, advanceAccounting);
+        var manual = await FinanceSeed.CreatePayableAsync(
+            factory, client, companyId, vendor, cc, today.AddDays(30), 300m, approve: false);
+
+        // origin=Advance with NO status filter => both advances, whatever their current stage.
+        var res = await client.GetAsync($"/api/payables/stage-items?companyId={companyId}&origin=Advance");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var items = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement
+            .GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(2, items.Count);
+        Assert.All(items, x => Assert.Equal("Advance", x.GetProperty("origin").GetString()));
+        var ids = items.Select(x => x.GetProperty("payableId").GetString()).ToList();
+        Assert.Contains(advanceReceived, ids);
+        Assert.Contains(advanceAccounting, ids);
+        Assert.DoesNotContain(manual, ids);
+        var statuses = items.Select(x => x.GetProperty("status").GetString()).ToHashSet();
+        Assert.Contains("Received", statuses);
+        Assert.Contains("PendingAccounting", statuses);
+    }
+
     private static async Task<List<string>> StageItemIds(HttpClient client, string companyId, string status, bool? hasFiscalDocument)
     {
         var url = $"/api/payables/stage-items?companyId={companyId}&status={status}";

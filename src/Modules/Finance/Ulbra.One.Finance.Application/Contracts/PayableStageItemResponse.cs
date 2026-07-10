@@ -18,4 +18,5 @@ public sealed record PayableStageItemResponse(
     int InstallmentCount,
     decimal TotalAmount,
     PayableStatus Status,
+    PayableOrigin Origin,
     bool HasFiscalDocument);
