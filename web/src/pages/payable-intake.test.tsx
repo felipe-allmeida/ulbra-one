@@ -1,8 +1,10 @@
 /**
- * Tests for the payable intake UI (NF reader + manual reveal-gate):
- * - The NF reader (hero) and the "fill manually" option render before any choice is made.
- * - Clicking "ou preencher manualmente" reveals the blank form.
- * - Uploading an NF triggers the presigned flow: upload-url → PUT → parse → applyParsed (mocked hooks).
+ * Tests for the payable intake UI (3-card modality chooser + NF reader + manual sub-path):
+ * - The chooser renders the 3 modality cards (Folha disabled/"Em breve") and nothing else.
+ * - Nota Fiscal nests today's flow: reader hero + "ou preencher manualmente" link.
+ * - Adiantamento goes straight to the blank form, with no NF reader at all.
+ * - The intake modality maps to the origin sent on create (originForIntake + wired submit).
+ * - The top back link returns to the chooser (not the list) from inside a modality.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
@@ -10,10 +12,12 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../test/renderWithProviders';
 import '../i18n';
 
+const { navMock } = vi.hoisted(() => ({ navMock: vi.fn() }));
+
 // ---- mock react-router-dom (NewPayablePage calls useNavigate, useParams) ----
 vi.mock('react-router-dom', async (orig) => {
   const actual = await orig<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: () => vi.fn(), useParams: () => ({}) };
+  return { ...actual, useNavigate: () => navMock, useParams: () => ({}) };
 });
 
 // ---- mock the store (useApp needs empresa / empresaId) ----
@@ -49,10 +53,10 @@ vi.mock('../queries', async (orig) => {
     usePayables: () => ({ data: { items: [], total: 0, totalPages: 1 }, isLoading: false }),
     usePayable: noop,
     useVendors: () => ({ data: { items: [] }, isLoading: false }),
-    useCostCenters: () => ({ data: [] }),
+    useCostCenters: vi.fn(() => ({ data: [] })),
     useExpenseCategories: () => ({ data: [] }),
     useLedgerAccounts: () => ({ data: [] }),
-    useCreatePayable: noopMut,
+    useCreatePayable: vi.fn(() => noopMut()),
     useUpdatePayable: noopMut,
     useUploadPayableAttachment: noopMut,
     useUploadPayableFiscalDocument: noopMut,
@@ -72,7 +76,14 @@ vi.mock('../queries', async (orig) => {
 });
 
 import { NewPayablePage } from './payables';
-import { useRequestFiscalUploadUrl, useParseFiscalDocument, uploadToPresignedUrl } from '../queries';
+import { originForIntake } from './payables/intake-choice';
+import {
+  useRequestFiscalUploadUrl,
+  useParseFiscalDocument,
+  uploadToPresignedUrl,
+  useCreatePayable,
+  useCostCenters,
+} from '../queries';
 import type { ParsedFiscalDocument, UploadTarget } from '../api';
 
 const minParsed: ParsedFiscalDocument = {
@@ -92,101 +103,193 @@ function renderPage() {
   return renderWithProviders(<NewPayablePage />);
 }
 
-describe('Payable intake (NF reader + manual)', () => {
+/** Wires the presigned upload-url → PUT → parse chain to resolve with the given parsed NF. */
+function mockNfFlow(parsed: ParsedFiscalDocument) {
+  const uploadTarget: UploadTarget = { uploadUrl: 'https://blob.example.com/up?sig=test', key: 'fiscal/nf001.xml' };
+  const requestUrlMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: UploadTarget) => void }) => {
+    opts?.onSuccess?.(uploadTarget);
+  });
+  const parseMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: ParsedFiscalDocument) => void }) => {
+    opts?.onSuccess?.(parsed);
+  });
+  vi.mocked(useRequestFiscalUploadUrl).mockReturnValue({
+    mutate: requestUrlMutate,
+    mutateAsync: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+    isSuccess: false,
+    data: undefined,
+  } as unknown as ReturnType<typeof useRequestFiscalUploadUrl>);
+  vi.mocked(useParseFiscalDocument).mockReturnValue({
+    mutate: parseMutate,
+    mutateAsync: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+    isSuccess: false,
+    data: undefined,
+  } as unknown as ReturnType<typeof useParseFiscalDocument>);
+  vi.mocked(uploadToPresignedUrl).mockResolvedValue(undefined);
+  return { uploadTarget, requestUrlMutate, parseMutate };
+}
+
+async function uploadNf(user: ReturnType<typeof userEvent.setup>) {
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[type="file"]');
+  expect(inputs.length).toBeGreaterThan(0);
+  const xmlFile = new File(['<nfeProc/>'], 'nf001.xml', { type: 'text/xml' });
+  await user.upload(inputs[0], xmlFile);
+  return xmlFile;
+}
+
+describe('Payable intake (modality chooser + NF reader + manual)', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders the NF reader and the manual option before any choice is made', () => {
+  it('renders the 3 modality cards and nothing else', () => {
     renderPage();
 
-    // The fiscal NF reader (hero) and the "fill manually" link are both offered up front.
-    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
-    expect(screen.getByText('ou preencher manualmente')).toBeInTheDocument();
-    // The payable form fields are not visible until a choice is made.
+    expect(screen.getByText('Folha de pagamento')).toBeInTheDocument();
+    expect(screen.getByText('Nota Fiscal')).toBeInTheDocument();
+    expect(screen.getByText('Adiantamento')).toBeInTheDocument();
+    // Neither the NF reader nor the form render before a modality is picked.
+    expect(screen.queryByText('Nota fiscal (XML/PDF)')).toBeNull();
+    expect(screen.queryByText('ou preencher manualmente')).toBeNull();
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('clicking "ou preencher manualmente" reveals the blank form', async () => {
+  it('Folha de pagamento is disabled with an "Em breve" badge', () => {
     renderPage();
 
+    const folha = screen.getByRole('button', { name: /Folha de pagamento/ });
+    expect(folha).toBeDisabled();
+    expect(screen.getByText('Em breve')).toBeInTheDocument();
+
+    fireEvent.click(folha);
+    // Nothing changes: still on the chooser.
+    expect(screen.queryByText('Nota fiscal (XML/PDF)')).toBeNull();
+    expect(screen.queryByText('Centro de custo')).toBeNull();
+  });
+
+  it('Nota Fiscal card shows the reader hero and the manual sub-path', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+
+    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
+    expect(screen.getByText('ou preencher manualmente')).toBeInTheDocument();
+    expect(screen.queryByText('Centro de custo')).toBeNull();
+  });
+
+  it('Nota Fiscal → "ou preencher manualmente" reveals the blank form (NF not available yet)', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
     fireEvent.click(screen.getByText('ou preencher manualmente'));
 
-    // After clicking, the form should appear (Centro de custo field).
     await waitFor(() => {
       expect(screen.getByText('Centro de custo')).toBeInTheDocument();
     });
+    // The reader collapses into the band, still available to attach the NF later.
+    expect(screen.getByText('Dados da Nota Fiscal')).toBeInTheDocument();
   });
 
-  it('NF flow: upload-url → PUT → parse → form fields pre-filled', async () => {
+  it('Adiantamento reveals the blank form with no NF reader at all', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Adiantamento/ }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Centro de custo')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Nota fiscal (XML/PDF)')).toBeNull();
+    expect(screen.queryByText('Dados da Nota Fiscal')).toBeNull();
+    expect(screen.queryByText('ou preencher manualmente')).toBeNull();
+  });
+
+  it('back link from inside a modality returns to the chooser (not the list)', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Adiantamento/ }));
+    await waitFor(() => expect(screen.getByText('Centro de custo')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Voltar'));
+
+    await waitFor(() => expect(screen.getByText('Folha de pagamento')).toBeInTheDocument());
+    expect(screen.queryByText('Centro de custo')).toBeNull();
+    expect(navMock).not.toHaveBeenCalled();
+  });
+
+  it('maps the intake modality to the payable origin (originForIntake)', () => {
+    expect(originForIntake('advance', false)).toBe('Advance');
+    expect(originForIntake('fiscal', true)).toBe('FiscalDocument');
+    // Manual sub-path of the fiscal modality (NF not available yet) stays Manual.
+    expect(originForIntake('fiscal', false)).toBe('Manual');
+  });
+
+  it('NF flow: upload-url → PUT → parse → prefilled form → create sends origin FiscalDocument', async () => {
     const user = userEvent.setup();
-
-    const uploadTarget: UploadTarget = {
-      uploadUrl: 'https://blob.example.com/up?sig=test',
-      key: 'fiscal/nf001.xml',
-    };
-
-    // Set up the upload-url mutation to call onSuccess with the target.
-    const requestUrlMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: UploadTarget) => void }) => {
-      opts?.onSuccess?.(uploadTarget);
-    });
-    const parseMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: ParsedFiscalDocument) => void }) => {
-      opts?.onSuccess?.(minParsed);
+    const { uploadTarget, requestUrlMutate, parseMutate } = mockNfFlow({
+      ...minParsed,
+      matchedVendorId: 'vendor_1',
+      matchedVendorName: 'Fornecedor SA',
+      serviceDescription: 'Materiais de escritório',
+      installments: [{ dueDate: '2026-08-10', amount: 1500 }],
     });
 
-    vi.mocked(useRequestFiscalUploadUrl).mockReturnValue({
-      mutate: requestUrlMutate,
-      mutateAsync: vi.fn(),
+    vi.mocked(useCostCenters).mockReturnValue({
+      data: [{ id: 'cc_1', code: 'CC1', name: 'TI' }],
+    } as unknown as ReturnType<typeof useCostCenters>);
+
+    const createAsync = vi.fn().mockResolvedValue({ id: 'payable_1' });
+    vi.mocked(useCreatePayable).mockReturnValue({
+      mutate: vi.fn(),
+      mutateAsync: createAsync,
       isPending: false,
       error: null,
       reset: vi.fn(),
       isSuccess: false,
       data: undefined,
-    } as unknown as ReturnType<typeof useRequestFiscalUploadUrl>);
-
-    vi.mocked(useParseFiscalDocument).mockReturnValue({
-      mutate: parseMutate,
-      mutateAsync: vi.fn(),
-      isPending: false,
-      error: null,
-      reset: vi.fn(),
-      isSuccess: false,
-      data: undefined,
-    } as unknown as ReturnType<typeof useParseFiscalDocument>);
-
-    vi.mocked(uploadToPresignedUrl).mockResolvedValue(undefined);
+    } as unknown as ReturnType<typeof useCreatePayable>);
 
     renderPage();
 
-    // The file input is hidden inside the label; query it via DOM.
-    const inputs = document.querySelectorAll<HTMLInputElement>('input[type="file"]');
-    expect(inputs.length).toBeGreaterThan(0);
-    const nfInput = inputs[0];
+    fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+    const xmlFile = await uploadNf(user);
 
-    const xmlFile = new File(['<nfeProc/>'], 'nf001.xml', { type: 'text/xml' });
-    await user.upload(nfInput, xmlFile);
-
-    // upload-url was requested with the file name
+    // Presigned chain: upload-url with the file name → PUT → parse by storage key.
     expect(requestUrlMutate).toHaveBeenCalledWith(
       { fileName: 'nf001.xml' },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
-
-    // File was PUT to the presigned URL
     expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
-
-    // Parse was called with the storage key (not the raw file)
     expect(parseMutate).toHaveBeenCalledWith(
       { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
 
-    // After parse succeeds, the form is revealed and the document number pre-filled.
-    // NF-001 appears in both the reader's read-only preview and the form input.
+    // Form revealed with the NF fields prefilled (NF-001 in the reader preview and the form input).
     await waitFor(() => {
       expect(screen.getAllByDisplayValue('NF-001').length).toBeGreaterThan(0);
     });
 
-    // The parsed NF has an issuerDocument but no matched vendor, so the
-    // prefilled "register vendor" action must be offered.
-    expect(screen.getByText('Cadastrar fornecedor')).toBeInTheDocument();
+    // Complete the one missing required field (cost center) and submit.
+    const selects = document.querySelectorAll<HTMLSelectElement>('select');
+    const ccSelect = Array.from(selects).find((s) => s.querySelector('option[value="cc_1"]'))!;
+    fireEvent.change(ccSelect, { target: { value: 'cc_1' } });
+
+    const submit = await screen.findByRole('button', { name: 'Lançar' });
+    await waitFor(() => expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+
+    await waitFor(() => {
+      expect(createAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'FiscalDocument',
+          vendorId: 'vendor_1',
+          costCenterId: 'cc_1',
+          installments: [{ dueDate: '2026-08-10', amount: 1500 }],
+        }),
+      );
+    });
   });
 });

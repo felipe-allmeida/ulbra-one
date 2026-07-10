@@ -30,6 +30,7 @@ import { useNames } from './use-names';
 import { fmtDate } from '../../datetime';
 import { VendorPicker } from './vendor-picker';
 import { FiscalXmlReader } from './fiscal-xml-reader';
+import { PayableIntakeChoice, originForIntake, type PayableIntakeMode } from './intake-choice';
 
 /* ============ CREATE / EDIT FORM ============ */
 function PayableForm({ initial }: { initial?: Payable }) {
@@ -132,10 +133,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const [xmlInstallments, setXmlInstallments] = useState<{ dueDate: string; amount: number }[] | null>(null);
   const vendorFromXml = useRef(false);
   const descriptionFromXml = useRef(false);
-  // Reveal gate (create flow): the payable fields stay hidden until an XML is parsed or the user opts to fill manually.
+  // Intake modality (create flow): chooser first; 'fiscal' nests the reader + manual sub-path,
+  // 'advance' (adiantamento) goes straight to the manual form with no NF.
+  const [intake, setIntake] = useState<'choice' | PayableIntakeMode>('choice');
+  // Reveal gate (fiscal mode): the payable fields stay hidden until an XML is parsed or the user opts to fill manually.
   const [xmlApplied, setXmlApplied] = useState(false);
   const [manualMode, setManualMode] = useState(false);
-  const revealed = editing || xmlApplied || manualMode;
+  const revealed = editing || intake === 'advance' || (intake === 'fiscal' && (xmlApplied || manualMode));
   // The parsed NF (drives the title, the vendor pre-fill and the "from NF" markers); null in manual/edit.
   const [nf, setNf] = useState<ParsedFiscalDocument | null>(null);
   // Payable form fields that were filled from the NF — shown with an AutoHint + input-auto styling.
@@ -268,8 +272,11 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const onValid = async (v: PayableValues) => {
     const body = buildBody(v);
     try {
+      // Origin is set at create time from the intake modality; immutable on edit.
       const p =
-        editing && initial ? await update.mutateAsync({ id: initial.id, body }) : await create.mutateAsync(body);
+        editing && initial
+          ? await update.mutateAsync({ id: initial.id, body })
+          : await create.mutateAsync({ ...body, origin: originForIntake(intake, xmlApplied) });
       // The NF used to read the data: persist the parsed fiscal document (key from the presigned upload) AND
       // attach the file to the payable so it shows in Anexos and counts as the registered NF. Then any extra
       // generic attachment. Then navigate.
@@ -283,6 +290,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
   };
 
   const backTo = editing && initial ? `/app/payables/${initial.id}` : '/app/payables';
+  // From inside a modality, the back link returns to the chooser (not the list); resets any NF state.
+  const backToChoice = () => {
+    setFiscalFile(null);
+    clearXmlFields();
+    setIntake('choice');
+  };
 
   // When the NF issuer has no matching vendor, build a pre-fill so the user can register it in one click.
   const vendorPrefill: Partial<VendorValues> | undefined =
@@ -309,7 +322,10 @@ function PayableForm({ initial }: { initial?: Payable }) {
 
   return (
     <>
-      <button className='backlink' onClick={() => nav(backTo)}>
+      <button
+        className='backlink'
+        onClick={() => (!editing && intake !== 'choice' ? backToChoice() : nav(backTo))}
+      >
         <ChevronLeft /> {t('common.back')}
       </button>
       <div className='detail-head'>
@@ -325,17 +341,22 @@ function PayableForm({ initial }: { initial?: Payable }) {
           title={t('payables.empty.noCompanyTitle')}
           sub={t('payables.empty.noCompanyForm')}
         />
+      ) : !editing && intake === 'choice' ? (
+        <PayableIntakeChoice onPick={setIntake} />
       ) : (
         <div>
-          <FiscalXmlReader
-            companyId={empresaId}
-            file={fiscalFile}
-            onFile={setFiscalFile}
-            onApply={applyParsed}
-            onUploadKey={(key, meta) => setFiscalUpload({ key, ...meta })}
-            onClear={clearXmlFields}
-            variant={revealed ? 'band' : 'hero'}
-          />
+          {/* The NF reader belongs to the fiscal modality (and edit); an adiantamento has no NF. */}
+          {(editing || intake === 'fiscal') && (
+            <FiscalXmlReader
+              companyId={empresaId}
+              file={fiscalFile}
+              onFile={setFiscalFile}
+              onApply={applyParsed}
+              onUploadKey={(key, meta) => setFiscalUpload({ key, ...meta })}
+              onClear={clearXmlFields}
+              variant={revealed ? 'band' : 'hero'}
+            />
+          )}
           {!revealed && (
             <div style={{ maxWidth: 560, margin: '12px auto 0', textAlign: 'center' }}>
               <button type='button' className='linklike' onClick={() => setManualMode(true)}>

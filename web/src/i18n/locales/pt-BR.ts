@@ -473,11 +473,13 @@ const ptBR = {
       totalTaxes: 'Total tributos',
     },
     intake: {
-      withNf: 'Preencher com NF',
-      withNfHint: 'Suba o XML da nota fiscal e os campos serão preenchidos automaticamente.',
-      manual: 'Preencher manualmente',
-      manualHint: 'Informe os dados da conta a pagar sem nota fiscal.',
-      createVendorFromNf: 'Cadastrar fornecedor da NF',
+      title: 'Como você quer lançar esta conta?',
+      payroll: 'Folha de pagamento',
+      payrollHint: 'Contas geradas a partir da folha de pagamento.',
+      fiscal: 'Nota Fiscal',
+      fiscalHint: 'Suba o XML ou PDF da nota fiscal — ou preencha manualmente se ainda não tiver a NF.',
+      advance: 'Adiantamento',
+      advanceHint: 'Lance um adiantamento sem nota fiscal, preenchendo os dados manualmente.',
     },
     confirmSection: {
       title: 'Confirme os dados',
