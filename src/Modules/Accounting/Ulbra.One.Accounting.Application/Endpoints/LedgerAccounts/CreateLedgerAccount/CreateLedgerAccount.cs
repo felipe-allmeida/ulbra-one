@@ -18,6 +18,10 @@ public sealed class CreateLedgerAccount : IEndpoint
     public sealed record Request
     {
         [NormalizeText] public string Code { get; set; } = string.Empty;
+        /// <summary>Optional short numeric alias ("código reduzido"); unique when present.</summary>
+        [NormalizeText] public string? ReducedCode { get; set; }
+        /// <summary>Optional "Natureza" classification (1–5) from the chart.</summary>
+        public int? Natureza { get; set; }
         [NormalizeText] public string Name { get; set; } = string.Empty;
         public AccountGroup AccountGroup { get; set; }
         public LedgerAccountKind Kind { get; set; }
@@ -44,7 +48,7 @@ public sealed class CreateLedgerAccount : IEndpoint
         try
         {
             account = new LedgerAccount(req.Code, req.Name, req.AccountGroup, req.Kind,
-                parentId: null, req.NormalBalance);
+                parentId: null, req.NormalBalance, req.ReducedCode, req.Natureza);
         }
         catch (ArgumentException ex)
         {

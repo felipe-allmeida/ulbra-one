@@ -49,7 +49,7 @@ public static class DevDataSeeder
 
         // ---------- Companies (group CNPJs) ----------
         var celsp = new Company("Comunidade Evangélica Luterana São Paulo - CELSP", "88332466000103");
-        var ulbra = new Company("Universidade Luterana do Brasil - ULBRA", "88332466000294");
+        var ulbra = new Company("Ulbra S.A", "88332466000294");
         core.Companies.AddRange(celsp, ulbra);
 
         // ---------- Units (ULBRA campuses/poles) ----------
@@ -244,10 +244,10 @@ public static class DevDataSeeder
         await SeedAccountingAsync(db, ulbra.Id, time, logger, ct);
 
         // ---------- Classify a few payables (so suggestion has history + the screen has examples) ----------
-        // Look up seeded analytical ledger accounts by code; classify the energy payable (4.02.02.01.05)
-        // and the cleaning/services payable (4.02.02.01.02). Idempotent: only classify when not yet classified.
-        var accEnergia = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.02.02.01.05", ct);
-        var accServicos = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.02.02.01.02", ct);
+        // Look up seeded analytical ledger accounts by code; classify the energy payable (4.2.15.05.020 ENERGIA
+        // ELETRICA) and the services payable (4.2.15.10.200 OUTROS SERVICOS PRESTADOS). Idempotent: only when unset.
+        var accEnergia = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.2.15.05.020", ct);
+        var accServicos = await db.LedgerAccounts.FirstAsync(a => a.Code == "4.2.15.10.200", ct);
 
         if (pEnergiaGravatai.AccountingAccountId == null)
             pEnergiaGravatai.Classify(accEnergia.Id);
@@ -363,9 +363,9 @@ public static class DevDataSeeder
             2, 4, 6, 6, 4, 5, 9, 5);
     }
 
-    /// <summary>Seeds the global RFB Imunes e Isentas chart of accounts (once, shared by all companies) plus
-    /// a handful of posted journal entries for the given company so the trial balance, DRE and balance sheet
-    /// come up populated. Chart seed is idempotent globally; the journal entries are idempotent per company.</summary>
+    /// <summary>Seeds the global AELBRA chart of accounts (once, shared by all companies) plus a handful of
+    /// posted journal entries for the given company so the trial balance, DRE and balance sheet come up
+    /// populated. Chart seed is idempotent globally; the journal entries are idempotent per company.</summary>
     private static async Task SeedAccountingAsync(AppDbContext db, Guid companyId, TimeProvider time, ILogger logger, CancellationToken ct)
     {
         // Global chart of accounts (shared by all companies): seed once when empty.
@@ -396,16 +396,16 @@ public static class DevDataSeeder
 
         var entries = new List<JournalEntry>
         {
-            // Patrimônio social integralizado: entrada de caixa contra o fundo patrimonial.
-            Post("Integralização do patrimônio social", "1.01.01.01.01", "2.05.01.01.01", 500_000m, competence),
-            // Receita de subvenção recebida em conta bancária.
-            Post("Receita de subvenções governamentais", "1.01.01.02.01", "4.01.01.01.01", 180_000m, competence),
+            // Capital social integralizado: entrada de caixa contra o patrimônio líquido.
+            Post("Integralização do capital social", "1.2.05.05.020", "2.6.05.05.020", 500_000m, competence),
+            // Receita operacional recebida em conta bancária.
+            Post("Receita operacional", "1.2.05.15.015", "3.2.05.10.020", 180_000m, competence),
             // Folha da diretoria liquidada pelo banco.
-            Post("Remuneração da diretoria", "4.02.01.01.01", "1.01.01.02.01", 95_000m, competence.AddDays(4)),
+            Post("Remuneração da diretoria", "4.2.05.05.020", "1.2.05.15.015", 95_000m, competence.AddDays(4)),
             // Energia elétrica paga pelo banco.
-            Post("Energia elétrica - competência", "4.02.02.01.05", "1.01.01.02.01", 21_300m, competence.AddDays(9)),
+            Post("Energia elétrica - competência", "4.2.15.05.020", "1.2.05.15.015", 21_300m, competence.AddDays(9)),
             // Serviços de terceiros (PJ) pagos pelo banco.
-            Post("Serviços de terceiros (PJ)", "4.02.02.01.02", "1.01.01.02.01", 18_000m, competence.AddDays(9)),
+            Post("Serviços de terceiros (PJ)", "4.2.15.10.200", "1.2.05.15.015", 18_000m, competence.AddDays(9)),
         };
 
         db.JournalEntries.AddRange(entries);
@@ -453,8 +453,8 @@ public static class DevDataSeeder
         await SeedGlobalChartAsync(db, logger, ct);
     }
 
-    /// <summary>Seeds the global RFB Imunes e Isentas chart of accounts once (idempotent), returning the
-    /// current chart. The chart is shared by all companies; bookkeeping stays per company via the journal.</summary>
+    /// <summary>Seeds the global AELBRA chart of accounts once (idempotent), returning the current chart.
+    /// The chart is shared by all companies; bookkeeping stays per company via the journal.</summary>
     private static async Task<List<LedgerAccount>> SeedGlobalChartAsync(AppDbContext db, ILogger logger, CancellationToken ct)
     {
         var accounts = await db.LedgerAccounts.OrderBy(a => a.Code).ToListAsync(ct);
@@ -464,7 +464,7 @@ public static class DevDataSeeder
             return accounts;
         }
 
-        accounts = ChartTemplates.Build(ChartTemplate.RfbImunesIsentas).ToList();
+        accounts = AelbraChart.Build().ToList();
         db.LedgerAccounts.AddRange(accounts);
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Dev seed: global ledger chart seeded ({Count} accounts).", accounts.Count);

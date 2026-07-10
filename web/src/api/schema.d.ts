@@ -2021,8 +2021,6 @@ export interface components {
             city: string;
             state: string;
         };
-        /** @enum {string} */
-        ChartTemplate: "Demo" | "RfbImunesIsentas" | "RfbPjLucroReal";
         ClassificationPolicyResponse: {
             /** @example company_3fa85f64571742199730000000000000 */
             companyId: string;
@@ -2145,6 +2143,9 @@ export interface components {
         };
         CreateLedgerAccountRequest: {
             code: string;
+            reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
             kind: components["schemas"]["LedgerAccountKind"];
@@ -2523,6 +2524,9 @@ export interface components {
             /** @example ledgacct_3fa85f64571742199730000000000000 */
             id: string;
             code: string;
+            reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             name: string;
             accountGroup: components["schemas"]["AccountGroup"];
             normalBalance: components["schemas"]["NormalBalance"];
@@ -3191,9 +3195,6 @@ export interface components {
             /** Format: date */
             asOf: string | null;
         };
-        SeedLedgerAccountsRequest: {
-            template: components["schemas"]["ChartTemplate"];
-        };
         SetReconciledBalanceRequest: {
             /** Format: double */
             balance: number;
@@ -3389,6 +3390,9 @@ export interface components {
         };
         UpdateLedgerAccountRequest: {
             name: string;
+            reducedCode: string | null;
+            /** Format: int32 */
+            natureza: number | null;
             accountGroup: components["schemas"]["AccountGroup"];
             kind: components["schemas"]["LedgerAccountKind"];
             normalBalance: components["schemas"]["NormalBalance"];
@@ -3773,11 +3777,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeedLedgerAccountsRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

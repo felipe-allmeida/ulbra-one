@@ -83,14 +83,39 @@ export function Chip({
 }
 
 /* ---------- KPI ---------- */
-export function Kpi({ label, value, foot }: { label: string; value: string; foot?: string }) {
-  return (
-    <div className='kpi-card'>
+export function Kpi({
+  label,
+  value,
+  foot,
+  onClick,
+  selected,
+}: {
+  label: string;
+  value: string;
+  foot?: string;
+  onClick?: () => void;
+  selected?: boolean;
+}) {
+  const body = (
+    <>
       <div className='kpi-label'>{label}</div>
       <div className='kpi-value'>{value}</div>
       {foot && <div className='kpi-foot'>{foot}</div>}
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type='button'
+        className={cx('kpi-card', 'kpi-card--clickable', selected && 'kpi-card--selected')}
+        aria-pressed={selected}
+        onClick={onClick}
+      >
+        {body}
+      </button>
+    );
+  }
+  return <div className='kpi-card'>{body}</div>;
 }
 
 /* ---------- Empty state ---------- */

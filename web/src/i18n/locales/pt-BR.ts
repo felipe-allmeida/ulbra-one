@@ -38,7 +38,7 @@ const ptBR = {
     classification: 'Classificação',
     conciliacao: 'Conciliação bancária',
     aging: 'Vencimentos (aging)',
-    ledgerAccounts: 'Plano de Contas Contábil',
+    ledgerAccounts: 'Plano de Contas',
     journalEntries: 'Lançamentos contábeis',
     pendingPostings: 'Pendentes de contabilização',
     expenseRecording: 'Registro de Despesa',
@@ -868,8 +868,9 @@ const ptBR = {
       Reversed: 'Estornado',
     },
     ledger: {
-      title: 'Plano de contas contábil',
+      title: 'Plano de Contas',
       subtitle: 'Estrutura de contas para escrituração por partidas dobradas.',
+      counts: { total: 'Contas criadas', active: 'Ativas', inactive: 'Inativas' },
       new: 'Nova conta',
       newTitle: 'Nova conta contábil',
       editTitle: 'Editar conta contábil',
@@ -900,7 +901,7 @@ const ptBR = {
       immutableAfterCreate: 'Não pode ser alterado após a criação',
       empty: {
         noCompanyTitle: 'Selecione uma empresa',
-        noCompanySub: 'Escolha a empresa para ver o plano de contas contábil.',
+        noCompanySub: 'Escolha a empresa para ver o plano de contas.',
         title: 'Nenhuma conta',
         sub: 'Crie a primeira conta ou semeie o template padrão.',
       },

@@ -5,7 +5,7 @@ import { type AccountGroup, type LedgerAccount, type LedgerAccountKind, type Nor
 import { useCreateLedgerAccount, useLedgerAccounts, useSeedLedgerAccounts, useUpdateLedgerAccount } from '../queries';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
-import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select } from '../ui';
+import { Button, Combobox, Drawer, EmptyState, Field, Input, Kpi, PageHeader, Panel, Select } from '../ui';
 
 const GROUPS: AccountGroup[] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
 
@@ -63,7 +63,17 @@ function LedgerAccountForm({
     if (isEditing) {
       update.mutate({
         id: initial.id,
-        body: { name: trimmedName, accountGroup: group, kind, normalBalance, parentId, isActive: initial.isActive },
+        body: {
+          name: trimmedName,
+          accountGroup: group,
+          kind,
+          normalBalance,
+          parentId,
+          isActive: initial.isActive,
+          // Preserve seed-managed fields (PUT is full-replace).
+          reducedCode: initial.reducedCode,
+          natureza: initial.natureza,
+        },
       });
     } else {
       create.mutate({
@@ -170,6 +180,7 @@ export function ContabilPlanoPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<LedgerAccount | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Sort by code, compute hierarchy depth via the parentId chain among loaded accounts.
   const rows = useMemo(() => {
@@ -187,6 +198,25 @@ export function ContabilPlanoPage() {
     };
     return [...accounts].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ account: a, depth: depthOf(a) }));
   }, [accounts]);
+
+  // Created / active / inactive counts (the list already includes inactive accounts).
+  const counts = useMemo(
+    () => ({
+      total: accounts.length,
+      active: accounts.filter((a) => a.isActive).length,
+      inactive: accounts.filter((a) => !a.isActive).length,
+    }),
+    [accounts],
+  );
+
+  // The counts KPIs double as status filters: "all" shows everything, "active"/"inactive" narrow the list.
+  const visibleRows = useMemo(
+    () =>
+      statusFilter === 'all'
+        ? rows
+        : rows.filter(({ account }) => account.isActive === (statusFilter === 'active')),
+    [rows, statusFilter],
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -207,6 +237,9 @@ export function ContabilPlanoPage() {
         normalBalance: a.normalBalance,
         parentId: a.parentId,
         isActive: !a.isActive,
+        // Preserve seed-managed fields (PUT is full-replace).
+        reducedCode: a.reducedCode,
+        natureza: a.natureza,
       },
     });
 
@@ -214,7 +247,7 @@ export function ContabilPlanoPage() {
     <>
       <PageHeader title={t('accounting.ledger.title')} sub={t('accounting.ledger.subtitle')}>
         {accounts.length === 0 && !list.isLoading && (
-          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate({})}>
+          <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate()}>
             {seed.isPending ? t('accounting.ledger.seeding') : t('accounting.ledger.seed')}
           </Button>
         )}
@@ -223,6 +256,29 @@ export function ContabilPlanoPage() {
         </Button>
       </PageHeader>
 
+      {accounts.length > 0 && (
+        <div className='kpi-grid'>
+          <Kpi
+            label={t('accounting.ledger.counts.total')}
+            value={String(counts.total)}
+            onClick={() => setStatusFilter('all')}
+            selected={statusFilter === 'all'}
+          />
+          <Kpi
+            label={t('accounting.ledger.counts.active')}
+            value={String(counts.active)}
+            onClick={() => setStatusFilter('active')}
+            selected={statusFilter === 'active'}
+          />
+          <Kpi
+            label={t('accounting.ledger.counts.inactive')}
+            value={String(counts.inactive)}
+            onClick={() => setStatusFilter('inactive')}
+            selected={statusFilter === 'inactive'}
+          />
+        </div>
+      )}
+
       {accounts.length === 0 ? (
         <EmptyState
           icon={<ListTree />}
@@ -230,10 +286,10 @@ export function ContabilPlanoPage() {
           sub={t('accounting.ledger.empty.sub')}
         />
       ) : (
-        <Panel title={t('accounting.ledger.count', { count: accounts.length })}>
+        <Panel title={t('accounting.ledger.count', { count: visibleRows.length })}>
           <table>
             <tbody>
-              {rows.map(({ account, depth }) => (
+              {visibleRows.map(({ account, depth }) => (
                 <tr key={account.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: depth * 20 }}>

@@ -438,6 +438,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<int?>("Natureza")
+                        .HasColumnType("integer")
+                        .HasColumnName("natureza");
+
                     b.Property<int>("NormalBalance")
                         .HasColumnType("integer")
                         .HasColumnName("normal_balance");
@@ -445,6 +449,11 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
                         .HasColumnName("parent_id");
+
+                    b.Property<string>("ReducedCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reduced_code");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -466,6 +475,11 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_ledger_accounts_parent_id");
+
+                    b.HasIndex("ReducedCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ledger_accounts_reduced_code")
+                        .HasFilter("reduced_code IS NOT NULL AND deleted_at IS NULL");
 
                     b.ToTable("ledger_accounts", "accounting");
                 });

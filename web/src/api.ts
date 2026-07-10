@@ -264,7 +264,8 @@ export interface LedgerAccountInput {
   normalBalance?: NormalBalance | null;
 }
 
-/** Request body for updating a ledger account (no companyId/code — both immutable). */
+/** Request body for updating a ledger account (no companyId/code — both immutable).
+ *  PUT is full-replace, so `reducedCode`/`natureza` must be echoed or they are cleared. */
 export interface LedgerAccountUpdateInput {
   name: string;
   accountGroup: AccountGroup;
@@ -272,6 +273,8 @@ export interface LedgerAccountUpdateInput {
   normalBalance: NormalBalance;
   parentId?: string | null;
   isActive: boolean;
+  reducedCode?: string | null;
+  natureza?: number | null;
 }
 
 /** One debit/credit line when creating or editing a draft journal entry. */
@@ -972,8 +975,8 @@ export const api = {
     request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
   updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
     request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  seedLedgerAccounts: (template?: string) =>
-    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST', body: JSON.stringify({ template }) }),
+  seedLedgerAccounts: () =>
+    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST' }),
 
   // ---------- Accounting: Journal entries (lançamentos) ----------
   listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {

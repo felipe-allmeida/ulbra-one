@@ -11,21 +11,22 @@ using Ulbra.One.Common.Application.Persistence;
 namespace Ulbra.One.IntegrationTests.Accounting;
 
 /// <summary>
-/// Integration tests for <see cref="IPayablePostingService"/> wired against the real seeded RFB
-/// Imunes e Isentas chart. Broker-free: the service is resolved from DI and driven directly.
+/// Integration tests for <see cref="IPayablePostingService"/> wired against the real seeded AELBRA
+/// chart. Broker-free: the service is resolved from DI and driven directly.
 /// </summary>
 [Collection("Postgres")]
 public class PayableAccountingPostingTests(PostgresFixture fixture)
 {
-    // RFB Imunes e Isentas codes used by AccountingModule defaults (confirmed in the JSON):
-    //   2.01.01.03.01 = Fornecedores - No País - Circulante   (Liability, Analytical)
-    //   1.01.01.02.01 = Bancos Conta Movimento                 (Asset, Analytical)
-    // Expense code (also in the RFB chart, used in the dev journal-entry seed):
-    //   4.02.02.01.05 = Despesas de Consumo (Água/Esgoto/Energia Elétrica/Comunicação)
+    // AELBRA "Modelo de Planos" codes used by AccountingModule defaults (analytical leaves):
+    //   2.2.05.15.080 = Fornecedores a Pagar                   (Liability, Analytical, ativa)
+    //   1.2.05.15.015 = Bco Banrisul CC 060289920-4            (Asset, Analytical)
+    // Expense code (also used in the dev journal-entry seed):
+    //   4.2.15.05.020 = Energia Elétrica
+    private const string ExpenseCode = "4.2.15.05.020";
+    private const string LiabilityCode = "2.2.05.15.080";
+    private const string CashCode = "1.2.05.15.015";
 
-    private const string ExpenseCode = "4.02.02.01.05";
-
-    private static async Task<Guid> SeedCompanyWithRfbChartAsync(HttpClient client)
+    private static async Task<Guid> SeedCompanyAndChartAsync(HttpClient client)
     {
         var cnpj = Random.Shared.NextInt64(10_000_000_000_000, 99_999_999_999_999).ToString();
         var companyRes = await client.PostAsJsonAsync("/api/companies", new { legalName = "Empresa Teste Contábil", cnpj });
@@ -35,9 +36,8 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
             .GetProperty("id").GetString()!;
         var companyId = CompanyId.Parse(prefixedId, null).Value;
 
-        // Seed the RFB Imunes e Isentas chart so config-default codes resolve.
-        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed",
-            new { companyId = prefixedId, template = "RfbImunesIsentas" });
+        // Seed the AELBRA chart so config-default codes resolve.
+        var seedRes = await client.PostAsJsonAsync("/api/ledger-accounts/seed", new { });
         seedRes.EnsureSuccessStatusCode();
 
         return companyId;
@@ -51,7 +51,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
@@ -71,7 +71,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
 
         // Find accounts by code to assert sides.
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.Code == ExpenseCode || a.Code == "2.01.01.03.01")
+            .Where(a => a.Code == ExpenseCode || a.Code == LiabilityCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;
@@ -81,7 +81,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         Assert.NotNull(debitLine);
         Assert.NotNull(creditLine);
         Assert.Equal(accounts[ExpenseCode], debitLine.LedgerAccountId);
-        Assert.Equal(accounts["2.01.01.03.01"], creditLine.LedgerAccountId);
+        Assert.Equal(accounts[LiabilityCode], creditLine.LedgerAccountId);
         Assert.Equal(100m, debitLine.Amount);
         Assert.Equal(100m, creditLine.Amount);
 
@@ -96,7 +96,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payment:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
@@ -107,7 +107,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Settlement resolved → a real entry must exist (not pending).
-        // This also validates that both 2.01.01.03.01 (Fornecedores) and 1.01.01.02.01 (Bancos) exist in the chart.
+        // This also validates that both 2.2.05.15.080 (Fornecedores) and 1.2.05.15.015 (Bancos) exist in the chart.
         var entry = await uow.ReadSet<JournalEntry>()
             .FirstOrDefaultAsync(e => e.CompanyId == companyId && e.SourceKey == sourceKey);
 
@@ -116,7 +116,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         Assert.Equal(entry.TotalDebit, entry.TotalCredit);
 
         var accounts = await uow.ReadSet<LedgerAccount>()
-            .Where(a => a.Code == "2.01.01.03.01" || a.Code == "1.01.01.02.01")
+            .Where(a => a.Code == LiabilityCode || a.Code == CashCode)
             .ToDictionaryAsync(a => a.Code, a => a.Id);
 
         var lines = entry.Lines;
@@ -125,8 +125,8 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
 
         Assert.NotNull(debitLine);
         Assert.NotNull(creditLine);
-        Assert.Equal(accounts["2.01.01.03.01"], debitLine.LedgerAccountId);
-        Assert.Equal(accounts["1.01.01.02.01"], creditLine.LedgerAccountId);
+        Assert.Equal(accounts[LiabilityCode], debitLine.LedgerAccountId);
+        Assert.Equal(accounts[CashCode], creditLine.LedgerAccountId);
         Assert.Equal(50m, debitLine.Amount);
         Assert.Equal(50m, creditLine.Amount);
 
@@ -140,7 +140,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
         var unknownAccountId = Guid.NewGuid(); // not present in the chart → unresolvable
 
@@ -170,7 +170,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var sourceKey = $"payable-incurral:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
@@ -195,7 +195,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
-        var companyId = await SeedCompanyWithRfbChartAsync(client);
+        var companyId = await SeedCompanyAndChartAsync(client);
         var paymentKey = $"payment:{Guid.NewGuid()}";
 
         await using var scope = factory.Services.CreateAsyncScope();
