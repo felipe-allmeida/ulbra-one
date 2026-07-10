@@ -10040,6 +10040,7 @@
           "categoryId",
           "dueDate",
           "amount",
+          "netAmount",
           "installmentStatus",
           "payableStatus",
           "scheduledPaymentDate",
@@ -10088,6 +10089,10 @@
             "format": "date"
           },
           "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "netAmount": {
             "type": "number",
             "format": "double"
           },
@@ -10385,6 +10390,8 @@
           "firstDueDate",
           "installmentCount",
           "totalAmount",
+          "totalWithheld",
+          "netTotal",
           "status",
           "origin",
           "hasFiscalDocument"
@@ -10419,6 +10426,14 @@
             "format": "int32"
           },
           "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
             "type": "number",
             "format": "double"
           },
@@ -11973,7 +11988,8 @@
       "StageBucket": {
         "required": [
           "count",
-          "totalAmount"
+          "totalAmount",
+          "netTotalAmount"
         ],
         "type": "object",
         "properties": {
@@ -11984,6 +12000,11 @@
           "totalAmount": {
             "type": "number",
             "format": "double"
+          },
+          "netTotalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false

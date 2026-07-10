@@ -2656,6 +2656,8 @@ export interface components {
             dueDate: string;
             /** Format: double */
             amount: number;
+            /** Format: double */
+            netAmount: number;
             installmentStatus: components["schemas"]["InstallmentStatus"];
             payableStatus: components["schemas"]["PayableStatus"];
             /** Format: date */
@@ -2753,6 +2755,10 @@ export interface components {
             installmentCount: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalWithheld: number;
+            /** Format: double */
+            netTotal: number;
             status: components["schemas"]["PayableStatus"];
             origin: components["schemas"]["PayableOrigin"];
             hasFiscalDocument: boolean;
@@ -3230,6 +3236,8 @@ export interface components {
             count: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            netTotalAmount: number | null;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
