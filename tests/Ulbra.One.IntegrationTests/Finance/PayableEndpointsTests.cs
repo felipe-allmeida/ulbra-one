@@ -100,6 +100,73 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         Assert.Equal(1, body.GetProperty("installments").GetArrayLength());
     }
 
+    [Theory]
+    [InlineData("FiscalDocument")]
+    [InlineData("Advance")]
+    public async Task Create_With_Intake_Origin_Returns_201_And_Echoes_Origin(string origin)
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var res = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            origin,
+            description = "Origem de entrada",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 1000m } },
+        });
+
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        Assert.Equal(origin, (await ReadJson(res)).GetProperty("origin").GetString());
+    }
+
+    [Fact]
+    public async Task Create_Without_Origin_Defaults_To_Manual()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var res = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "Sem origem explícita",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 1000m } },
+        });
+
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        Assert.Equal("Manual", (await ReadJson(res)).GetProperty("origin").GetString());
+    }
+
+    [Theory]
+    [InlineData("Purchase")]
+    [InlineData("Payroll")]
+    [InlineData("SeniorImport")]
+    public async Task Create_With_Reserved_Origin_Returns_400_OriginInvalid(string origin)
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        var res = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            origin,
+            description = "Origem reservada",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 1000m } },
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("Payable.OriginInvalid", (await ReadJson(res)).GetProperty("title").GetString());
+    }
+
     [Fact]
     public async Task Create_Invalid_Vendor_Returns_400_VendorInvalid()
     {

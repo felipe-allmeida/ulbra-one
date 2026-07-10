@@ -56,6 +56,11 @@ public sealed class CreatePayable : IEndpoint
         TimeProvider clock,
         CancellationToken ct)
     {
+        // Clients may only send the intake origins (Manual, FiscalDocument, Advance); the others are
+        // reserved for system integrations (purchase orders, payroll, Senior import).
+        if (req.Origin is PayableOrigin.Purchase or PayableOrigin.Payroll or PayableOrigin.SeniorImport)
+            return TypedResults.Problem(detail: "Origin is reserved for system integrations.", statusCode: 400, title: "Payable.OriginInvalid");
+
         var companyId = req.CompanyId.Value;
 
         var cc = await uow.ReadSet<CostCenter>().FirstOrDefaultAsync(c => c.Id == req.CostCenterId.Value && c.CompanyId == companyId, ct);

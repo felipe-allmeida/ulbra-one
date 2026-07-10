@@ -24,6 +24,16 @@ public class PayableTests
         Assert.All(p.Installments, i => Assert.Equal(InstallmentStatus.Open, i.Status));
     }
 
+    [Theory]
+    [InlineData(PayableOrigin.FiscalDocument)]
+    [InlineData(PayableOrigin.Advance)]
+    public void New_payable_keeps_intake_origin(PayableOrigin origin)
+    {
+        var p = new Payable(Guid.NewGuid(), origin, Guid.NewGuid(), "CEEE", null, null, "Energia",
+            Guid.NewGuid(), null, Payable.GenerateInstallments(100m, 1, new DateOnly(2026, 7, 10), 1));
+        Assert.Equal(origin, p.Origin);
+    }
+
     [Fact]
     public void New_payable_rejects_zero_installments()
     {
