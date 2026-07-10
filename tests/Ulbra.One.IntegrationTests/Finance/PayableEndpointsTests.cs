@@ -497,6 +497,52 @@ public class PayableEndpointsTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Update_Persists_Type_Change()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // Created without a type (undetermined).
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId = seed.CompanyId,
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "NF sem tipo",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 500m } },
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
+
+        // PUT with type=Service persists the flip (AEL-696 root cause: the field used to be dropped).
+        var updateRes = await client.PutAsJsonAsync($"/api/payables/{payableId}", new
+        {
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "NF sem tipo",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 500m } },
+            type = "Service",
+        });
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+        Assert.Equal("Service", (await ReadJson(updateRes)).GetProperty("type").GetString());
+        var getBody = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.Equal("Service", getBody.GetProperty("type").GetString());
+
+        // PUT is full-replace: omitting type (null) clears it back to undetermined.
+        var clearRes = await client.PutAsJsonAsync($"/api/payables/{payableId}", new
+        {
+            vendorId = seed.VendorId,
+            costCenterId = seed.CostCenterId,
+            description = "NF sem tipo",
+            installments = new[] { new { dueDate = "2026-07-10", amount = 500m } },
+        });
+        Assert.Equal(HttpStatusCode.OK, clearRes.StatusCode);
+        var clearedBody = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        Assert.Equal(JsonValueKind.Null, clearedBody.GetProperty("type").ValueKind);
+    }
+
+    [Fact]
     public async Task Update_RejectedPayable_Returns_409_NotEditable()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
