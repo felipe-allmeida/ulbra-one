@@ -65,6 +65,27 @@ describe('PayableTable', () => {
     );
     expect(screen.getByText(/Entrada/)).toBeInTheDocument();
   });
+  it('tags advance rows with "Adiantamento" in the default status cell', () => {
+    const mixed = [
+      { ...items[0], payableId: 'p_advance', origin: 'Advance' },
+      { ...items[0], payableId: 'p_manual', origin: 'Manual' },
+    ] as any;
+    render(
+      <MemoryRouter>
+        <PayableTable
+          companyId='company_1'
+          stageLabel='Entrada'
+          items={mixed}
+          total={2}
+          page={1}
+          totalPages={1}
+          onPage={() => {}}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getAllByText('Adiantamento')).toHaveLength(1);
+  });
+
   it('shows the "Nota Fiscal pendente" tag only on PendingAccounting rows lacking a fiscal document', () => {
     const accItems = [
       { ...items[0], payableId: 'p_no_nf', status: 'PendingAccounting', hasFiscalDocument: false },

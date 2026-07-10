@@ -3138,6 +3138,13 @@
             }
           },
           {
+            "name": "origin",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PayableOrigin"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -10379,6 +10386,7 @@
           "installmentCount",
           "totalAmount",
           "status",
+          "origin",
           "hasFiscalDocument"
         ],
         "type": "object",
@@ -10416,6 +10424,9 @@
           },
           "status": {
             "$ref": "#/components/schemas/PayableStatus"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
           },
           "hasFiscalDocument": {
             "type": "boolean"

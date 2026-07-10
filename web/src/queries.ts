@@ -42,6 +42,7 @@ import {
   type Payable,
   type PayableAttachment,
   type PayableInput,
+  type PayableOrigin,
   type PayableStatus,
   type Payment,
   type Receipt,
@@ -217,6 +218,8 @@ export interface PayableStageItemsParams {
   status?: PayableStatus;
   /** Filter by NF presence — e.g. the Pendências "Nota Fiscal" tab passes `false`. */
   hasFiscalDocument?: boolean;
+  /** Filter by intake origin — e.g. the "Adiantamentos" tab passes `Advance` (no status). */
+  origin?: PayableOrigin;
   page?: number;
   pageSize?: number;
 }

@@ -580,12 +580,14 @@ export const api = {
     companyId: string;
     status?: PayableStatus;
     hasFiscalDocument?: boolean;
+    origin?: PayableOrigin;
     page?: number;
     pageSize?: number;
   }): Promise<Paginated<PayableStageItem>> => {
     const q = new URLSearchParams({ companyId: params.companyId });
     if (params.status) q.set('status', params.status);
     if (params.hasFiscalDocument !== undefined) q.set('hasFiscalDocument', String(params.hasFiscalDocument));
+    if (params.origin) q.set('origin', params.origin);
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableStageItem>>(`/payables/stage-items?${q}`);

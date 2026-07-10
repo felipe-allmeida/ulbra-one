@@ -18,6 +18,7 @@ export function PayableTable({
   totalPages,
   onPage,
   extraColumn,
+  statusCell,
 }: {
   companyId: string;
   stageLabel: string;
@@ -27,6 +28,8 @@ export function PayableTable({
   totalPages: number;
   onPage: (p: number) => void;
   extraColumn?: { header: string; cell: (item: PayableStageItem) => ReactNode };
+  /** Overrides the status column content (default: stage SLA chips + pendency tags). */
+  statusCell?: (item: PayableStageItem) => ReactNode;
 }) {
   const { t } = useTranslation();
   const nav = useNavigate();
@@ -73,11 +76,22 @@ export function PayableTable({
                 {brl(l.totalAmount)}
               </td>
               <td onClick={(e) => e.stopPropagation()}>
-                <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
-                {l.status === 'PendingAccounting' && l.hasFiscalDocument === false && (
-                  <span className='badge-status badge-pendente' style={{ marginLeft: 6 }}>
-                    {t('payables.tags.fiscalDocPending')}
-                  </span>
+                {statusCell ? (
+                  statusCell(l)
+                ) : (
+                  <>
+                    <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
+                    {l.origin === 'Advance' && (
+                      <span className='badge-status badge-remessa' style={{ marginLeft: 6 }}>
+                        {t('payables.tags.advance')}
+                      </span>
+                    )}
+                    {l.status === 'PendingAccounting' && l.hasFiscalDocument === false && (
+                      <span className='badge-status badge-pendente' style={{ marginLeft: 6 }}>
+                        {t('payables.tags.fiscalDocPending')}
+                      </span>
+                    )}
+                  </>
                 )}
               </td>
               {extraColumn && <td onClick={(e) => e.stopPropagation()}>{extraColumn.cell(l)}</td>}

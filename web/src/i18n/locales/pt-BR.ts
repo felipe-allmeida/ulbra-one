@@ -199,6 +199,10 @@ const ptBR = {
     subtitle: 'Despesas aprovadas aguardando contabilização — conferência fiscal e Nota Fiscal.',
     noCompanyTitle: 'Selecione uma empresa',
     noCompanySub: 'Escolha a empresa para ver as despesas a contabilizar.',
+    tabs: {
+      review: 'Registro de Despesa',
+      advances: 'Adiantamentos',
+    },
   },
 
   login: {
@@ -602,6 +606,7 @@ const ptBR = {
     loading: 'Carregando…',
     tags: {
       fiscalDocPending: 'Nota Fiscal pendente',
+      advance: 'Adiantamento',
     },
     accounting: {
       title: 'Registro de Despesa',

@@ -2754,6 +2754,7 @@ export interface components {
             /** Format: double */
             totalAmount: number;
             status: components["schemas"]["PayableStatus"];
+            origin: components["schemas"]["PayableOrigin"];
             hasFiscalDocument: boolean;
         };
         PayableStageItemResponsePaginatedResponse: {
@@ -5886,6 +5887,7 @@ export interface operations {
                 companyId: string;
                 status?: components["schemas"]["PayableStatus"];
                 hasFiscalDocument?: boolean;
+                origin?: components["schemas"]["PayableOrigin"];
                 Page?: number;
                 PageSize?: number;
             };
