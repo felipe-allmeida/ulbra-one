@@ -20,9 +20,21 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
         // Never recompute once locked: the accounting incurral already booked the withholdings.
         if (payable.Status is PayableStatus.Scheduled or PayableStatus.Paid) return;
 
+        // Product: no source withholding. Clear stale rows (a payable corrected from Service to Product,
+        // or an NF-e uploaded over an NFS-e) so each installment's NetAmount returns to gross.
+        if (payable.Type == PayableType.Product)
+        {
+            if (payable.Withholdings.Count == 0) return;
+            var stale = payable.Withholdings.ToList();
+            try { payable.SetWithholdings([]); }
+            catch (InvalidOperationException) { return; } // domain guard (registered payments) — best-effort
+            uow.RemoveRange(stale);
+            return;
+        }
+
         // Withholding is a service obligation of the paying source. The trigger is service-nature — NOT the
         // LC116 subitem, which only refines specific taxes (INSS on labor supply, ISS by municipality). Skip
-        // products / undetermined; a service still withholds the general federal taxes even without a subitem.
+        // undetermined (null); a service still withholds the general federal taxes even without a subitem.
         if (payable.Type != PayableType.Service) return;
 
         // The fiscal document refines the calculation when present (LC116 subitem, municipality, ISS rate), but a
