@@ -47,6 +47,7 @@ public sealed class GetPayableStageItems : IEndpoint
             p.Description,
             p.CostCenterId,
             p.CategoryId,
+            p.Origin,
             FirstDueDate = p.Installments.Min(i => i.DueDate),
             InstallmentCount = p.Installments.Count,
             p.TotalAmount,
@@ -56,7 +57,12 @@ public sealed class GetPayableStageItems : IEndpoint
 
         // Optional pendency filter (e.g. Pendências "Nota Fiscal" tab: PendingAccounting + no NF). EF
         // translates HasFiscalDocument to WHERE [NOT] EXISTS. Absent => unchanged behavior for all stages.
-        if (hasFiscalDocument is { } hasNf) rows = rows.Where(x => x.HasFiscalDocument == hasNf);
+        // The false branch means "NF pendency", not "fact: no NF" — Advance payables (adiantamento) are
+        // exempt from the NF gate, so they never count as pending. The response flag stays factual.
+        if (hasFiscalDocument is { } hasNf)
+            rows = hasNf
+                ? rows.Where(x => x.HasFiscalDocument)
+                : rows.Where(x => !x.HasFiscalDocument && x.Origin != PayableOrigin.Advance);
 
         var page = await rows.OrderBy(x => x.FirstDueDate).ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(x => new PayableStageItemResponse(
