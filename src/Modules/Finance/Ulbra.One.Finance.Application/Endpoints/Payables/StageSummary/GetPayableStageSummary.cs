@@ -42,6 +42,15 @@ public sealed class GetPayableStageSummary : IEndpoint
             .Select(g => new { Count = g.Count(), Total = g.Sum(p => p.TotalAmount) })
             .FirstOrDefaultAsync(ct);
 
+        // Net sum for the Payment bucket only: what will actually leave the bank. Σ Installment.NetAmount
+        // == NetTotal per payable (invariant kept by RecomputeInstallmentNetAmounts), so a flat SUM over
+        // the scheduled installments is exact — and it's literally what the remittance pays. Separate
+        // scalar query: a nested Sum inside the status GroupBy above doesn't translate.
+        var paymentNetTotal = await uow.ReadSet<Payable>()
+            .Where(p => p.CompanyId == companyId.Value && p.Status == PayableStatus.Scheduled)
+            .SelectMany(p => p.Installments)
+            .SumAsync(i => i.NetAmount, ct);
+
         StageBucket Bucket(PayableStatus s)
         {
             var r = rows.FirstOrDefault(x => x.Status == s);
@@ -53,7 +62,7 @@ public sealed class GetPayableStageSummary : IEndpoint
             Classification: Bucket(PayableStatus.PendingClassification),
             Approval: Bucket(PayableStatus.PendingApproval),
             Accounting: Bucket(PayableStatus.PendingAccounting),
-            Payment: Bucket(PayableStatus.Scheduled),
+            Payment: Bucket(PayableStatus.Scheduled) with { NetTotalAmount = paymentNetTotal },
             Reconciled: Bucket(PayableStatus.Paid),
             FiscalDocumentPending: fiscalPending is null
                 ? new StageBucket(0, 0m)
