@@ -14,14 +14,6 @@ public class PayableLifecycleTests
         => Assert.Equal(PayableStatus.Received, NewPayable().Status);
 
     [Fact]
-    public void Approve_moves_to_scheduled()
-    {
-        var p = NewPayable();
-        p.Approve("u", DateTimeOffset.UnixEpoch);
-        Assert.Equal(PayableStatus.Scheduled, p.Status);
-    }
-
-    [Fact]
     public void AutoApproval_requires_classification_and_under_limit()
     {
         var unclassified = NewPayable(100m);
@@ -30,14 +22,14 @@ public class PayableLifecycleTests
 
         var classified = NewPayable(100m);
         classified.Classify(Guid.NewGuid());
-        classified.SetType(PayableType.Service); // type must be determined before auto-scheduling
+        classified.SetType(PayableType.Service); // type must be determined before auto-approving
         classified.ApplyAutoApproval(500m, DateTimeOffset.UnixEpoch);
-        Assert.Equal(PayableStatus.Scheduled, classified.Status);
+        Assert.Equal(PayableStatus.PendingAccounting, classified.Status); // approval now routes through accounting
 
         var overLimit = NewPayable(1000m);
         overLimit.Classify(Guid.NewGuid());
         overLimit.ApplyAutoApproval(500m, DateTimeOffset.UnixEpoch);
-        Assert.NotEqual(PayableStatus.Scheduled, overLimit.Status);
+        Assert.NotEqual(PayableStatus.PendingAccounting, overLimit.Status);
     }
 
     [Fact]
@@ -56,6 +48,7 @@ public class PayableLifecycleTests
         var p = NewPayable(100m);
         p.Classify(Guid.NewGuid());
         p.Approve("u", DateTimeOffset.UnixEpoch);
+        p.CompleteAccounting("u", DateTimeOffset.UnixEpoch, hasFiscalDocument: true); // reach Scheduled
         var inst = p.Installments[0];
         inst.RegisterPayment(new Payment(inst.Id, p.Id, new DateOnly(2026, 1, 10), 100m,
             Guid.NewGuid(), PaymentMethod.Pix, 0, 0, 0, null, Guid.NewGuid(), default));

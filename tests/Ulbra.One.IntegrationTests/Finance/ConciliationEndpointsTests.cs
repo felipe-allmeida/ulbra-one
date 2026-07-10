@@ -68,7 +68,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         return (await ReadJson(res)).GetProperty("id").GetString()!;
     }
 
-    private static async Task<string> CreateApprovedPayableAsync(HttpClient client, Seed seed, decimal amount, string dueDate)
+    private static async Task<string> CreateApprovedPayableAsync(ApiFactory factory, HttpClient client, Seed seed, decimal amount, string dueDate)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -83,6 +83,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var payableId = (await ReadJson(createRes)).GetProperty("id").GetString()!;
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
         return payableId;
     }
 
@@ -150,7 +151,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
 
         // First import → both transactions are new.
         using (var content = OfxFile())
@@ -219,7 +220,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
 
         using var content = OfxFile();
         var importRes = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
@@ -249,7 +250,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        var payableId = await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         await ImportAsync(client, bankId);
 
         var suggested = await SingleTransactionAsync(client, bankId, "Suggested");
@@ -272,7 +273,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         await ImportAsync(client, bankId);
 
         var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
@@ -291,7 +292,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         await ImportAsync(client, bankId);
 
         // The credit (2500) is Unmatched; match it manually.
@@ -299,7 +300,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var creditTxnId = credit.GetProperty("id").GetString()!;
 
         // Wrong-amount installment: a 1000 installment vs. the 2500 credit → AmountMismatch.
-        var wrongPayableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        var wrongPayableId = await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         var wrongInstallment = await GetInstallmentAsync(client, wrongPayableId);
         var wrongInstallmentId = wrongInstallment.GetProperty("id").GetString()!;
 
@@ -309,7 +310,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         Assert.Equal("Match.AmountMismatch", (await ReadJson(wrongRes)).GetProperty("title").GetString());
 
         // Correct-amount installment: a 2500 installment that equals the credit → reconciles.
-        var rightPayableId = await CreateApprovedPayableAsync(client, seed, 2500.00m, "2026-07-12");
+        var rightPayableId = await CreateApprovedPayableAsync(factory, client, seed, 2500.00m, "2026-07-12");
         var rightInstallment = await GetInstallmentAsync(client, rightPayableId);
         var rightInstallmentId = rightInstallment.GetProperty("id").GetString()!;
 
@@ -329,7 +330,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         await ImportAsync(client, bankId);
 
         var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
@@ -405,6 +406,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
             (WithholdingTaxType.Irrf, BaseAmount: grossAmount, Rate: null, Amount: withholdingAmount)
         ]);
         payable.Approve("test-user", clock.GetUtcNow());
+        payable.CompleteAccounting("test-user", clock.GetUtcNow(), hasFiscalDocument: true); // → Scheduled
 
         await uow.AddAsync(payable, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
@@ -461,7 +463,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
         var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
-        var payableId = await CreateApprovedPayableAsync(client, seed, 1000.00m, "2026-07-12");
+        var payableId = await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
         await ImportAsync(client, bankId);
 
         var suggested = await SingleTransactionAsync(client, bankId, "Suggested");

@@ -26,6 +26,20 @@ public sealed class GetPayableStageSummary : IEndpoint
             .Select(g => new { Status = g.Key, Count = g.Count(), Total = g.Sum(p => p.TotalAmount) })
             .ToListAsync(ct);
 
+        // "Nota Fiscal pendente" pendency bucket: PendingAccounting titles with no NF registered — neither a
+        // parsed FiscalDocument nor an attached NF document (PayableAttachment). Separate query — the status
+        // GroupBy above can't express the NOT EXISTS against the other aggregates.
+        var fiscalDocs = uow.ReadSet<FiscalDocument>();
+        var attachments = uow.ReadSet<PayableAttachment>();
+        var fiscalPending = await uow.ReadSet<Payable>()
+            .Where(p => p.CompanyId == companyId.Value
+                        && p.Status == PayableStatus.PendingAccounting
+                        && !fiscalDocs.Any(d => d.PayableId == p.Id)
+                        && !attachments.Any(a => a.PayableId == p.Id))
+            .GroupBy(_ => 1)
+            .Select(g => new { Count = g.Count(), Total = g.Sum(p => p.TotalAmount) })
+            .FirstOrDefaultAsync(ct);
+
         StageBucket Bucket(PayableStatus s)
         {
             var r = rows.FirstOrDefault(x => x.Status == s);
@@ -36,7 +50,11 @@ public sealed class GetPayableStageSummary : IEndpoint
             Entry: Bucket(PayableStatus.Received),
             Classification: Bucket(PayableStatus.PendingClassification),
             Approval: Bucket(PayableStatus.PendingApproval),
+            Accounting: Bucket(PayableStatus.PendingAccounting),
             Payment: Bucket(PayableStatus.Scheduled),
-            Reconciled: Bucket(PayableStatus.Paid)));
+            Reconciled: Bucket(PayableStatus.Paid),
+            FiscalDocumentPending: fiscalPending is null
+                ? new StageBucket(0, 0m)
+                : new StageBucket(fiscalPending.Count, fiscalPending.Total)));
     }
 }

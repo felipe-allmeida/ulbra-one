@@ -10,6 +10,7 @@ import { STAGE_ORDER, dashboardCards, isStageKey, type StageKey } from './stages
 import { EntryTab } from './entry-tab';
 import { ClassificationTab } from './classification-tab';
 import { ApprovalTab } from './approval-tab';
+import { AccountingTab } from './accounting-tab';
 import { PaymentTab } from './payment-tab';
 import { ReconciledTab } from './reconciled-tab';
 
@@ -35,7 +36,11 @@ export function PayablesLayout() {
     key,
     label: t(`payables.stages.${key}`),
     count: summary ? summary[key].count : undefined,
-    badge: key === 'approval' && summary && summary.approval.count > 0 ? 'warning' : undefined,
+    badge:
+      (key === 'approval' && summary && summary.approval.count > 0) ||
+      (key === 'accounting' && summary && summary.accounting.count > 0)
+        ? 'warning'
+        : undefined,
   }));
 
   return (
@@ -68,6 +73,7 @@ export function PayablesLayout() {
           {active === 'entry' && <EntryTab companyId={empresaId} />}
           {active === 'classification' && <ClassificationTab companyId={empresaId} />}
           {active === 'approval' && <ApprovalTab companyId={empresaId} />}
+          {active === 'accounting' && <AccountingTab companyId={empresaId} />}
           {active === 'payment' && <PaymentTab companyId={empresaId} />}
           {active === 'reconciled' && <ReconciledTab companyId={empresaId} />}
         </>

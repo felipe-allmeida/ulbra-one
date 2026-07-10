@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard,
+  Calculator,
   Wallet,
   BookText,
   Contact,
@@ -93,7 +94,7 @@ export const NAV_DOMAINS: NavDomain[] = [
         items: [
           { labelKey: 'nav.accountsPayable', to: '/app/payables', icon: <ArrowUpRight /> },
           { labelKey: 'nav.accountsReceivable', to: '/app/receivables', icon: <ArrowDownLeft /> },
-          { labelKey: 'nav.approvals', to: '/app/approvals', icon: <ClipboardCheck /> },
+          { labelKey: 'nav.pendencies', to: '/app/pendencies', icon: <ClipboardCheck /> },
           { labelKey: 'nav.conciliacao', to: '/app/reconciliation', icon: <ArrowLeftRight /> },
           { labelKey: 'nav.remittances', to: '/app/remittances', icon: <SendHorizonal /> },
         ],
@@ -118,6 +119,7 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.movement',
         items: [
+          { labelKey: 'nav.expenseRecording', to: '/app/accounting/expense-recording', icon: <Calculator /> },
           { labelKey: 'nav.journalEntries', to: '/app/accounting/journal-entries', icon: <BookOpen /> },
           { labelKey: 'nav.pendingPostings', to: '/app/accounting/pending', icon: <ClipboardCheck /> },
         ],

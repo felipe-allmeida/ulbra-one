@@ -14,7 +14,6 @@ public sealed class PayableReceivedConsumer(
     IUnitOfWork uow,
     IPayableClassifier classifier,
     TimeProvider clock,
-    IPublishEndpoint publish,
     IAutoWithholdingService autoWithholding)
     : IConsumer<PayableReceived>
 {
@@ -63,12 +62,6 @@ public sealed class PayableReceivedConsumer(
 
         Apply(payable, result, cc?.AutoApprovalLimit ?? 0m, clock.GetUtcNow());
 
-        if (payable.Status == PayableStatus.Scheduled)
-        {
-            var withholdings = payable.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
-            await publish.Publish(new PayableScheduled(payable.Id, payable.CompanyId, payable.TotalAmount, payable.AccountingAccountId, withholdings), ct);
-        }
-
         // Payable carries an xmin rowversion. If a human mutated the payable between create and async
         // consumption, SaveChanges throws DbUpdateConcurrencyException — safe under at-least-once: MassTransit
         // retries, and on retry the Status==Received guard makes it a no-op. No explicit catch needed.
@@ -92,7 +85,7 @@ public sealed class PayableReceivedConsumer(
         if (r.AccountingAccountId is not null && r.Confidence >= AutoApplyThreshold)
         {
             payable.Classify(r.AccountingAccountId);
-            payable.ApplyAutoApproval(autoApprovalLimit, now); // → Scheduled if under limit
+            payable.ApplyAutoApproval(autoApprovalLimit, now); // → PendingAccounting if under limit
             if (payable.Status == PayableStatus.Received) payable.MarkPendingApproval();
         }
         else

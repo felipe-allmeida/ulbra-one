@@ -17,7 +17,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
     /// vendor A / CC1: NotYetDue 100, Overdue1To30 200; vendor B / CC2: Overdue31To60 300, partial (remaining 50 in 1-30);
     /// plus an excluded fully-paid installment and an excluded cancelled payable.
     /// </summary>
-    private async Task<(string CompanyId, string VendorA, string VendorB, string Cc1, string Cc2)> SeedAgingAsync(HttpClient client, DateOnly today)
+    private async Task<(string CompanyId, string VendorA, string VendorB, string Cc1, string Cc2)> SeedAgingAsync(ApiFactory factory, HttpClient client, DateOnly today)
     {
         var companyId = await FinanceSeed.CreateCompanyAsync(client);
         var cc1 = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Marketing");
@@ -27,22 +27,22 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         var bankId = await FinanceSeed.CreateBankAccountAsync(client, companyId, "00012345");
 
         // Vendor A / CC1
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(10), 100m);   // NotYetDue
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-10), 200m);  // Overdue1To30
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendorA, cc1, today.AddDays(10), 100m);   // NotYetDue
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendorA, cc1, today.AddDays(-10), 200m);  // Overdue1To30
 
         // Vendor B / CC2
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendorB, cc2, today.AddDays(-45), 300m);  // Overdue31To60
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendorB, cc2, today.AddDays(-45), 300m);  // Overdue31To60
 
         // Vendor B / CC2 partial: amount 80, pay 30, remaining 50 -> Overdue1To30
-        var (partialPayable, partialInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(client, companyId, vendorB, cc2, today.AddDays(-5), 80m);
+        var (partialPayable, partialInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, client, companyId, vendorB, cc2, today.AddDays(-5), 80m);
         await FinanceSeed.RegisterPaymentAsync(client, partialPayable, partialInst, bankId, 30m, today);
 
         // Excluded: fully paid installment (vendor A / CC1)
-        var (paidPayable, paidInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(client, companyId, vendorA, cc1, today.AddDays(-3), 500m);
+        var (paidPayable, paidInst) = await FinanceSeed.CreatePayableWithInstallmentAsync(factory, client, companyId, vendorA, cc1, today.AddDays(-3), 500m);
         await FinanceSeed.RegisterPaymentAsync(client, paidPayable, paidInst, bankId, 500m, today);
 
         // Excluded: cancelled payable (vendor A / CC1)
-        var cancelledPayable = await FinanceSeed.CreatePayableAsync(client, companyId, vendorA, cc1, today.AddDays(-20), 999m, approve: false);
+        var cancelledPayable = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendorA, cc1, today.AddDays(-20), 999m, approve: false);
         var cancelRes = await client.PostAsJsonAsync($"/api/payables/{cancelledPayable}/cancel", new { reason = "Nao vai mais" });
         cancelRes.EnsureSuccessStatusCode();
 
@@ -55,7 +55,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var (companyId, _, _, _, _) = await SeedAgingAsync(client, today);
+        var (companyId, _, _, _, _) = await SeedAgingAsync(factory, client, today);
 
         var res = await client.GetAsync($"/api/payables/aging?companyId={companyId}");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
@@ -76,7 +76,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var (companyId, vendorA, vendorB, _, _) = await SeedAgingAsync(client, today);
+        var (companyId, vendorA, vendorB, _, _) = await SeedAgingAsync(factory, client, today);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/aging?companyId={companyId}"));
         var byVendor = body.GetProperty("byVendor");
@@ -102,7 +102,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var (companyId, _, _, cc1, cc2) = await SeedAgingAsync(client, today);
+        var (companyId, _, _, cc1, cc2) = await SeedAgingAsync(factory, client, today);
 
         var body = await ReadJson(await client.GetAsync($"/api/payables/aging?companyId={companyId}"));
         var byCostCenter = body.GetProperty("byCostCenter");
@@ -133,7 +133,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
 
         // Unapproved, non-cancelled payable with an overdue installment (approve: false, no cancel call).
         // Amount 400 -> should appear in Overdue1To30.
-        await FinanceSeed.CreatePayableAsync(client, companyId, vendor, cc, today.AddDays(-5), 400m, approve: false);
+        await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(-5), 400m, approve: false);
 
         var res = await client.GetAsync($"/api/payables/aging?companyId={companyId}");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
@@ -157,7 +157,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var (companyId, _, _, _, _) = await SeedAgingAsync(client, today);
+        var (companyId, _, _, _, _) = await SeedAgingAsync(factory, client, today);
 
         var res = await client.GetAsync($"/api/payables/aging/items?companyId={companyId}&bucket=Overdue1To30");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
@@ -183,7 +183,7 @@ public class AgingEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var (companyId, _, vendorB, _, _) = await SeedAgingAsync(client, today);
+        var (companyId, _, vendorB, _, _) = await SeedAgingAsync(factory, client, today);
 
         var items = await ReadJson(await client.GetAsync($"/api/payables/aging/items?companyId={companyId}&vendorId={vendorB}"));
         Assert.Equal(2, items.GetArrayLength()); // 300 (Overdue31To60) + remaining 50 (Overdue1To30)

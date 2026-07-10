@@ -65,4 +65,24 @@ describe('PayableTable', () => {
     );
     expect(screen.getByText(/Entrada/)).toBeInTheDocument();
   });
+  it('shows the "Nota Fiscal pendente" tag only on PendingAccounting rows lacking a fiscal document', () => {
+    const accItems = [
+      { ...items[0], payableId: 'p_no_nf', status: 'PendingAccounting', hasFiscalDocument: false },
+      { ...items[0], payableId: 'p_with_nf', status: 'PendingAccounting', hasFiscalDocument: true },
+    ] as any;
+    render(
+      <MemoryRouter>
+        <PayableTable
+          companyId='company_1'
+          stageLabel='Contabilidade'
+          items={accItems}
+          total={2}
+          page={1}
+          totalPages={1}
+          onPage={() => {}}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getAllByText('Nota Fiscal pendente')).toHaveLength(1);
+  });
 });

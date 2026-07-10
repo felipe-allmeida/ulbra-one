@@ -1,11 +1,30 @@
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application;
 
 namespace Ulbra.One.IntegrationTests.Finance;
 
 /// <summary>Shared HTTP seeding helpers for Finance integration tests.</summary>
 public static class FinanceSeed
 {
+    // Minimal valid NF-e (Product). Uploading it registers a FiscalDocument so a payable can leave the
+    // accounting stage. Issuer CNPJ need not match the seeded vendor — upload only parses + persists.
+    private const string NfeXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe12345678901234567890123456789012345678901234" versao="4.00">
+      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
+      <emit><CNPJ>11222333000181</CNPJ><xNome>Fornecedor Teste LTDA</xNome></emit>
+      <dest><CNPJ>11444777000161</CNPJ><xNome>ULBRA Teste</xNome></dest>
+      <total><ICMSTot><vNF>18000.00</vNF></ICMSTot></total>
+    </infNFe>
+  </NFe>
+</nfeProc>
+""";
+
     /// <summary>
     /// "Today" in Brazil local time (UTC-3), matching the API's ReceivableClock/business clock.
     /// Tests must use this (not DateTime.UtcNow) for receipt/payment dates: near UTC midnight the UTC
@@ -94,11 +113,11 @@ public static class FinanceSeed
     }
 
     /// <summary>
-    /// Creates a single-installment payable and (optionally) approves it so it reaches <c>Scheduled</c>.
-    /// Returns the created payable id.
+    /// Creates a single-installment payable and (optionally) drives it to <c>Scheduled</c> — approve then
+    /// complete the accounting stage (register a NF + confirm). Returns the created payable id.
     /// </summary>
     public static async Task<string> CreatePayableAsync(
-        HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
+        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -117,16 +136,18 @@ public static class FinanceSeed
         {
             var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
             approveRes.EnsureSuccessStatusCode();
+            await CompleteAccountingAsync(factory, client, payableId);
         }
 
         return payableId;
     }
 
     /// <summary>
-    /// Creates a single-installment payable and (optionally) approves it. Returns (payableId, installmentId).
+    /// Creates a single-installment payable and (optionally) drives it to <c>Scheduled</c> (approve +
+    /// complete accounting). Returns (payableId, installmentId).
     /// </summary>
     public static async Task<(string PayableId, string InstallmentId)> CreatePayableWithInstallmentAsync(
-        HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
+        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -146,9 +167,58 @@ public static class FinanceSeed
         {
             var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
             approveRes.EnsureSuccessStatusCode();
+            await CompleteAccountingAsync(factory, client, payableId);
         }
 
         return (payableId, installmentId);
+    }
+
+    /// <summary>
+    /// Drives an approved payable through the accounting stage to <c>Scheduled</c>: registers a minimal NF-e
+    /// (satisfying the fiscal-document gate) and confirms the accounting review.
+    /// </summary>
+    public static async Task CompleteAccountingAsync(ApiFactory factory, HttpClient client, string payableId)
+    {
+        await RegisterFiscalDocAsync(factory, client, payableId);
+        var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
+        confirmRes.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Approves a payable, parking it in <c>PendingAccounting</c> (no NF registered, accounting not confirmed).</summary>
+    public static async Task ApproveAsync(HttpClient client, string payableId)
+    {
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        res.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Registers a minimal NF-e against the payable (satisfies the fiscal-document gate) without confirming.</summary>
+    public static async Task RegisterFiscalDocAsync(ApiFactory factory, HttpClient client, string payableId)
+    {
+        var key = await SeedBlobAsync(factory, NfeXml, "nf.xml");
+        var uploadRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
+            new { key, fileName = "nf.xml", contentType = "application/xml", sizeBytes = (long)Encoding.UTF8.GetByteCount(NfeXml) });
+        uploadRes.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Attaches a document (e.g. the NF) to the payable via the multipart /attachments endpoint —
+    /// stored as a PayableAttachment (no parsing). Satisfies the "has NF" gate just like a fiscal document.</summary>
+    public static async Task AttachDocumentAsync(HttpClient client, string payableId, string fileName = "nf.xml")
+    {
+        using var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(Encoding.UTF8.GetBytes(NfeXml));
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/xml");
+        content.Add(file, "file", fileName);
+        (await client.PostAsync($"/api/payables/{payableId}/attachments", content)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Saves a blob directly via <see cref="IFileStorageService"/> (the presigned-URL path is not
+    /// available with the LocalFileStorageService used in tests) and returns the storage key.</summary>
+    private static async Task<string> SeedBlobAsync(ApiFactory factory, string xml, string fileName)
+    {
+        using var scope = factory.Services.CreateScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+        return await storage.SaveAsync(fileName, stream);
     }
 
     public static async Task RegisterPaymentAsync(HttpClient client, string payableId, string installmentId, string bankId, decimal amount, DateOnly date)

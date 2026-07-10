@@ -85,6 +85,7 @@ export const queryKeys = {
   payableStageSummary: (companyId: string) => ['payableStageSummary', companyId] as const,
   payableStageItems: (params: PayableStageItemsParams) => ['payableStageItems', params] as const,
   payableAuditTrail: (id: string) => ['payableAuditTrail', id] as const,
+  payableAccountingView: (id: string) => ['payableAccountingView', id] as const,
   receivables: (params: ReceivablesParams) => ['receivables', params] as const,
   receivable: (id: string) => ['receivable', id] as const,
   receivableStageSummary: (companyId: string) => ['receivableStageSummary', companyId] as const,
@@ -214,6 +215,8 @@ export interface ReceivablesParams {
 export interface PayableStageItemsParams {
   companyId: string;
   status?: PayableStatus;
+  /** Filter by NF presence — e.g. the Pendências "Nota Fiscal" tab passes `false`. */
+  hasFiscalDocument?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -358,6 +361,14 @@ export function usePayableAuditTrail(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.payableAuditTrail(id ?? ''),
     queryFn: () => api.payableAuditTrail(id!),
+    enabled: !!id,
+  });
+}
+
+export function usePayableAccountingView(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.payableAccountingView(id ?? ''),
+    queryFn: () => api.payableAccountingView(id!),
     enabled: !!id,
   });
 }
@@ -680,6 +691,20 @@ export function useApprovePayable(options?: UseMutationOptions<Payable, unknown,
   return useInvalidatingMutation(({ id }) => api.approvePayable(id), invalidatePayable, options);
 }
 
+export function useConfirmAccounting(options?: UseMutationOptions<Payable, unknown, { id: string }>) {
+  return useInvalidatingMutation(
+    ({ id }) => api.confirmAccounting(id),
+    (qc, _data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
+    },
+    options,
+  );
+}
+
 export function useRejectPayable(options?: UseMutationOptions<Payable, unknown, { id: string; reason: string }>) {
   return useInvalidatingMutation(({ id, reason }) => api.rejectPayable(id, reason), invalidatePayable, options);
 }
@@ -694,8 +719,13 @@ export function useUploadPayableAttachment(
   return useInvalidatingMutation(
     ({ id, file }) => api.uploadPayableAttachment(id, file),
     (qc, _data, vars) => {
+      // An attached document can satisfy the NF gate (Pendências "Nota Fiscal" tab), so refresh the stage
+      // lists/counts and the accounting view too — not just the payable + list.
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
     },
     options,
   );
@@ -802,8 +832,13 @@ export function useUploadPayableFiscalDocument(
     ({ id, key, fileName, contentType, sizeBytes }) =>
       api.uploadPayableFiscalDocument(id, { key, fileName, contentType, sizeBytes }),
     (qc, _data, vars) => {
+      // Mirror useConfirmAccounting: an attached NF flips hasFiscalDocument, so the Pendências
+      // "Nota Fiscal" list/count and the accounting view must refresh too.
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
       void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
     },
     options,
   );
@@ -1102,8 +1137,15 @@ export function useClassifyPayable(
 ) {
   return useInvalidatingMutation(
     ({ id, body }) => api.classifyPayable(id, body),
-    (qc) => {
+    (qc, _data, vars) => {
+      // ['payables'] prefix-matches the LIST keys but NOT ['payable', id] (usePayable). Invalidate the single
+      // payable explicitly so the accounting drawer's retentions/account (bound to `p`) refresh after reclassify,
+      // plus the accounting view and stage lists (classify can also auto-approve → status/bucket changes).
       void qc.invalidateQueries({ queryKey: ['payables'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.payable(vars.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.payableAccountingView(vars.id) });
+      void qc.invalidateQueries({ queryKey: ['payableStageItems'] });
+      void qc.invalidateQueries({ queryKey: ['payableStageSummary'] });
     },
     options,
   );

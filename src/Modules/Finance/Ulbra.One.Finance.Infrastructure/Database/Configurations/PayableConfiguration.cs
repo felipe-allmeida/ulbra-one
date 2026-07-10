@@ -20,6 +20,7 @@ public sealed class PayableConfiguration : BaseEntityConfiguration<Payable>
         e.Property(x => x.CancelReason).HasMaxLength(500);
         e.Property(x => x.ApprovedBy).HasMaxLength(64);
         e.Property(x => x.RejectedBy).HasMaxLength(64);
+        e.Property(x => x.AccountedBy).HasMaxLength(64);
         e.HasMany(x => x.Installments).WithOne().HasForeignKey(i => i.PayableId).OnDelete(DeleteBehavior.Cascade);
         e.HasMany(x => x.Attachments).WithOne().HasForeignKey(a => a.PayableId).OnDelete(DeleteBehavior.Cascade);
         e.HasMany(x => x.Withholdings).WithOne().HasForeignKey(w => w.PayableId).OnDelete(DeleteBehavior.Cascade);

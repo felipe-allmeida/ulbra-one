@@ -6,7 +6,7 @@ public enum TransactionStatus { Pending = 0, Approved = 1, Paid = 2, Rejected = 
 
 public enum PayableOrigin { Manual, Purchase, Payroll, SeniorImport }
 
-public enum PayableStatus { Received, PendingClassification, PendingApproval, Scheduled, Paid, Rejected, Cancelled }
+public enum PayableStatus { Received, PendingClassification, PendingApproval, PendingAccounting, Scheduled, Paid, Rejected, Cancelled }
 
 /// <summary>Whether a payable is a Service (subject to source withholding) or a Product. Undetermined = null on the payable.</summary>
 public enum PayableType { Service, Product }

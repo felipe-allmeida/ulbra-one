@@ -199,9 +199,11 @@ public class SetWithholdingsEndpointTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
         var payableId = await CreatePayableAsync(client, seed, 1000m);
 
-        // Approve → Scheduled (the accounting incurral fires at this point).
+        // Approve → PendingAccounting; completing the accounting review (NF + confirm) → Scheduled
+        // (the accounting incurral fires there), which is where withholdings lock.
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableId); // → Scheduled
 
         // Changing withholdings after scheduling is rejected — defense-in-depth; the UI already
         // renders the retenções section read-only once the payable leaves the pre-approval states.

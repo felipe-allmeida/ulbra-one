@@ -8,6 +8,7 @@ export function PayableStatusBadge({ s }: { s: PayableStatus }) {
     Received: 'badge-pendente',
     PendingClassification: 'badge-pendente',
     PendingApproval: 'badge-pendente',
+    PendingAccounting: 'badge-pendente',
     Scheduled: 'badge-aprovado',
     Paid: 'badge-pago',
     Rejected: 'badge-rejeitado',

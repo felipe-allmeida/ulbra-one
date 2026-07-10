@@ -121,6 +121,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
         payableARes.EnsureSuccessStatusCode();
         var payableAPrefixedId = (await ReadJson(payableARes)).GetProperty("id").GetString()!;
         (await client.PostAsJsonAsync($"/api/payables/{payableAPrefixedId}/approve", new { })).EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableAPrefixedId); // → Scheduled
         var payableAId = Guid.Parse(payableAPrefixedId[(payableAPrefixedId.LastIndexOf('_') + 1)..]);
 
         // Payable B (PIX, 500)
@@ -137,6 +138,7 @@ public class RemittanceReturnServiceTests(PostgresFixture fixture)
         payableBRes.EnsureSuccessStatusCode();
         var payableBPrefixedId = (await ReadJson(payableBRes)).GetProperty("id").GetString()!;
         (await client.PostAsJsonAsync($"/api/payables/{payableBPrefixedId}/approve", new { })).EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payableBPrefixedId); // → Scheduled
         var payableBId = Guid.Parse(payableBPrefixedId[(payableBPrefixedId.LastIndexOf('_') + 1)..]);
 
         return new SeedResult(companyId, bankAccount.Id, payableAId, payableBId);

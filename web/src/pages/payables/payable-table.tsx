@@ -74,6 +74,11 @@ export function PayableTable({
               </td>
               <td onClick={(e) => e.stopPropagation()}>
                 <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
+                {l.status === 'PendingAccounting' && l.hasFiscalDocument === false && (
+                  <span className='badge-status badge-pendente' style={{ marginLeft: 6 }}>
+                    {t('payables.tags.fiscalDocPending')}
+                  </span>
+                )}
               </td>
               {extraColumn && <td onClick={(e) => e.stopPropagation()}>{extraColumn.cell(l)}</td>}
             </tr>

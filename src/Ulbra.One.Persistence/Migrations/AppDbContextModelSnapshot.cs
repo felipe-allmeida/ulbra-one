@@ -1417,6 +1417,15 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("AccountedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accounted_at");
+
+                    b.Property<string>("AccountedBy")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("accounted_by");
+
                     b.Property<Guid?>("AccountingAccountId")
                         .HasColumnType("uuid")
                         .HasColumnName("accounting_account_id");

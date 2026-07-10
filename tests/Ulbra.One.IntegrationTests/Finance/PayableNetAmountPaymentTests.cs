@@ -113,8 +113,11 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
             (WithholdingTaxType.Irrf, BaseAmount: grossAmount, Rate: null, Amount: withholdingAmount)
         ]);
 
-        // Move to Scheduled so remittance + auto-pay can pick it up.
+        // Move to Scheduled so remittance + auto-pay can pick it up. Approval now parks in PendingAccounting;
+        // completing the accounting review (NF registered) is what schedules it. The fiscal-doc gate is an
+        // endpoint concern, so at the domain level we pass hasFiscalDocument: true.
         payable.Approve("test-user", now);
+        payable.CompleteAccounting("test-user", now, hasFiscalDocument: true);
 
         await uow.AddAsync(payable, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
@@ -126,7 +129,7 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
     /// Creates a payable via HTTP, approves it (→ Scheduled) — no withholdings.
     /// </summary>
     private static async Task<Guid> CreateScheduledPayableNoWithholdingAsync(
-        HttpClient client, NetAmountSeed seed, decimal amount)
+        ApiFactory factory, HttpClient client, NetAmountSeed seed, decimal amount)
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
@@ -143,6 +146,7 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
 
         var approveRes = await client.PostAsJsonAsync($"/api/payables/{payablePrefixedId}/approve", new { });
         approveRes.EnsureSuccessStatusCode();
+        await FinanceSeed.CompleteAccountingAsync(factory, client, payablePrefixedId);
 
         return payableId;
     }
@@ -209,7 +213,7 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
         var seed = await SeedCompanyVendorBankAsync(factory, client);
 
         const decimal amount = 500m;
-        var payableId = await CreateScheduledPayableNoWithholdingAsync(client, seed, amount);
+        var payableId = await CreateScheduledPayableNoWithholdingAsync(factory, client, seed, amount);
 
         await using var scope = factory.Services.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<IRemittanceGenerationService>();
