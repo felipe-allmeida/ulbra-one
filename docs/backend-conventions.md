@@ -370,7 +370,7 @@ generator does the rest automatically.
 
 **Stack:** MassTransit v8 (pinned `< 9.0.0`) + RabbitMQ. The **EF bus outbox** runs on `AppDbContext`, storing outgoing messages in the `masstransit` schema tables (`masstransit.inbox_state`, `masstransit.outbox_message`, `masstransit.outbox_state`) atomically alongside business rows. `QueryDelay = 1s`. Registered at the API composition root (`src/API/Ulbra.One.Api/MessagingSetup.cs` → `AddMessaging`).
 
-**Status (AEL-588):** Foundation is complete — bus outbox is wired and proven by `OutboxFoundationTests`. Zero consumers are registered today. The first real consumer is AI auto-classification (AEL-557), implemented in a later PR.
+**Status:** Foundation (AEL-588) is complete — bus outbox is wired and proven by `OutboxFoundationTests` — and in production use. Registered consumers (all in `MessagingSetup.cs`): Finance `PayableReceivedConsumer` (AI auto-classification + withholding on create) and `PayableUpdatedConsumer` (withholding recalculation on edit, AEL-696); Accounting `PayableScheduledConsumer`, `PaymentRegisteredConsumer` and `AccountingReversalConsumer` (posting reactions to Finance events).
 
 ### Pattern
 
@@ -400,7 +400,6 @@ Transport is config-selected. Local dev uses RabbitMQ via `docker-compose` (`Mas
 
 ### Deferred (future slices)
 
-- First consumer: AI auto-classification of payables (AEL-557).
 - Hangfire time-based escalation for stale approvals.
 - Real delivery channels (email, push) for in-app notifications.
 - MassTransit consumer inbox middleware for stricter idempotency.
