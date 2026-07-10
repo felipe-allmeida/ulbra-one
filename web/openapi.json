@@ -9914,6 +9914,7 @@
         "required": [
           "id",
           "status",
+          "origin",
           "counterpartyName",
           "documentNumber",
           "totalAmount",
@@ -9935,6 +9936,9 @@
           },
           "status": {
             "$ref": "#/components/schemas/PayableStatus"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
           },
           "counterpartyName": {
             "type": "string"
@@ -10157,7 +10161,9 @@
           "Manual",
           "Purchase",
           "Payroll",
-          "SeniorImport"
+          "SeniorImport",
+          "FiscalDocument",
+          "Advance"
         ],
         "type": "string"
       },

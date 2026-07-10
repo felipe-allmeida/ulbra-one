@@ -2609,6 +2609,7 @@ export interface components {
             /** @example payable_3fa85f64571742199730000000000000 */
             id: string;
             status: components["schemas"]["PayableStatus"];
+            origin: components["schemas"]["PayableOrigin"];
             counterpartyName: string;
             documentNumber: string | null;
             /** Format: double */
@@ -2680,7 +2681,7 @@ export interface components {
             totalPages: number;
         };
         /** @enum {string} */
-        PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport";
+        PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport" | "FiscalDocument" | "Advance";
         PayableResponse: {
             /** @example payable_3fa85f64571742199730000000000000 */
             id: string;
