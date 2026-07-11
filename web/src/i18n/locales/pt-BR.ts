@@ -452,10 +452,10 @@ const ptBR = {
       registerVendor: 'Cadastrar fornecedor',
       vendorNoticeBanner: 'Confirme os dados coletados a partir do arquivo de Nota Fiscal.',
       heroEmphasis:
-        'Comece subindo o XML da nota fiscal — os campos da conta a pagar serão preenchidos automaticamente.',
-      dropHint: 'Clique para selecionar o XML da nota fiscal',
+        'Comece subindo o XML ou PDF da nota fiscal — os campos da conta a pagar serão preenchidos automaticamente.',
+      dropHint: 'Clique para selecionar o XML ou PDF da nota fiscal',
       fillManually: 'ou preencher manualmente',
-      selectLabel: 'Selecione a NF em XML',
+      selectLabel: 'Selecione a NF (XML ou PDF)',
       selectHelp: 'NF-e (produto) ou NFS-e (serviço) em XML; PDF é lido por IA.',
       parsing: 'Lendo a nota fiscal…',
       applied: 'Campos preenchidos automaticamente a partir da NF:',
