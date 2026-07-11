@@ -3138,6 +3138,13 @@
             }
           },
           {
+            "name": "origin",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PayableOrigin"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -9914,6 +9921,7 @@
         "required": [
           "id",
           "status",
+          "origin",
           "counterpartyName",
           "documentNumber",
           "totalAmount",
@@ -9935,6 +9943,9 @@
           },
           "status": {
             "$ref": "#/components/schemas/PayableStatus"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
           },
           "counterpartyName": {
             "type": "string"
@@ -10029,6 +10040,7 @@
           "categoryId",
           "dueDate",
           "amount",
+          "netAmount",
           "installmentStatus",
           "payableStatus",
           "scheduledPaymentDate",
@@ -10077,6 +10089,10 @@
             "format": "date"
           },
           "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "netAmount": {
             "type": "number",
             "format": "double"
           },
@@ -10157,7 +10173,9 @@
           "Manual",
           "Purchase",
           "Payroll",
-          "SeniorImport"
+          "SeniorImport",
+          "FiscalDocument",
+          "Advance"
         ],
         "type": "string"
       },
@@ -10372,7 +10390,10 @@
           "firstDueDate",
           "installmentCount",
           "totalAmount",
+          "totalWithheld",
+          "netTotal",
           "status",
+          "origin",
           "hasFiscalDocument"
         ],
         "type": "object",
@@ -10408,8 +10429,19 @@
             "type": "number",
             "format": "double"
           },
+          "totalWithheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "netTotal": {
+            "type": "number",
+            "format": "double"
+          },
           "status": {
             "$ref": "#/components/schemas/PayableStatus"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/PayableOrigin"
           },
           "hasFiscalDocument": {
             "type": "boolean"
@@ -11956,7 +11988,8 @@
       "StageBucket": {
         "required": [
           "count",
-          "totalAmount"
+          "totalAmount",
+          "netTotalAmount"
         ],
         "type": "object",
         "properties": {
@@ -11967,6 +12000,11 @@
           "totalAmount": {
             "type": "number",
             "format": "double"
+          },
+          "netTotalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false

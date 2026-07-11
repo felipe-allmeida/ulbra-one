@@ -28,17 +28,28 @@ public sealed class GetPayableStageSummary : IEndpoint
 
         // "Nota Fiscal pendente" pendency bucket: PendingAccounting titles with no NF registered — neither a
         // parsed FiscalDocument nor an attached NF document (PayableAttachment). Separate query — the status
-        // GroupBy above can't express the NOT EXISTS against the other aggregates.
+        // GroupBy above can't express the NOT EXISTS against the other aggregates. Advance payables
+        // (adiantamento) are exempt from the NF gate, so a missing NF is not a pendency for them.
         var fiscalDocs = uow.ReadSet<FiscalDocument>();
         var attachments = uow.ReadSet<PayableAttachment>();
         var fiscalPending = await uow.ReadSet<Payable>()
             .Where(p => p.CompanyId == companyId.Value
                         && p.Status == PayableStatus.PendingAccounting
+                        && p.Origin != PayableOrigin.Advance
                         && !fiscalDocs.Any(d => d.PayableId == p.Id)
                         && !attachments.Any(a => a.PayableId == p.Id))
             .GroupBy(_ => 1)
             .Select(g => new { Count = g.Count(), Total = g.Sum(p => p.TotalAmount) })
             .FirstOrDefaultAsync(ct);
+
+        // Net sum for the Payment bucket only: what will actually leave the bank. Σ Installment.NetAmount
+        // == NetTotal per payable (invariant kept by RecomputeInstallmentNetAmounts), so a flat SUM over
+        // the scheduled installments is exact — and it's literally what the remittance pays. Separate
+        // scalar query: a nested Sum inside the status GroupBy above doesn't translate.
+        var paymentNetTotal = await uow.ReadSet<Payable>()
+            .Where(p => p.CompanyId == companyId.Value && p.Status == PayableStatus.Scheduled)
+            .SelectMany(p => p.Installments)
+            .SumAsync(i => i.NetAmount, ct);
 
         StageBucket Bucket(PayableStatus s)
         {
@@ -51,7 +62,7 @@ public sealed class GetPayableStageSummary : IEndpoint
             Classification: Bucket(PayableStatus.PendingClassification),
             Approval: Bucket(PayableStatus.PendingApproval),
             Accounting: Bucket(PayableStatus.PendingAccounting),
-            Payment: Bucket(PayableStatus.Scheduled),
+            Payment: Bucket(PayableStatus.Scheduled) with { NetTotalAmount = paymentNetTotal },
             Reconciled: Bucket(PayableStatus.Paid),
             FiscalDocumentPending: fiscalPending is null
                 ? new StageBucket(0, 0m)

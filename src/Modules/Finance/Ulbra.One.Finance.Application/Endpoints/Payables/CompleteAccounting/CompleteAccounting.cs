@@ -36,9 +36,10 @@ public sealed class CompleteAccounting : IEndpoint
         // Hard gate: the Nota Fiscal must be registered before accounting completes — either a parsed
         // FiscalDocument (XML) or an attached NF document (PayableAttachment, the Pendências attach flow).
         // Both are separate from the aggregate, so the check lives here (cf. ClassificationGate).
+        // Advance payables (adiantamento) are exempt — they are paid before the NF exists.
         var hasFiscalDocument = await uow.ReadSet<FiscalDocument>().AnyAsync(d => d.PayableId == p.Id, ct)
             || await uow.ReadSet<PayableAttachment>().AnyAsync(a => a.PayableId == p.Id, ct);
-        if (!hasFiscalDocument)
+        if (!hasFiscalDocument && p.Origin != PayableOrigin.Advance)
             return TypedResults.Problem(
                 detail: "A Nota Fiscal must be registered before the payable can be sent to payment.",
                 statusCode: 400, title: "Payable.FiscalDocumentMissing");

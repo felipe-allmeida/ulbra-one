@@ -4,7 +4,10 @@ public enum TransactionType { Payable = 0, Receivable = 1 }
 
 public enum TransactionStatus { Pending = 0, Approved = 1, Paid = 2, Rejected = 3 }
 
-public enum PayableOrigin { Manual, Purchase, Payroll, SeniorImport }
+/// <summary>Intake channel of a payable. Manual = filled by hand (NF registered later), FiscalDocument = born
+/// from an uploaded NF file, Advance = adiantamento (paid before the NF exists — exempt from the NF gate).
+/// Purchase/Payroll/SeniorImport are reserved for system integrations. Int-backed: append only, never reorder.</summary>
+public enum PayableOrigin { Manual, Purchase, Payroll, SeniorImport, FiscalDocument, Advance }
 
 public enum PayableStatus { Received, PendingClassification, PendingApproval, PendingAccounting, Scheduled, Paid, Rejected, Cancelled }
 

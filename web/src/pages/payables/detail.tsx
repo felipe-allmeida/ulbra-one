@@ -120,6 +120,12 @@ export function PayableDetailPage() {
           <div className='info-label'>{t('payables.cards.totalAmount')}</div>
           <div className='info-value'>{brl(p.totalAmount)}</div>
         </div>
+        {(p.status === 'Scheduled' || p.status === 'Paid') && (
+          <div className='info-card'>
+            <div className='info-label'>{t('payables.cards.netTotal')}</div>
+            <div className='info-value'>{brl(p.netTotal)}</div>
+          </div>
+        )}
         <div className='info-card'>
           <div className='info-label'>{t('payables.cards.status')}</div>
           <div style={{ marginTop: 4 }}>

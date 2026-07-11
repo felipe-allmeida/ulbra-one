@@ -7,7 +7,11 @@ namespace Ulbra.One.Finance.Application.Contracts;
 public sealed record PayableListItemResponse(
     PayableId PayableId, InstallmentId InstallmentId, int Sequence, int InstallmentCount,
     string CounterpartyName, string Description, CostCenterId CostCenterId, ExpenseCategoryId? CategoryId,
-    DateOnly DueDate, decimal Amount, InstallmentStatus InstallmentStatus, PayableStatus PayableStatus,
+    DateOnly DueDate, decimal Amount,
+    /// <summary>Installment amount net of the payable's withholdings (Σ NetAmount == the payable's NetTotal;
+    /// equals Amount when there are none). This is what the payment esteira actually pays.</summary>
+    decimal NetAmount,
+    InstallmentStatus InstallmentStatus, PayableStatus PayableStatus,
     /// <summary>Date the daily sweep will process this installment (defaults to DueDate at creation).</summary>
     DateOnly ScheduledPaymentDate,
     /// <summary>True when this installment has been manually paused from the remittance sweep.</summary>

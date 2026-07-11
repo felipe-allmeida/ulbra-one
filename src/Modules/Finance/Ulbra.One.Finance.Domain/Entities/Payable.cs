@@ -204,13 +204,14 @@ public class Payable : IAuditable, ISoftDeletable
 
     /// <summary>Accountant confirms the accounting review (retentions, ledger classification) and releases the
     /// payable for payment. Requires a registered fiscal document (Nota Fiscal) — checked by the caller, since the
-    /// <c>FiscalDocument</c> is a separate aggregate — enforced here as an invariant. Only valid from
+    /// <c>FiscalDocument</c> is a separate aggregate — enforced here as an invariant. Advance payables
+    /// (adiantamento) are exempt: they are paid before the NF exists. Only valid from
     /// <see cref="PayableStatus.PendingAccounting"/>.</summary>
     public void CompleteAccounting(string bookedBy, DateTimeOffset at, bool hasFiscalDocument)
     {
         if (Status != PayableStatus.PendingAccounting)
             throw new InvalidOperationException("Only a payable pending accounting can be booked (scheduled).");
-        if (!hasFiscalDocument)
+        if (!hasFiscalDocument && Origin != PayableOrigin.Advance)
             throw new InvalidOperationException("A registered fiscal document (Nota Fiscal) is required before accounting can be completed.");
         Status = PayableStatus.Scheduled;
         AccountedBy = bookedBy;

@@ -438,15 +438,15 @@ body {
 }
 .file-picker.file-picker-lg {
   flex-direction: column;
-  gap: 10px;
-  padding: 28px 20px;
+  gap: 8px;
+  padding: 16px;
   border-style: dashed;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
 }
 .file-picker.file-picker-lg svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   color: var(--brand);
 }
 
@@ -478,6 +478,81 @@ body {
   background: var(--brand-subtle);
   border: 1px solid var(--brand);
   border-radius: var(--radius);
+}
+
+/* Intake choice (create flow): 3 modality cards — Folha (em breve), Nota Fiscal (primary), Adiantamento */
+.intake-choice-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 0 14px;
+}
+.intake-choice {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 14px;
+  max-width: 860px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+@media (max-width: 900px) {
+  .intake-choice {
+    grid-template-columns: 1fr;
+  }
+}
+.intake-card {
+  text-align: center;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  color: var(--foreground);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.intake-card:hover:not(:disabled) {
+  border-color: var(--brand, #4f46e5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.intake-card svg {
+  width: 28px;
+  height: 28px;
+  color: var(--brand, #4f46e5);
+}
+.intake-card.is-primary {
+  border-color: var(--brand, #4f46e5);
+  background: var(--brand-subtle);
+}
+.intake-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.intake-card-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.intake-card-hint {
+  font-size: 13px;
+  color: var(--muted-foreground, #6b7280);
+}
+.intake-soon-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground, #6b7280);
+  background: var(--surface, #f3f4f6);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 /* Inline text button styled as a link (e.g. "ou preencher manualmente") */

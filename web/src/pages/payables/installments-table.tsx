@@ -15,6 +15,8 @@ export function InstallmentsTable({
   onRegister: (installment: Installment) => void;
 }) {
   const { t } = useTranslation();
+  // The net becomes final (and payable) once accounting completes — show it per installment from there on.
+  const showNet = p.status === 'Scheduled' || p.status === 'Paid';
   return (
     <Panel title={t('payables.installmentsTitle')}>
       <table>
@@ -22,7 +24,10 @@ export function InstallmentsTable({
           <tr>
             <th>{t('installments.columns.sequence')}</th>
             <th>{t('installments.columns.dueDate')}</th>
-            <th style={{ textAlign: 'right' }}>{t('installments.columns.amount')}</th>
+            <th style={{ textAlign: 'right' }}>
+              {t(showNet ? 'payables.columns.grossAmount' : 'installments.columns.amount')}
+            </th>
+            {showNet && <th style={{ textAlign: 'right' }}>{t('installments.columns.net')}</th>}
             <th>{t('installments.columns.status')}</th>
             <th />
           </tr>
@@ -39,6 +44,11 @@ export function InstallmentsTable({
                 <td className='amount-cell' style={{ textAlign: 'right' }}>
                   {brl(inst.amount)}
                 </td>
+                {showNet && (
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    {brl(inst.netAmount)}
+                  </td>
+                )}
                 <td>
                   <InstallmentStatusBadge s={inst.status} />
                 </td>

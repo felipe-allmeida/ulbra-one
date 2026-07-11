@@ -11,7 +11,7 @@ public sealed record ParsedAddress(
     string? Cep, string? Street, string? Number, string? Neighborhood, string? City, string? State);
 
 /// <summary>
-/// Result of parsing a fiscal document (NF-e/NFS-e XML or the service PDF mock). Returned by the
+/// Result of parsing a fiscal document (NF-e/NFS-e XML, or PDF/image via the AI vision extractor). Returned by the
 /// stateless parse/preview endpoint to pre-fill the payable form — nothing is persisted at this point.
 /// The parsers leave the vendor-match fields null; the endpoint fills them from the registry.
 /// </summary>

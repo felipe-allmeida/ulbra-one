@@ -30,6 +30,7 @@ const baseItem = {
   categoryId: null,
   dueDate: '2026-06-20',
   amount: 800,
+  netAmount: 750, // 50 withheld — the esteira pays (and sums) the net
   installmentStatus: 'Open',
   payableStatus: 'Scheduled',
   scheduledPaymentDate: '2026-07-01',
@@ -104,7 +105,23 @@ describe('PaymentTab', () => {
     );
     expect(screen.getByText('ACME')).toBeInTheDocument();
     expect(screen.getAllByText(/R\$/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Total:/)).toBeInTheDocument();
+    expect(screen.getByText(/A pagar:/)).toBeInTheDocument();
+  });
+
+  it('shows gross and net ("A pagar") per line and sums the net everywhere', () => {
+    mockUsePayables.mockReturnValue({ data: { items: [remittanceItem], total: 1, totalPages: 1 } });
+    render(
+      <MemoryRouter>
+        <PaymentTab companyId='company_1' />
+      </MemoryRouter>,
+    );
+    // Two amount columns on the rail table.
+    expect(screen.getByText('Valor bruto')).toBeInTheDocument();
+    expect(screen.getAllByText('A pagar').length).toBeGreaterThan(0);
+    // The line shows the gross (800) AND the net (750); the summary + panel subtotal sum the net.
+    expect(screen.getAllByText(/R\$\s?800/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\$\s?750/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText(/A pagar:\s*R\$\s?800/)).toBeNull();
   });
 
   it('renders two sub-tabs Remessas and Manuais', () => {

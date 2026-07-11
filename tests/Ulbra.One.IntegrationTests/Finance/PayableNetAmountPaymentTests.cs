@@ -202,6 +202,44 @@ public class PayableNetAmountPaymentTests(PostgresFixture fixture)
     }
 
     /// <summary>
+    /// Manual baixa path: with a withholding, the outstanding balance is the NET (not the gross) —
+    /// paying the gross must be rejected with Payment.Overpay, and paying the net settles the installment.
+    /// This is the server-side rule the payment form's suggested value must respect.
+    /// </summary>
+    [Fact]
+    public async Task RegisterPayment_At_Gross_Returns_Overpay_And_Net_Settles()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedCompanyVendorBankAsync(factory, client);
+
+        // Gross 1000, IRRF 150 → outstanding = NetAmount 850.
+        await CreateScheduledPayableWithWithholdingAsync(factory, seed, 1000m, 150m);
+
+        // Resolve prefixed ids via the operational list (avoids assuming the id string format).
+        var list = await ReadJson(await client.GetAsync($"/api/payables?companyId={seed.CompanyPrefixedId}"));
+        var row = list.GetProperty("items").EnumerateArray().Single();
+        var payableId = row.GetProperty("payableId").GetString()!;
+        var installmentId = row.GetProperty("installmentId").GetString()!;
+        var bankId = await FinanceSeed.CreateBankAccountAsync(client, seed.CompanyPrefixedId, "11122233");
+        var paymentDate = FinanceSeed.Today().ToString("yyyy-MM-dd");
+
+        // Paying the gross exceeds the net outstanding balance → 400 Payment.Overpay.
+        var overpay = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments",
+            new { paymentDate, amount = 1000m, bankAccountId = bankId, method = "Pix" });
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, overpay.StatusCode);
+        Assert.Equal("Payment.Overpay", (await ReadJson(overpay)).GetProperty("title").GetString());
+
+        // Paying the net settles the installment in full.
+        var pay = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments",
+            new { paymentDate, amount = 850m, bankAccountId = bankId, method = "Pix" });
+        Assert.Equal(System.Net.HttpStatusCode.Created, pay.StatusCode);
+        var paidInstallment = (await ReadJson(pay)).GetProperty("installments")[0];
+        Assert.Equal("Paid", paidInstallment.GetProperty("status").GetString());
+        Assert.Equal(850m, paidInstallment.GetProperty("paidAmount").GetDecimal());
+    }
+
+    /// <summary>
     /// (Regression A) Remittance path: a payable with NO withholding must still produce a
     /// RemittanceLine.Amount equal to installment.Amount (since NetAmount == Amount).
     /// </summary>
