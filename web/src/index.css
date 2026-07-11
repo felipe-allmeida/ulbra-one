@@ -438,15 +438,15 @@ body {
 }
 .file-picker.file-picker-lg {
   flex-direction: column;
-  gap: 10px;
-  padding: 28px 20px;
+  gap: 8px;
+  padding: 16px;
   border-style: dashed;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
 }
 .file-picker.file-picker-lg svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   color: var(--brand);
 }
 

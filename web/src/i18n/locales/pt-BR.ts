@@ -456,7 +456,7 @@ const ptBR = {
       dropHint: 'Clique para selecionar o XML da nota fiscal',
       fillManually: 'ou preencher manualmente',
       selectLabel: 'Selecione a NF em XML',
-      selectHelp: 'NF-e (produto) ou NFS-e (serviço) em XML; PDF de serviço é lido por mock.',
+      selectHelp: 'NF-e (produto) ou NFS-e (serviço) em XML; PDF é lido por IA.',
       parsing: 'Lendo a nota fiscal…',
       applied: 'Campos preenchidos automaticamente a partir da NF:',
       format: 'Formato',

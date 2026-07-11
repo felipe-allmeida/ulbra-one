@@ -4,7 +4,7 @@ namespace Ulbra.One.Finance.Application.FiscalDocuments;
 
 /// <summary>
 /// Detects the format of an uploaded fiscal document and parses it: <c>.xml</c> is dispatched to the
-/// matching <see cref="IFiscalXmlParser"/> by root namespace; <c>.pdf</c> goes to the service PDF mock.
+/// matching <see cref="IFiscalXmlParser"/> by root namespace; <c>.pdf</c> and images are read by the AI vision extractor.
 /// </summary>
 public interface IFiscalDocumentReader
 {
