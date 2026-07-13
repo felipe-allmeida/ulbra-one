@@ -182,6 +182,14 @@ public static class FinanceSeed
     public static async Task CompleteAccountingAsync(ApiFactory factory, HttpClient client, string payableId)
     {
         await RegisterFiscalDocAsync(factory, client, payableId);
+        await ConfirmAccountingAsync(client, payableId);
+    }
+
+    /// <summary>Confirms the accounting review (→ Scheduled) without touching the NF. Split out so a test can
+    /// register the NF first, then set a manual withholding (which survives, as confirm does not recalculate),
+    /// then confirm.</summary>
+    public static async Task ConfirmAccountingAsync(HttpClient client, string payableId)
+    {
         var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
         confirmRes.EnsureSuccessStatusCode();
     }

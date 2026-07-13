@@ -124,7 +124,7 @@ public sealed class UploadFiscalDocument : IEndpoint
 
         // Recompute withholdings now that the document + service-nature are persisted — the auto-calc at
         // classification time may have run before this document was linked. No-op when the payable is already
-        // Scheduled/Paid (locked) or when it is not a service.
+        // Scheduled/Paid (locked); an NF-e over a former service clears the stale rows (Product withholds nothing).
         await autoWithholding.RecalculateAndApplyAsync(payable, ct);
         await uow.SaveChangesAsync(ct);
 
