@@ -1,6 +1,7 @@
 using FluentValidation;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Domain.Validation;
 
 namespace Ulbra.One.Registry.Application.Validation;
@@ -23,6 +24,13 @@ public sealed class VendorRequestValidator : AbstractValidator<VendorRequest>
             RuleFor(x => x.PaymentScheduleDay)
                 .NotNull().InclusiveBetween(1, 28)
                 .WithMessage("PaymentScheduleDay must be between 1 and 28 for FixedDayOfMonth.");
+        });
+        When(x => x.AcceptedPaymentMethods is not null, () =>
+        {
+            RuleForEach(x => x.AcceptedPaymentMethods!).IsInEnum().WithMessage("Invalid payment method.");
+            RuleFor(x => x.AcceptedPaymentMethods!)
+                .Must(m => m.Distinct().Count() == m.Count)
+                .WithMessage("Duplicate payment methods are not allowed.");
         });
     }
 }

@@ -8,7 +8,7 @@ import { useBankAccounts, useDeleteBankAccount, useSaveBankAccount } from '../qu
 import { getErrorMessage } from '../apiError';
 import { Button, Input, Select, Field, PageHeader, Panel, EmptyState, Drawer, ConfirmDialog } from '../ui';
 import { EmpresaPicker } from './shared';
-import { resolver, fieldError, bankAccountSchema, type BankAccountValues } from './schemas';
+import { resolver, fieldError, bankAccountSchema, PAYMENT_METHODS, type BankAccountValues } from './schemas';
 
 /* ============ Create / edit form (Drawer body) ============ */
 function BankAccountForm({
@@ -211,12 +211,11 @@ function BankAccountForm({
                 name='defaultPaymentMethod'
                 render={({ field }) => (
                   <Select {...field} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value || null)}>
-                    <option value='Pix'>{t('payments.methods.Pix')}</option>
-                    <option value='Ted'>{t('payments.methods.Ted')}</option>
-                    <option value='Boleto'>{t('payments.methods.Boleto')}</option>
-                    <option value='Cash'>{t('payments.methods.Cash')}</option>
-                    <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
-                    <option value='Other'>{t('payments.methods.Other')}</option>
+                    {PAYMENT_METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {t(`payments.methods.${m}`)}
+                      </option>
+                    ))}
                   </Select>
                 )}
               />

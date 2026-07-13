@@ -21,4 +21,7 @@
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
 </Project>

@@ -79,6 +79,7 @@ export const queryKeys = {
   transactions: (params: TransactionsParams) => ['transactions', params] as const,
   transaction: (id: string) => ['transaction', id] as const,
   vendors: (companyId: string, search?: string, page = 1) => ['vendors', companyId, search ?? '', page] as const,
+  vendor: (id: string) => ['vendor', id] as const,
   customers: (companyId: string, search?: string, page = 1) => ['customers', companyId, search ?? '', page] as const,
   employees: (companyId: string, search?: string, page = 1) => ['employees', companyId, search ?? '', page] as const,
   payables: (params: PayablesParams) => ['payables', params] as const,
@@ -308,6 +309,14 @@ export function useVendors(companyId: string, search?: string, page = 1) {
     queryFn: () => api.listVendors(companyId, search, page),
     enabled: !!companyId,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useVendor(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vendor(id ?? ''),
+    queryFn: () => api.getVendor(id!),
+    enabled: !!id,
   });
 }
 

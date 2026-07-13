@@ -12605,7 +12605,8 @@
           "generate",
           "accountingAccountId",
           "paymentBankAccountId",
-          "paymentMethod"
+          "paymentMethod",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -12656,6 +12657,9 @@
           },
           "paymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PayableType"
           }
         },
         "additionalProperties": false
@@ -12815,7 +12819,8 @@
           "paymentScheduleMode",
           "paymentScheduleDay",
           "cprbForeseen",
-          "simplesAnexo"
+          "simplesAnexo",
+          "acceptedPaymentMethods"
         ],
         "type": "object",
         "properties": {
@@ -12871,6 +12876,13 @@
           },
           "simplesAnexo": {
             "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "acceptedPaymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12893,7 +12905,8 @@
           "paymentScheduleDay",
           "active",
           "cprbForeseen",
-          "simplesAnexo"
+          "simplesAnexo",
+          "acceptedPaymentMethods"
         ],
         "type": "object",
         "properties": {
@@ -12956,6 +12969,12 @@
           },
           "simplesAnexo": {
             "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "acceptedPaymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            }
           }
         },
         "additionalProperties": false

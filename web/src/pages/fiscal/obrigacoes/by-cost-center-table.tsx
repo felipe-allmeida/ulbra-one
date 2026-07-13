@@ -16,7 +16,7 @@ export function ByCostCenterTable({
   return (
     <div style={{ marginTop: 16 }}>
       <Panel title={t('fiscal.obrigacoes.byCostCenter')}>
-        <div className='help' style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <div className='help' style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '12px 16px 10px' }}>
           <AlertTriangle size={14} /> {t('fiscal.obrigacoes.costCenterNote')}
         </div>
         <table>

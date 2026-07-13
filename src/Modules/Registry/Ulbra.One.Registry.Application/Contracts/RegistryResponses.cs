@@ -1,4 +1,5 @@
 using Ulbra.One.Common.Application.Ids;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
 
@@ -49,12 +50,14 @@ public sealed record VendorResponse(
     int? PaymentScheduleDay,
     bool Active,
     bool? CprbForeseen,
-    SimplesAnexo? SimplesAnexo)
+    SimplesAnexo? SimplesAnexo,
+    IReadOnlyList<PaymentMethod> AcceptedPaymentMethods)
 {
     public static VendorResponse From(VendorEntity v) => new(
         new VendorId(v.Id), new CompanyId(v.CompanyId), v.PersonType, v.Name, v.TradeName, v.Document, v.Email, v.Phone,
         AddressResponse.From(v.Address), v.PaymentTerms, BankInfoResponse.From(v.BankInfo), v.TaxRegime,
-        v.PaymentSchedule.Mode, v.PaymentSchedule.DayOfMonth, v.Active, v.CprbForeseen, v.SimplesAnexo);
+        v.PaymentSchedule.Mode, v.PaymentSchedule.DayOfMonth, v.Active, v.CprbForeseen, v.SimplesAnexo,
+        v.AcceptedPaymentMethods);
 }
 
 /// <summary>Customer response shape. Matches the frontend <c>Customer</c> type.</summary>

@@ -18,8 +18,6 @@ public enum InstallmentStatus { Open, PartiallyPaid, Paid, InRemittance }
 
 public enum BankAccountType { Checking, Savings }
 
-public enum PaymentMethod { Pix, Ted, Boleto, Cash, DirectDebit, Other }
-
 /// <summary>Where a receivable originates. AcademicImport is reserved for future Prime/Ensino ingestion.</summary>
 public enum ReceivableOrigin { Manual, AcademicImport, Rent, MiscRevenue }
 

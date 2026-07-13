@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Wallet, Paperclip } from 'lucide-react';
-import { PersonType, type Payable, type PayableInput, type ParsedFiscalDocument, type PaymentMethod } from '../../api';
+import { PersonType, type Payable, type PayableInput, type ParsedFiscalDocument } from '../../api';
 import {
   resolver,
   fieldError,
@@ -43,12 +43,10 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const accountItems = (accs: typeof accountingAccounts) =>
     [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const bankAccountsList = useBankAccounts(empresaId, false).data ?? [];
-  // Per-payable payment source override (null = use company default).
+  // Per-payable payment source override (null = use company default). The payment method is no longer
+  // chosen here — it's decided at settlement, from the methods the vendor accepts (AEL-712).
   const [paymentBankAccountId, setPaymentBankAccountId] = useState<string | null>(
     initial?.paymentBankAccountId ?? null,
-  );
-  const [paymentMethodOverride, setPaymentMethodOverride] = useState<PaymentMethod | null>(
-    initial?.paymentMethod ?? null,
   );
   // Type (Service/Product): drives the automatic withholding. Set here so it's applied before any auto-approval.
   const [payableType, setPayableType] = useState<'Service' | 'Product' | null>(initial?.type ?? null);
@@ -267,7 +265,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
-      paymentMethod: paymentMethodOverride ?? null,
+      // Preserve the existing method when editing; never set on creation (decided at settlement — AEL-712).
+      paymentMethod: initial?.paymentMethod ?? null,
       type,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
@@ -523,8 +522,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 </Field>
               </div>
 
-              {/* Forma de pagamento (à vista/parcelado) · Conta bancária · Método (opcional, aparece com o banco) */}
-              <div className={paymentBankAccountId ? 'edit-grid cols-3' : 'edit-grid'} style={{ marginTop: 14 }}>
+              <div className='edit-grid' style={{ marginTop: 14 }}>
                 <Field label={t('payables.fields.mode')}>
                   <Controller
                     control={control}
@@ -558,10 +556,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 <Field label={t('payables.paymentSource.bankAccount')}>
                   <Select
                     value={paymentBankAccountId ?? ''}
-                    onChange={(e) => {
-                      setPaymentBankAccountId(e.target.value !== '' ? e.target.value : null);
-                      if (!e.target.value) setPaymentMethodOverride(null);
-                    }}
+                    onChange={(e) => setPaymentBankAccountId(e.target.value !== '' ? e.target.value : null)}
                   >
                     <option value=''>{t('payables.paymentSource.bankAccountSelect')}</option>
                     {bankAccountsList.map((b) => (
@@ -571,24 +566,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     ))}
                   </Select>
                 </Field>
-                {paymentBankAccountId && (
-                  <Field label={t('payables.paymentSource.method')}>
-                    <Select
-                      value={paymentMethodOverride ?? ''}
-                      onChange={(e) =>
-                        setPaymentMethodOverride(e.target.value !== '' ? (e.target.value as PaymentMethod) : null)
-                      }
-                    >
-                      <option value=''>{t('payables.paymentSource.methodSelect')}</option>
-                      <option value='Pix'>{t('payments.methods.Pix')}</option>
-                      <option value='Ted'>{t('payments.methods.Ted')}</option>
-                      <option value='Boleto'>{t('payments.methods.Boleto')}</option>
-                      <option value='Cash'>{t('payments.methods.Cash')}</option>
-                      <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
-                      <option value='Other'>{t('payments.methods.Other')}</option>
-                    </Select>
-                  </Field>
-                )}
               </div>
 
               <div className='edit-grid' style={{ marginTop: 14 }}>
