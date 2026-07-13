@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -9,6 +10,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Messaging;
 using CPCreatePayable = Ulbra.One.Finance.Application.Endpoints.Payables.CreatePayable.CreatePayable;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
@@ -31,6 +33,9 @@ public sealed class UpdatePayable : IEndpoint
         public LedgerAccountId? AccountingAccountId { get; set; }
         public BankAccountId? PaymentBankAccountId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
+        // Service/Product/null (undetermined). Applied unconditionally: this PUT is full-replace,
+        // and the form sends null when the user clears the selector back to "undetermined".
+        public PayableType? Type { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -41,7 +46,7 @@ public sealed class UpdatePayable : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, Request req,
-        IUnitOfWork uow, CancellationToken ct)
+        IUnitOfWork uow, IPublishEndpoint publish, CancellationToken ct)
     {
         var p = await uow.Set<Payable>().FirstOrDefaultAsync(x => x.Id == id.Value, ct);
         if (p is null) return TypedResults.Problem(detail: "Payable not found.", statusCode: 404, title: "Payable.NotFound");
@@ -85,11 +90,15 @@ public sealed class UpdatePayable : IEndpoint
             p.Classify(req.AccountingAccountId?.Value);
         }
         p.SetPaymentSource(req.PaymentBankAccountId?.Value, req.PaymentMethod);
+        p.SetType(req.Type);
         // EF does not auto-track changes to the private List<T> backing field, so we manage the
         // installment set explicitly: delete old rows and register new ones.
         uow.RemoveRange(oldInstallments);
         foreach (var inst in p.Installments)
             await uow.AddAsync(inst, ct);
+        // The bus outbox captures the event in the same transaction as the edit — the withholding
+        // recalculation consumer only ever sees committed state.
+        await publish.Publish(new PayableUpdated(p.Id, p.CompanyId), ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));
     }
