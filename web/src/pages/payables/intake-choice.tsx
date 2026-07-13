@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Users, Receipt, HandCoins } from 'lucide-react';
+import { Users, Receipt, HandCoins, FileUp, PencilLine } from 'lucide-react';
 import type { PayableOrigin } from '../../api';
 
 export type PayableIntakeMode = 'fiscal' | 'advance';
@@ -39,6 +39,44 @@ export function PayableIntakeChoice({ onPick }: { onPick: (mode: PayableIntakeMo
           <HandCoins />
           <span className='intake-card-name'>{t('payables.intake.advance')}</span>
           <span className='intake-card-hint'>{t('payables.intake.advanceHint')}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============ FISCAL SUB-CHOICE (fiscal modality) ============ */
+/**
+ * Second screen of the Nota Fiscal modality: two symmetric blocks. "Enviar arquivo" is itself a file
+ * input — clicking it opens the picker directly (no extra screen) and the chosen XML/PDF is parsed +
+ * prefilled by the reader. "Preencher manualmente" fills the payable in by hand (NF not available yet).
+ */
+export function FiscalIntakeChoice({ onUpload, onManual }: { onUpload: (file: File) => void; onManual: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <div className='intake-choice-title'>{t('payables.fiscalEntry.title')}</div>
+      <div className='intake-choice cols-2'>
+        <label className='intake-card is-primary'>
+          <FileUp />
+          <span className='intake-card-name'>{t('payables.fiscalEntry.upload')}</span>
+          <span className='intake-card-hint'>{t('payables.fiscalEntry.uploadHint')}</span>
+          <input
+            type='file'
+            accept='.xml,application/xml,text/xml,.pdf,application/pdf'
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onUpload(f);
+              // Reset so re-selecting the same file fires onChange again.
+              e.target.value = '';
+            }}
+          />
+        </label>
+        <button type='button' className='intake-card' onClick={onManual}>
+          <PencilLine />
+          <span className='intake-card-name'>{t('payables.fiscalEntry.manual')}</span>
+          <span className='intake-card-hint'>{t('payables.fiscalEntry.manualHint')}</span>
         </button>
       </div>
     </div>

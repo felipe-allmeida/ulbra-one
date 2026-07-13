@@ -1,7 +1,7 @@
 /**
- * Tests for the payable intake UI (3-card modality chooser + NF reader + manual sub-path):
+ * Tests for the payable intake UI (3-card modality chooser + NF sub-choice + reader + manual):
  * - The chooser renders the 3 modality cards (Folha disabled/"Em breve") and nothing else.
- * - Nota Fiscal nests today's flow: reader hero + "ou preencher manualmente" link.
+ * - Nota Fiscal opens a 2-block sub-choice: "Enviar arquivo" (opens the file picker directly) vs "Preencher manualmente".
  * - Adiantamento goes straight to the blank form, with no NF reader at all.
  * - The intake modality maps to the origin sent on create (originForIntake + wired submit).
  * - The top back link returns to the chooser (not the list) from inside a modality.
@@ -103,18 +103,14 @@ function renderPage() {
   return renderWithProviders(<NewPayablePage />);
 }
 
-/** Wires the presigned upload-url → PUT → parse chain to resolve with the given parsed NF. */
+/** Wires the presigned upload-url → PUT → parse chain (mutateAsync-based) to resolve with the parsed NF. */
 function mockNfFlow(parsed: ParsedFiscalDocument) {
   const uploadTarget: UploadTarget = { uploadUrl: 'https://blob.example.com/up?sig=test', key: 'fiscal/nf001.xml' };
-  const requestUrlMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: UploadTarget) => void }) => {
-    opts?.onSuccess?.(uploadTarget);
-  });
-  const parseMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: ParsedFiscalDocument) => void }) => {
-    opts?.onSuccess?.(parsed);
-  });
+  const requestUrlMutateAsync = vi.fn(async (_vars: unknown) => uploadTarget);
+  const parseMutateAsync = vi.fn(async (_vars: unknown) => parsed);
   vi.mocked(useRequestFiscalUploadUrl).mockReturnValue({
-    mutate: requestUrlMutate,
-    mutateAsync: vi.fn(),
+    mutate: vi.fn(),
+    mutateAsync: requestUrlMutateAsync,
     isPending: false,
     error: null,
     reset: vi.fn(),
@@ -122,8 +118,8 @@ function mockNfFlow(parsed: ParsedFiscalDocument) {
     data: undefined,
   } as unknown as ReturnType<typeof useRequestFiscalUploadUrl>);
   vi.mocked(useParseFiscalDocument).mockReturnValue({
-    mutate: parseMutate,
-    mutateAsync: vi.fn(),
+    mutate: vi.fn(),
+    mutateAsync: parseMutateAsync,
     isPending: false,
     error: null,
     reset: vi.fn(),
@@ -131,7 +127,7 @@ function mockNfFlow(parsed: ParsedFiscalDocument) {
     data: undefined,
   } as unknown as ReturnType<typeof useParseFiscalDocument>);
   vi.mocked(uploadToPresignedUrl).mockResolvedValue(undefined);
-  return { uploadTarget, requestUrlMutate, parseMutate };
+  return { uploadTarget, requestUrlMutateAsync, parseMutateAsync };
 }
 
 async function uploadNf(user: ReturnType<typeof userEvent.setup>) {
@@ -170,21 +166,40 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('Nota Fiscal card shows the reader hero and the manual sub-path', () => {
+  it('Nota Fiscal card shows the 2-block sub-choice (file vs manual)', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
 
-    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
-    expect(screen.getByText('ou preencher manualmente')).toBeInTheDocument();
+    // The fiscal sub-choice: two blocks, not the reader nor the form yet.
+    expect(screen.getByText('Como você quer informar a Nota Fiscal?')).toBeInTheDocument();
+    expect(screen.getByText('Enviar arquivo')).toBeInTheDocument(); // a file-input label, not a button
+    expect(screen.getByRole('button', { name: /Preencher manualmente/ })).toBeInTheDocument();
+    expect(screen.queryByText('Dados da Nota Fiscal')).toBeNull();
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('Nota Fiscal → "ou preencher manualmente" reveals the blank form (NF not available yet)', async () => {
+  it('Nota Fiscal → "Enviar arquivo" reads the picked file and reveals the form directly (no extra screen)', async () => {
+    const user = userEvent.setup();
+    mockNfFlow(minParsed);
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
-    fireEvent.click(screen.getByText('ou preencher manualmente'));
+    // The "Enviar arquivo" block is itself the file input — picking a file goes straight to processing.
+    await uploadNf(user);
+
+    await waitFor(() => {
+      expect(screen.getByText('Centro de custo')).toBeInTheDocument();
+    });
+    // The reader shows the parsed NF band; no intermediate upload screen was needed.
+    expect(screen.getByText('Dados da Nota Fiscal')).toBeInTheDocument();
+  });
+
+  it('Nota Fiscal → "Preencher manualmente" reveals the blank form (NF not available yet)', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Preencher manualmente/ }));
 
     await waitFor(() => {
       expect(screen.getByText('Centro de custo')).toBeInTheDocument();
@@ -228,7 +243,7 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
 
   it('NF flow: upload-url → PUT → parse → prefilled form → create sends origin FiscalDocument', async () => {
     const user = userEvent.setup();
-    const { uploadTarget, requestUrlMutate, parseMutate } = mockNfFlow({
+    const { uploadTarget, requestUrlMutateAsync, parseMutateAsync } = mockNfFlow({
       ...minParsed,
       matchedVendorId: 'vendor_1',
       matchedVendorName: 'Fornecedor SA',
@@ -254,18 +269,19 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+    // "Enviar arquivo" is the file input itself — picking a file kicks off the presigned chain.
     const xmlFile = await uploadNf(user);
 
     // Presigned chain: upload-url with the file name → PUT → parse by storage key.
-    expect(requestUrlMutate).toHaveBeenCalledWith(
-      { fileName: 'nf001.xml' },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    );
-    expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
-    expect(parseMutate).toHaveBeenCalledWith(
-      { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    );
+    await waitFor(() => {
+      expect(requestUrlMutateAsync).toHaveBeenCalledWith({ fileName: 'nf001.xml' });
+      expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
+      expect(parseMutateAsync).toHaveBeenCalledWith({
+        companyId: 'company_1',
+        key: uploadTarget.key,
+        fileName: 'nf001.xml',
+      });
+    });
 
     // Form revealed with the NF fields prefilled (NF-001 in the reader preview and the form input).
     await waitFor(() => {
