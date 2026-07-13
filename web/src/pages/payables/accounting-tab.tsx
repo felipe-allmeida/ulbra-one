@@ -7,12 +7,19 @@ import { STAGE_STATUS } from './stages';
 import { PayableTable } from './payable-table';
 import { AccountingDrawer } from './accounting-drawer';
 
-/** Accounting stage ("Contabilidade"): lists PendingAccounting payables and opens the "Registro de Despesa". */
+/**
+ * Accounting stage ("Contabilidade"): lists PendingAccounting payables and opens the "Registro de Despesa".
+ * Advances (origin=Advance) are excluded — they are tracked in the "Adiantamentos" tab, which carries its
+ * own "Registrar despesa" action.
+ */
 export function AccountingTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
-  const list = usePayableStageItems({ companyId, status: STAGE_STATUS.accounting, page }, { enabled: !!companyId });
+  const list = usePayableStageItems(
+    { companyId, status: STAGE_STATUS.accounting, excludeOrigin: 'Advance', page },
+    { enabled: !!companyId },
+  );
   const data = list.data;
   const [reviewId, setReviewId] = useState<string | null>(null);
 

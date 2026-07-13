@@ -28,6 +28,7 @@ public sealed class GetPayableStageItems : IEndpoint
         PayableStatus? status,
         bool? hasFiscalDocument,
         PayableOrigin? origin,
+        PayableOrigin? excludeOrigin,
         IUnitOfWork uow,
         [AsParameters] PaginationQueryParameters pagination,
         CancellationToken ct)
@@ -36,6 +37,9 @@ public sealed class GetPayableStageItems : IEndpoint
         if (status is { } st) q = q.Where(p => p.Status == st);
         // Origin filter (e.g. the "Adiantamentos" tab of Registro de Despesa: origin=Advance, no status).
         if (origin is { } og) q = q.Where(p => p.Origin == og);
+        // Origin exclusion (e.g. the "Registro de Despesa" review tab: PendingAccounting minus advances —
+        // adiantamentos live in their own tab, so they must not surface here).
+        if (excludeOrigin is { } ex) q = q.Where(p => p.Origin != ex);
 
         // "Has NF" = a parsed FiscalDocument (XML read at creation) OR an attached NF document (PayableAttachment —
         // the Pendências attach flow, PDF/other, no parse). Correlated EXISTS, both translated to SQL.

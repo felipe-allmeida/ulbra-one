@@ -220,6 +220,9 @@ export interface PayableStageItemsParams {
   hasFiscalDocument?: boolean;
   /** Filter by intake origin — e.g. the "Adiantamentos" tab passes `Advance` (no status). */
   origin?: PayableOrigin;
+  /** Exclude an intake origin — e.g. the "Registro de Despesa" review tab passes `Advance` so
+   * adiantamentos surface only in their own tab. */
+  excludeOrigin?: PayableOrigin;
   page?: number;
   pageSize?: number;
 }

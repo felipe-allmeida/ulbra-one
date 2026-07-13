@@ -154,6 +154,35 @@ public class PayableStageItemsTests(PostgresFixture fixture)
         Assert.Contains("PendingAccounting", statuses);
     }
 
+    [Fact]
+    public async Task StageItems_excludeOrigin_hides_payables_of_that_origin()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // An advance and a normal payable, both parked in PendingAccounting.
+        var advance = await FinanceSeed.CreatePayableAsync(
+            factory, client, companyId, vendor, cc, today.AddDays(10), 100m, approve: false, origin: "Advance");
+        await FinanceSeed.ApproveAsync(client, advance);
+        var normal = await FinanceSeed.CreatePayableAsync(
+            factory, client, companyId, vendor, cc, today.AddDays(20), 200m, approve: false);
+        await FinanceSeed.ApproveAsync(client, normal);
+
+        // The "Registro de Despesa" review tab: PendingAccounting minus advances (tracked in their own tab).
+        var res = await client.GetAsync(
+            $"/api/payables/stage-items?companyId={companyId}&status=PendingAccounting&excludeOrigin=Advance");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var ids = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement
+            .GetProperty("items").EnumerateArray()
+            .Select(x => x.GetProperty("payableId").GetString()).ToList();
+        Assert.Equal([normal], ids);
+    }
+
     private static async Task<List<string>> StageItemIds(HttpClient client, string companyId, string status, bool? hasFiscalDocument)
     {
         var url = $"/api/payables/stage-items?companyId={companyId}&status={status}";
