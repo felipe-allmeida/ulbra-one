@@ -136,15 +136,25 @@ function PayableForm({ initial }: { initial?: Payable }) {
   // Intake modality (create flow): chooser first; 'fiscal' nests the reader + manual sub-path,
   // 'advance' (adiantamento) goes straight to the manual form with no NF.
   const [intake, setIntake] = useState<'choice' | PayableIntakeMode>('choice');
-  // Fiscal modality sub-step: 'choice' shows the upload-vs-manual blocks; 'upload' shows the NF reader hero.
+  // Fiscal modality sub-step: 'choice' shows the upload-vs-manual blocks; 'upload' processes the picked NF.
   const [fiscalEntry, setFiscalEntry] = useState<'choice' | 'upload'>('choice');
+  // File picked straight from the "Enviar arquivo" block — handed to the reader to parse (no extra screen).
+  const [autoNfFile, setAutoNfFile] = useState<File | null>(null);
   // Reveal gate (fiscal mode): the payable fields stay hidden until an XML is parsed or the user opts to fill manually.
   const [xmlApplied, setXmlApplied] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   // Picking a modality from the 3-card chooser; the fiscal modality restarts at its own sub-choice.
   const pickIntake = (m: PayableIntakeMode) => {
     setIntake(m);
-    if (m === 'fiscal') setFiscalEntry('choice');
+    if (m === 'fiscal') {
+      setFiscalEntry('choice');
+      setAutoNfFile(null);
+    }
+  };
+  // "Enviar arquivo": go straight to processing the picked file (the reader parses it), no upload screen.
+  const pickFiscalFile = (f: File) => {
+    setFiscalEntry('upload');
+    setAutoNfFile(f);
   };
   const revealed = editing || intake === 'advance' || (intake === 'fiscal' && (xmlApplied || manualMode));
   // The parsed NF (drives the title, the vendor pre-fill and the "from NF" markers); null in manual/edit.
@@ -300,16 +310,18 @@ function PayableForm({ initial }: { initial?: Payable }) {
   // From inside a modality, the back link returns to the chooser (not the list); resets any NF state.
   const backToChoice = () => {
     setFiscalFile(null);
+    setAutoNfFile(null);
     clearXmlFields();
     setFiscalEntry('choice');
     setIntake('choice');
   };
-  // Back link: from the NF upload hero, step back to the fiscal sub-choice; from a modality, to the 3-card
-  // chooser; otherwise leave the form. Edit always leaves straight to the payable.
+  // Back link: while a picked NF is still being read (not revealed yet), step back to the fiscal sub-choice;
+  // from a modality, to the 3-card chooser; otherwise leave the form. Edit always leaves to the payable.
   const goBack = () => {
     if (editing) return nav(backTo);
     if (intake === 'fiscal' && fiscalEntry === 'upload' && !revealed) {
       setFiscalFile(null);
+      setAutoNfFile(null);
       clearXmlFields();
       setFiscalEntry('choice');
       return;
@@ -363,7 +375,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
         <PayableIntakeChoice onPick={pickIntake} />
       ) : (
         <div>
-          {/* NF reader: shown on the upload sub-step (hero) or once the form is revealed (band); also in edit.
+          {/* NF reader (band): while the picked NF is read, once the form is revealed, and in edit.
               Not shown on the fiscal sub-choice screen. An adiantamento has no NF. */}
           {(editing || (intake === 'fiscal' && (fiscalEntry === 'upload' || revealed))) && (
             <FiscalXmlReader
@@ -373,12 +385,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
               onApply={applyParsed}
               onUploadKey={(key, meta) => setFiscalUpload({ key, ...meta })}
               onClear={clearXmlFields}
-              variant={revealed ? 'band' : 'hero'}
+              variant='band'
+              autoFile={autoNfFile}
             />
           )}
-          {/* Fiscal sub-choice: upload the NF file (left) vs. fill the payable manually (right). */}
+          {/* Fiscal sub-choice: "Enviar arquivo" (opens the file picker directly) vs. "Preencher manualmente". */}
           {!revealed && intake === 'fiscal' && fiscalEntry === 'choice' && (
-            <FiscalIntakeChoice onUpload={() => setFiscalEntry('upload')} onManual={() => setManualMode(true)} />
+            <FiscalIntakeChoice onUpload={pickFiscalFile} onManual={() => setManualMode(true)} />
           )}
           {revealed && (
             <form

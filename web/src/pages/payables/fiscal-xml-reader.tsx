@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Receipt } from 'lucide-react';
 import { type ParsedFiscalDocument } from '../../api';
@@ -22,6 +22,7 @@ export function FiscalXmlReader({
   onUploadKey,
   onClear,
   variant,
+  autoFile,
 }: {
   companyId: string;
   file: File | null;
@@ -31,6 +32,8 @@ export function FiscalXmlReader({
   onUploadKey: (key: string, meta: { fileName: string; contentType: string; sizeBytes: number }) => void;
   onClear: () => void;
   variant: 'hero' | 'band';
+  /** File chosen upstream (the "Enviar arquivo" intake block); parsed automatically, no extra screen. */
+  autoFile?: File | null;
 }) {
   const { t } = useTranslation();
   const requestUrl = useRequestFiscalUploadUrl();
@@ -73,6 +76,18 @@ export function FiscalXmlReader({
       },
     );
   };
+
+  // A file picked upstream ("Enviar arquivo") is processed once, running the same upload+parse flow as
+  // the inline picker — so the user never sees a separate upload screen.
+  const autoProcessedRef = useRef<File | null>(null);
+  useEffect(() => {
+    if (autoFile && autoProcessedRef.current !== autoFile) {
+      autoProcessedRef.current = autoFile;
+      onSelect(autoFile);
+    }
+    // onSelect is recreated each render on purpose; we key the run on the autoFile identity only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFile]);
 
   const clearAll = () => {
     setParsed(null);

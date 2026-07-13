@@ -1,7 +1,7 @@
 /**
  * Tests for the payable intake UI (3-card modality chooser + NF sub-choice + reader + manual):
  * - The chooser renders the 3 modality cards (Folha disabled/"Em breve") and nothing else.
- * - Nota Fiscal opens a 2-block sub-choice: "Enviar arquivo" (reader hero) vs "Preencher manualmente".
+ * - Nota Fiscal opens a 2-block sub-choice: "Enviar arquivo" (opens the file picker directly) vs "Preencher manualmente".
  * - Adiantamento goes straight to the blank form, with no NF reader at all.
  * - The intake modality maps to the origin sent on create (originForIntake + wired submit).
  * - The top back link returns to the chooser (not the list) from inside a modality.
@@ -175,22 +175,28 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
 
-    // The fiscal sub-choice: two blocks, not the reader hero nor the form yet.
+    // The fiscal sub-choice: two blocks, not the reader nor the form yet.
     expect(screen.getByText('Como você quer informar a Nota Fiscal?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Enviar arquivo/ })).toBeInTheDocument();
+    expect(screen.getByText('Enviar arquivo')).toBeInTheDocument(); // a file-input label, not a button
     expect(screen.getByRole('button', { name: /Preencher manualmente/ })).toBeInTheDocument();
-    expect(screen.queryByText('Nota fiscal (XML/PDF)')).toBeNull();
+    expect(screen.queryByText('Dados da Nota Fiscal')).toBeNull();
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('Nota Fiscal → "Enviar arquivo" shows the reader hero', () => {
+  it('Nota Fiscal → "Enviar arquivo" reads the picked file and reveals the form directly (no extra screen)', async () => {
+    const user = userEvent.setup();
+    mockNfFlow(minParsed);
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Enviar arquivo/ }));
+    // The "Enviar arquivo" block is itself the file input — picking a file goes straight to processing.
+    await uploadNf(user);
 
-    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
-    expect(screen.queryByText('Centro de custo')).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByText('Centro de custo')).toBeInTheDocument();
+    });
+    // The reader shows the parsed NF band; no intermediate upload screen was needed.
+    expect(screen.getByText('Dados da Nota Fiscal')).toBeInTheDocument();
   });
 
   it('Nota Fiscal → "Preencher manualmente" reveals the blank form (NF not available yet)', async () => {
@@ -267,19 +273,21 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Enviar arquivo/ }));
+    // "Enviar arquivo" is the file input itself — picking a file kicks off the presigned chain.
     const xmlFile = await uploadNf(user);
 
     // Presigned chain: upload-url with the file name → PUT → parse by storage key.
-    expect(requestUrlMutate).toHaveBeenCalledWith(
-      { fileName: 'nf001.xml' },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    );
-    expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
-    expect(parseMutate).toHaveBeenCalledWith(
-      { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    );
+    await waitFor(() => {
+      expect(requestUrlMutate).toHaveBeenCalledWith(
+        { fileName: 'nf001.xml' },
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
+      expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
+      expect(parseMutate).toHaveBeenCalledWith(
+        { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
+    });
 
     // Form revealed with the NF fields prefilled (NF-001 in the reader preview and the form input).
     await waitFor(() => {
