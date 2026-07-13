@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { type Payable, type Installment, type PaymentMethod, type RegisterPaymentInput } from '../../api';
-import { resolver, fieldError, paymentSchema, type PaymentValues } from '../schemas';
-import { useBankAccounts, useRegisterPayment, useUploadPaymentProof } from '../../queries';
+import { type Payable, type Installment, type RegisterPaymentInput } from '../../api';
+import { resolver, fieldError, paymentSchema, PAYMENT_METHODS, type PaymentValues } from '../schemas';
+import { useBankAccounts, useRegisterPayment, useUploadPaymentProof, useVendor } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { Button, Input, Select, Field } from '../../ui';
-
-const PAYMENT_METHODS: PaymentMethod[] = ['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other'];
 
 /* ============ Baixa (register payment) form ============ */
 export function PaymentForm({
@@ -25,11 +23,16 @@ export function PaymentForm({
   const contas = useBankAccounts(payable.companyId).data ?? [];
   const [file, setFile] = useState<File | null>(null);
 
+  // Só as formas de pagamento aceitas pelo fornecedor (vazio/carregando = todas — AEL-712).
+  const vendor = useVendor(payable.vendorId).data;
+  const accepted = vendor?.acceptedPaymentMethods ?? [];
+  const allowedMethods = accepted.length > 0 ? PAYMENT_METHODS.filter((m) => accepted.includes(m)) : PAYMENT_METHODS;
+
   // Outstanding balance is NET of withholdings — the server rejects anything above it
   // (Payment.Overpay); suggesting the gross here used to make every prefilled payment fail.
   const remaining = Math.round((installment.netAmount - installment.paidAmount) * 100) / 100;
 
-  const { control, handleSubmit, formState } = useForm<PaymentValues>({
+  const { control, handleSubmit, formState, setValue, watch } = useForm<PaymentValues>({
     resolver: resolver(paymentSchema),
     mode: 'onChange',
     defaultValues: {
@@ -43,6 +46,14 @@ export function PaymentForm({
       notes: '',
     },
   });
+
+  // Se a forma selecionada não estiver entre as aceitas pelo fornecedor, cai para a primeira permitida.
+  const method = watch('method');
+  useEffect(() => {
+    if (allowedMethods.length > 0 && !allowedMethods.includes(method)) {
+      setValue('method', allowedMethods[0], { shouldValidate: true });
+    }
+  }, [allowedMethods, method, setValue]);
 
   const register = useRegisterPayment();
   const uploadProof = useUploadPaymentProof();
@@ -129,7 +140,7 @@ export function PaymentForm({
             name='method'
             render={({ field }) => (
               <Select {...field}>
-                {PAYMENT_METHODS.map((m) => (
+                {allowedMethods.map((m) => (
                   <option key={m} value={m}>
                     {t(`payments.methods.${m}`)}
                   </option>
@@ -138,6 +149,11 @@ export function PaymentForm({
             )}
           />
         </Field>
+        {method === 'Pix' && (
+          <Field label={t('registry.vendor.pixKey')}>
+            <Input value={vendor?.bankInfo?.pixKey || ''} readOnly placeholder={t('payments.fields.noPixKey')} />
+          </Field>
+        )}
         <Field label={t('payments.fields.interest')}>
           <Controller
             control={control}

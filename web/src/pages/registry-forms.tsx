@@ -26,6 +26,7 @@ import {
   TAX_REGIMES,
   SIMPLES_ANEXOS,
   PAYMENT_SCHEDULE_MODES,
+  PAYMENT_METHODS,
   type VendorValues,
   type CustomerValues,
   type EmployeeValues,
@@ -229,6 +230,7 @@ const VENDOR_FIELDS = [
   'taxRegime',
   'paymentScheduleMode',
   'paymentScheduleDay',
+  'acceptedPaymentMethods',
 ] as const;
 
 export function VendorForm({
@@ -275,6 +277,7 @@ export function VendorForm({
       simplesAnexo: initial?.simplesAnexo ?? null,
       paymentScheduleMode: initial?.paymentScheduleMode ?? prefill?.paymentScheduleMode ?? 'OnDueDate',
       paymentScheduleDay: initial?.paymentScheduleDay ?? prefill?.paymentScheduleDay ?? null,
+      acceptedPaymentMethods: initial?.acceptedPaymentMethods ?? prefill?.acceptedPaymentMethods ?? [],
       address: initial ? fromAddress(initial.address ?? null) : (prefill?.address ?? { ...emptyAddress }),
     },
   });
@@ -351,6 +354,7 @@ export function VendorForm({
         simplesAnexo: v.taxRegime === 'SimplesNacional' ? v.simplesAnexo : null,
         paymentScheduleMode: v.paymentScheduleMode,
         paymentScheduleDay: v.paymentScheduleMode === 'FixedDayOfMonth' ? v.paymentScheduleDay : null,
+        acceptedPaymentMethods: v.acceptedPaymentMethods,
       },
     });
   };
@@ -440,13 +444,36 @@ export function VendorForm({
 
       <div className='form-section'>Comercial</div>
       <div className='form-grid'>
-        <Field label='Condição de pagamento'>
+        <Field label='Prazo de pagamento'>
           <Controller
             control={control}
             name='paymentTerms'
             render={({ field }) => <Input {...field} placeholder='ex.: 30 dias' />}
           />
         </Field>
+        <div className='span-2'>
+          <Field label='Condição de pagamento' help='Formas de pagamento aceitas por este fornecedor.'>
+            <Controller
+              control={control}
+              name='acceptedPaymentMethods'
+              render={({ field }) => {
+                const sel = new Set(field.value);
+                const toggle = (m: (typeof PAYMENT_METHODS)[number]) =>
+                  field.onChange(PAYMENT_METHODS.filter((x) => (x === m ? !sel.has(m) : sel.has(x))));
+                return (
+                  <div className='uni-pick'>
+                    {PAYMENT_METHODS.map((m) => (
+                      <label className='uni-pick-row' key={m}>
+                        <input type='checkbox' checked={sel.has(m)} onChange={() => toggle(m)} />{' '}
+                        {t(`payments.methods.${m}`)}
+                      </label>
+                    ))}
+                  </div>
+                );
+              }}
+            />
+          </Field>
+        </div>
         <Field label={t('registry.vendor.taxRegime')}>
           <Controller
             control={control}

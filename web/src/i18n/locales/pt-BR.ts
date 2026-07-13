@@ -1156,6 +1156,7 @@ const ptBR = {
       bankAccount: 'Conta de saída',
       bankAccountSelect: '— selecione —',
       method: 'Forma de pagamento',
+      noPixKey: 'Fornecedor sem chave Pix cadastrada',
       interest: 'Juros (R$)',
       fine: 'Multa (R$)',
       discount: 'Desconto (R$)',

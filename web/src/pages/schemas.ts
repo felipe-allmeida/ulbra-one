@@ -88,6 +88,10 @@ export type SimplesAnexoValue = (typeof SIMPLES_ANEXOS)[number];
 export const PAYMENT_SCHEDULE_MODES = ['OnDueDate', 'FixedDayOfMonth', 'FirstDayOfMonth'] as const;
 export type PaymentScheduleMode = (typeof PAYMENT_SCHEDULE_MODES)[number];
 
+// Formas de pagamento (Forma de Pagamento) — fonte única no frontend, espelha o enum PaymentMethod do backend.
+export const PAYMENT_METHODS = ['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other'] as const;
+export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
+
 export const vendorSchema = refineDocument(
   z
     .object({
@@ -100,6 +104,8 @@ export const vendorSchema = refineDocument(
       simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
       paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
       paymentScheduleDay: z.number().nullable().default(null),
+      // Formas de pagamento aceitas ("Condição de pagamento" na UI).
+      acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
     })
     .superRefine((val, ctx) => {
       if (val.paymentScheduleMode === 'FixedDayOfMonth') {
@@ -230,7 +236,7 @@ export const bankAccountSchema = z
     alias: z.string().trim().min(1, { message: 'validation.aliasRequired' }),
     openingBalance: nonNegativeNumberString,
     isDefaultForPayments: z.boolean(),
-    defaultPaymentMethod: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']).nullable(),
+    defaultPaymentMethod: z.enum(PAYMENT_METHODS).nullable(),
     cnabAgreementCode: z.string(),
   })
   .superRefine((val, ctx) => {
@@ -248,7 +254,7 @@ export const paymentSchema = z.object({
   paymentDate: z.string().min(1, { message: 'validation.paymentDateRequired' }),
   amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
   bankAccountId: z.string().min(1, { message: 'validation.bankAccountRequired' }),
-  method: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']),
+  method: z.enum(PAYMENT_METHODS),
   interest: nonNegativeNumberString,
   fine: nonNegativeNumberString,
   discount: nonNegativeNumberString,
@@ -283,7 +289,7 @@ export const receiptSchema = z.object({
   receiptDate: z.string().min(1, { message: 'validation.receiptDateRequired' }),
   amount: z.string().refine((v) => Number(v) > 0, { message: 'validation.amountPositive' }),
   bankAccountId: z.string().min(1, { message: 'validation.bankAccountRequired' }),
-  method: z.enum(['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other']),
+  method: z.enum(PAYMENT_METHODS),
   interest: nonNegativeNumberString,
   fine: nonNegativeNumberString,
   discount: nonNegativeNumberString,
