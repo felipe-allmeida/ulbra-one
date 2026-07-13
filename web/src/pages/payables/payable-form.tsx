@@ -52,6 +52,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   );
   // Type (Service/Product): drives the automatic withholding. Set here so it's applied before any auto-approval.
   const [payableType, setPayableType] = useState<'Service' | 'Product' | null>(initial?.type ?? null);
+  // Tipo de fornecimento é obrigatório; erro mostrado após uma tentativa de submit sem selecionar.
+  const [typeError, setTypeError] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -254,7 +256,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
     setXmlApplied(true);
   };
 
-  const buildBody = (v: PayableValues): Omit<PayableInput, 'origin'> => {
+  const buildBody = (v: PayableValues, type: 'Service' | 'Product'): Omit<PayableInput, 'origin'> => {
     const base = {
       companyId: empresaId,
       vendorId: v.vendorId,
@@ -266,7 +268,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
       paymentMethod: paymentMethodOverride ?? null,
-      type: payableType,
+      type,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
     if (xmlInstallments && xmlInstallments.length > 0) {
@@ -287,7 +289,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
   };
 
   const onValid = async (v: PayableValues) => {
-    const body = buildBody(v);
+    // Tipo de fornecimento é obrigatório — não faz parte do schema RHF (é state próprio), então guardamos aqui.
+    if (!payableType) {
+      setTypeError(true);
+      return;
+    }
+    const body = buildBody(v, payableType);
     try {
       // Origin is set at create time from the intake modality; immutable on edit.
       const p =
@@ -467,10 +474,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
                       setPayableType(v === 'service' ? 'Service' : v === 'product' ? 'Product' : null);
                     }}
                   >
-                    <option value=''>{t('payables.fields.natureUndefined')}</option>
+                    <option value=''>{t('payables.fields.natureSelect')}</option>
                     <option value='service'>{t('payables.fields.natureService')}</option>
                     <option value='product'>{t('payables.fields.natureProduct')}</option>
                   </Select>
+                  {typeError && !payableType && (
+                    <div className='field-err'>{t('validation.typeRequired')}</div>
+                  )}
                 </Field>
               </div>
               <div className='edit-grid' style={{ marginTop: 14 }}>
