@@ -12815,7 +12815,8 @@
           "paymentScheduleMode",
           "paymentScheduleDay",
           "cprbForeseen",
-          "simplesAnexo"
+          "simplesAnexo",
+          "acceptedPaymentMethods"
         ],
         "type": "object",
         "properties": {
@@ -12871,6 +12872,13 @@
           },
           "simplesAnexo": {
             "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "acceptedPaymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12893,7 +12901,8 @@
           "paymentScheduleDay",
           "active",
           "cprbForeseen",
-          "simplesAnexo"
+          "simplesAnexo",
+          "acceptedPaymentMethods"
         ],
         "type": "object",
         "properties": {
@@ -12956,6 +12965,12 @@
           },
           "simplesAnexo": {
             "$ref": "#/components/schemas/SimplesAnexo"
+          },
+          "acceptedPaymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            }
           }
         },
         "additionalProperties": false

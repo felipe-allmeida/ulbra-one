@@ -3485,6 +3485,7 @@ export interface components {
             paymentScheduleDay: number | null;
             cprbForeseen: boolean | null;
             simplesAnexo: components["schemas"]["SimplesAnexo"];
+            acceptedPaymentMethods: components["schemas"]["PaymentMethod"][] | null;
         };
         VendorResponse: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -3507,6 +3508,7 @@ export interface components {
             active: boolean;
             cprbForeseen: boolean | null;
             simplesAnexo: components["schemas"]["SimplesAnexo"];
+            acceptedPaymentMethods: components["schemas"]["PaymentMethod"][];
         };
         VendorResponsePaginatedResponse: {
             items: components["schemas"]["VendorResponse"][];
