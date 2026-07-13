@@ -57,6 +57,7 @@ public sealed class GetPayableAccountingView : IEndpoint
         return TypedResults.Ok(new PayableAccountingViewResponse(
             new PayableId(p.Id),
             p.Status,
+            p.Origin,
             p.CounterpartyName,
             p.DocumentNumber,
             p.TotalAmount,

@@ -51,7 +51,8 @@ function groupByScheduledDate(
     .map(([date, groupItems]) => ({
       date,
       items: groupItems,
-      subtotal: groupItems.reduce((s, i) => s + i.amount, 0),
+      // Net of withholdings — what the remittance will actually debit on that date.
+      subtotal: groupItems.reduce((s, i) => s + i.netAmount, 0),
     }));
 }
 
@@ -124,7 +125,8 @@ function RemessasRail({
                 <th>{t('payables.columns.dueDate')}</th>
                 <th>{t('payables.columns.vendor')}</th>
                 <th>{t('payables.columns.installment')}</th>
-                <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.grossAmount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.toPay')}</th>
                 <th>{t('payables.columns.status')}</th>
                 <th />
               </tr>
@@ -145,6 +147,9 @@ function RemessasRail({
                     </td>
                     <td className='amount-cell' style={{ textAlign: 'right' }}>
                       {brl(l.amount)}
+                    </td>
+                    <td className='amount-cell' style={{ textAlign: 'right' }}>
+                      <strong>{brl(l.netAmount)}</strong>
                     </td>
                     <td>
                       {isInRemittance && l.remittanceSequence != null ? (
@@ -207,14 +212,17 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
   return (
     <>
       {manualItems.length > 0 && (
-        <Panel title={`${t('installments.rail.payManual')} · ${brl(manualItems.reduce((s, i) => s + i.amount, 0))}`}>
+        <Panel
+          title={`${t('installments.rail.payManual')} · ${brl(manualItems.reduce((s, i) => s + i.netAmount, 0))}`}
+        >
           <table>
             <thead>
               <tr>
                 <th>{t('payables.columns.dueDate')}</th>
                 <th>{t('payables.columns.vendor')}</th>
                 <th>{t('payables.columns.installment')}</th>
-                <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.grossAmount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.toPay')}</th>
                 <th>{t('payables.columns.status')}</th>
                 <th />
               </tr>
@@ -229,6 +237,9 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
                   </td>
                   <td className='amount-cell' style={{ textAlign: 'right' }}>
                     {brl(l.amount)}
+                  </td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    <strong>{brl(l.netAmount)}</strong>
                   </td>
                   <td>
                     <InstallmentRailChip line={toRailLine(l)} today={today} />
@@ -248,14 +259,15 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
       )}
 
       {heldItems.length > 0 && (
-        <Panel title={`${t('workflow.payment.heldGroup')} · ${brl(heldItems.reduce((s, i) => s + i.amount, 0))}`}>
+        <Panel title={`${t('workflow.payment.heldGroup')} · ${brl(heldItems.reduce((s, i) => s + i.netAmount, 0))}`}>
           <table>
             <thead>
               <tr>
                 <th>{t('payables.columns.dueDate')}</th>
                 <th>{t('payables.columns.vendor')}</th>
                 <th>{t('payables.columns.installment')}</th>
-                <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.grossAmount')}</th>
+                <th style={{ textAlign: 'right' }}>{t('payables.columns.toPay')}</th>
                 <th>{t('payables.columns.status')}</th>
                 <th />
               </tr>
@@ -270,6 +282,9 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
                   </td>
                   <td className='amount-cell' style={{ textAlign: 'right' }}>
                     {brl(l.amount)}
+                  </td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    <strong>{brl(l.netAmount)}</strong>
                   </td>
                   <td>
                     <InstallmentRailChip line={toRailLine(l)} today={today} />
@@ -311,7 +326,8 @@ export function PaymentTab({ companyId }: { companyId: string }) {
     return bucket === 'manual' || bucket === 'held';
   });
 
-  const total = items.reduce((s, i) => s + i.amount, 0);
+  // "A pagar": net of withholdings — matches what the remittances/baixas will actually debit.
+  const total = items.reduce((s, i) => s + i.netAmount, 0);
 
   // Dar baixa drawer state (used in Manuais rail)
   const [baixa, setBaixa] = useState<PayableListItem | null>(null);
@@ -333,7 +349,7 @@ export function PaymentTab({ companyId }: { companyId: string }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <strong>{t('workflow.payment.weekSummary', { amount: brl(total), count: items.length })}</strong>
+        <strong>{t('workflow.payment.weekSummaryToPay', { amount: brl(total), count: items.length })}</strong>
         {activeRail === 'remittance' && (
           <Button
             icon={<FileOutput />}

@@ -2609,6 +2609,7 @@ export interface components {
             /** @example payable_3fa85f64571742199730000000000000 */
             id: string;
             status: components["schemas"]["PayableStatus"];
+            origin: components["schemas"]["PayableOrigin"];
             counterpartyName: string;
             documentNumber: string | null;
             /** Format: double */
@@ -2655,6 +2656,8 @@ export interface components {
             dueDate: string;
             /** Format: double */
             amount: number;
+            /** Format: double */
+            netAmount: number;
             installmentStatus: components["schemas"]["InstallmentStatus"];
             payableStatus: components["schemas"]["PayableStatus"];
             /** Format: date */
@@ -2680,7 +2683,7 @@ export interface components {
             totalPages: number;
         };
         /** @enum {string} */
-        PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport";
+        PayableOrigin: "Manual" | "Purchase" | "Payroll" | "SeniorImport" | "FiscalDocument" | "Advance";
         PayableResponse: {
             /** @example payable_3fa85f64571742199730000000000000 */
             id: string;
@@ -2752,7 +2755,12 @@ export interface components {
             installmentCount: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalWithheld: number;
+            /** Format: double */
+            netTotal: number;
             status: components["schemas"]["PayableStatus"];
+            origin: components["schemas"]["PayableOrigin"];
             hasFiscalDocument: boolean;
         };
         PayableStageItemResponsePaginatedResponse: {
@@ -3228,6 +3236,8 @@ export interface components {
             count: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            netTotalAmount: number | null;
         };
         StatementImportResponse: {
             /** @example statement_import_3fa85f64571742199730000000000000 */
@@ -5885,6 +5895,7 @@ export interface operations {
                 companyId: string;
                 status?: components["schemas"]["PayableStatus"];
                 hasFiscalDocument?: boolean;
+                origin?: components["schemas"]["PayableOrigin"];
                 Page?: number;
                 PageSize?: number;
             };

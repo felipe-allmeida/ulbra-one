@@ -17,5 +17,10 @@ public sealed record PayableStageItemResponse(
     DateOnly FirstDueDate,
     int InstallmentCount,
     decimal TotalAmount,
+    /// <summary>Sum of the payable's withholdings (0 when there are none).</summary>
+    decimal TotalWithheld,
+    /// <summary>TotalAmount − TotalWithheld — final once accounting completes (withholdings lock at Scheduled).</summary>
+    decimal NetTotal,
     PayableStatus Status,
+    PayableOrigin Origin,
     bool HasFiscalDocument);

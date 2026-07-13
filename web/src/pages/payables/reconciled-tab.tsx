@@ -19,6 +19,7 @@ export function ReconciledTab({ companyId }: { companyId: string }) {
       page={page}
       totalPages={data?.totalPages ?? 1}
       onPage={setPage}
+      showNet
     />
   );
 }

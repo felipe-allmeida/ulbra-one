@@ -117,13 +117,15 @@ public static class FinanceSeed
     /// complete the accounting stage (register a NF + confirm). Returns the created payable id.
     /// </summary>
     public static async Task<string> CreatePayableAsync(
-        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
+        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true,
+        string origin = "Manual")
     {
         var createRes = await client.PostAsJsonAsync("/api/payables", new
         {
             companyId,
             vendorId,
             costCenterId,
+            origin,
             description = "Para pagar",
             installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
             type = "Product", // determined product (no source withholding) — required before a payable can schedule
@@ -182,6 +184,15 @@ public static class FinanceSeed
         await RegisterFiscalDocAsync(factory, client, payableId);
         var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
         confirmRes.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Sets a single IRRF withholding on the payable (allowed until accounting completes).
+    /// The aggregate re-rateia every installment's NetAmount proportionally.</summary>
+    public static async Task SetWithholdingAsync(HttpClient client, string payableId, decimal baseAmount, decimal amount)
+    {
+        var res = await client.PutAsJsonAsync($"/api/payables/{payableId}/withholdings",
+            new { items = new[] { new { taxType = "Irrf", baseAmount, rate = (decimal?)null, amount } } });
+        res.EnsureSuccessStatusCode();
     }
 
     /// <summary>Approves a payable, parking it in <c>PendingAccounting</c> (no NF registered, accounting not confirmed).</summary>

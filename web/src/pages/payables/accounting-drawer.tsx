@@ -43,6 +43,9 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
   }, [p]);
 
   const hasNf = v?.hasFiscalDocument ?? false;
+  // Adiantamento (Advance) is exempt from the NF gate — it is paid before the NF exists.
+  const nfExempt = v?.origin === 'Advance';
+  const confirmBlocked = !hasNf && !nfExempt;
   const toItems = (xs: { id: string; code: string; name: string }[]): ComboboxItem[] =>
     xs.map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
 
@@ -60,8 +63,8 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
         <Button
           variant='brand'
           icon={<Calculator />}
-          disabled={!hasNf || confirm.isPending}
-          title={!hasNf ? t('payables.accounting.confirmBlockedNoNf') : undefined}
+          disabled={confirmBlocked || confirm.isPending}
+          title={confirmBlocked ? t('payables.accounting.confirmBlockedNoNf') : undefined}
           onClick={() =>
             confirm.mutate(
               { id: payableId },

@@ -199,6 +199,10 @@ const ptBR = {
     subtitle: 'Despesas aprovadas aguardando contabilização — conferência fiscal e Nota Fiscal.',
     noCompanyTitle: 'Selecione uma empresa',
     noCompanySub: 'Escolha a empresa para ver as despesas a contabilizar.',
+    tabs: {
+      review: 'Registro de Despesa',
+      advances: 'Adiantamentos',
+    },
   },
 
   login: {
@@ -341,7 +345,10 @@ const ptBR = {
       AttachmentDeleted: 'Anexo removido',
     },
     payment: {
+      // weekSummary is shared with the receivables tab (neutral); weekSummaryToPay is the payables
+      // payment esteira, whose total is net of withholdings ("a pagar").
       weekSummary: 'Total: {{amount}} ({{count}} parcelas)',
+      weekSummaryToPay: 'A pagar: {{amount}} ({{count}} parcelas)',
       groupToday: 'Vence hoje',
       groupThisWeek: 'Esta semana',
       groupNextWeek: 'Próxima semana',
@@ -403,6 +410,9 @@ const ptBR = {
       costCenter: 'Centro de custo',
       category: 'Agrupamento (local)',
       amount: 'Valor',
+      grossAmount: 'Valor bruto',
+      netAmount: 'Valor líquido',
+      toPay: 'A pagar',
       status: 'Status',
     },
     fields: {
@@ -442,11 +452,11 @@ const ptBR = {
       registerVendor: 'Cadastrar fornecedor',
       vendorNoticeBanner: 'Confirme os dados coletados a partir do arquivo de Nota Fiscal.',
       heroEmphasis:
-        'Comece subindo o XML da nota fiscal — os campos da conta a pagar serão preenchidos automaticamente.',
-      dropHint: 'Clique para selecionar o XML da nota fiscal',
+        'Comece subindo o XML ou PDF da nota fiscal — os campos da conta a pagar serão preenchidos automaticamente.',
+      dropHint: 'Clique para selecionar o XML ou PDF da nota fiscal',
       fillManually: 'ou preencher manualmente',
-      selectLabel: 'Selecione a NF em XML',
-      selectHelp: 'NF-e (produto) ou NFS-e (serviço) em XML; PDF de serviço é lido por mock.',
+      selectLabel: 'Selecione a NF (XML ou PDF)',
+      selectHelp: 'NF-e (produto) ou NFS-e (serviço) em XML; PDF é lido por IA.',
       parsing: 'Lendo a nota fiscal…',
       applied: 'Campos preenchidos automaticamente a partir da NF:',
       format: 'Formato',
@@ -473,11 +483,13 @@ const ptBR = {
       totalTaxes: 'Total tributos',
     },
     intake: {
-      withNf: 'Preencher com NF',
-      withNfHint: 'Suba o XML da nota fiscal e os campos serão preenchidos automaticamente.',
-      manual: 'Preencher manualmente',
-      manualHint: 'Informe os dados da conta a pagar sem nota fiscal.',
-      createVendorFromNf: 'Cadastrar fornecedor da NF',
+      title: 'Como você quer lançar esta conta?',
+      payroll: 'Folha de pagamento',
+      payrollHint: 'Contas geradas a partir da folha de pagamento.',
+      fiscal: 'Nota Fiscal',
+      fiscalHint: 'Suba o XML ou PDF da nota fiscal — ou preencha manualmente se ainda não tiver a NF.',
+      advance: 'Adiantamento',
+      advanceHint: 'Lance um adiantamento sem nota fiscal, preenchendo os dados manualmente.',
     },
     confirmSection: {
       title: 'Confirme os dados',
@@ -505,6 +517,7 @@ const ptBR = {
     },
     cards: {
       totalAmount: 'Valor total',
+      netTotal: 'Valor líquido',
       status: 'Status',
       costCenter: 'Centro de custo',
       category: 'Agrupamento (local)',
@@ -600,6 +613,7 @@ const ptBR = {
     loading: 'Carregando…',
     tags: {
       fiscalDocPending: 'Nota Fiscal pendente',
+      advance: 'Adiantamento',
     },
     accounting: {
       title: 'Registro de Despesa',
@@ -1616,6 +1630,7 @@ const ptBR = {
   errors: {
     generic: 'Algo deu errado. Tente novamente em instantes.',
     codes: {
+      'Payment.Overpay': 'O valor pago excede o saldo em aberto da parcela (valor líquido de retenções).',
       'Company.NotFound': 'Empresa não encontrada.',
       'CostCenter.UnitsInvalid': 'Uma ou mais unidades não pertencem a esta empresa.',
       'Transaction.CostCenterInvalid': 'Centro de custo inválido para esta empresa.',

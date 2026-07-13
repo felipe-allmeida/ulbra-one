@@ -41,7 +41,8 @@ export function dashboardCards(summary: PayableStageSummaryResponse, t: (k: stri
       label: t(`payables.stages.${key}`),
       icon: stageIcon(key),
       count: bucket.count,
-      totalAmount: bucket.totalAmount,
+      // Payment shows what will actually leave the bank (net of withholdings); other stages stay gross.
+      totalAmount: key === 'payment' ? (bucket.netTotalAmount ?? bucket.totalAmount) : bucket.totalAmount,
     };
   });
 }

@@ -2,12 +2,15 @@ import { type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, Wallet } from 'lucide-react';
-import { type PayableStageItem } from '../../api';
+import { type PayableStageItem, type PayableStatus } from '../../api';
 import { brl } from '../../lib';
 import { Panel, Pager, EmptyState } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { SlaChips } from '../../components/workflow';
 import { useNames } from './use-names';
+
+// The net only becomes final when accounting completes (withholdings lock at Scheduled).
+const isNetLocked = (s: PayableStatus) => s === 'Scheduled' || s === 'Paid';
 
 export function PayableTable({
   companyId,
@@ -18,6 +21,8 @@ export function PayableTable({
   totalPages,
   onPage,
   extraColumn,
+  statusCell,
+  showNet,
 }: {
   companyId: string;
   stageLabel: string;
@@ -27,6 +32,11 @@ export function PayableTable({
   totalPages: number;
   onPage: (p: number) => void;
   extraColumn?: { header: string; cell: (item: PayableStageItem) => ReactNode };
+  /** Overrides the status column content (default: stage SLA chips + pendency tags). */
+  statusCell?: (item: PayableStageItem) => ReactNode;
+  /** Post-accounting tables: renders "Valor bruto" + "Valor líquido" columns; the net cell shows
+   * '—' until the withholdings lock (status Scheduled/Paid). */
+  showNet?: boolean;
 }) {
   const { t } = useTranslation();
   const nav = useNavigate();
@@ -56,7 +66,10 @@ export function PayableTable({
             <th>{t('payables.columns.vendor')}</th>
             <th>{t('payables.columns.costCenter')}</th>
             <th style={{ textAlign: 'center' }}>{t('payables.columns.installments')}</th>
-            <th style={{ textAlign: 'right' }}>{t('payables.columns.amount')}</th>
+            <th style={{ textAlign: 'right' }}>
+              {t(showNet ? 'payables.columns.grossAmount' : 'payables.columns.amount')}
+            </th>
+            {showNet && <th style={{ textAlign: 'right' }}>{t('payables.columns.netAmount')}</th>}
             <th>{t('payables.columns.status')}</th>
             {extraColumn && <th>{extraColumn.header}</th>}
           </tr>
@@ -72,12 +85,28 @@ export function PayableTable({
               <td className='amount-cell' style={{ textAlign: 'right' }}>
                 {brl(l.totalAmount)}
               </td>
+              {showNet && (
+                <td className='amount-cell' style={{ textAlign: 'right' }}>
+                  {isNetLocked(l.status) ? brl(l.netTotal) : '—'}
+                </td>
+              )}
               <td onClick={(e) => e.stopPropagation()}>
-                <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
-                {l.status === 'PendingAccounting' && l.hasFiscalDocument === false && (
-                  <span className='badge-status badge-pendente' style={{ marginLeft: 6 }}>
-                    {t('payables.tags.fiscalDocPending')}
-                  </span>
+                {statusCell ? (
+                  statusCell(l)
+                ) : (
+                  <>
+                    <SlaChips stageLabel={stageLabel} dueDate={l.firstDueDate} />
+                    {l.origin === 'Advance' && (
+                      <span className='badge-status badge-remessa' style={{ marginLeft: 6 }}>
+                        {t('payables.tags.advance')}
+                      </span>
+                    )}
+                    {l.status === 'PendingAccounting' && l.hasFiscalDocument === false && (
+                      <span className='badge-status badge-pendente' style={{ marginLeft: 6 }}>
+                        {t('payables.tags.fiscalDocPending')}
+                      </span>
+                    )}
+                  </>
                 )}
               </td>
               {extraColumn && <td onClick={(e) => e.stopPropagation()}>{extraColumn.cell(l)}</td>}

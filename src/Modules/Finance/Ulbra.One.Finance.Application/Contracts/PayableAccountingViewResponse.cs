@@ -16,6 +16,7 @@ public sealed record PayableVendorTaxBlock(
 public sealed record PayableAccountingViewResponse(
     PayableId Id,
     PayableStatus Status,
+    PayableOrigin Origin,
     string CounterpartyName,
     string? DocumentNumber,
     decimal TotalAmount,

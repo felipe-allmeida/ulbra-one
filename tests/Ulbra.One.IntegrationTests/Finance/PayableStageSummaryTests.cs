@@ -40,6 +40,50 @@ public class PayableStageSummaryTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task StageSummary_payment_bucket_reports_net_total()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var today = FinanceSeed.Today();
+
+        var companyId = await FinanceSeed.CreateCompanyAsync(client);
+        var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
+        var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
+
+        // Scheduled with withholding: 1000 gross − 150 IRRF = 850 net.
+        var withheld = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 1000m, approve: false);
+        await FinanceSeed.SetWithholdingAsync(client, withheld, baseAmount: 1000m, amount: 150m);
+        await FinanceSeed.ApproveAsync(client, withheld);
+        await FinanceSeed.CompleteAccountingAsync(factory, client, withheld);
+
+        // Scheduled without withholding: net == gross.
+        var plain = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 500m, approve: true);
+        _ = plain;
+
+        // PendingAccounting with withholding must NOT leak into the Payment net sum.
+        var pending = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 2000m, approve: false);
+        await FinanceSeed.SetWithholdingAsync(client, pending, baseAmount: 2000m, amount: 300m);
+        await FinanceSeed.ApproveAsync(client, pending);
+
+        var body = JsonDocument.Parse(await (await client.GetAsync($"/api/payables/stage-summary?companyId={companyId}"))
+            .Content.ReadAsStringAsync()).RootElement;
+
+        var payment = body.GetProperty("payment");
+        Assert.Equal(2, payment.GetProperty("count").GetInt32());
+        Assert.Equal(1500m, payment.GetProperty("totalAmount").GetDecimal()); // gross sum unchanged
+        Assert.Equal(1350m, payment.GetProperty("netTotalAmount").GetDecimal()); // 850 + 500
+
+        // Only the Payment bucket carries a net sum; the others serialize null.
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("accounting").GetProperty("netTotalAmount").ValueKind);
+
+        // A company with nothing scheduled reports 0 (not null) on the Payment bucket.
+        var emptyCompany = await FinanceSeed.CreateCompanyAsync(client);
+        var empty = JsonDocument.Parse(await (await client.GetAsync($"/api/payables/stage-summary?companyId={emptyCompany}"))
+            .Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(0m, empty.GetProperty("payment").GetProperty("netTotalAmount").GetDecimal());
+    }
+
+    [Fact]
     public async Task StageSummary_reports_fiscalDocumentPending_bucket()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

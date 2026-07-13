@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { STAGE_ORDER, STAGE_STATUS, dashboardCards, isStageKey } from './stages';
 
 const summary = {
-  entry: { count: 5, totalAmount: 12400 },
-  classification: { count: 3, totalAmount: 8750 },
-  approval: { count: 2, totalAmount: 45000 },
-  accounting: { count: 1, totalAmount: 5000 },
-  payment: { count: 4, totalAmount: 22100 },
-  reconciled: { count: 18, totalAmount: 134500 },
-  fiscalDocumentPending: { count: 1, totalAmount: 5000 },
+  entry: { count: 5, totalAmount: 12400, netTotalAmount: null },
+  classification: { count: 3, totalAmount: 8750, netTotalAmount: null },
+  approval: { count: 2, totalAmount: 45000, netTotalAmount: null },
+  accounting: { count: 1, totalAmount: 5000, netTotalAmount: null },
+  payment: { count: 4, totalAmount: 22100, netTotalAmount: 20900 },
+  reconciled: { count: 18, totalAmount: 134500, netTotalAmount: null },
+  fiscalDocumentPending: { count: 1, totalAmount: 5000, netTotalAmount: null },
 };
 
 describe('stages', () => {
@@ -27,6 +27,14 @@ describe('stages', () => {
     expect(cards[0]).toMatchObject({ stageKey: 'entry', label: 'payables.stages.entry', count: 5, totalAmount: 12400 });
     expect(cards[2]).toMatchObject({ stageKey: 'approval', count: 2, totalAmount: 45000 });
     expect(cards[3]).toMatchObject({ stageKey: 'accounting', count: 1, totalAmount: 5000 });
+  });
+  it('payment card shows the NET sum (what actually leaves the bank); other stages stay gross', () => {
+    const cards = dashboardCards(summary, (k) => k);
+    expect(cards[4]).toMatchObject({ stageKey: 'payment', totalAmount: 20900 });
+    expect(cards[5]).toMatchObject({ stageKey: 'reconciled', totalAmount: 134500 });
+    // Defensive fallback while the API doesn't send the net field.
+    const legacy = dashboardCards({ ...summary, payment: { count: 4, totalAmount: 22100, netTotalAmount: null } }, (k) => k);
+    expect(legacy[4]).toMatchObject({ totalAmount: 22100 });
   });
   it('isStageKey guards valid keys', () => {
     expect(isStageKey('approval')).toBe(true);

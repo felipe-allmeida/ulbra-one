@@ -25,14 +25,16 @@ export function PaymentForm({
   const contas = useBankAccounts(payable.companyId).data ?? [];
   const [file, setFile] = useState<File | null>(null);
 
-  const remaining = Math.round((installment.amount - installment.paidAmount) * 100) / 100;
+  // Outstanding balance is NET of withholdings — the server rejects anything above it
+  // (Payment.Overpay); suggesting the gross here used to make every prefilled payment fail.
+  const remaining = Math.round((installment.netAmount - installment.paidAmount) * 100) / 100;
 
   const { control, handleSubmit, formState } = useForm<PaymentValues>({
     resolver: resolver(paymentSchema),
     mode: 'onChange',
     defaultValues: {
       paymentDate: new Date().toISOString().slice(0, 10),
-      amount: String(remaining > 0 ? remaining : installment.amount),
+      amount: String(remaining > 0 ? remaining : installment.netAmount),
       bankAccountId: '',
       method: 'Pix',
       interest: '',

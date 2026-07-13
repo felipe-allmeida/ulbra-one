@@ -84,7 +84,11 @@ export function FiscalXmlReader({
   };
 
   return (
-    <div className={hero ? 'card-form fiscal-hero' : 'card-form fiscal-band'} style={{ maxWidth: 'none' }}>
+    <div
+      className={hero ? 'card-form fiscal-hero' : 'card-form fiscal-band'}
+      // Hero keeps the centered 560px cap (.fiscal-hero); the band spans the full form width.
+      style={hero ? undefined : { maxWidth: 'none' }}
+    >
       <div className='section-title' style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
         {!hero && <Receipt style={{ width: 16, height: 16, color: 'var(--brand)' }} />}
         {hero ? t('payables.fiscalReader.title') : t('payables.fiscalReader.bandTitle')}
