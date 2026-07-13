@@ -1,5 +1,6 @@
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Normalization;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
 
@@ -19,7 +20,9 @@ public sealed record VendorRequest(
     [property: NormalizeText] string? PaymentTerms, BankInfoRequest? BankInfo, TaxRegime TaxRegime,
     PaymentScheduleMode PaymentScheduleMode = PaymentScheduleMode.OnDueDate, int? PaymentScheduleDay = null,
     // Indicativos p/ INSS (cadastro sugere; NF confirma): CPRB previsto (Sim/Não/null) + anexo do Simples.
-    bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null);
+    bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null,
+    // Formas de pagamento aceitas ("Condição de pagamento" na UI). Omisso/vazio = sem restrição.
+    IReadOnlyList<PaymentMethod>? AcceptedPaymentMethods = null);
 
 public sealed record CustomerRequest(
     CompanyId CompanyId, PersonType PersonType, [property: NormalizeText] string Name,

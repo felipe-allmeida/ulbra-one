@@ -17,4 +17,8 @@
     <ProjectReference Include="../../Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
     <ProjectReference Include="../../Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- PaymentMethod (shared payment vocabulary) lives in Common.Domain; imported project-wide. -->
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
 </Project>

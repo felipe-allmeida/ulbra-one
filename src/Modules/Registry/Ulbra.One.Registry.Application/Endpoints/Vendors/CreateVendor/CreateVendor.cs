@@ -38,7 +38,7 @@ public sealed class CreateVendor : IEndpoint
             req.Document, req.Email, req.Phone, req.Address.ToAddress(), req.PaymentTerms,
             req.BankInfo.ToBankInfo(), req.TaxRegime,
             new PaymentSchedule(req.PaymentScheduleMode, req.PaymentScheduleDay),
-            req.CprbForeseen, req.SimplesAnexo);
+            req.CprbForeseen, req.SimplesAnexo, req.AcceptedPaymentMethods);
         await uow.AddAsync(vendor, ct);
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToCreated(v => $"/api/vendors/{v.Id}");

@@ -2851,6 +2851,13 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AcceptedPaymentMethods")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("accepted_payment_methods")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.Property<bool>("Active")
                         .HasColumnType("boolean")
                         .HasColumnName("active");

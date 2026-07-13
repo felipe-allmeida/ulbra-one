@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Ulbra.One.Accounting.Application.Seeding;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Core.Domain.Entities;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
