@@ -12605,7 +12605,8 @@
           "generate",
           "accountingAccountId",
           "paymentBankAccountId",
-          "paymentMethod"
+          "paymentMethod",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -12656,6 +12657,9 @@
           },
           "paymentMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PayableType"
           }
         },
         "additionalProperties": false

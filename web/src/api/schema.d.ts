@@ -3428,6 +3428,7 @@ export interface components {
             /** @example bank_account_3fa85f64571742199730000000000000 */
             paymentBankAccountId: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
+            type: components["schemas"]["PayableType"];
         };
         UpdateReceivableUpdateReceivableRequest: {
             /** @example customer_3fa85f64571742199730000000000000 */
