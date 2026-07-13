@@ -1130,11 +1130,15 @@ body {
 }
 .edit-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
+/* Let each field shrink below its content's intrinsic width inside the (narrow) drawer. */
+.edit-grid > * {
+  min-width: 0;
+}
 .edit-grid.cols-3 {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 @media (max-width: 640px) {
   .edit-grid {
@@ -1773,9 +1777,10 @@ tfoot td {
 .form-grid .span-2 {
   grid-column: 1 / -1;
 }
-/* Selects fill their column and may shrink like inputs do, so two side by side keep the 12px gap
-   instead of overflowing at the global .select 220px min-width (the drawer is only ~436px wide). */
-.form-grid .select {
+/* Selects fill their column and may shrink like inputs do, so two side by side keep the gap
+   instead of overflowing at the global .select 220px min-width (drawers are only ~440px wide). */
+.form-grid .select,
+.edit-grid .select {
   width: 100%;
   min-width: 0;
 }
