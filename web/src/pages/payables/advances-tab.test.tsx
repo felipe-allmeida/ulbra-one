@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
 const { mockUseStageItems } = vi.hoisted(() => ({ mockUseStageItems: vi.fn() }));
 vi.mock('../../queries', () => ({ usePayableStageItems: mockUseStageItems }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
+vi.mock('./accounting-drawer', () => ({
+  AccountingDrawer: ({ payableId }: { payableId: string }) => (
+    <div data-testid='accounting-drawer'>{payableId}</div>
+  ),
+}));
 
 import { AdvancesTab } from './advances-tab';
 
@@ -74,6 +79,22 @@ describe('AdvancesTab', () => {
     expect(screen.getByText('Paga')).toBeInTheDocument();
     // Every row is tagged as an Adiantamento.
     expect(screen.getAllByText('Adiantamento')).toHaveLength(2);
+  });
+
+  it('shows a "Registrar despesa" action only on advances awaiting accounting', () => {
+    renderTab();
+    // pay_1 is PendingAccounting → actionable; pay_2 is Paid → no action.
+    const pendingRow = screen.getByText('Adiantamento obra').closest('tr')!;
+    const paidRow = screen.getByText('Adiantamento viagem').closest('tr')!;
+    expect(within(pendingRow).getByRole('button', { name: 'Registrar despesa' })).toBeInTheDocument();
+    expect(within(paidRow).queryByRole('button', { name: 'Registrar despesa' })).not.toBeInTheDocument();
+  });
+
+  it('opens the accounting drawer for the clicked advance', () => {
+    renderTab();
+    const pendingRow = screen.getByText('Adiantamento obra').closest('tr')!;
+    fireEvent.click(within(pendingRow).getByRole('button', { name: 'Registrar despesa' }));
+    expect(screen.getByTestId('accounting-drawer')).toHaveTextContent('pay_1');
   });
 
   it('shows gross + net columns: net filled once locked (Paid), "—" while pre-accounting', () => {

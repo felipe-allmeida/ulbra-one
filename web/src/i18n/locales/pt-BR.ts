@@ -200,7 +200,7 @@ const ptBR = {
     noCompanyTitle: 'Selecione uma empresa',
     noCompanySub: 'Escolha a empresa para ver as despesas a contabilizar.',
     tabs: {
-      review: 'Registro de Despesa',
+      review: 'Despesas',
       advances: 'Adiantamentos',
     },
   },
