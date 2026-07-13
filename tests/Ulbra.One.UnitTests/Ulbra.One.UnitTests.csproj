@@ -37,7 +37,6 @@
     <ProjectReference Include="../../src/Modules/Identity/Ulbra.One.Identity.Application/Ulbra.One.Identity.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- PaymentMethod (shared payment vocabulary) lives in Common.Domain; imported project-wide. -->
     <Using Include="Ulbra.One.Common.Domain" />
   </ItemGroup>
 </Project>

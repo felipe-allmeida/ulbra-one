@@ -255,7 +255,7 @@ if (app.Environment.IsDevelopment())
     // and the group-wide withholding rules so the auto-retention calculation produces output.
     await Ulbra.One.Api.DevDataSeeder.SeedLedgerChartAsync(app.Services);
     await Ulbra.One.Api.DevDataSeeder.SeedWithholdingRulesAsync(app.Services);
-    //await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
+    await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
