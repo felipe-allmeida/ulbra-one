@@ -381,8 +381,8 @@ export interface PayableInput {
   /** Optional override: which bank account + method to use for auto-pay (null = use company default). */
   paymentBankAccountId?: string | null;
   paymentMethod?: PaymentMethod | null;
-  /** Type: 'Service' (triggers withholding), 'Product', null/omitted=undetermined. */
-  type?: 'Service' | 'Product' | null;
+  /** Type of supply: 'Service' (triggers withholding) or 'Product'. Required. */
+  type: 'Service' | 'Product';
 }
 
 /** Request body for creating/updating a receivable. `installments` lists explicit dues; `generate` derives them. */

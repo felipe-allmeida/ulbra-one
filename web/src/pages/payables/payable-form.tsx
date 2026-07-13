@@ -30,7 +30,7 @@ import { useNames } from './use-names';
 import { fmtDate } from '../../datetime';
 import { VendorPicker } from './vendor-picker';
 import { FiscalXmlReader } from './fiscal-xml-reader';
-import { PayableIntakeChoice, originForIntake, type PayableIntakeMode } from './intake-choice';
+import { PayableIntakeChoice, FiscalIntakeChoice, originForIntake, type PayableIntakeMode } from './intake-choice';
 
 /* ============ CREATE / EDIT FORM ============ */
 function PayableForm({ initial }: { initial?: Payable }) {
@@ -52,6 +52,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   );
   // Type (Service/Product): drives the automatic withholding. Set here so it's applied before any auto-approval.
   const [payableType, setPayableType] = useState<'Service' | 'Product' | null>(initial?.type ?? null);
+  // Tipo de fornecimento é obrigatório; erro mostrado após uma tentativa de submit sem selecionar.
+  const [typeError, setTypeError] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   const editing = !!initial;
@@ -136,9 +138,26 @@ function PayableForm({ initial }: { initial?: Payable }) {
   // Intake modality (create flow): chooser first; 'fiscal' nests the reader + manual sub-path,
   // 'advance' (adiantamento) goes straight to the manual form with no NF.
   const [intake, setIntake] = useState<'choice' | PayableIntakeMode>('choice');
+  // Fiscal modality sub-step: 'choice' shows the upload-vs-manual blocks; 'upload' processes the picked NF.
+  const [fiscalEntry, setFiscalEntry] = useState<'choice' | 'upload'>('choice');
+  // File picked straight from the "Enviar arquivo" block — handed to the reader to parse (no extra screen).
+  const [autoNfFile, setAutoNfFile] = useState<File | null>(null);
   // Reveal gate (fiscal mode): the payable fields stay hidden until an XML is parsed or the user opts to fill manually.
   const [xmlApplied, setXmlApplied] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  // Picking a modality from the 3-card chooser; the fiscal modality restarts at its own sub-choice.
+  const pickIntake = (m: PayableIntakeMode) => {
+    setIntake(m);
+    if (m === 'fiscal') {
+      setFiscalEntry('choice');
+      setAutoNfFile(null);
+    }
+  };
+  // "Enviar arquivo": go straight to processing the picked file (the reader parses it), no upload screen.
+  const pickFiscalFile = (f: File) => {
+    setFiscalEntry('upload');
+    setAutoNfFile(f);
+  };
   const revealed = editing || intake === 'advance' || (intake === 'fiscal' && (xmlApplied || manualMode));
   // The parsed NF (drives the title, the vendor pre-fill and the "from NF" markers); null in manual/edit.
   const [nf, setNf] = useState<ParsedFiscalDocument | null>(null);
@@ -237,7 +256,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
     setXmlApplied(true);
   };
 
-  const buildBody = (v: PayableValues): Omit<PayableInput, 'origin'> => {
+  const buildBody = (v: PayableValues, type: 'Service' | 'Product'): Omit<PayableInput, 'origin'> => {
     const base = {
       companyId: empresaId,
       vendorId: v.vendorId,
@@ -249,7 +268,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
       paymentMethod: paymentMethodOverride ?? null,
-      type: payableType,
+      type,
     };
     // Duplicatas da NF → parcelas explícitas (datas/valores reais), sem passar pelo generate.
     if (xmlInstallments && xmlInstallments.length > 0) {
@@ -270,7 +289,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
   };
 
   const onValid = async (v: PayableValues) => {
-    const body = buildBody(v);
+    // Tipo de fornecimento é obrigatório — não faz parte do schema RHF (é state próprio), então guardamos aqui.
+    if (!payableType) {
+      setTypeError(true);
+      return;
+    }
+    const body = buildBody(v, payableType);
     try {
       // Origin is set at create time from the intake modality; immutable on edit.
       const p =
@@ -282,7 +306,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       // generic attachment. Then navigate.
       if (fiscalUpload) await uploadFiscal.mutateAsync({ id: p.id, ...fiscalUpload });
       if (!editing && fiscalFile) await upload.mutateAsync({ id: p.id, file: fiscalFile });
-      if (!editing && file) await upload.mutateAsync({ id: p.id, file });
+      if (file) await upload.mutateAsync({ id: p.id, file });
       nav(`/app/payables/${p.id}`);
     } catch {
       // Errors surface via the mutation hooks' `error` state (see `erro`).
@@ -293,8 +317,24 @@ function PayableForm({ initial }: { initial?: Payable }) {
   // From inside a modality, the back link returns to the chooser (not the list); resets any NF state.
   const backToChoice = () => {
     setFiscalFile(null);
+    setAutoNfFile(null);
     clearXmlFields();
+    setFiscalEntry('choice');
     setIntake('choice');
+  };
+  // Back link: while a picked NF is still being read (not revealed yet), step back to the fiscal sub-choice;
+  // from a modality, to the 3-card chooser; otherwise leave the form. Edit always leaves to the payable.
+  const goBack = () => {
+    if (editing) return nav(backTo);
+    if (intake === 'fiscal' && fiscalEntry === 'upload' && !revealed) {
+      setFiscalFile(null);
+      setAutoNfFile(null);
+      clearXmlFields();
+      setFiscalEntry('choice');
+      return;
+    }
+    if (intake !== 'choice') return backToChoice();
+    nav(backTo);
   };
 
   // When the NF issuer has no matching vendor, build a pre-fill so the user can register it in one click.
@@ -322,10 +362,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
 
   return (
     <>
-      <button
-        className='backlink'
-        onClick={() => (!editing && intake !== 'choice' ? backToChoice() : nav(backTo))}
-      >
+      <button className='backlink' onClick={goBack}>
         <ChevronLeft /> {t('common.back')}
       </button>
       <div className='detail-head'>
@@ -342,11 +379,12 @@ function PayableForm({ initial }: { initial?: Payable }) {
           sub={t('payables.empty.noCompanyForm')}
         />
       ) : !editing && intake === 'choice' ? (
-        <PayableIntakeChoice onPick={setIntake} />
+        <PayableIntakeChoice onPick={pickIntake} />
       ) : (
         <div>
-          {/* The NF reader belongs to the fiscal modality (and edit); an adiantamento has no NF. */}
-          {(editing || intake === 'fiscal') && (
+          {/* NF reader (band): while the picked NF is read, once the form is revealed, and in edit.
+              Not shown on the fiscal sub-choice screen. An adiantamento has no NF. */}
+          {(editing || (intake === 'fiscal' && (fiscalEntry === 'upload' || revealed))) && (
             <FiscalXmlReader
               companyId={empresaId}
               file={fiscalFile}
@@ -354,15 +392,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
               onApply={applyParsed}
               onUploadKey={(key, meta) => setFiscalUpload({ key, ...meta })}
               onClear={clearXmlFields}
-              variant={revealed ? 'band' : 'hero'}
+              variant='band'
+              autoFile={autoNfFile}
             />
           )}
-          {!revealed && (
-            <div style={{ maxWidth: 560, margin: '12px auto 0', textAlign: 'center' }}>
-              <button type='button' className='linklike' onClick={() => setManualMode(true)}>
-                {t('payables.fiscalReader.fillManually')}
-              </button>
-            </div>
+          {/* Fiscal sub-choice: "Enviar arquivo" (opens the file picker directly) vs. "Preencher manualmente". */}
+          {!revealed && intake === 'fiscal' && fiscalEntry === 'choice' && (
+            <FiscalIntakeChoice onUpload={pickFiscalFile} onManual={() => setManualMode(true)} />
           )}
           {revealed && (
             <form
@@ -438,10 +474,13 @@ function PayableForm({ initial }: { initial?: Payable }) {
                       setPayableType(v === 'service' ? 'Service' : v === 'product' ? 'Product' : null);
                     }}
                   >
-                    <option value=''>{t('payables.fields.natureUndefined')}</option>
+                    <option value=''>{t('payables.fields.natureSelect')}</option>
                     <option value='service'>{t('payables.fields.natureService')}</option>
                     <option value='product'>{t('payables.fields.natureProduct')}</option>
                   </Select>
+                  {typeError && !payableType && (
+                    <div className='field-err'>{t('validation.typeRequired')}</div>
+                  )}
                 </Field>
               </div>
               <div className='edit-grid' style={{ marginTop: 14 }}>
@@ -459,43 +498,6 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     )}
                   />
                 </Field>
-                <Field
-                  label={
-                    <>
-                      {t('payables.fields.documentNumber')} {nfFields.has('documentNumber') && <AutoHint />}
-                    </>
-                  }
-                >
-                  <Controller
-                    control={control}
-                    name='documentNumber'
-                    render={({ field }) => (
-                      <Input
-                        className={nfFields.has('documentNumber') ? 'input-auto' : undefined}
-                        {...field}
-                        placeholder={t('payables.placeholders.documentNumber')}
-                      />
-                    )}
-                  />
-                </Field>
-                <Field
-                  label={
-                    <>
-                      {t('payables.fields.issueDate')} {nfFields.has('issueDate') && <AutoHint />}
-                    </>
-                  }
-                >
-                  <Controller
-                    control={control}
-                    name='issueDate'
-                    render={({ field }) => (
-                      <Input type='date' className={nfFields.has('issueDate') ? 'input-auto' : undefined} {...field} />
-                    )}
-                  />
-                </Field>
-              </div>
-
-              <div style={{ marginTop: 14 }}>
                 <Field
                   label={
                     <>
@@ -521,53 +523,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 </Field>
               </div>
 
-              {/* ——— Pagar de (optional payment source override) ——— */}
-              <div style={{ marginTop: 14 }}>
-                <div className='section-title' style={{ marginTop: 0, marginBottom: 2 }}>
-                  {t('payables.paymentSource.sectionTitle')}
-                </div>
-                <div className='help' style={{ marginBottom: 10 }}>
-                  {t('payables.paymentSource.sectionHint')}
-                </div>
-                <div className='edit-grid'>
-                  <Field label={t('payables.paymentSource.bankAccount')}>
-                    <Select
-                      value={paymentBankAccountId ?? ''}
-                      onChange={(e) => {
-                        setPaymentBankAccountId(e.target.value !== '' ? e.target.value : null);
-                        if (!e.target.value) setPaymentMethodOverride(null);
-                      }}
-                    >
-                      <option value=''>{t('payables.paymentSource.bankAccountSelect')}</option>
-                      {bankAccountsList.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.alias} — {b.bankName}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  {paymentBankAccountId && (
-                    <Field label={t('payables.paymentSource.method')}>
-                      <Select
-                        value={paymentMethodOverride ?? ''}
-                        onChange={(e) =>
-                          setPaymentMethodOverride(e.target.value !== '' ? (e.target.value as PaymentMethod) : null)
-                        }
-                      >
-                        <option value=''>{t('payables.paymentSource.methodSelect')}</option>
-                        <option value='Pix'>{t('payments.methods.Pix')}</option>
-                        <option value='Ted'>{t('payments.methods.Ted')}</option>
-                        <option value='Boleto'>{t('payments.methods.Boleto')}</option>
-                        <option value='Cash'>{t('payments.methods.Cash')}</option>
-                        <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
-                        <option value='Other'>{t('payments.methods.Other')}</option>
-                      </Select>
-                    </Field>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ marginTop: 14 }}>
+              {/* Forma de pagamento (à vista/parcelado) · Conta bancária · Método (opcional, aparece com o banco) */}
+              <div className={paymentBankAccountId ? 'edit-grid cols-3' : 'edit-grid'} style={{ marginTop: 14 }}>
                 <Field label={t('payables.fields.mode')}>
                   <Controller
                     control={control}
@@ -598,6 +555,40 @@ function PayableForm({ initial }: { initial?: Payable }) {
                     )}
                   />
                 </Field>
+                <Field label={t('payables.paymentSource.bankAccount')}>
+                  <Select
+                    value={paymentBankAccountId ?? ''}
+                    onChange={(e) => {
+                      setPaymentBankAccountId(e.target.value !== '' ? e.target.value : null);
+                      if (!e.target.value) setPaymentMethodOverride(null);
+                    }}
+                  >
+                    <option value=''>{t('payables.paymentSource.bankAccountSelect')}</option>
+                    {bankAccountsList.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.alias} — {b.bankName}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                {paymentBankAccountId && (
+                  <Field label={t('payables.paymentSource.method')}>
+                    <Select
+                      value={paymentMethodOverride ?? ''}
+                      onChange={(e) =>
+                        setPaymentMethodOverride(e.target.value !== '' ? (e.target.value as PaymentMethod) : null)
+                      }
+                    >
+                      <option value=''>{t('payables.paymentSource.methodSelect')}</option>
+                      <option value='Pix'>{t('payments.methods.Pix')}</option>
+                      <option value='Ted'>{t('payments.methods.Ted')}</option>
+                      <option value='Boleto'>{t('payments.methods.Boleto')}</option>
+                      <option value='Cash'>{t('payments.methods.Cash')}</option>
+                      <option value='DirectDebit'>{t('payments.methods.DirectDebit')}</option>
+                      <option value='Other'>{t('payments.methods.Other')}</option>
+                    </Select>
+                  </Field>
+                )}
               </div>
 
               <div className='edit-grid' style={{ marginTop: 14 }}>
@@ -720,42 +711,75 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 </div>
               )}
 
-              {!editing && (
-                <div style={{ marginTop: 14 }}>
-                  <Field
-                    label={t('payables.upload.label')}
-                    help={fiscalFile ? t('payables.upload.fromReader') : t('payables.upload.help')}
-                  >
-                    {fiscalFile ? (
-                      // The NF read at the top is attached on create — show it here (no second upload).
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          minWidth: 0,
-                          padding: '10px 12px',
-                          border: '1px solid var(--border)',
-                          borderRadius: 'var(--radius)',
-                          background: 'var(--surface)',
-                        }}
-                      >
-                        <Paperclip style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--brand)' }} />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {fiscalFile.name}
-                        </span>
-                      </div>
-                    ) : (
-                      <FilePicker
-                        accept='application/pdf,image/png,image/jpeg'
-                        fileName={file?.name}
-                        placeholder={t('common.noFileSelected')}
-                        onSelect={setFile}
+              {/* Linha final: Nº do documento · Data de emissão · Anexar NF (Anexar NF também na edição). */}
+              <div className='edit-grid cols-3' style={{ marginTop: 14 }}>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.documentNumber')} {nfFields.has('documentNumber') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='documentNumber'
+                    render={({ field }) => (
+                      <Input
+                        className={nfFields.has('documentNumber') ? 'input-auto' : undefined}
+                        {...field}
+                        placeholder={t('payables.placeholders.documentNumber')}
                       />
                     )}
-                  </Field>
-                </div>
-              )}
+                  />
+                </Field>
+                <Field
+                  label={
+                    <>
+                      {t('payables.fields.issueDate')} {nfFields.has('issueDate') && <AutoHint />}
+                    </>
+                  }
+                >
+                  <Controller
+                    control={control}
+                    name='issueDate'
+                    render={({ field }) => (
+                      <Input type='date' className={nfFields.has('issueDate') ? 'input-auto' : undefined} {...field} />
+                    )}
+                  />
+                </Field>
+                <Field
+                  label={t('payables.upload.label')}
+                  help={fiscalFile ? t('payables.upload.fromReader') : t('payables.upload.help')}
+                >
+                  {fiscalFile ? (
+                    // The NF read at the top is attached — show it here (no second upload).
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        minWidth: 0,
+                        padding: '10px 12px',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        background: 'var(--surface)',
+                      }}
+                    >
+                      <Paperclip style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--brand)' }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {fiscalFile.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <FilePicker
+                      accept='application/pdf,image/png,image/jpeg'
+                      fileName={file?.name}
+                      placeholder={t('common.noFileSelected')}
+                      onSelect={setFile}
+                    />
+                  )}
+                </Field>
+              </div>
 
               {erro && (
                 <div className='create-err' style={{ marginTop: 10 }}>
