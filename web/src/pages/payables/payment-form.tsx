@@ -23,7 +23,7 @@ export function PaymentForm({
   const contas = useBankAccounts(payable.companyId).data ?? [];
   const [file, setFile] = useState<File | null>(null);
 
-  // Só as formas de pagamento aceitas pelo fornecedor (vazio/carregando = todas — AEL-712).
+  // Only the payment methods the vendor accepts (empty/loading = all — AEL-712).
   const vendor = useVendor(payable.vendorId).data;
   const accepted = vendor?.acceptedPaymentMethods ?? [];
   const allowedMethods = accepted.length > 0 ? PAYMENT_METHODS.filter((m) => accepted.includes(m)) : PAYMENT_METHODS;
@@ -47,7 +47,7 @@ export function PaymentForm({
     },
   });
 
-  // Se a forma selecionada não estiver entre as aceitas pelo fornecedor, cai para a primeira permitida.
+  // If the selected method isn't among the vendor's accepted ones, fall back to the first allowed.
   const method = watch('method');
   useEffect(() => {
     if (allowedMethods.length > 0 && !allowedMethods.includes(method)) {

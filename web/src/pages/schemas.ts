@@ -88,7 +88,7 @@ export type SimplesAnexoValue = (typeof SIMPLES_ANEXOS)[number];
 export const PAYMENT_SCHEDULE_MODES = ['OnDueDate', 'FixedDayOfMonth', 'FirstDayOfMonth'] as const;
 export type PaymentScheduleMode = (typeof PAYMENT_SCHEDULE_MODES)[number];
 
-// Formas de pagamento (Forma de Pagamento) — fonte única no frontend, espelha o enum PaymentMethod do backend.
+// Payment methods — single source of truth in the frontend, mirrors the backend PaymentMethod enum.
 export const PAYMENT_METHODS = ['Pix', 'Ted', 'Boleto', 'Cash', 'DirectDebit', 'Other'] as const;
 export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
 
@@ -104,7 +104,7 @@ export const vendorSchema = refineDocument(
       simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
       paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
       paymentScheduleDay: z.number().nullable().default(null),
-      // Formas de pagamento aceitas ("Condição de pagamento" na UI).
+      // Accepted payment methods ("Condição de pagamento" in the UI).
       acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
     })
     .superRefine((val, ctx) => {

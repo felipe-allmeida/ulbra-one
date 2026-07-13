@@ -20,7 +20,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public string? PaymentTerms { get; private set; }
     public BankInfo BankInfo { get; private set; } = BankInfo.Empty;
     public PaymentSchedule PaymentSchedule { get; private set; } = PaymentSchedule.Default;
-    // Formas de pagamento que o fornecedor aceita ("Condição de pagamento" na UI). Vazio = sem restrição.
+    // Payment methods the vendor accepts ("Condição de pagamento" in the UI). Empty = no restriction.
     public IReadOnlyList<PaymentMethod> AcceptedPaymentMethods { get; private set; } = [];
     public TaxRegime TaxRegime { get; private set; } = TaxRegime.Unknown;
     // Indicativos para a retenção de INSS — sugestão do cadastro, confirmada contra a NF no lançamento.

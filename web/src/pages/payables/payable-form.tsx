@@ -43,8 +43,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const accountItems = (accs: typeof accountingAccounts) =>
     [...accs].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }));
   const bankAccountsList = useBankAccounts(empresaId, false).data ?? [];
-  // Per-payable payment source override (null = use company default). A forma de pagamento não é mais
-  // escolhida aqui — passa a ser decidida na baixa, a partir das formas aceitas pelo fornecedor (AEL-712).
+  // Per-payable payment source override (null = use company default). The payment method is no longer
+  // chosen here — it's decided at settlement, from the methods the vendor accepts (AEL-712).
   const [paymentBankAccountId, setPaymentBankAccountId] = useState<string | null>(
     initial?.paymentBankAccountId ?? null,
   );
@@ -246,7 +246,7 @@ function PayableForm({ initial }: { initial?: Payable }) {
       documentNumber: v.documentNumber.trim() || null,
       issueDate: v.issueDate || null,
       paymentBankAccountId: paymentBankAccountId ?? null,
-      // Preserva o método existente em edição; nunca definido na criação (decidido na baixa).
+      // Preserve the existing method when editing; never set on creation (decided at settlement).
       paymentMethod: initial?.paymentMethod ?? null,
       type: payableType,
     };

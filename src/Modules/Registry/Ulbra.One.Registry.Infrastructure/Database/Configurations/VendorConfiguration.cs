@@ -31,8 +31,8 @@ public sealed class VendorConfiguration : BaseEntityConfiguration<VendorEntity>
             ps.Property(p => p.Mode).HasConversion<string>().HasMaxLength(20);
             ps.Property(p => p.DayOfMonth);
         });
-        // Formas de pagamento aceitas — lista de PaymentMethod persistida como jsonb (nomes do enum).
-        // Precedente: FiscalDocument.Cfops/Ncms. Default '[]' cobre fornecedores já cadastrados.
+        // Accepted payment methods — a list of PaymentMethod persisted as jsonb (enum names).
+        // Precedent: FiscalDocument.Cfops/Ncms. Default '[]' backfills existing vendors.
         var acceptedMethodsToJson = new ValueConverter<IReadOnlyList<PaymentMethod>, string>(
             v => JsonSerializer.Serialize(v.Select(m => m.ToString()), (JsonSerializerOptions?)null),
             v => (JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>())
