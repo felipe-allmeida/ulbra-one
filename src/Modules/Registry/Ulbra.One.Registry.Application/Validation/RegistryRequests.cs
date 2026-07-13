@@ -21,7 +21,7 @@ public sealed record VendorRequest(
     PaymentScheduleMode PaymentScheduleMode = PaymentScheduleMode.OnDueDate, int? PaymentScheduleDay = null,
     // Indicativos p/ INSS (cadastro sugere; NF confirma): CPRB previsto (Sim/Não/null) + anexo do Simples.
     bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null,
-    // Accepted payment methods ("Condição de pagamento" in the UI). Omitted/empty = no restriction.
+    // Accepted payment methods. Omitted/empty = no restriction.
     IReadOnlyList<PaymentMethod>? AcceptedPaymentMethods = null);
 
 public sealed record CustomerRequest(

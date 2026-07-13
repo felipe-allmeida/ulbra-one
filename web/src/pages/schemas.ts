@@ -104,7 +104,7 @@ export const vendorSchema = refineDocument(
       simplesAnexo: z.enum(SIMPLES_ANEXOS).nullable().default(null),
       paymentScheduleMode: z.enum(PAYMENT_SCHEDULE_MODES).default('OnDueDate'),
       paymentScheduleDay: z.number().nullable().default(null),
-      // Accepted payment methods ("Condição de pagamento" in the UI).
+      // Accepted payment methods.
       acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
     })
     .superRefine((val, ctx) => {
