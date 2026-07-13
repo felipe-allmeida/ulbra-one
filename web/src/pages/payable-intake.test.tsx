@@ -1,7 +1,7 @@
 /**
- * Tests for the payable intake UI (3-card modality chooser + NF reader + manual sub-path):
+ * Tests for the payable intake UI (3-card modality chooser + NF sub-choice + reader + manual):
  * - The chooser renders the 3 modality cards (Folha disabled/"Em breve") and nothing else.
- * - Nota Fiscal nests today's flow: reader hero + "ou preencher manualmente" link.
+ * - Nota Fiscal opens a 2-block sub-choice: "Enviar arquivo" (reader hero) vs "Preencher manualmente".
  * - Adiantamento goes straight to the blank form, with no NF reader at all.
  * - The intake modality maps to the origin sent on create (originForIntake + wired submit).
  * - The top back link returns to the chooser (not the list) from inside a modality.
@@ -170,21 +170,34 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('Nota Fiscal card shows the reader hero and the manual sub-path', () => {
+  it('Nota Fiscal card shows the 2-block sub-choice (file vs manual)', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
 
-    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
-    expect(screen.getByText('ou preencher manualmente')).toBeInTheDocument();
+    // The fiscal sub-choice: two blocks, not the reader hero nor the form yet.
+    expect(screen.getByText('Como você quer informar a Nota Fiscal?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar arquivo/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Preencher manualmente/ })).toBeInTheDocument();
+    expect(screen.queryByText('Nota fiscal (XML/PDF)')).toBeNull();
     expect(screen.queryByText('Centro de custo')).toBeNull();
   });
 
-  it('Nota Fiscal → "ou preencher manualmente" reveals the blank form (NF not available yet)', async () => {
+  it('Nota Fiscal → "Enviar arquivo" shows the reader hero', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
-    fireEvent.click(screen.getByText('ou preencher manualmente'));
+    fireEvent.click(screen.getByRole('button', { name: /Enviar arquivo/ }));
+
+    expect(screen.getByText('Nota fiscal (XML/PDF)')).toBeInTheDocument();
+    expect(screen.queryByText('Centro de custo')).toBeNull();
+  });
+
+  it('Nota Fiscal → "Preencher manualmente" reveals the blank form (NF not available yet)', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Preencher manualmente/ }));
 
     await waitFor(() => {
       expect(screen.getByText('Centro de custo')).toBeInTheDocument();
@@ -254,6 +267,7 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Nota Fiscal/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Enviar arquivo/ }));
     const xmlFile = await uploadNf(user);
 
     // Presigned chain: upload-url with the file name → PUT → parse by storage key.
