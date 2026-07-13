@@ -581,7 +581,6 @@ export const api = {
     status?: PayableStatus;
     hasFiscalDocument?: boolean;
     origin?: PayableOrigin;
-    excludeOrigin?: PayableOrigin;
     page?: number;
     pageSize?: number;
   }): Promise<Paginated<PayableStageItem>> => {
@@ -589,7 +588,6 @@ export const api = {
     if (params.status) q.set('status', params.status);
     if (params.hasFiscalDocument !== undefined) q.set('hasFiscalDocument', String(params.hasFiscalDocument));
     if (params.origin) q.set('origin', params.origin);
-    if (params.excludeOrigin) q.set('excludeOrigin', params.excludeOrigin);
     if (params.page) q.set('Page', String(params.page));
     if (params.pageSize) q.set('PageSize', String(params.pageSize));
     return request<Paginated<PayableStageItem>>(`/payables/stage-items?${q}`);
