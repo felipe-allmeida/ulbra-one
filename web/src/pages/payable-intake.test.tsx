@@ -103,18 +103,14 @@ function renderPage() {
   return renderWithProviders(<NewPayablePage />);
 }
 
-/** Wires the presigned upload-url → PUT → parse chain to resolve with the given parsed NF. */
+/** Wires the presigned upload-url → PUT → parse chain (mutateAsync-based) to resolve with the parsed NF. */
 function mockNfFlow(parsed: ParsedFiscalDocument) {
   const uploadTarget: UploadTarget = { uploadUrl: 'https://blob.example.com/up?sig=test', key: 'fiscal/nf001.xml' };
-  const requestUrlMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: UploadTarget) => void }) => {
-    opts?.onSuccess?.(uploadTarget);
-  });
-  const parseMutate = vi.fn((_vars: unknown, opts?: { onSuccess?: (d: ParsedFiscalDocument) => void }) => {
-    opts?.onSuccess?.(parsed);
-  });
+  const requestUrlMutateAsync = vi.fn(async (_vars: unknown) => uploadTarget);
+  const parseMutateAsync = vi.fn(async (_vars: unknown) => parsed);
   vi.mocked(useRequestFiscalUploadUrl).mockReturnValue({
-    mutate: requestUrlMutate,
-    mutateAsync: vi.fn(),
+    mutate: vi.fn(),
+    mutateAsync: requestUrlMutateAsync,
     isPending: false,
     error: null,
     reset: vi.fn(),
@@ -122,8 +118,8 @@ function mockNfFlow(parsed: ParsedFiscalDocument) {
     data: undefined,
   } as unknown as ReturnType<typeof useRequestFiscalUploadUrl>);
   vi.mocked(useParseFiscalDocument).mockReturnValue({
-    mutate: parseMutate,
-    mutateAsync: vi.fn(),
+    mutate: vi.fn(),
+    mutateAsync: parseMutateAsync,
     isPending: false,
     error: null,
     reset: vi.fn(),
@@ -131,7 +127,7 @@ function mockNfFlow(parsed: ParsedFiscalDocument) {
     data: undefined,
   } as unknown as ReturnType<typeof useParseFiscalDocument>);
   vi.mocked(uploadToPresignedUrl).mockResolvedValue(undefined);
-  return { uploadTarget, requestUrlMutate, parseMutate };
+  return { uploadTarget, requestUrlMutateAsync, parseMutateAsync };
 }
 
 async function uploadNf(user: ReturnType<typeof userEvent.setup>) {
@@ -247,7 +243,7 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
 
   it('NF flow: upload-url → PUT → parse → prefilled form → create sends origin FiscalDocument', async () => {
     const user = userEvent.setup();
-    const { uploadTarget, requestUrlMutate, parseMutate } = mockNfFlow({
+    const { uploadTarget, requestUrlMutateAsync, parseMutateAsync } = mockNfFlow({
       ...minParsed,
       matchedVendorId: 'vendor_1',
       matchedVendorName: 'Fornecedor SA',
@@ -278,15 +274,13 @@ describe('Payable intake (modality chooser + NF reader + manual)', () => {
 
     // Presigned chain: upload-url with the file name → PUT → parse by storage key.
     await waitFor(() => {
-      expect(requestUrlMutate).toHaveBeenCalledWith(
-        { fileName: 'nf001.xml' },
-        expect.objectContaining({ onSuccess: expect.any(Function) }),
-      );
+      expect(requestUrlMutateAsync).toHaveBeenCalledWith({ fileName: 'nf001.xml' });
       expect(uploadToPresignedUrl).toHaveBeenCalledWith(uploadTarget.uploadUrl, xmlFile);
-      expect(parseMutate).toHaveBeenCalledWith(
-        { companyId: 'company_1', key: uploadTarget.key, fileName: 'nf001.xml' },
-        expect.objectContaining({ onSuccess: expect.any(Function) }),
-      );
+      expect(parseMutateAsync).toHaveBeenCalledWith({
+        companyId: 'company_1',
+        key: uploadTarget.key,
+        fileName: 'nf001.xml',
+      });
     });
 
     // Form revealed with the NF fields prefilled (NF-001 in the reader preview and the form input).

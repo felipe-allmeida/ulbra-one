@@ -40,10 +40,14 @@ export function FiscalXmlReader({
   const parse = useParseFiscalDocument();
   const [parsed, setParsed] = useState<ParsedFiscalDocument | null>(null);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const [parsing, setParsing] = useState(false);
   const hero = variant === 'hero';
 
-  // Selecting a file: request a presigned upload URL → PUT the file to blob storage →
-  // parse it by key → apply. The file is uploaded once and the same key is reused on save.
+  // Selecting a file: request a presigned upload URL → PUT the file to blob storage → parse it by key →
+  // apply. Driven with mutateAsync + await (not per-call onSuccess): when the file comes from the "Enviar
+  // arquivo" block this reader mounts exactly as the request starts, and React StrictMode's mount → cleanup
+  // → mount cycle discards mutate() callbacks; an awaited promise chain survives it. `parsing` keeps the
+  // loading state reliable regardless of the mutation observer's lifecycle.
   const onSelect = (f: File | null) => {
     setParsed(null);
     parse.reset();
@@ -52,29 +56,21 @@ export function FiscalXmlReader({
     onClear();
     onFile(f);
     if (!f) return;
-    requestUrl.mutate(
-      { fileName: f.name },
-      {
-        onSuccess: async (target) => {
-          try {
-            await uploadToPresignedUrl(target.uploadUrl, f);
-          } catch (e) {
-            setUploadErr(e instanceof Error ? e.message : String(e));
-            return;
-          }
-          onUploadKey(target.key, { fileName: f.name, contentType: f.type, sizeBytes: f.size });
-          parse.mutate(
-            { companyId, key: target.key, fileName: f.name },
-            {
-              onSuccess: (p) => {
-                setParsed(p);
-                onApply(p);
-              },
-            },
-          );
-        },
-      },
-    );
+    setParsing(true);
+    void (async () => {
+      try {
+        const target = await requestUrl.mutateAsync({ fileName: f.name });
+        await uploadToPresignedUrl(target.uploadUrl, f);
+        onUploadKey(target.key, { fileName: f.name, contentType: f.type, sizeBytes: f.size });
+        const p = await parse.mutateAsync({ companyId, key: target.key, fileName: f.name });
+        setParsed(p);
+        onApply(p);
+      } catch (e) {
+        setUploadErr(getErrorMessage(e));
+      } finally {
+        setParsing(false);
+      }
+    })();
   };
 
   // A file picked upstream ("Enviar arquivo") is processed once, running the same upload+parse flow as
@@ -120,7 +116,7 @@ export function FiscalXmlReader({
         />
       </Field>
 
-      {(requestUrl.isPending || parse.isPending) && (
+      {(parsing || requestUrl.isPending || parse.isPending) && (
         <div className='help' style={{ marginTop: 10 }}>
           {t('payables.fiscalReader.parsing')}
         </div>
