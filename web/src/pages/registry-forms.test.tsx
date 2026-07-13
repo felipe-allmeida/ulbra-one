@@ -317,6 +317,7 @@ describe('VendorForm', () => {
         simplesAnexo: null,
         paymentScheduleMode: 'FixedDayOfMonth' as const,
         paymentScheduleDay: 20,
+        acceptedPaymentMethods: [],
         active: true,
       };
       renderWithProviders(

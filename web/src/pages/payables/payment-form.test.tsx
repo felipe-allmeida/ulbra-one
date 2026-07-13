@@ -5,6 +5,7 @@ import '../../i18n';
 const { mockRegister } = vi.hoisted(() => ({ mockRegister: vi.fn() }));
 vi.mock('../../queries', () => ({
   useBankAccounts: () => ({ data: [] }),
+  useVendor: () => ({ data: undefined }),
   useRegisterPayment: () => ({ mutate: mockRegister, isPending: false, error: null }),
   useUploadPaymentProof: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }));

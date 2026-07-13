@@ -2,4 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
 </Project>

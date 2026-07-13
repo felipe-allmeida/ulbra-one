@@ -36,4 +36,7 @@
     <ProjectReference Include="../../src/Modules/Accounting/Ulbra.One.Accounting.Application/Ulbra.One.Accounting.Application.csproj" />
     <ProjectReference Include="../../src/Modules/Identity/Ulbra.One.Identity.Application/Ulbra.One.Identity.Application.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
 </Project>

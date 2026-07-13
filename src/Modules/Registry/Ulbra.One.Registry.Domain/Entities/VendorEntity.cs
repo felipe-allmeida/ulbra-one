@@ -1,4 +1,5 @@
 using Ulbra.One.Registry.Domain.ValueObjects;
+using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Domain.Auditing;
 using Ulbra.One.Common.Domain.Validation;
 
@@ -19,6 +20,8 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public string? PaymentTerms { get; private set; }
     public BankInfo BankInfo { get; private set; } = BankInfo.Empty;
     public PaymentSchedule PaymentSchedule { get; private set; } = PaymentSchedule.Default;
+    // Payment methods the vendor accepts. Empty = no restriction.
+    public IReadOnlyList<PaymentMethod> AcceptedPaymentMethods { get; private set; } = [];
     public TaxRegime TaxRegime { get; private set; } = TaxRegime.Unknown;
     // Indicativos para a retenção de INSS — sugestão do cadastro, confirmada contra a NF no lançamento.
     // CprbForeseen: CPRB (folha desonerada) previsto? Sim(true)/Não(false)/Desconhecido(null) → sugere 3,5% vs 11%.
@@ -38,24 +41,27 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public VendorEntity(Guid companyId, PersonType personType, string name, string? tradeName,
         string document, string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
-        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null)
+        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null,
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null)
     {
         CompanyId = companyId;
         Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
-            paymentSchedule, cprbForeseen, simplesAnexo);
+            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods);
     }
 
     public void Update(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
-        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null) =>
+        bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null,
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null) =>
         Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
-            paymentSchedule, cprbForeseen, simplesAnexo);
+            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods);
 
     private void Apply(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
-        bool? cprbForeseen, SimplesAnexo? simplesAnexo)
+        bool? cprbForeseen, SimplesAnexo? simplesAnexo,
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods)
     {
         PersonType = personType;
         Name = name;
@@ -70,6 +76,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
         TaxRegime = taxRegime;
         CprbForeseen = cprbForeseen;
         SimplesAnexo = simplesAnexo;
+        AcceptedPaymentMethods = acceptedPaymentMethods ?? [];
     }
 
     public void Deactivate() => Active = false;
