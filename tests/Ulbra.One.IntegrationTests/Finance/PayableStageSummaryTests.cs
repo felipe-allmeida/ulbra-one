@@ -50,11 +50,15 @@ public class PayableStageSummaryTests(PostgresFixture fixture)
         var cc = await FinanceSeed.CreateCostCenterAsync(client, companyId, "CC1", "Geral");
         var vendor = await FinanceSeed.CreateVendorAsync(client, companyId, "Fornecedor A");
 
-        // Scheduled with withholding: 1000 gross − 150 IRRF = 850 net.
+        // Scheduled with withholding: 1000 gross − 150 IRRF = 850 net. The withholding is set AFTER the NF
+        // is registered: the seed's NF is an NF-e (Product), and the auto-withholding pass clears retentions
+        // on a Product (AEL-696). Setting it post-NF, while still PendingAccounting, makes it stick (confirm
+        // does not recalculate), so the payable reaches Scheduled at net 850.
         var withheld = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 1000m, approve: false);
-        await FinanceSeed.SetWithholdingAsync(client, withheld, baseAmount: 1000m, amount: 150m);
         await FinanceSeed.ApproveAsync(client, withheld);
-        await FinanceSeed.CompleteAccountingAsync(factory, client, withheld);
+        await FinanceSeed.RegisterFiscalDocAsync(factory, client, withheld);
+        await FinanceSeed.SetWithholdingAsync(client, withheld, baseAmount: 1000m, amount: 150m);
+        await FinanceSeed.ConfirmAccountingAsync(client, withheld);
 
         // Scheduled without withholding: net == gross.
         var plain = await FinanceSeed.CreatePayableAsync(factory, client, companyId, vendor, cc, today.AddDays(10), 500m, approve: true);
