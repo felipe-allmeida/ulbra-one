@@ -11,13 +11,19 @@ public sealed class PendingAccountingPosting
     public decimal Amount { get; private set; }
     public string Reason { get; private set; } = string.Empty;
     public string IntendedCodes { get; private set; } = string.Empty;
+
+    /// <summary>Opaque serialized replay plan (competence + line codes/sides/amounts/cost centers) captured
+    /// when parking, so the posting can be reprocessed after the mapping is fixed / period reopened. Null on
+    /// legacy rows parked before replay support.</summary>
+    public string? Plan { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? ResolvedAt { get; private set; }
 
     private PendingAccountingPosting() { }
 
     public PendingAccountingPosting(Guid companyId, string sourceKey, PostingKind kind, decimal amount,
-        string reason, string intendedCodes)
+        string reason, string intendedCodes, string? plan = null)
     {
         CompanyId = companyId;
         SourceKey = sourceKey;
@@ -25,6 +31,7 @@ public sealed class PendingAccountingPosting
         Amount = amount;
         Reason = reason;
         IntendedCodes = intendedCodes;
+        Plan = plan;
     }
 
     public void MarkResolved(DateTimeOffset at) => ResolvedAt = at;

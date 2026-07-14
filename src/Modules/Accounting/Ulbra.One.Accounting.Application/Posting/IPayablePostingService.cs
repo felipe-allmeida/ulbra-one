@@ -1,3 +1,5 @@
+using Ulbra.One.Accounting.Domain.Entities;
+
 namespace Ulbra.One.Accounting.Application.Posting;
 
 public sealed record AccountingPostingOptions(
@@ -18,4 +20,8 @@ public interface IPayablePostingService
     Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, CancellationToken ct);
 
     Task ReverseAsync(Guid companyId, string sourceKey, string reason, CancellationToken ct);
+
+    /// <summary>Replays a parked pending posting from its stored plan; marks it resolved when a posting lands.
+    /// Returns false when it still cannot post (missing plan / account, or the target period is still closed).</summary>
+    Task<bool> ResolvePendingAsync(PendingAccountingPosting pending, CancellationToken ct);
 }

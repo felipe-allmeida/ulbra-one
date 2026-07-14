@@ -567,6 +567,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("kind");
 
+                    b.Property<string>("Plan")
+                        .HasColumnType("text")
+                        .HasColumnName("plan");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -588,6 +592,11 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.HasIndex("CompanyId", "ResolvedAt")
                         .HasDatabaseName("ix_pending_accounting_postings_company_id_resolved_at");
+
+                    b.HasIndex("CompanyId", "SourceKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pending_accounting_postings_company_source_key_open")
+                        .HasFilter("resolved_at IS NULL");
 
                     b.ToTable("pending_accounting_postings", "accounting");
                 });

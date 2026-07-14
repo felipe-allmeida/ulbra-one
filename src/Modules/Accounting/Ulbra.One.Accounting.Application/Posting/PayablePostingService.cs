@@ -14,6 +14,11 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         await uow.ReadSet<JournalEntry>()
             .AnyAsync(e => e.CompanyId == companyId && e.SourceKey == sourceKey && e.DeletedAt == null, ct);
 
+    // ── Idempotency: an OPEN pending already exists for this sourceKey (redelivery must not duplicate) ──
+    private async Task<bool> AlreadyPendingAsync(Guid companyId, string sourceKey, CancellationToken ct) =>
+        await uow.ReadSet<PendingAccountingPosting>()
+            .AnyAsync(p => p.CompanyId == companyId && p.SourceKey == sourceKey && p.ResolvedAt == null, ct);
+
     // ── Resolve an active analytical ledger account by code (global chart); null if not found ──
     private async Task<LedgerAccount?> ResolveAsync(string? code, CancellationToken ct)
     {
@@ -40,11 +45,12 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
     // ── Core: post a multi-line balanced entry or park a pending ─────────────
     // lines: list of (code, side, amount, costCenterId). All codes must resolve; first unresolvable → Pending.
-    private async Task PostEntryAsync(
+    // Returns true when a posting is in place (posted now or already posted); false when parked (still blocked).
+    private async Task<bool> PostEntryAsync(
         Guid companyId, string sourceKey, string description, PostingKind kind, DateOnly competenceDate,
         IReadOnlyList<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)> lines, CancellationToken ct)
     {
-        if (await AlreadyPostedAsync(companyId, sourceKey, ct)) return; // idempotent
+        if (await AlreadyPostedAsync(companyId, sourceKey, ct)) return true; // idempotent
 
         // Resolve all accounts up-front (all-or-nothing).
         var resolved = new List<(LedgerAccount Account, EntrySide Side, decimal Amount, Guid? CostCenterId)>(lines.Count);
@@ -69,11 +75,14 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
         var intendedCodes = string.Join(" / ", lines.Select(l => $"{(l.Side == EntrySide.Debit ? "Dr" : "Cr")} {l.Code}"));
         var debitTotal = lines.Sum(l => l.Side == EntrySide.Debit ? l.Amount : 0m);
+        // Replay plan stores the ORIGINAL (pre-clamp) competence, so a later reprocess re-applies the clamp.
+        var plan = new PostingPlan(competenceDate, description,
+            lines.Select(l => new PostingPlanLine(l.Code, l.Side, l.Amount, l.CostCenterId)).ToList()).Serialize();
 
         if (anyUnresolvable)
         {
-            await ParkPendingAsync(companyId, sourceKey, kind, debitTotal, $"AccountNotFound:{firstMissingLabel}", intendedCodes, ct);
-            return;
+            await ParkPendingAsync(companyId, sourceKey, kind, debitTotal, $"AccountNotFound:{firstMissingLabel}", intendedCodes, plan, ct);
+            return false;
         }
 
         // Closed-period clamp (automatic path never blocks): if the true competence sits in a closed period,
@@ -88,8 +97,8 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             if (await AccountingPeriodGuard.IsClosedAsync(uow, companyId, today, ct))
             {
                 await ParkPendingAsync(companyId, sourceKey, kind, debitTotal,
-                    $"PeriodClosed:{competence.Year:D4}-{competence.Month:D2}", intendedCodes, ct);
-                return;
+                    $"PeriodClosed:{competence.Year:D4}-{competence.Month:D2}", intendedCodes, plan, ct);
+                return false;
             }
             competence = today;
             clamped = true;
@@ -105,16 +114,35 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             entry.AddLine(new JournalLine(account.Id, side, amount, costCenterId));
         entry.Post(await NextNumberAsync(companyId, ct), clock.GetUtcNow());
         await uow.AddAsync(entry, ct);
+        return true;
     }
 
     // ── Park a payable posting that could not be booked (missing account or fully-closed period) ──
+    // Idempotent: skips if an open pending for this sourceKey already exists (at-least-once redelivery).
     private async Task ParkPendingAsync(
         Guid companyId, string sourceKey, PostingKind kind, decimal amount,
-        string reason, string intendedCodes, CancellationToken ct)
+        string reason, string intendedCodes, string? plan, CancellationToken ct)
     {
-        var pending = new PendingAccountingPosting(companyId, sourceKey, kind, amount, reason, intendedCodes);
+        if (await AlreadyPendingAsync(companyId, sourceKey, ct)) return;
+        var pending = new PendingAccountingPosting(companyId, sourceKey, kind, amount, reason, intendedCodes, plan);
         pending.Stamp(clock.GetUtcNow());
         await uow.AddAsync(pending, ct);
+    }
+
+    // ── Reprocess a parked posting from its stored plan (after fixing the chart / reopening the period) ──
+    public async Task<bool> ResolvePendingAsync(PendingAccountingPosting pending, CancellationToken ct)
+    {
+        if (pending.ResolvedAt is not null) return true; // already resolved (idempotent)
+
+        var plan = PostingPlan.Deserialize(pending.Plan);
+        if (plan is null) return false; // legacy pending without a replayable plan
+
+        var lines = plan.Lines
+            .Select(l => (l.Code, l.Side, l.Amount, l.CostCenterId))
+            .ToList();
+        var posted = await PostEntryAsync(pending.CompanyId, pending.SourceKey, plan.Description, pending.Kind, plan.CompetenceDate, lines, ct);
+        if (posted) pending.MarkResolved(clock.GetUtcNow());
+        return posted;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

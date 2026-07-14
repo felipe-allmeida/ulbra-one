@@ -16,5 +16,11 @@ public sealed class PendingAccountingPostingConfiguration : IEntityTypeConfigura
         e.Property(x => x.IntendedCodes).HasMaxLength(200).IsRequired();
         e.Property(x => x.Amount).HasPrecision(18, 2);
         e.HasIndex(x => new { x.CompanyId, x.ResolvedAt });
+        // Idempotency: at most one OPEN pending per (company, sourceKey). Resolved rows are excluded, so a new
+        // pending can be re-parked after an earlier one was resolved.
+        e.HasIndex(x => new { x.CompanyId, x.SourceKey })
+            .IsUnique()
+            .HasFilter("resolved_at IS NULL")
+            .HasDatabaseName("ix_pending_accounting_postings_company_source_key_open");
     }
 }
