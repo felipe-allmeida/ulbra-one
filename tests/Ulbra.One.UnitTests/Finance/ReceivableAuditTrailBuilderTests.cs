@@ -29,6 +29,22 @@ public class ReceivableAuditTrailBuilderTests
     }
 
     [Fact]
+    public void Build_maps_system_actor_to_friendly_name_on_created_event()
+    {
+        // Unauthenticated/background contexts stamp the actor as the literal "system" (a non-Guid);
+        // an empty actor is the other system case. Both must render as the friendly system name.
+        var systemCreated = ReceivableTestFactory.Pending(createdActorId: "system", createdAt: T0);
+        var emptyCreated = ReceivableTestFactory.Pending(createdActorId: "", createdAt: T0);
+
+        var systemEvents = ReceivableAuditTrailBuilder.Build(systemCreated, new Dictionary<Guid, string>());
+        var emptyEvents = ReceivableAuditTrailBuilder.Build(emptyCreated, new Dictionary<Guid, string>());
+
+        Assert.Equal("Created", systemEvents[0].Type);
+        Assert.Equal("Sistema Ulbra.One", systemEvents[0].ActorName);
+        Assert.Equal("Sistema Ulbra.One", emptyEvents[0].ActorName);
+    }
+
+    [Fact]
     public void Build_emits_written_off_with_reason()
     {
         var receivable = ReceivableTestFactory.WrittenOff(
