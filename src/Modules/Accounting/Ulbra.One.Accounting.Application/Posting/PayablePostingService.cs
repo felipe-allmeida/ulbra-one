@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application.Persistence;
@@ -38,18 +39,18 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             .MaxAsync(e => (int?)e.Number, ct) ?? 0) + 1;
 
     // ── Core: post a multi-line balanced entry or park a pending ─────────────
-    // lines: list of (code, side, amount). All codes must resolve; first unresolvable → Pending.
+    // lines: list of (code, side, amount, costCenterId). All codes must resolve; first unresolvable → Pending.
     private async Task PostEntryAsync(
-        Guid companyId, string sourceKey, string description, PostingKind kind,
-        IReadOnlyList<(string? Code, EntrySide Side, decimal Amount)> lines, CancellationToken ct)
+        Guid companyId, string sourceKey, string description, PostingKind kind, DateOnly competenceDate,
+        IReadOnlyList<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)> lines, CancellationToken ct)
     {
         if (await AlreadyPostedAsync(companyId, sourceKey, ct)) return; // idempotent
 
         // Resolve all accounts up-front (all-or-nothing).
-        var resolved = new List<(LedgerAccount Account, EntrySide Side, decimal Amount)>(lines.Count);
+        var resolved = new List<(LedgerAccount Account, EntrySide Side, decimal Amount, Guid? CostCenterId)>(lines.Count);
         bool anyUnresolvable = false;
         string firstMissingLabel = string.Empty;
-        foreach (var (code, side, amount) in lines)
+        foreach (var (code, side, amount, costCenterId) in lines)
         {
             var account = await ResolveAsync(code, ct);
             if (account is null)
@@ -62,43 +63,73 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             }
             else
             {
-                resolved.Add((account, side, amount));
+                resolved.Add((account, side, amount, costCenterId));
             }
         }
 
+        var intendedCodes = string.Join(" / ", lines.Select(l => $"{(l.Side == EntrySide.Debit ? "Dr" : "Cr")} {l.Code}"));
+        var debitTotal = lines.Sum(l => l.Side == EntrySide.Debit ? l.Amount : 0m);
+
         if (anyUnresolvable)
         {
-            // Park a single PendingAccountingPosting naming the first unresolvable code.
-            var desc = string.Join(" / ", lines.Select(l => $"{(l.Side == EntrySide.Debit ? "Dr" : "Cr")} {l.Code}"));
-            var pending = new PendingAccountingPosting(
-                companyId, sourceKey, kind, lines.Sum(l => l.Side == EntrySide.Debit ? l.Amount : 0m),
-                $"AccountNotFound:{firstMissingLabel}", desc);
-            pending.Stamp(clock.GetUtcNow());
-            await uow.AddAsync(pending, ct);
+            await ParkPendingAsync(companyId, sourceKey, kind, debitTotal, $"AccountNotFound:{firstMissingLabel}", intendedCodes, ct);
             return;
         }
 
-        var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-        var entry = new JournalEntry(companyId, today, description,
+        // Closed-period clamp (automatic path never blocks): if the true competence sits in a closed period,
+        // book it in the current open period so the incurral and its settlement stay paired (a parked incurral
+        // beside a posted settlement would leave Fornecedores a Pagar unbalanced). Last resort: if even today
+        // is closed, park rather than post silently into the wrong period.
+        var competence = competenceDate;
+        var clamped = false;
+        if (await AccountingPeriodGuard.IsClosedAsync(uow, companyId, competence, ct))
+        {
+            var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+            if (await AccountingPeriodGuard.IsClosedAsync(uow, companyId, today, ct))
+            {
+                await ParkPendingAsync(companyId, sourceKey, kind, debitTotal,
+                    $"PeriodClosed:{competence.Year:D4}-{competence.Month:D2}", intendedCodes, ct);
+                return;
+            }
+            competence = today;
+            clamped = true;
+        }
+
+        var finalDescription = clamped
+            ? $"{description} (competência {competenceDate:yyyy-MM} em período fechado; ajustada para {competence:yyyy-MM})"
+            : description;
+
+        var entry = new JournalEntry(companyId, competence, finalDescription,
             JournalOrigin.Automatic, sourceReference: sourceKey, sourceKey: sourceKey);
-        foreach (var (account, side, amount) in resolved)
-            entry.AddLine(new JournalLine(account.Id, side, amount));
+        foreach (var (account, side, amount, costCenterId) in resolved)
+            entry.AddLine(new JournalLine(account.Id, side, amount, costCenterId));
         entry.Post(await NextNumberAsync(companyId, ct), clock.GetUtcNow());
         await uow.AddAsync(entry, ct);
+    }
+
+    // ── Park a payable posting that could not be booked (missing account or fully-closed period) ──
+    private async Task ParkPendingAsync(
+        Guid companyId, string sourceKey, PostingKind kind, decimal amount,
+        string reason, string intendedCodes, CancellationToken ct)
+    {
+        var pending = new PendingAccountingPosting(companyId, sourceKey, kind, amount, reason, intendedCodes);
+        pending.Stamp(clock.GetUtcNow());
+        await uow.AddAsync(pending, ct);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
     public async Task PostIncurralAsync(
         Guid companyId, string sourceKey, decimal amount, Guid? expenseAccountId,
-        IReadOnlyList<(string TaxType, decimal Amount)> withholdings, CancellationToken ct)
+        IReadOnlyList<(string TaxType, decimal Amount)> withholdings,
+        DateOnly? competenceDate, Guid? costCenterId, CancellationToken ct)
     {
         // The expense line comes from the payable's classified global ledger account (resolved by id);
         // liability/cash/withholding lines are Accounting-internal config codes. An unresolvable expense
         // account leaves a null code, which PostEntryAsync parks as a PendingAccountingPosting.
         //
-        // Build the multi-line plan:
-        //   Dr expenseAccount      = gross amount
+        // Build the multi-line plan (cost center carried on the expense/result line only):
+        //   Dr expenseAccount      = gross amount        (+ costCenterId)
         //   Cr PayablesLiability   = gross − Σwithholdings  (net)
         //   Cr WithholdingCode[t]  = each withholding.Amount  (one line per withholding)
         // When withholdings is empty the net == gross → exactly the classic 2-line entry.
@@ -106,28 +137,31 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         var totalWithheld = withholdings.Sum(w => w.Amount);
         var netAmount = amount - totalWithheld;
 
-        var lineList = new List<(string? Code, EntrySide Side, decimal Amount)>(2 + withholdings.Count)
+        var lineList = new List<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)>(2 + withholdings.Count)
         {
-            (expenseAccount?.Code, EntrySide.Debit, amount),
-            (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount),
+            (expenseAccount?.Code, EntrySide.Debit, amount, costCenterId),
+            (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount, (Guid?)null),
         };
 
         foreach (var w in withholdings)
         {
             opts.WithholdingCodes.TryGetValue(w.TaxType, out var withholdingCode);
-            lineList.Add((withholdingCode, EntrySide.Credit, w.Amount));
+            lineList.Add((withholdingCode, EntrySide.Credit, w.Amount, (Guid?)null));
         }
 
-        await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, lineList, ct);
+        // Competence = título's real competence (IssueDate); null (e.g. advances with no NF) falls back to today.
+        var competence = competenceDate ?? DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+        await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, competence, lineList, ct);
     }
 
-    public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, CancellationToken ct) =>
+    public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, CancellationToken ct) =>
         PostEntryAsync(companyId, sourceKey,
             "Pagamento de fornecedor",
             PostingKind.Settlement,
+            paymentDate,
             [
-                (opts.PayablesLiabilityCode, EntrySide.Debit, amount),
-                (opts.CashCode, EntrySide.Credit, amount),
+                (opts.PayablesLiabilityCode, EntrySide.Debit, amount, (Guid?)null),
+                (opts.CashCode, EntrySide.Credit, amount, (Guid?)null),
             ],
             ct);
 

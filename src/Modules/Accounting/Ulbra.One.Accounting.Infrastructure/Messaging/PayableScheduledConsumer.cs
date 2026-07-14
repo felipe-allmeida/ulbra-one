@@ -20,6 +20,8 @@ public sealed class PayableScheduledConsumer(IPayablePostingService posting, IUn
             m.Amount,
             m.AccountingAccountId,
             withholdings,
+            m.CompetenceDate,
+            m.CostCenterId,
             ctx.CancellationToken);
         await uow.SaveChangesAsync(ctx.CancellationToken);
     }
