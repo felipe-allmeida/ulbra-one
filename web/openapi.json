@@ -204,8 +204,8 @@
         ],
         "operationId": "SeedLedgerAccounts",
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -217,8 +217,8 @@
               }
             }
           },
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -912,6 +912,9 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "429": {
             "description": "Too Many Requests",
             "content": {
@@ -921,9 +924,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }
@@ -1303,9 +1303,6 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found"
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -1315,6 +1312,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -5510,6 +5510,60 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/withholding-rules/preview": {
+      "get": {
+        "tags": [
+          "Fiscal"
+        ],
+        "operationId": "PreviewWithholdingRules",
+        "parameters": [
+          {
+            "name": "regime",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaxRegime"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cprb",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "simplesAnexo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SimplesAnexo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WithholdingPreviewItem"
+                  }
                 }
               }
             }
@@ -10854,7 +10908,7 @@
             "nullable": true
           }
         },
-        "additionalProperties": { }
+        "additionalProperties": {}
       },
       "RateSource": {
         "enum": [
@@ -12820,7 +12874,8 @@
           "paymentScheduleDay",
           "cprbForeseen",
           "simplesAnexo",
-          "acceptedPaymentMethods"
+          "acceptedPaymentMethods",
+          "withholdingRates"
         ],
         "type": "object",
         "properties": {
@@ -12883,6 +12938,13 @@
               "$ref": "#/components/schemas/PaymentMethod"
             },
             "nullable": true
+          },
+          "withholdingRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorWithholdingRate"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12906,7 +12968,8 @@
           "active",
           "cprbForeseen",
           "simplesAnexo",
-          "acceptedPaymentMethods"
+          "acceptedPaymentMethods",
+          "withholdingRates"
         ],
         "type": "object",
         "properties": {
@@ -12975,6 +13038,12 @@
             "items": {
               "$ref": "#/components/schemas/PaymentMethod"
             }
+          },
+          "withholdingRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorWithholdingRate"
+            }
           }
         },
         "additionalProperties": false
@@ -13010,6 +13079,23 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VendorWithholdingRate": {
+        "required": [
+          "taxType",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -13206,6 +13292,40 @@
             "items": {
               "$ref": "#/components/schemas/PayableWithholdingResponse"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithholdingPreviewItem": {
+        "required": [
+          "taxType",
+          "retains",
+          "reason",
+          "rateSource",
+          "rate",
+          "invoiceDependent"
+        ],
+        "type": "object",
+        "properties": {
+          "taxType": {
+            "$ref": "#/components/schemas/WithholdingTaxType"
+          },
+          "retains": {
+            "type": "boolean"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/NonRetentionReason"
+          },
+          "rateSource": {
+            "$ref": "#/components/schemas/RateSource"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "invoiceDependent": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
