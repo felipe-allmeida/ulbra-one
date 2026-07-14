@@ -18,6 +18,7 @@ using Ulbra.One.Accounting.Application.Endpoints.Periods.ListAccountingPeriods;
 using Ulbra.One.Accounting.Application.Endpoints.Periods.ReopenAccountingPeriod;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetBalanceSheet;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetIncomeStatement;
+using Ulbra.One.Accounting.Application.Endpoints.Reports.GetJournalBook;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetTrialBalance;
 using Ulbra.One.Common.Application.Extensions;
 
@@ -46,6 +47,7 @@ public static class AccountingEndpoints
         reports.MapEndpoint<GetTrialBalance>();
         reports.MapEndpoint<GetIncomeStatement>();
         reports.MapEndpoint<GetBalanceSheet>();
+        reports.MapEndpoint<GetJournalBook>();
 
         var pendingPostings = builder.MapGroup("/accounting/pending-postings");
         pendingPostings.MapEndpoint<GetPendingPostings>();
