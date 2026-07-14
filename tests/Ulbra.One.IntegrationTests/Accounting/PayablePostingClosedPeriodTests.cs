@@ -53,9 +53,11 @@ public class PayablePostingClosedPeriodTests(PostgresFixture fixture)
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
         var payableId = Guid.NewGuid();
 
-        // Incurral competence in the CLOSED March period; settlement paid today (open).
+        // Incurral competence in the CLOSED March period; settlement paid today (open). These arrive as two
+        // separate consume operations in production, so each commits on its own (distinct entry Number).
         await posting.PostIncurralAsync(companyId, $"payable-incurral:{payableId}", 100m, expenseId, [],
             competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, CancellationToken.None);
+        await uow.SaveChangesAsync(CancellationToken.None);
         await posting.PostSettlementAsync(companyId, $"payment:{payableId}", 100m, today, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
