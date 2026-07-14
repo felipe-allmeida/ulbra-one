@@ -34,3 +34,10 @@ public sealed record WithholdingRuleRequest
     public bool? Cprb { get; set; }
     public SimplesAnexo? SimplesAnexo { get; set; }
 }
+
+/// <summary>One tax's system-default outcome for a given vendor tax profile — used to preview what the system
+/// would apply before/without a vendor-specific override. <see cref="InvoiceDependent"/> flags ISS (rate depends
+/// on the invoice/municipality), which cannot be resolved to a number at registration time.</summary>
+public sealed record WithholdingPreviewItem(
+    WithholdingTaxType TaxType, bool Retains, NonRetentionReason Reason,
+    RateSource RateSource, decimal? Rate, bool InvoiceDependent);

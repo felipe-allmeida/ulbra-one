@@ -22,7 +22,7 @@ public sealed class WithholdingCalculator(IUnitOfWork uow) : IWithholdingCalcula
             context.Lines
                 .Select(l => new ServiceLine(l.Lc116Subitem, l.MunicipalityIbge, l.InvoiceIssRate, l.Amount))
                 .ToList(),
-            context.Cprb, context.SimplesAnexo);
+            context.Cprb, context.SimplesAnexo, context.RateOverrides);
 
         return WithholdingRuleResolver.Resolve(rules, resolutionContext)
             .Select(c => new WithholdingResult(c.TaxType, c.BaseAmount, c.Rate, c.Amount))

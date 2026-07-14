@@ -26,7 +26,7 @@ import { ClassificacaoPage } from './pages/classificacao';
 import { ConciliacaoPage } from './pages/conciliacao';
 import { AgingPage } from './pages/aging';
 import { CashFlowPage } from './pages/cash-flow';
-import { FornecedoresPage } from './pages/fornecedores';
+import { FornecedoresPage, VendorDetailPage } from './pages/fornecedores';
 import { ClientesPage } from './pages/clientes';
 import { ColaboradoresPage } from './pages/colaboradores';
 import { LandingPage } from './pages/landing';
@@ -88,6 +88,8 @@ export default function App() {
         <Route path='accounting/cost-centers/:id' element={<CentroDetailPage modo='detalhe' />} />
         <Route path='structure' element={<EstruturaPage />} />
         <Route path='vendors' element={<FornecedoresPage />} />
+        <Route path='vendors/new' element={<VendorDetailPage mode='new' />} />
+        <Route path='vendors/:id' element={<VendorDetailPage mode='detail' />} />
         <Route path='customers' element={<ClientesPage />} />
         <Route path='employees' element={<ColaboradoresPage />} />
         <Route path='*' element={<Navigate to='/app/home' replace />} />

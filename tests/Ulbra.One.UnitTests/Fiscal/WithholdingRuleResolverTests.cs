@@ -175,4 +175,75 @@ public class WithholdingRuleResolverTests
         Assert.Equal(330.00m, Amount(r, WithholdingTaxType.Inss));   // 11% — INSS pelo regime, mesmo sem subitem
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Iss));         // no municipality → no ISS
     }
+
+    // ---- Per-vendor rate overrides (only the rate; never on/off) ----
+
+    [Fact]
+    public void Vendor_rate_override_replaces_the_rule_rate_for_a_retained_tax()
+    {
+        // The system decides IRRF is withheld (1.5%); the vendor's override swaps only the rate → 5%.
+        var overrides = new Dictionary<WithholdingTaxType, decimal> { [WithholdingTaxType.Irrf] = 0.05m };
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], RateOverrides: overrides);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(50.00m, Amount(r, WithholdingTaxType.Irrf));    // 5% (override), not 1.5% (system)
+        Assert.Equal(6.50m, Amount(r, WithholdingTaxType.Pis));      // other taxes follow the system
+    }
+
+    [Fact]
+    public void Vendor_rate_override_does_nothing_when_the_system_does_not_retain()
+    {
+        // The vendor overrides only the RATE — it cannot re-enable a tax the system exempts (Simples IRRF).
+        var overrides = new Dictionary<WithholdingTaxType, decimal> { [WithholdingTaxType.Irrf] = 0.05m };
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine(null, null, null, 1000m)], RateOverrides: overrides);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Irrf));        // stays exempt (override ignored)
+    }
+
+    [Fact]
+    public void Vendor_rate_override_applies_to_inss_when_retained()
+    {
+        var overrides = new Dictionary<WithholdingTaxType, decimal> { [WithholdingTaxType.Inss] = 0.06m };
+        var ctx = new ResolutionContext(null, TaxRegime.LucroReal,
+            [new ServiceLine(null, "4304606", null, 5000m)], RateOverrides: overrides);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(300.00m, Amount(r, WithholdingTaxType.Inss));   // 6% (override) on 5000, not 11%
+    }
+
+    [Fact]
+    public void No_override_keeps_the_system_rate()
+    {
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], RateOverrides: null);
+
+        var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
+
+        Assert.Equal(15.00m, Amount(r, WithholdingTaxType.Irrf));    // 1.5% from the system
+    }
+
+    [Fact]
+    public void ResolvePerTax_previews_system_rules_per_tax()
+    {
+        // Preview uses only system rules: Simples → federal not withheld; INSS Annex IV withholds 11%.
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine(null, null, null, 100m)], SimplesAnexo: SimplesAnexo.IV);
+
+        var perTax = WithholdingRuleResolver.ResolvePerTax(BaseRules(), ctx);
+
+        var irrf = perTax.Single(x => x.Tax == WithholdingTaxType.Irrf).Rule;
+        Assert.NotNull(irrf);
+        Assert.False(irrf!.Retains);                                 // Simples exemption
+
+        var inss = perTax.Single(x => x.Tax == WithholdingTaxType.Inss).Rule;
+        Assert.NotNull(inss);
+        Assert.True(inss!.Retains);
+        Assert.Equal(0.11m, inss.Rate);                             // Annex IV → 11%
+    }
 }

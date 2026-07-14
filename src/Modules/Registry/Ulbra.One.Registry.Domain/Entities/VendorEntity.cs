@@ -28,6 +28,9 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public bool? CprbForeseen { get; private set; }
     // Anexo do Simples (só relevante quando TaxRegime=SimplesNacional): Anexo IV retém 11%, demais isento.
     public SimplesAnexo? SimplesAnexo { get; private set; }
+    // Vendor-specific withholding rates (per tax). RATE override only: the system rules decide whether/which tax
+    // is withheld; when there is an entry here for a withheld tax, this rate takes precedence.
+    public IReadOnlyList<VendorWithholdingRate> WithholdingRates { get; private set; } = [];
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }
 
@@ -42,26 +45,29 @@ public class VendorEntity : IAuditable, ISoftDeletable
         string document, string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
         bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null,
-        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null)
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null,
+        IReadOnlyList<VendorWithholdingRate>? withholdingRates = null)
     {
         CompanyId = companyId;
         Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
-            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods);
+            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods, withholdingRates);
     }
 
     public void Update(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
         bool? cprbForeseen = null, SimplesAnexo? simplesAnexo = null,
-        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null) =>
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods = null,
+        IReadOnlyList<VendorWithholdingRate>? withholdingRates = null) =>
         Apply(personType, name, tradeName, document, email, phone, address, paymentTerms, bankInfo, taxRegime,
-            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods);
+            paymentSchedule, cprbForeseen, simplesAnexo, acceptedPaymentMethods, withholdingRates);
 
     private void Apply(PersonType personType, string name, string? tradeName, string document,
         string? email, string? phone, Address address, string? paymentTerms,
         BankInfo bankInfo, TaxRegime taxRegime, PaymentSchedule paymentSchedule,
         bool? cprbForeseen, SimplesAnexo? simplesAnexo,
-        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods)
+        IReadOnlyList<PaymentMethod>? acceptedPaymentMethods,
+        IReadOnlyList<VendorWithholdingRate>? withholdingRates)
     {
         PersonType = personType;
         Name = name;
@@ -77,6 +83,7 @@ public class VendorEntity : IAuditable, ISoftDeletable
         CprbForeseen = cprbForeseen;
         SimplesAnexo = simplesAnexo;
         AcceptedPaymentMethods = acceptedPaymentMethods ?? [];
+        WithholdingRates = withholdingRates ?? [];
     }
 
     public void Deactivate() => Active = false;

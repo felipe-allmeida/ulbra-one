@@ -16,7 +16,8 @@ import { Button, Field, Input, MaskedInput, Select } from '../ui';
 import { useToast } from '../toast';
 import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone } from '../format';
 import { getErrorMessage, ApiError } from '../apiError';
-import { useSaveCustomer, useSaveEmployee, useSaveVendor } from '../queries';
+import { useSaveCustomer, useSaveEmployee, useSaveVendor, useWithholdingPreview } from '../queries';
+import { fractionToPercent, percentToFraction } from '../lib';
 import {
   vendorSchema,
   customerSchema,
@@ -27,6 +28,7 @@ import {
   SIMPLES_ANEXOS,
   PAYMENT_SCHEDULE_MODES,
   PAYMENT_METHODS,
+  WITHHOLDING_TAX_TYPES,
   type VendorValues,
   type CustomerValues,
   type EmployeeValues,
@@ -278,6 +280,10 @@ export function VendorForm({
       paymentScheduleMode: initial?.paymentScheduleMode ?? prefill?.paymentScheduleMode ?? 'OnDueDate',
       paymentScheduleDay: initial?.paymentScheduleDay ?? prefill?.paymentScheduleDay ?? null,
       acceptedPaymentMethods: initial?.acceptedPaymentMethods ?? prefill?.acceptedPaymentMethods ?? [],
+      // Per-tax rate overrides: list {taxType, rate:fraction} → map taxType → rate as % (string).
+      withholdingRates: initial?.withholdingRates
+        ? Object.fromEntries(initial.withholdingRates.map((w) => [w.taxType, String(fractionToPercent(w.rate))]))
+        : {},
       address: initial ? fromAddress(initial.address ?? null) : (prefill?.address ?? { ...emptyAddress }),
     },
   });
@@ -297,6 +303,19 @@ export function VendorForm({
   const isPj = personType === PersonType.Company;
   const paymentScheduleMode = watch('paymentScheduleMode');
   const taxRegime = watch('taxRegime');
+  const cprbForeseen = watch('cprbForeseen');
+  const simplesAnexo = watch('simplesAnexo');
+  // System default per tax for this vendor's tax profile — shows what an override replaces (reflects live edits).
+  const withholdingPreview = useWithholdingPreview(
+    {
+      regime: taxRegime,
+      companyId,
+      cprb: cprbForeseen,
+      simplesAnexo: taxRegime === 'SimplesNacional' ? simplesAnexo : null,
+    },
+    { enabled: !!taxRegime },
+  );
+  const previewByTax = new Map((withholdingPreview.data ?? []).map((p) => [p.taxType, p]));
 
   const onCnpjBlur = async () => {
     const document = getValues('document');
@@ -355,6 +374,10 @@ export function VendorForm({
         paymentScheduleMode: v.paymentScheduleMode,
         paymentScheduleDay: v.paymentScheduleMode === 'FixedDayOfMonth' ? v.paymentScheduleDay : null,
         acceptedPaymentMethods: v.acceptedPaymentMethods,
+        // Map taxType → rate(%) → list {taxType, rate:fraction}; only filled entries (> 0).
+        withholdingRates: Object.entries(v.withholdingRates)
+          .filter(([, pct]) => pct.trim() !== '' && Number(pct) > 0)
+          .map(([taxType, pct]) => ({ taxType, rate: percentToFraction(Number(pct)) })),
       },
     });
   };
@@ -642,6 +665,53 @@ export function VendorForm({
           </Field>
         )}
       </div>
+
+      <div className='form-section'>{t('registry.vendor.withholding.section')}</div>
+      <div className='help' style={{ marginBottom: 8 }}>{t('registry.vendor.withholding.hint')}</div>
+      <Controller
+        control={control}
+        name='withholdingRates'
+        render={({ field }) => (
+          <table className='wh-override-table'>
+            <thead>
+              <tr>
+                <th>{t('retentionRules.fields.taxType')}</th>
+                <th>{t('registry.vendor.withholding.systemDefault')}</th>
+                <th>{t('registry.vendor.withholding.override')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {WITHHOLDING_TAX_TYPES.map((tax) => {
+                const sys = previewByTax.get(tax);
+                const retains = sys?.retains ?? false;
+                const label = sys?.invoiceDependent
+                  ? t('registry.vendor.withholding.issNota')
+                  : !retains
+                    ? t('retentionRules.no')
+                    : sys?.rate != null
+                      ? `${fractionToPercent(sys.rate)}%`
+                      : '—';
+                return (
+                  <tr key={tax}>
+                    <td>{t(`withholdingTaxType.${tax}`)}</td>
+                    <td className='t-mono'>{label}</td>
+                    <td>
+                      {/* Always editable: the saved rate is used instead of the system's whenever this tax is
+                          withheld (the preview is only a registration-time approximation — e.g. ISS depends on the invoice). */}
+                      <Input
+                        inputMode='decimal'
+                        value={field.value[tax] ?? ''}
+                        onChange={(e) => field.onChange({ ...field.value, [tax]: e.target.value })}
+                        placeholder={retains && sys?.rate != null ? String(fractionToPercent(sys.rate)) : '%'}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      />
 
       <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
     </form>

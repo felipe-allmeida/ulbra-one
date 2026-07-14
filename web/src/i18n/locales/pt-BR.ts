@@ -1766,6 +1766,13 @@ const ptBR = {
       cprbUnknown: 'Desconhecido',
       simplesAnexo: 'Anexo do Simples',
       simplesAnexoNone: 'Não informado',
+      withholding: {
+        section: 'Retenções',
+        hint: 'Informe a alíquota de um tributo para este fornecedor: ela será usada no lugar da do sistema sempre que esse tributo for retido. Deixe em branco para usar o padrão do sistema.',
+        systemDefault: 'Padrão do sistema',
+        override: 'Alíquota do fornecedor (%)',
+        issNota: 'Depende da nota/município',
+      },
     },
   },
 
