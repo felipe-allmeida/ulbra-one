@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Endpoints.JournalEntries;
+using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Ids;
@@ -34,6 +35,10 @@ public sealed class CreateJournalEntry : IEndpoint
             return TypedResults.Problem(detail: "CompanyId is required.", statusCode: 400, title: "JournalEntry.Invalid");
         if (string.IsNullOrWhiteSpace(req.Description))
             return TypedResults.Problem(detail: "Description is required.", statusCode: 400, title: "JournalEntry.Invalid");
+
+        // Closed-period guard: block creating a draft whose competence falls in a closed period.
+        var periodProblem = await AccountingPeriodGuard.EnsureOpenAsync(uow, req.CompanyId.Value, req.CompetenceDate, ct);
+        if (periodProblem is not null) return periodProblem;
 
         // Structural invariants are owned by the domain (single source of truth); account I/O checks
         // are validated separately.

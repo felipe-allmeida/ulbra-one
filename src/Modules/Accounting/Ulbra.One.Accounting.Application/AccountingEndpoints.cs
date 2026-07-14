@@ -12,6 +12,9 @@ using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.ListLedgerAccoun
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.SeedLedgerAccounts;
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.UpdateLedgerAccount;
 using Ulbra.One.Accounting.Application.Endpoints.PendingPostings.GetPendingPostings;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.CloseAccountingPeriod;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.ListAccountingPeriods;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.ReopenAccountingPeriod;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetBalanceSheet;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetIncomeStatement;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetTrialBalance;
@@ -45,6 +48,11 @@ public static class AccountingEndpoints
 
         var pendingPostings = builder.MapGroup("/accounting/pending-postings");
         pendingPostings.MapEndpoint<GetPendingPostings>();
+
+        var periods = builder.MapGroup("/accounting/periods");
+        periods.MapEndpoint<ListAccountingPeriods>();
+        periods.MapEndpoint<CloseAccountingPeriod>();
+        periods.MapEndpoint<ReopenAccountingPeriod>();
 
         return builder;
     }

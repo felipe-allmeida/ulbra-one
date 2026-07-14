@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
+using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
@@ -35,6 +36,10 @@ public sealed class PostJournalEntry : IEndpoint
             if (entry is null) return TypedResults.Problem(detail: "Journal entry not found.", statusCode: 404, title: "JournalEntry.NotFound");
             if (entry.Status != JournalStatus.Draft)
                 return TypedResults.Problem(detail: "Only a draft entry can be posted.", statusCode: 409, title: "JournalEntry.NotDraft");
+
+            // Closed-period guard: a draft created while the period was open must not post after it closed.
+            var periodProblem = await AccountingPeriodGuard.EnsureOpenAsync(uow, entry.CompanyId, entry.CompetenceDate, ct);
+            if (periodProblem is not null) return periodProblem;
 
             var maxNumber = await uow.ReadSet<JournalEntry>()
                 .Where(e => e.CompanyId == entry.CompanyId && e.Number != null)
