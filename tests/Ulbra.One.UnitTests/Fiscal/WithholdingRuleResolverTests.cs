@@ -175,4 +175,125 @@ public class WithholdingRuleResolverTests
         Assert.Equal(330.00m, Amount(r, WithholdingTaxType.Inss));   // 11% — INSS pelo regime, mesmo sem subitem
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Iss));         // no municipality → no ISS
     }
+
+    // ---- Vendor-specific rules (retenção por Fornecedor) ----
+
+    private static readonly Guid Vendor = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OtherVendor = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+    [Fact]
+    public void Vendor_rule_beats_a_more_specific_system_rule()
+    {
+        // A vendor-only rule (DimensionCount 0) must beat the system IRRF rule even though the latter could be
+        // more specific — vendor priority is the PRIMARY sort key, above DimensionCount.
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m, vendorId: Vendor));
+
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], VendorId: Vendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(50.00m, Amount(r, WithholdingTaxType.Irrf));    // 5% do fornecedor, não 1,5% do sistema
+    }
+
+    [Fact]
+    public void Vendor_rule_only_overrides_its_own_tax_others_fall_back_to_system()
+    {
+        // The vendor pins only IRRF; every other tax must resolve from the system defaults for that same vendor.
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m, vendorId: Vendor));
+
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], VendorId: Vendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(50.00m, Amount(r, WithholdingTaxType.Irrf));    // 5% (fornecedor)
+        Assert.Equal(6.50m, Amount(r, WithholdingTaxType.Pis));      // 0,65% (sistema)
+        Assert.Equal(30.00m, Amount(r, WithholdingTaxType.Cofins));  // 3% (sistema)
+        Assert.Equal(10.00m, Amount(r, WithholdingTaxType.Csll));    // 1% (sistema)
+        Assert.Equal(110.00m, Amount(r, WithholdingTaxType.Inss));   // 11% (sistema)
+    }
+
+    [Fact]
+    public void Vendor_rule_does_not_apply_to_a_different_vendor()
+    {
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m, vendorId: Vendor));
+
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], VendorId: OtherVendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(15.00m, Amount(r, WithholdingTaxType.Irrf));    // 1,5% do sistema (a regra do Vendor não casa)
+    }
+
+    [Fact]
+    public void Vendor_does_not_retain_override_zeroes_a_system_withholding()
+    {
+        // A vendor rule can EXEMPT a tax the system would normally withhold.
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Inss, retains: false, RateSource.Fixed, null,
+            vendorId: Vendor, reason: NonRetentionReason.RegimeExemption));
+
+        var ctx = new ResolutionContext(null, TaxRegime.LucroReal,
+            [new ServiceLine(null, "4304606", null, 5000m)], VendorId: Vendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Inss));        // fornecedor zera o INSS que o sistema reteria
+    }
+
+    [Fact]
+    public void Vendor_rule_can_reenable_a_tax_the_simples_exemption_turns_off()
+    {
+        // A Simples vendor is exempt from IRRF by the system rule; a vendor override re-enables it (wins by priority).
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.015m, vendorId: Vendor));
+
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine(null, null, null, 1000m)], VendorId: Vendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(15.00m, Amount(r, WithholdingTaxType.Irrf));    // 1,5% — sobrepõe a isenção do Simples
+    }
+
+    [Fact]
+    public void Within_vendor_the_most_specific_rule_wins()
+    {
+        // Two vendor rules for INSS: a vendor-only one and a vendor+CPRB one. With CPRB confirmed, the pinned
+        // (higher DimensionCount) vendor rule wins — specificity still applies inside the vendor tier.
+        var rules = BaseRules();
+        rules.Add(new WithholdingRule(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.11m, vendorId: Vendor));
+        rules.Add(new WithholdingRule(WithholdingTaxType.Inss, retains: true, RateSource.Fixed, 0.035m, vendorId: Vendor, cprb: true));
+
+        var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
+            [new ServiceLine(null, null, null, 1000m)], Cprb: true, VendorId: Vendor);
+
+        var r = WithholdingRuleResolver.Resolve(rules, ctx);
+
+        Assert.Equal(35.00m, Amount(r, WithholdingTaxType.Inss));    // 3,5% (vendor+CPRB) vence vendor-only 11%
+    }
+
+    [Fact]
+    public void ResolvePerTax_previews_system_rules_per_tax()
+    {
+        // Preview uses only system rules (no vendorId in context): Simples → federal não retém; INSS Anexo IV retém 11%.
+        var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
+            [new ServiceLine(null, null, null, 100m)], SimplesAnexo: SimplesAnexo.IV);
+
+        var perTax = WithholdingRuleResolver.ResolvePerTax(BaseRules(), ctx);
+
+        var irrf = perTax.Single(x => x.Tax == WithholdingTaxType.Irrf).Rule;
+        Assert.NotNull(irrf);
+        Assert.False(irrf!.Retains);                                 // isenção do Simples
+
+        var inss = perTax.Single(x => x.Tax == WithholdingTaxType.Inss).Rule;
+        Assert.NotNull(inss);
+        Assert.True(inss!.Retains);
+        Assert.Equal(0.11m, inss.Rate);                             // Anexo IV → 11%
+    }
 }

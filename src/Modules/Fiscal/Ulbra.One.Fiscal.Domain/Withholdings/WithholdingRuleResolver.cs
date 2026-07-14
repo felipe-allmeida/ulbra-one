@@ -13,10 +13,12 @@ public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge,
 /// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
 /// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.
 /// <para><paramref name="Cprb"/> (CPRB destacado na NF, confirmado no lançamento) e <paramref name="SimplesAnexo"/>
-/// (anexo do Simples) refinam a retenção de INSS: CPRB → 3,5%; Anexo IV → 11%; demais anexos → isento.</para></summary>
+/// (anexo do Simples) refinam a retenção de INSS: CPRB → 3,5%; Anexo IV → 11%; demais anexos → isento.</para>
+/// <para><paramref name="VendorId"/> habilita as regras específicas do fornecedor, que têm prioridade sobre
+/// as regras do sistema (ver <see cref="WithholdingRuleResolver.ResolveRule"/>).</para></summary>
 public sealed record ResolutionContext(
     Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines,
-    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null);
+    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null, Guid? VendorId = null);
 
 /// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
@@ -70,22 +72,41 @@ public static class WithholdingRuleResolver
             .ToList();
     }
 
-    /// <summary>Picks the most specific rule for (tax × line × context). Specificity = number of pinned dimensions;
-    /// tiebreak: regime &gt; municipality &gt; company &gt; Id (deterministic). A Simples vendor matches both the general
-    /// rule (regime = any) and the Simples exemption (regime = Simples, does-not-retain); the exemption wins by
-    /// specificity (its regime dimension is pinned), so a Simples service is exempt from the federal withholding.</summary>
+    /// <summary>Resolves, for each of the 6 taxes, the winning rule (or null when none matches) for a single
+    /// service line — used to PREVIEW what the system would apply to a vendor before any invoice exists. Unlike
+    /// <see cref="Resolve"/> this exposes the matched rule itself (including does-not-retain rules and rules
+    /// without a rate), so the UI can render "não retém"/"depende da nota" as well as a rate.</summary>
+    public static IReadOnlyList<(WithholdingTaxType Tax, WithholdingRule? Rule)> ResolvePerTax(
+        IReadOnlyCollection<WithholdingRule> rules, ResolutionContext context)
+    {
+        var line = context.Lines.Count > 0
+            ? context.Lines[0]
+            : new ServiceLine(null, null, null, 0m);
+        return WithholdingTaxes
+            .Select(tax => (tax, ResolveRule(rules, tax, line, context)))
+            .ToList();
+    }
+
+    /// <summary>Picks the most specific rule for (tax × line × context). A vendor-pinned rule (matching this
+    /// context's VendorId) beats EVERY non-vendor rule — that's the primary sort key, above DimensionCount.
+    /// Within a tier, specificity = number of pinned dimensions; tiebreak: regime &gt; municipality &gt; company &gt; Id
+    /// (deterministic). A Simples vendor matches both the general rule (regime = any) and the Simples exemption
+    /// (regime = Simples, does-not-retain); the exemption wins by specificity (its regime dimension is pinned),
+    /// so a Simples service is exempt from the federal withholding — unless a vendor rule overrides it.</summary>
     private static WithholdingRule? ResolveRule(
         IReadOnlyCollection<WithholdingRule> rules, WithholdingTaxType tax, ServiceLine line, ResolutionContext ctx) =>
         rules.Where(r =>
                 r.Active
                 && r.TaxType == tax
+                && (r.VendorId is null || r.VendorId == ctx.VendorId)
                 && (r.CompanyId is null || r.CompanyId == ctx.CompanyId)
                 && (r.Lc116Subitem is null || r.Lc116Subitem == line.Lc116Subitem)
                 && (r.MunicipalityIbge is null || r.MunicipalityIbge == line.MunicipalityIbge)
                 && (r.VendorRegime is null || r.VendorRegime == ctx.VendorRegime)
                 && (r.Cprb is null || r.Cprb == ctx.Cprb)
                 && (r.SimplesAnexo is null || r.SimplesAnexo == ctx.SimplesAnexo))
-            .OrderByDescending(r => r.DimensionCount)
+            .OrderByDescending(r => r.VendorId is not null) // vendor-specific override beats ALL system rules
+            .ThenByDescending(r => r.DimensionCount)
             .ThenByDescending(r => r.SimplesAnexo is not null)
             // VendorRegime antes de Cprb: CPRB é regime não-Simples, então num empate a regra do Simples
             // (ex.: isenção do INSS) vence a regra de CPRB — um Simples marcado como CPRB continua pelo anexo.
