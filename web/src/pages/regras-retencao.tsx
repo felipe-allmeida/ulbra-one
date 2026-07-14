@@ -24,9 +24,7 @@ export function RegrasRetencaoPage() {
   const [confirm, setConfirm] = useState<null | WithholdingRule>(null);
 
   const list = useWithholdingRules();
-  // Vendor-scoped rules are managed on the vendor's own page ("Retenções"); this admin screen is the system/group
-  // ruleset, so hide them here to avoid confusion.
-  const rules = (list.data ?? []).filter((r) => !r.vendorId);
+  const rules = list.data ?? [];
   const companies = useCompanies();
   const companyName = (id: string | null) =>
     id ? (companies.data?.find((c) => c.id === id)?.legalName ?? id) : t('retentionRules.allCompanies');

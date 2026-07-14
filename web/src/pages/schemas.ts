@@ -106,6 +106,8 @@ export const vendorSchema = refineDocument(
       paymentScheduleDay: z.number().nullable().default(null),
       // Accepted payment methods.
       acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
+      // Alíquotas de retenção override por tributo (mapa taxType → alíquota em % como string; '' = sem override).
+      withholdingRates: z.record(z.string(), z.string()).default({}),
     })
     .superRefine((val, ctx) => {
       if (val.paymentScheduleMode === 'FixedDayOfMonth') {
@@ -378,7 +380,6 @@ export const withholdingRuleSchema = z
     cprb: z.boolean().nullable().default(null),
     municipalityIbge: z.string().default(''),
     companyId: z.string().default(''), // '' = todas as empresas (grupo-wide)
-    vendorId: z.string().default(''), // '' = regra do sistema; preenchido quando editada dentro de um fornecedor
   })
   .superRefine((v, ctx) => {
     // Espelha o guard do backend: regra que retém com alíquota fixa exige alíquota positiva.

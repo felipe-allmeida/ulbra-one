@@ -10,7 +10,6 @@ import { useToast } from '../toast';
 import { maskCpf, maskCnpj } from '../format';
 import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
-import { VendorWithholdingSection } from './vendor-withholding-section';
 
 const vendorDoc = (v: Vendor) => (v.personType === PersonType.Company ? maskCnpj(v.document) : maskCpf(v.document));
 
@@ -256,7 +255,7 @@ export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
         </div>
       </div>
 
-      <div className='card-form'>
+      <div className='card-form vendor-page-form'>
         <VendorForm
           companyId={vendor.companyId}
           initial={vendor}
@@ -264,14 +263,6 @@ export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
           onCancel={() => nav('/app/vendors')}
         />
       </div>
-
-      <VendorWithholdingSection
-        vendorId={vendor.id}
-        companyId={vendor.companyId}
-        regime={vendor.taxRegime}
-        cprb={vendor.cprbForeseen ?? null}
-        simplesAnexo={vendor.simplesAnexo}
-      />
     </>
   );
 }

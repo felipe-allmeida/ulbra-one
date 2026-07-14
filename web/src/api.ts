@@ -70,8 +70,15 @@ export type SimplesAnexoValue = Schemas['SimplesAnexo'];
 // `simplesAnexo` is a nullable enum on the backend (`SimplesAnexo?`); Swashbuckle can't express nullable enums, so
 // the generated type is non-null — restore the honest nullability. `cprbForeseen` (a nullable bool) generates
 // correctly and flows through untouched.
+/** Per-tax withholding RATE override on the vendor (rate = decimal fraction, 0.015 = 1,5%). */
+export interface VendorWithholdingRate {
+  taxType: string;
+  rate: number;
+}
+// `withholdingRates` added here until `openapi.json`/`schema.d.ts` are regenerated from the running API.
 export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
   simplesAnexo: SimplesAnexoValue | null;
+  withholdingRates: VendorWithholdingRate[];
 };
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
@@ -123,12 +130,9 @@ export type PayableWithholding = Schemas['PayableWithholdingResponse'];
 // ---------- Withholding rules (Regras de Retenção) ----------
 // `vendorRegime` / `simplesAnexo` are nullable enums on the backend; Swashbuckle emits them non-null (nullable-enum
 // quirk), so restore the honest nullability. `cprb` (a nullable bool) generates correctly and flows through.
-// `vendorId` (typed id, prefixed `vendor_...`, nullable) added here until `openapi.json`/`schema.d.ts` are regenerated
-// from the running API — see api.ts hand-written-layer convention.
 export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime' | 'simplesAnexo'> & {
   vendorRegime: TaxRegime | null;
   simplesAnexo: SimplesAnexoValue | null;
-  vendorId: string | null;
 };
 export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
 export type RateSource = Schemas['RateSource'];
@@ -937,13 +941,8 @@ export const api = {
   deleteExpenseCategory: (id: string) => request<void>(`/expense-categories/${id}`, { method: 'DELETE' }),
 
   // ---------- Withholding rules (Regras de Retenção) ----------
-  listWithholdingRules: (includeInactive?: boolean, vendorId?: string) => {
-    const qs = new URLSearchParams();
-    if (includeInactive) qs.set('includeInactive', 'true');
-    if (vendorId) qs.set('vendorId', vendorId);
-    const suffix = qs.toString();
-    return request<WithholdingRule[]>(`/withholding-rules${suffix ? `?${suffix}` : ''}`);
-  },
+  listWithholdingRules: (includeInactive?: boolean) =>
+    request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
   // Preview do padrão do sistema por tributo, dado o perfil fiscal do fornecedor (regras de fornecedor excluídas).
   previewWithholdingRules: (params: WithholdingPreviewParams) => {
     const qs = new URLSearchParams({ regime: params.regime });

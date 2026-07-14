@@ -95,8 +95,7 @@ export const queryKeys = {
   receivableStageItems: (params: ReceivableStageItemsParams) => ['receivableStageItems', params] as const,
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
-  withholdingRules: (includeInactive = false, vendorId?: string) =>
-    ['withholdingRules', includeInactive, vendorId ?? ''] as const,
+  withholdingRules: (includeInactive = false) => ['withholdingRules', includeInactive] as const,
   withholdingPreview: (params: WithholdingPreviewParams) => ['withholdingPreview', params] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
@@ -437,10 +436,10 @@ export function useExpenseCategories(includeInactive = false) {
   });
 }
 
-export function useWithholdingRules(includeInactive = false, vendorId?: string) {
+export function useWithholdingRules(includeInactive = false) {
   return useQuery({
-    queryKey: queryKeys.withholdingRules(includeInactive, vendorId),
-    queryFn: () => api.listWithholdingRules(includeInactive, vendorId),
+    queryKey: queryKeys.withholdingRules(includeInactive),
+    queryFn: () => api.listWithholdingRules(includeInactive),
   });
 }
 
