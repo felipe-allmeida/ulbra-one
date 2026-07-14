@@ -28,8 +28,8 @@ public class VendorEntity : IAuditable, ISoftDeletable
     public bool? CprbForeseen { get; private set; }
     // Anexo do Simples (só relevante quando TaxRegime=SimplesNacional): Anexo IV retém 11%, demais isento.
     public SimplesAnexo? SimplesAnexo { get; private set; }
-    // Alíquotas de retenção específicas deste fornecedor (por tributo). Override APENAS de alíquota: as regras do
-    // sistema decidem se/qual tributo retém; havendo entrada aqui para um tributo retido, esta alíquota prevalece.
+    // Vendor-specific withholding rates (per tax). RATE override only: the system rules decide whether/which tax
+    // is withheld; when there is an entry here for a withheld tax, this rate takes precedence.
     public IReadOnlyList<VendorWithholdingRate> WithholdingRates { get; private set; } = [];
     public bool Active { get; private set; } = true;
     public DateTimeOffset? DeletedAt { get; private set; }

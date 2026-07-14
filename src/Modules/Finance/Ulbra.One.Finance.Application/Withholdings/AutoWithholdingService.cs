@@ -49,8 +49,8 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
         // INSS: usa o CPRB confirmado na NF quando houver; senão cai na sugestão do cadastro (CprbForeseen).
         var cprb = payable.CprbOnInvoice ?? vendorTax?.CprbForeseen;
 
-        // Alíquotas específicas do fornecedor (override só de alíquota): as regras do sistema decidem se retém;
-        // havendo entrada para um tributo retido, a alíquota do fornecedor substitui a da regra.
+        // Vendor-specific rates (rate override only): the system rules decide WHETHER to retain; when there is an
+        // entry for a retained tax, the vendor's rate replaces the rule's.
         Dictionary<WithholdingTaxType, decimal>? rateOverrides = null;
         if (vendorTax is { WithholdingRates.Count: > 0 })
         {

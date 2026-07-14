@@ -1152,7 +1152,7 @@ body {
   padding: 20px;
   max-width: 640px;
 }
-/* Vendor cadastro rendered as a full-width page (the reused VendorForm, not the drawer): fill the content
+/* Vendor form rendered as a full-width page (the reused VendorForm, not the drawer): fill the content
    area and lay the drawer's 2-col grids out in 3 columns. span-2 fields still span every column
    (grid-column: 1 / -1), so wide fields stay full-width. */
 .card-form.vendor-page-form {

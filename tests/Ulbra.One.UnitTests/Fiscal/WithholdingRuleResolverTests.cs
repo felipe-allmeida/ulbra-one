@@ -176,20 +176,20 @@ public class WithholdingRuleResolverTests
         Assert.Equal(0m, Amount(r, WithholdingTaxType.Iss));         // no municipality → no ISS
     }
 
-    // ---- Per-vendor rate overrides (retenção por Fornecedor: só alíquota) ----
+    // ---- Per-vendor rate overrides (only the rate; never on/off) ----
 
     [Fact]
     public void Vendor_rate_override_replaces_the_rule_rate_for_a_retained_tax()
     {
-        // The system decides IRRF is withheld (1,5%); the vendor's override swaps only the rate → 5%.
+        // The system decides IRRF is withheld (1.5%); the vendor's override swaps only the rate → 5%.
         var overrides = new Dictionary<WithholdingTaxType, decimal> { [WithholdingTaxType.Irrf] = 0.05m };
         var ctx = new ResolutionContext(null, TaxRegime.LucroPresumido,
             [new ServiceLine(null, null, null, 1000m)], RateOverrides: overrides);
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(50.00m, Amount(r, WithholdingTaxType.Irrf));    // 5% (override), não 1,5% (sistema)
-        Assert.Equal(6.50m, Amount(r, WithholdingTaxType.Pis));      // demais tributos seguem o sistema
+        Assert.Equal(50.00m, Amount(r, WithholdingTaxType.Irrf));    // 5% (override), not 1.5% (system)
+        Assert.Equal(6.50m, Amount(r, WithholdingTaxType.Pis));      // other taxes follow the system
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class WithholdingRuleResolverTests
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(0m, Amount(r, WithholdingTaxType.Irrf));        // segue isento (override ignorado)
+        Assert.Equal(0m, Amount(r, WithholdingTaxType.Irrf));        // stays exempt (override ignored)
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class WithholdingRuleResolverTests
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(300.00m, Amount(r, WithholdingTaxType.Inss));   // 6% (override) sobre 5000, não 11%
+        Assert.Equal(300.00m, Amount(r, WithholdingTaxType.Inss));   // 6% (override) on 5000, not 11%
     }
 
     [Fact]
@@ -225,13 +225,13 @@ public class WithholdingRuleResolverTests
 
         var r = WithholdingRuleResolver.Resolve(BaseRules(), ctx);
 
-        Assert.Equal(15.00m, Amount(r, WithholdingTaxType.Irrf));    // 1,5% do sistema
+        Assert.Equal(15.00m, Amount(r, WithholdingTaxType.Irrf));    // 1.5% from the system
     }
 
     [Fact]
     public void ResolvePerTax_previews_system_rules_per_tax()
     {
-        // Preview uses only system rules: Simples → federal não retém; INSS Anexo IV retém 11%.
+        // Preview uses only system rules: Simples → federal not withheld; INSS Annex IV withholds 11%.
         var ctx = new ResolutionContext(null, TaxRegime.SimplesNacional,
             [new ServiceLine(null, null, null, 100m)], SimplesAnexo: SimplesAnexo.IV);
 
@@ -239,11 +239,11 @@ public class WithholdingRuleResolverTests
 
         var irrf = perTax.Single(x => x.Tax == WithholdingTaxType.Irrf).Rule;
         Assert.NotNull(irrf);
-        Assert.False(irrf!.Retains);                                 // isenção do Simples
+        Assert.False(irrf!.Retains);                                 // Simples exemption
 
         var inss = perTax.Single(x => x.Tax == WithholdingTaxType.Inss).Rule;
         Assert.NotNull(inss);
         Assert.True(inss!.Retains);
-        Assert.Equal(0.11m, inss.Rate);                             // Anexo IV → 11%
+        Assert.Equal(0.11m, inss.Rate);                             // Annex IV → 11%
     }
 }

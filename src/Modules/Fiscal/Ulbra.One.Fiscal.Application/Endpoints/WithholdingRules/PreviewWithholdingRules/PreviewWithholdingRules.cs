@@ -15,7 +15,7 @@ using Ulbra.One.Registry.Domain.Entities;
 namespace Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.PreviewWithholdingRules;
 
 /// <summary>Previews, per tax, what the SYSTEM defaults (vendor-specific rules excluded) would apply for a given
-/// vendor tax profile — so the "Retenções" section of a vendor can show what an override would replace. The
+/// vendor tax profile — so the withholding section of a vendor can show what an override would replace. The
 /// resolver is the single source of truth; this avoids reimplementing the matching in the client.</summary>
 public sealed class PreviewWithholdingRules : IEndpoint
 {
@@ -27,14 +27,14 @@ public sealed class PreviewWithholdingRules : IEndpoint
         IUnitOfWork uow, TaxRegime regime, CompanyId? companyId, bool? cprb, SimplesAnexo? simplesAnexo,
         CancellationToken ct)
     {
-        // System/company rules — the preview is "o padrão do sistema" para o perfil fiscal do fornecedor.
+        // System/company rules — the preview is the system default for the vendor's tax profile.
         var rules = await uow.ReadSet<WithholdingRule>()
             .Where(r => r.Active
                 && (r.CompanyId == null || (companyId != null && r.CompanyId == companyId.Value.Value)))
             .ToListAsync(ct);
 
-        // A single synthetic service line: no subitem/municipality/nota → federal + INSS resolve; ISS stays
-        // invoice-dependent (rate comes from the municipality/nota, not resolvable at cadastro time).
+        // A single synthetic service line: no subitem/municipality/invoice → federal + INSS resolve; ISS stays
+        // invoice-dependent (rate comes from the municipality/invoice, not resolvable at registration time).
         var ctx = new ResolutionContext(
             companyId?.Value, regime, [new ServiceLine(null, null, null, 100m)], cprb, simplesAnexo);
 

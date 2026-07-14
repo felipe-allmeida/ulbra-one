@@ -194,20 +194,20 @@ export function FornecedoresPage() {
 }
 
 /* ===================== DETAIL / NEW ===================== */
-export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
+export function VendorDetailPage({ mode }: { mode: 'new' | 'detail' }) {
   const { id } = useParams();
   const nav = useNavigate();
   const { empresa, empresas } = useApp();
 
-  const vendorQuery = useVendor(modo === 'detalhe' ? id : undefined);
-  const vendor = modo === 'detalhe' ? (vendorQuery.data ?? null) : null;
-  const carregando = modo === 'detalhe' && vendorQuery.isLoading;
+  const vendorQuery = useVendor(mode === 'detail' ? id : undefined);
+  const vendor = mode === 'detail' ? (vendorQuery.data ?? null) : null;
+  const loading = mode === 'detail' && vendorQuery.isLoading;
 
   // The vendor's company (in detail) or the selected company (in new).
-  const empresaDoVendor = vendor ? (empresas.find((e) => e.id === vendor.companyId) ?? null) : empresa;
+  const vendorCompany = vendor ? (empresas.find((e) => e.id === vendor.companyId) ?? null) : empresa;
 
   /* ---- NEW ---- */
-  if (modo === 'novo') {
+  if (mode === 'new') {
     return (
       <>
         <button className='backlink' onClick={() => nav('/app/vendors')}>
@@ -235,8 +235,8 @@ export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   }
 
   /* ---- DETAIL ---- */
-  if (carregando) return <div className='empty-state'>Carregando…</div>;
-  if (!vendor || !empresaDoVendor)
+  if (loading) return <div className='empty-state'>Carregando…</div>;
+  if (!vendor || !vendorCompany)
     return <EmptyState icon={<Truck />} title='Fornecedor não encontrado' sub='Ele pode ter sido removido.' />;
 
   return (
@@ -250,7 +250,7 @@ export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
             <Truck size={20} /> {vendor.name}
           </h1>
           <div className='detail-sub'>
-            {vendorDoc(vendor)} · {empresaDoVendor.legalName}
+            {vendorDoc(vendor)} · {vendorCompany.legalName}
           </div>
         </div>
       </div>

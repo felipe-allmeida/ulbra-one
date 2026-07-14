@@ -155,13 +155,13 @@ public class PayableUpdateWithholdingRecalcTests(PostgresFixture fixture)
     [Fact]
     public async Task Consumer_applies_vendor_rate_override()
     {
-        // Proves the vendor rate override flows end-to-end: cadastro do Fornecedor → AutoWithholdingService →
-        // WithholdingCalculator → resolver. IRRF é retido pelo sistema (1,5%); o override do fornecedor troca só a alíquota → 5%.
+        // Proves the vendor rate override flows end-to-end: vendor record → AutoWithholdingService →
+        // WithholdingCalculator → resolver. IRRF is withheld by the system (1.5%); the vendor override swaps only the rate → 5%.
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var seed = await SeedAsync(client);
 
-        // Grava a alíquota override (5% IRRF) no cadastro do fornecedor (mesmo caminho do frontend: PUT /vendors).
+        // Save the rate override (5% IRRF) on the vendor record (same path as the frontend: PUT /vendors).
         var put = await client.PutAsJsonAsync($"/api/vendors/{seed.VendorId}", new
         {
             companyId = seed.CompanyId,
@@ -182,7 +182,7 @@ public class PayableUpdateWithholdingRecalcTests(PostgresFixture fixture)
         var body = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
         var irrf = body.GetProperty("withholdings").EnumerateArray()
             .Single(w => w.GetProperty("taxType").GetString() == "Irrf");
-        Assert.Equal(500m, irrf.GetProperty("amount").GetDecimal()); // 5% override sobre 10.000, não 1,5%
+        Assert.Equal(500m, irrf.GetProperty("amount").GetDecimal()); // 5% override on 10,000, not 1.5%
     }
 
     [Fact]

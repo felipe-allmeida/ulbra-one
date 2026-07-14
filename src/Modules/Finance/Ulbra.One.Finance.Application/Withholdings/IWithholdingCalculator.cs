@@ -10,9 +10,9 @@ public sealed record ServiceLineInput(string? Lc116Subitem, string? Municipality
 /// <summary>Inputs for the withholding calculation, assembled by Finance from the payable + vendor + fiscal document.</summary>
 public sealed record WithholdingContext(
     Guid CompanyId, Guid VendorId, TaxRegime VendorRegime, IReadOnlyList<ServiceLineInput> Lines,
-    // INSS: Cprb = "CPRB destacado na NF?" confirmado no payable; SimplesAnexo = anexo do Fornecedor.
+    // INSS: Cprb = "is CPRB stated on the invoice?" confirmed on the payable; SimplesAnexo = the vendor's Simples annex.
     bool? Cprb = null, SimplesAnexo? SimplesAnexo = null,
-    // Alíquotas de retenção cadastradas no Fornecedor (por tributo): substituem a alíquota da regra quando há retenção.
+    // Withholding rates configured on the vendor (per tax): replace the rule's rate when the tax is withheld.
     IReadOnlyDictionary<WithholdingTaxType, decimal>? RateOverrides = null);
 
 /// <summary>A computed withholding line (same shape Payable.SetWithholdings consumes).</summary>

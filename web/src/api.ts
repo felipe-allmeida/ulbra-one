@@ -943,7 +943,7 @@ export const api = {
   // ---------- Withholding rules (Regras de Retenção) ----------
   listWithholdingRules: (includeInactive?: boolean) =>
     request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
-  // Preview do padrão do sistema por tributo, dado o perfil fiscal do fornecedor (regras de fornecedor excluídas).
+  // System default per tax for the vendor's tax profile (vendor overrides excluded).
   previewWithholdingRules: (params: WithholdingPreviewParams) => {
     const qs = new URLSearchParams({ regime: params.regime });
     if (params.companyId) qs.set('companyId', params.companyId);

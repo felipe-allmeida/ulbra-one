@@ -23,7 +23,7 @@ public sealed record VendorRequest(
     bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null,
     // Accepted payment methods. Omitted/empty = no restriction.
     IReadOnlyList<PaymentMethod>? AcceptedPaymentMethods = null,
-    // Alíquotas de retenção por tributo (override só de alíquota). Omitida/vazia = usa o padrão do sistema.
+    // Per-tax withholding rates (rate override only). Omitted/empty = use the system default.
     IReadOnlyList<VendorWithholdingRate>? WithholdingRates = null);
 
 public sealed record CustomerRequest(

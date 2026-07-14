@@ -88,8 +88,8 @@ export default function App() {
         <Route path='accounting/cost-centers/:id' element={<CentroDetailPage modo='detalhe' />} />
         <Route path='structure' element={<EstruturaPage />} />
         <Route path='vendors' element={<FornecedoresPage />} />
-        <Route path='vendors/new' element={<VendorDetailPage modo='novo' />} />
-        <Route path='vendors/:id' element={<VendorDetailPage modo='detalhe' />} />
+        <Route path='vendors/new' element={<VendorDetailPage mode='new' />} />
+        <Route path='vendors/:id' element={<VendorDetailPage mode='detail' />} />
         <Route path='customers' element={<ClientesPage />} />
         <Route path='employees' element={<ColaboradoresPage />} />
         <Route path='*' element={<Navigate to='/app/home' replace />} />

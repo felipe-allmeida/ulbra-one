@@ -280,7 +280,7 @@ export function VendorForm({
       paymentScheduleMode: initial?.paymentScheduleMode ?? prefill?.paymentScheduleMode ?? 'OnDueDate',
       paymentScheduleDay: initial?.paymentScheduleDay ?? prefill?.paymentScheduleDay ?? null,
       acceptedPaymentMethods: initial?.acceptedPaymentMethods ?? prefill?.acceptedPaymentMethods ?? [],
-      // Alíquotas override por tributo: lista {taxType, rate:fração} → mapa taxType → alíquota em % (string).
+      // Per-tax rate overrides: list {taxType, rate:fraction} → map taxType → rate as % (string).
       withholdingRates: initial?.withholdingRates
         ? Object.fromEntries(initial.withholdingRates.map((w) => [w.taxType, String(fractionToPercent(w.rate))]))
         : {},
@@ -374,7 +374,7 @@ export function VendorForm({
         paymentScheduleMode: v.paymentScheduleMode,
         paymentScheduleDay: v.paymentScheduleMode === 'FixedDayOfMonth' ? v.paymentScheduleDay : null,
         acceptedPaymentMethods: v.acceptedPaymentMethods,
-        // Mapa taxType → alíquota(%) → lista {taxType, rate:fração}, só entradas preenchidas (> 0).
+        // Map taxType → rate(%) → list {taxType, rate:fraction}; only filled entries (> 0).
         withholdingRates: Object.entries(v.withholdingRates)
           .filter(([, pct]) => pct.trim() !== '' && Number(pct) > 0)
           .map(([taxType, pct]) => ({ taxType, rate: percentToFraction(Number(pct)) })),
@@ -696,8 +696,8 @@ export function VendorForm({
                     <td>{t(`withholdingTaxType.${tax}`)}</td>
                     <td className='t-mono'>{label}</td>
                     <td>
-                      {/* Sempre editável: a alíquota cadastrada é usada no lugar da do sistema sempre que esse
-                          tributo for retido (o preview é só uma aproximação do cadastro — ex.: ISS depende da nota). */}
+                      {/* Always editable: the saved rate is used instead of the system's whenever this tax is
+                          withheld (the preview is only a registration-time approximation — e.g. ISS depends on the invoice). */}
                       <Input
                         inputMode='decimal'
                         value={field.value[tax] ?? ''}

@@ -106,7 +106,7 @@ export const vendorSchema = refineDocument(
       paymentScheduleDay: z.number().nullable().default(null),
       // Accepted payment methods.
       acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
-      // Alíquotas de retenção override por tributo (mapa taxType → alíquota em % como string; '' = sem override).
+      // Per-tax withholding rate overrides (map taxType → rate as % string; '' = no override).
       withholdingRates: z.record(z.string(), z.string()).default({}),
     })
     .superRefine((val, ctx) => {
