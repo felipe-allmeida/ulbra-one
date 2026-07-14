@@ -46,6 +46,8 @@ public static class AccountingModule
         services.AddSingleton(opts);
         services.AddScoped<Ulbra.One.Accounting.Application.Posting.IPayablePostingService,
             Ulbra.One.Accounting.Application.Posting.PayablePostingService>();
+        services.AddScoped<Ulbra.One.Accounting.Application.CostCenters.ICostCenterLookup,
+            Ulbra.One.Accounting.Infrastructure.CostCenters.CostCenterLookup>();
 
         return services;
     }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
+using Ulbra.One.Accounting.Application.CostCenters;
 using Ulbra.One.Accounting.Application.Endpoints.JournalEntries;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
@@ -32,7 +33,7 @@ public sealed class UpdateJournalEntry : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
-    private static async Task<IResult> Handle(JournalEntryId id, Request req, IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(JournalEntryId id, Request req, IUnitOfWork uow, ICostCenterLookup costCenters, CancellationToken ct)
     {
         var entry = await uow.Set<JournalEntry>().FirstOrDefaultAsync(e => e.Id == id.Value, ct);
         if (entry is null) return TypedResults.Problem(detail: "Journal entry not found.", statusCode: 404, title: "JournalEntry.NotFound");
@@ -62,6 +63,8 @@ public sealed class UpdateJournalEntry : IEndpoint
         if (structuralProblem is not null) return structuralProblem;
         var problem = await JournalLineValidation.ValidateAsync(req.Lines, uow, ct);
         if (problem is not null) return problem;
+        var costCenterProblem = await JournalLineValidation.ValidateCostCentersAsync(req.Lines, entry.CompanyId, costCenters, ct);
+        if (costCenterProblem is not null) return costCenterProblem;
 
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(JournalEntryResponse.From(entry));

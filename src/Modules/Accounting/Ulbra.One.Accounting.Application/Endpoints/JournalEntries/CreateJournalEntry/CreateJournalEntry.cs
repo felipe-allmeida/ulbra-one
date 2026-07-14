@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
+using Ulbra.One.Accounting.Application.CostCenters;
 using Ulbra.One.Accounting.Application.Endpoints.JournalEntries;
 using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain.Entities;
@@ -29,7 +30,7 @@ public sealed class CreateJournalEntry : IEndpoint
             .Produces<JournalEntryResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-    private static async Task<IResult> Handle(Request req, IUnitOfWork uow, CancellationToken ct)
+    private static async Task<IResult> Handle(Request req, IUnitOfWork uow, ICostCenterLookup costCenters, CancellationToken ct)
     {
         if (req.CompanyId.Value == Guid.Empty)
             return TypedResults.Problem(detail: "CompanyId is required.", statusCode: 400, title: "JournalEntry.Invalid");
@@ -53,6 +54,8 @@ public sealed class CreateJournalEntry : IEndpoint
         if (structuralProblem is not null) return structuralProblem;
         var problem = await JournalLineValidation.ValidateAsync(req.Lines, uow, ct);
         if (problem is not null) return problem;
+        var costCenterProblem = await JournalLineValidation.ValidateCostCentersAsync(req.Lines, req.CompanyId.Value, costCenters, ct);
+        if (costCenterProblem is not null) return costCenterProblem;
 
         await uow.AddAsync(entry, ct);
         await uow.SaveChangesAsync(ct);
