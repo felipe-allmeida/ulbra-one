@@ -19,7 +19,11 @@ const entry: JournalBookEntryView = {
 
 describe('EntryBlock', () => {
   it('renders the entry number, description and both D/C lines', () => {
-    const { container } = renderWithProviders(<EntryBlock entry={entry} />);
+    const { container } = renderWithProviders(
+      <table>
+        <EntryBlock entry={entry} />
+      </table>,
+    );
     expect(container.textContent).toContain('#7');
     expect(container.textContent).toContain('Provisão de despesa');
     expect(container.textContent).toContain('4.1');
@@ -27,12 +31,20 @@ describe('EntryBlock', () => {
   });
 
   it('flags a reversed entry with the rejected badge', () => {
-    const { container } = renderWithProviders(<EntryBlock entry={{ ...entry, status: 'Reversed' }} />);
+    const { container } = renderWithProviders(
+      <table>
+        <EntryBlock entry={{ ...entry, status: 'Reversed' }} />
+      </table>,
+    );
     expect(container.querySelector('.badge-rejeitado')).toBeInTheDocument();
   });
 
   it('does not flag a posted entry', () => {
-    const { container } = renderWithProviders(<EntryBlock entry={entry} />);
+    const { container } = renderWithProviders(
+      <table>
+        <EntryBlock entry={entry} />
+      </table>,
+    );
     expect(container.querySelector('.badge-rejeitado')).toBeNull();
   });
 });

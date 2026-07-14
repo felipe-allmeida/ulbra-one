@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BookOpen } from 'lucide-react';
 import { useJournalBook } from '../../queries';
 import { brlCents } from '../../lib';
-import { EmptyState, PageHeader } from '../../ui';
+import { EmptyState, PageHeader, Panel } from '../../ui';
 import { BookFilters } from './filters';
 import { DayGroup } from './day-group';
 
@@ -45,19 +45,25 @@ export function LivroDiarioPage() {
           sub={t('accounting.journalBook.empty.sub')}
         />
       ) : (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {book.days.map((d) => (
             <DayGroup key={d.date} day={d} />
           ))}
-          <div
-            className='journal-grand-total'
-            style={{ display: 'flex', justifyContent: 'flex-end', gap: 24, fontWeight: 700, marginTop: 16 }}
-          >
-            <span>{t('accounting.journalBook.grandTotal')}</span>
-            <span className='amount-cell'>{brlCents(book.totalDebit)}</span>
-            <span className='amount-cell'>{brlCents(book.totalCredit)}</span>
-          </div>
-        </>
+          <Panel title={t('accounting.journalBook.grandTotal')}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 24,
+                fontWeight: 700,
+                padding: '11px 16px',
+              }}
+            >
+              <span className='amount-cell'>{brlCents(book.totalDebit)}</span>
+              <span className='amount-cell'>{brlCents(book.totalCredit)}</span>
+            </div>
+          </Panel>
+        </div>
       )}
     </>
   );
