@@ -7,6 +7,8 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Finance.Infrastructure.Messaging;
+using Ulbra.One.Fiscal.Domain;
+using Ulbra.One.Fiscal.Domain.Entities;
 using Ulbra.One.Persistence;
 
 namespace Ulbra.One.IntegrationTests.Finance;
@@ -150,6 +152,37 @@ public class PayableUpdateWithholdingRecalcTests(PostgresFixture fixture)
         var netSum = body.GetProperty("installments").EnumerateArray()
             .Sum(i => i.GetProperty("netAmount").GetDecimal());
         Assert.Equal(body.GetProperty("netTotal").GetDecimal(), netSum);
+    }
+
+    [Fact]
+    public async Task Consumer_applies_vendor_specific_rule_over_system_default()
+    {
+        // Proves VendorId flows end-to-end: AutoWithholdingService → WithholdingCalculator → resolver.
+        // A vendor-specific IRRF rule (5%) must beat the seeded system default (1,5%).
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var vendorRawId = Guid.Parse(seed.VendorId.Split('_')[1]);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            await uow.AddAsync(
+                new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m,
+                    companyId: null, vendorId: vendorRawId),
+                CancellationToken.None);
+            await uow.SaveChangesAsync(CancellationToken.None);
+        }
+
+        var (prefixedId, rawId) = await CreatePayableAsync(client, seed, SingleInstallment(10_000m), type: "Product");
+        var updateRes = await UpdatePayableAsync(client, prefixedId, seed, SingleInstallment(10_000m), type: "Service");
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+        await RunConsumerAsync(factory, rawId);
+
+        var body = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
+        var irrf = body.GetProperty("withholdings").EnumerateArray()
+            .Single(w => w.GetProperty("taxType").GetString() == "Irrf");
+        Assert.Equal(500m, irrf.GetProperty("amount").GetDecimal()); // 5% do fornecedor, não 1,5% do sistema
     }
 
     [Fact]
