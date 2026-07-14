@@ -280,4 +280,125 @@ public class PayablePostingServiceTests
 
         Assert.Empty(uow.JournalEntries);
     }
+
+    // ── #7 competência ────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PostIncurral_books_at_provided_competence()
+    {
+        var expense = MakeAnalytical(ExpenseCode, AccountGroup.Expense);
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var (uow, sut) = BuildSut(expense, liability);
+        var competence = new DateOnly(2026, 3, 10);
+
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:c", 100m, expense.Id, [],
+            competenceDate: competence, costCenterId: null, CancellationToken.None);
+
+        Assert.Equal(competence, uow.JournalEntries[0].CompetenceDate);
+    }
+
+    [Fact]
+    public async Task PostIncurral_null_competence_falls_back_to_today()
+    {
+        var expense = MakeAnalytical(ExpenseCode, AccountGroup.Expense);
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var (uow, sut) = BuildSut(expense, liability);
+
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:c2", 100m, expense.Id, [],
+            competenceDate: null, costCenterId: null, CancellationToken.None);
+
+        Assert.Equal(DateOnly.FromDateTime(FixedNow.UtcDateTime), uow.JournalEntries[0].CompetenceDate);
+    }
+
+    [Fact]
+    public async Task PostSettlement_books_at_payment_date()
+    {
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
+        var (uow, sut) = BuildSut(liability, cash);
+        var paymentDate = new DateOnly(2026, 5, 20);
+
+        await sut.PostSettlementAsync(CompanyId, "payment:c", 75m, paymentDate, CancellationToken.None);
+
+        Assert.Equal(paymentDate, uow.JournalEntries[0].CompetenceDate);
+    }
+
+    // ── #6-A cost center propagation ──────────────────────────────────────────
+
+    [Fact]
+    public async Task PostIncurral_sets_cost_center_on_expense_line_only()
+    {
+        var expense = MakeAnalytical(ExpenseCode, AccountGroup.Expense);
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var (uow, sut) = BuildSut(expense, liability);
+        var costCenterId = Guid.NewGuid();
+
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:cc", 100m, expense.Id, [],
+            competenceDate: null, costCenterId: costCenterId, CancellationToken.None);
+
+        var entry = uow.JournalEntries[0];
+        var debitLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Debit);
+        var creditLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Credit);
+        Assert.Equal(costCenterId, debitLine.CostCenterId);
+        Assert.Null(creditLine.CostCenterId);
+    }
+
+    // ── #1 automatic-path clamp ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task PostIncurral_clamps_competence_when_period_is_closed()
+    {
+        var expense = MakeAnalytical(ExpenseCode, AccountGroup.Expense);
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var closedMarch = new AccountingPeriod(CompanyId, 2026, 3);
+        closedMarch.Close();
+        var (uow, sut) = BuildSut(expense, liability, closedMarch);
+
+        // Competence in the closed March period; today (FixedNow) is July → open.
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:clamp", 100m, expense.Id, [],
+            competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, CancellationToken.None);
+
+        var entry = Assert.Single(uow.JournalEntries);
+        Assert.Equal(DateOnly.FromDateTime(FixedNow.UtcDateTime), entry.CompetenceDate); // clamped to today
+        Assert.Contains("ajustada", entry.Description);
+        Assert.Empty(uow.Pendings); // clamped, not parked
+    }
+
+    // ── #10 pending idempotency + resolution ──────────────────────────────────
+
+    [Fact]
+    public async Task ParkPending_is_idempotent_across_redeliveries()
+    {
+        // No accounts seeded → the posting parks a pending.
+        var (uow, sut) = BuildSut();
+
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:dup", 100m, Guid.NewGuid(), [],
+            competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:dup", 100m, Guid.NewGuid(), [],
+            competenceDate: null, costCenterId: null, CancellationToken.None);
+
+        Assert.Single(uow.Pendings); // redelivery did not duplicate
+    }
+
+    [Fact]
+    public async Task ResolvePending_replays_plan_after_account_is_added()
+    {
+        // Expense resolves, but the liability code is missing → parks with a replayable plan.
+        var expense = MakeAnalytical(ExpenseCode, AccountGroup.Expense);
+        var (uow, sut) = BuildSut(expense);
+
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:res", 100m, expense.Id, [],
+            competenceDate: null, costCenterId: null, CancellationToken.None);
+        var pending = Assert.Single(uow.Pendings);
+        Assert.Null(pending.ResolvedAt);
+        Assert.Empty(uow.JournalEntries);
+
+        // Fix the mapping: add the missing liability account, then reprocess.
+        await uow.AddAsync(MakeAnalytical(LiabilityCode, AccountGroup.Liability), CancellationToken.None);
+        var resolved = await sut.ResolvePendingAsync(pending, CancellationToken.None);
+
+        Assert.True(resolved);
+        Assert.NotNull(pending.ResolvedAt);
+        Assert.Single(uow.JournalEntries);
+    }
 }

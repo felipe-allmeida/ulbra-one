@@ -28,13 +28,16 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         return a is { } acct && acct.CanReceiveEntry ? acct : null;
     }
 
-    // ── Resolve an active analytical ledger account by id (global chart); null if not found ──
-    private async Task<LedgerAccount?> ResolveByIdAsync(Guid? id, CancellationToken ct)
+    // ── Resolve a ledger account's CODE by id (regardless of active/postable) so the incurral plan is
+    //    code-based and replayable: an inactive expense account parks with its real code and can be
+    //    reprocessed once activated (ResolveAsync re-checks CanReceiveEntry at post/replay time). ──
+    private async Task<string?> ResolveCodeByIdAsync(Guid? id, CancellationToken ct)
     {
         if (id is not { } accountId) return null;
-        var a = await uow.ReadSet<LedgerAccount>()
-            .FirstOrDefaultAsync(a => a.Id == accountId && a.DeletedAt == null, ct);
-        return a is { } acct && acct.CanReceiveEntry ? acct : null;
+        return await uow.ReadSet<LedgerAccount>()
+            .Where(a => a.Id == accountId && a.DeletedAt == null)
+            .Select(a => a.Code)
+            .FirstOrDefaultAsync(ct);
     }
 
     // ── Next per-company sequential entry number ──────────────────────────────
@@ -161,13 +164,13 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         //   Cr PayablesLiability   = gross − Σwithholdings  (net)
         //   Cr WithholdingCode[t]  = each withholding.Amount  (one line per withholding)
         // When withholdings is empty the net == gross → exactly the classic 2-line entry.
-        var expenseAccount = await ResolveByIdAsync(expenseAccountId, ct);
+        var expenseCode = await ResolveCodeByIdAsync(expenseAccountId, ct);
         var totalWithheld = withholdings.Sum(w => w.Amount);
         var netAmount = amount - totalWithheld;
 
         var lineList = new List<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)>(2 + withholdings.Count)
         {
-            (expenseAccount?.Code, EntrySide.Debit, amount, costCenterId),
+            (expenseCode, EntrySide.Debit, amount, costCenterId),
             (opts.PayablesLiabilityCode, EntrySide.Credit, netAmount, (Guid?)null),
         };
 
