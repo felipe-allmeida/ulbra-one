@@ -12,7 +12,7 @@ namespace Ulbra.One.Finance.Application.AuditTrail;
 /// </summary>
 public static class PayableAuditTrailBuilder
 {
-    private const string SystemActorName = "Sistema";
+    private const string SystemActorName = "Sistema Ulbra.One";
 
     public static IReadOnlyList<AuditTrailEventResponse> Build(
         Payable payable,
@@ -93,9 +93,10 @@ public static class PayableAuditTrailBuilder
         IReadOnlyDictionary<Guid, string> names, IReadOnlyDictionary<string, string> meta)
     {
         string actorName = SystemActorName;
-        if (!string.IsNullOrEmpty(actorId))
+        // A non-Guid actorId is the literal system marker ("system"); only real users are stored as Guids.
+        if (!string.IsNullOrEmpty(actorId) && Guid.TryParse(actorId, out var g))
         {
-            actorName = Guid.TryParse(actorId, out var g) && names.TryGetValue(g, out var n) ? n : actorId;
+            actorName = names.TryGetValue(g, out var n) ? n : actorId;
         }
         return new AuditTrailEventResponse(type, string.IsNullOrEmpty(actorId) ? null : actorId, actorName, at, meta);
     }

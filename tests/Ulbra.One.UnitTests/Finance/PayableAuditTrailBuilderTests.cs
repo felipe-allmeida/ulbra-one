@@ -48,7 +48,21 @@ public class PayableAuditTrailBuilderTests
         var events = PayableAuditTrailBuilder.Build(payable, new Dictionary<Guid, string>(),
             cancelledAt: null, paymentReversalTimes: new Dictionary<Guid, DateTimeOffset>());
 
-        Assert.Equal("Sistema", events[0].ActorName);
+        Assert.Equal("Sistema Ulbra.One", events[0].ActorName);
+    }
+
+    [Fact]
+    public void Build_maps_literal_system_actor_to_friendly_name()
+    {
+        // Auto-approval and unauthenticated contexts stamp the actor as the literal "system"
+        // (a non-Guid). It must render as the friendly system name, never leak the raw string.
+        var payable = PayableTestFactory.Received(actorId: "system", createdAt: T0);
+
+        var events = PayableAuditTrailBuilder.Build(payable, new Dictionary<Guid, string>(),
+            cancelledAt: null, paymentReversalTimes: new Dictionary<Guid, DateTimeOffset>());
+
+        Assert.Equal("Created", events[0].Type);
+        Assert.Equal("Sistema Ulbra.One", events[0].ActorName);
     }
 
     [Fact]
