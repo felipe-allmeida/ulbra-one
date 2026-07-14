@@ -42,28 +42,34 @@ export function VendorPicker({
 
   return (
     <>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <Combobox
-            value={value}
-            onChange={onChange}
-            items={items}
-            invalid={invalid}
-            loading={vendors.isLoading}
-            placeholder={t('transactions.counterparty.selectVendor')}
-            searchPlaceholder={t('transactions.counterparty.searchVendor')}
-            emptyText={t('transactions.counterparty.emptyVendor')}
-            onSearch={setSearch}
-            footer={
-              <Button type='button' variant='ghost' icon={<Plus />} onClick={() => setDrawerOpen(true)}>
-                {t('transactions.counterparty.newVendor')}
-              </Button>
-            }
-          />
-        </div>
+      {/* Column layout so the prominent "register vendor" button never squeezes the combobox in a narrow
+          grid column (e.g. the payable form's 3-col row) — it stacks below the field, left-aligned. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+        <Combobox
+          value={value}
+          onChange={onChange}
+          items={items}
+          invalid={invalid}
+          loading={vendors.isLoading}
+          placeholder={t('transactions.counterparty.selectVendor')}
+          searchPlaceholder={t('transactions.counterparty.searchVendor')}
+          emptyText={t('transactions.counterparty.emptyVendor')}
+          onSearch={setSearch}
+          footer={
+            <Button type='button' variant='ghost' icon={<Plus />} onClick={() => setDrawerOpen(true)}>
+              {t('transactions.counterparty.newVendor')}
+            </Button>
+          }
+        />
         {/* When the NF issuer had no matching vendor, offer a prominent prefilled "register vendor". */}
         {prefill && (
-          <Button type='button' variant='brand' icon={<Plus />} onClick={() => setDrawerOpen(true)}>
+          <Button
+            type='button'
+            variant='brand'
+            icon={<Plus />}
+            onClick={() => setDrawerOpen(true)}
+            style={{ alignSelf: 'flex-start' }}
+          >
             {t('payables.fiscalReader.registerVendor')}
           </Button>
         )}
