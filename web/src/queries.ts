@@ -34,6 +34,7 @@ import {
   type FiscalDocument,
   type WithholdingRule,
   type WithholdingRuleInput,
+  type WithholdingPreviewParams,
   type MatchStatus,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
@@ -94,7 +95,9 @@ export const queryKeys = {
   receivableStageItems: (params: ReceivableStageItemsParams) => ['receivableStageItems', params] as const,
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
-  withholdingRules: (includeInactive = false) => ['withholdingRules', includeInactive] as const,
+  withholdingRules: (includeInactive = false, vendorId?: string) =>
+    ['withholdingRules', includeInactive, vendorId ?? ''] as const,
+  withholdingPreview: (params: WithholdingPreviewParams) => ['withholdingPreview', params] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
@@ -434,10 +437,18 @@ export function useExpenseCategories(includeInactive = false) {
   });
 }
 
-export function useWithholdingRules(includeInactive = false) {
+export function useWithholdingRules(includeInactive = false, vendorId?: string) {
   return useQuery({
-    queryKey: queryKeys.withholdingRules(includeInactive),
-    queryFn: () => api.listWithholdingRules(includeInactive),
+    queryKey: queryKeys.withholdingRules(includeInactive, vendorId),
+    queryFn: () => api.listWithholdingRules(includeInactive, vendorId),
+  });
+}
+
+export function useWithholdingPreview(params: WithholdingPreviewParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.withholdingPreview(params),
+    queryFn: () => api.previewWithholdingRules(params),
+    enabled: options?.enabled ?? true,
   });
 }
 

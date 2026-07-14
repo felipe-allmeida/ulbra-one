@@ -123,14 +123,34 @@ export type PayableWithholding = Schemas['PayableWithholdingResponse'];
 // ---------- Withholding rules (Regras de Retenção) ----------
 // `vendorRegime` / `simplesAnexo` are nullable enums on the backend; Swashbuckle emits them non-null (nullable-enum
 // quirk), so restore the honest nullability. `cprb` (a nullable bool) generates correctly and flows through.
+// `vendorId` (typed id, prefixed `vendor_...`, nullable) added here until `openapi.json`/`schema.d.ts` are regenerated
+// from the running API — see api.ts hand-written-layer convention.
 export type WithholdingRule = Omit<Schemas['WithholdingRuleResponse'], 'vendorRegime' | 'simplesAnexo'> & {
   vendorRegime: TaxRegime | null;
   simplesAnexo: SimplesAnexoValue | null;
+  vendorId: string | null;
 };
 export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
 export type RateSource = Schemas['RateSource'];
 export type BaseRule = Schemas['BaseRule'];
 export type NonRetentionReason = Schemas['NonRetentionReason'];
+
+// System-default outcome per tax for a vendor tax profile (GET /withholding-rules/preview). Hand-written until
+// `WithholdingPreviewItem` lands in the regenerated schema.
+export interface WithholdingPreviewItem {
+  taxType: WithholdingTaxType;
+  retains: boolean;
+  reason: NonRetentionReason;
+  rateSource: RateSource;
+  rate: number | null;
+  invoiceDependent: boolean;
+}
+export interface WithholdingPreviewParams {
+  regime: TaxRegime;
+  companyId?: string | null;
+  cprb?: boolean | null;
+  simplesAnexo?: SimplesAnexoValue | null;
+}
 
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
@@ -917,8 +937,21 @@ export const api = {
   deleteExpenseCategory: (id: string) => request<void>(`/expense-categories/${id}`, { method: 'DELETE' }),
 
   // ---------- Withholding rules (Regras de Retenção) ----------
-  listWithholdingRules: (includeInactive?: boolean) =>
-    request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
+  listWithholdingRules: (includeInactive?: boolean, vendorId?: string) => {
+    const qs = new URLSearchParams();
+    if (includeInactive) qs.set('includeInactive', 'true');
+    if (vendorId) qs.set('vendorId', vendorId);
+    const suffix = qs.toString();
+    return request<WithholdingRule[]>(`/withholding-rules${suffix ? `?${suffix}` : ''}`);
+  },
+  // Preview do padrão do sistema por tributo, dado o perfil fiscal do fornecedor (regras de fornecedor excluídas).
+  previewWithholdingRules: (params: WithholdingPreviewParams) => {
+    const qs = new URLSearchParams({ regime: params.regime });
+    if (params.companyId) qs.set('companyId', params.companyId);
+    if (params.cprb != null) qs.set('cprb', String(params.cprb));
+    if (params.simplesAnexo) qs.set('simplesAnexo', params.simplesAnexo);
+    return request<WithholdingPreviewItem[]>(`/withholding-rules/preview?${qs.toString()}`);
+  },
   createWithholdingRule: (body: WithholdingRuleInput) =>
     request<WithholdingRule>('/withholding-rules', { method: 'POST', body: JSON.stringify(body) }),
   updateWithholdingRule: (id: string, body: WithholdingRuleInput) =>

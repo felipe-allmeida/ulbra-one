@@ -29,10 +29,13 @@ export function WithholdingRuleForm({
   initial,
   onSaved,
   onCancel,
+  vendorId,
 }: {
   initial?: WithholdingRule;
   onSaved: (rule: WithholdingRule) => void;
   onCancel: () => void;
+  /** When set, scopes the rule to this vendor: hides the Empresa field and forces companyId=null. */
+  vendorId?: string;
 }) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -55,6 +58,7 @@ export function WithholdingRuleForm({
       cprb: initial?.cprb ?? null,
       municipalityIbge: initial?.municipalityIbge ?? '',
       companyId: initial?.companyId ?? '',
+      vendorId: vendorId ?? initial?.vendorId ?? '',
     },
   });
 
@@ -74,7 +78,9 @@ export function WithholdingRuleForm({
 
   const onValid = (v: WithholdingRuleValues) => {
     const body: WithholdingRuleInput = {
-      companyId: v.companyId || null,
+      // Regra de fornecedor não pina empresa (backend rejeita ambos); as demais mantêm o escopo por empresa.
+      companyId: vendorId ? null : v.companyId || null,
+      vendorId: vendorId ?? initial?.vendorId ?? null,
       taxType: v.taxType,
       lc116Subitem: v.lc116Subitem.trim() || null,
       vendorRegime: v.vendorRegime,
@@ -275,22 +281,24 @@ export function WithholdingRuleForm({
           />
         </Field>
 
-        <Field label={t('retentionRules.fields.company')}>
-          <Controller
-            control={control}
-            name='companyId'
-            render={({ field }) => (
-              <Select {...field}>
-                <option value=''>{t('retentionRules.allCompanies')}</option>
-                {(companies.data ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.legalName}
-                  </option>
-                ))}
-              </Select>
-            )}
-          />
-        </Field>
+        {!vendorId && (
+          <Field label={t('retentionRules.fields.company')}>
+            <Controller
+              control={control}
+              name='companyId'
+              render={({ field }) => (
+                <Select {...field}>
+                  <option value=''>{t('retentionRules.allCompanies')}</option>
+                  {(companies.data ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.legalName}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
+          </Field>
+        )}
       </div>
 
       <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
