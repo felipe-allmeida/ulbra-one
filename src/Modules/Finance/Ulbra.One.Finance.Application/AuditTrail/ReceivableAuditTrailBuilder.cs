@@ -8,7 +8,7 @@ namespace Ulbra.One.Finance.Application.AuditTrail;
 /// <summary>Synthesizes a receivable's typed audit timeline from its explicit audit fields.</summary>
 public static class ReceivableAuditTrailBuilder
 {
-    private const string SystemActorName = "Sistema";
+    private const string SystemActorName = "Sistema Ulbra.One";
 
     public static IReadOnlyList<AuditTrailEventResponse> Build(
         Receivable receivable, IReadOnlyDictionary<Guid, string> userNames)
@@ -62,8 +62,9 @@ public static class ReceivableAuditTrailBuilder
         IReadOnlyDictionary<Guid, string> names, IReadOnlyDictionary<string, string> meta)
     {
         string actorName = SystemActorName;
-        if (!string.IsNullOrEmpty(actorId))
-            actorName = Guid.TryParse(actorId, out var g) && names.TryGetValue(g, out var n) ? n : actorId;
+        // A non-Guid actorId is the literal system marker ("system"); only real users are stored as Guids.
+        if (!string.IsNullOrEmpty(actorId) && Guid.TryParse(actorId, out var g))
+            actorName = names.TryGetValue(g, out var n) ? n : actorId;
         return new AuditTrailEventResponse(type, string.IsNullOrEmpty(actorId) ? null : actorId, actorName, at, meta);
     }
 
