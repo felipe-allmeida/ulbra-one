@@ -47,6 +47,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
     public DbSet<JournalLine> JournalLines => Set<JournalLine>();
     public DbSet<PendingAccountingPosting> PendingAccountingPostings => Set<PendingAccountingPosting>();
+    public DbSet<AccountingPeriod> AccountingPeriods => Set<AccountingPeriod>();
     // Identity
     public DbSet<User> Users => Set<User>();
     // Registry

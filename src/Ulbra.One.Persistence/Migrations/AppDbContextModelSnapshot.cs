@@ -240,6 +240,59 @@ namespace Ulbra.One.Persistence.Migrations
                     b.ToTable("outbox_state", "masstransit");
                 });
 
+            modelBuilder.Entity("Ulbra.One.Accounting.Domain.Entities.AccountingPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by");
+
+                    b.Property<int>("FiscalYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("fiscal_year");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer")
+                        .HasColumnName("month");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_accounting_periods");
+
+                    b.HasIndex("CompanyId", "FiscalYear", "Month")
+                        .IsUnique()
+                        .HasDatabaseName("ix_accounting_periods_company_id_fiscal_year_month");
+
+                    b.ToTable("accounting_periods", "accounting");
+                });
+
             modelBuilder.Entity("Ulbra.One.Accounting.Domain.Entities.JournalEntry", b =>
                 {
                     b.Property<Guid>("Id")
