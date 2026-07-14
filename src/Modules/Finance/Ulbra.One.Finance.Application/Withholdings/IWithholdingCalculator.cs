@@ -11,7 +11,9 @@ public sealed record ServiceLineInput(string? Lc116Subitem, string? Municipality
 public sealed record WithholdingContext(
     Guid CompanyId, Guid VendorId, TaxRegime VendorRegime, IReadOnlyList<ServiceLineInput> Lines,
     // INSS: Cprb = "CPRB destacado na NF?" confirmado no payable; SimplesAnexo = anexo do Fornecedor.
-    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null);
+    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null,
+    // Alíquotas de retenção cadastradas no Fornecedor (por tributo): substituem a alíquota da regra quando há retenção.
+    IReadOnlyDictionary<WithholdingTaxType, decimal>? RateOverrides = null);
 
 /// <summary>A computed withholding line (same shape Payable.SetWithholdings consumes).</summary>
 public sealed record WithholdingResult(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);

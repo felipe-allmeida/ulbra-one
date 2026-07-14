@@ -6,19 +6,16 @@ namespace Ulbra.One.Fiscal.Domain.Entities;
 
 /// <summary>
 /// Editable withholding rule applied by the resolver PER TAX. The key is a set of optional dimensions
-/// (null = "any"): <see cref="VendorId"/>, <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>,
-/// <see cref="MunicipalityIbge"/>, <see cref="CompanyId"/>, and the INSS-specific <see cref="Cprb"/> /
-/// <see cref="SimplesAnexo"/>. The outcome is <see cref="Retains"/> + rate/base/minimum. Specificity (which
-/// rule wins when several match) is COMPUTED during resolution, not stored. A rule pinned to a
-/// <see cref="VendorId"/> is the vendor-specific override and beats every non-vendor (system) rule.
+/// (null = "any"): <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>, <see cref="MunicipalityIbge"/>,
+/// <see cref="CompanyId"/>, and the INSS-specific <see cref="Cprb"/> / <see cref="SimplesAnexo"/>. The outcome
+/// is <see cref="Retains"/> + rate/base/minimum. Specificity (which rule wins when several match) is COMPUTED
+/// during resolution, not stored. Per-vendor tuning is a rate override on the vendor cadastro (not a rule here):
+/// the system rules decide WHETHER to retain; the vendor may only override the rate.
 /// </summary>
 public class WithholdingRule : IAuditable, ISoftDeletable
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
     public Guid? CompanyId { get; private set; }
-    // Vendor-specific override (null = system rule). A vendor-pinned rule wins over ALL non-vendor rules —
-    // that priority lives in the resolver's primary sort key, NOT in DimensionCount (see below).
-    public Guid? VendorId { get; private set; }
     public WithholdingTaxType TaxType { get; private set; }
     public string? Lc116Subitem { get; private set; }
     public TaxRegime? VendorRegime { get; private set; }
@@ -44,9 +41,7 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     /// <summary>Collection group (DARF/guia) derived from the tax.</summary>
     public RetentionGroup Group => RetentionGroups.For(TaxType);
 
-    /// <summary>How many dimensions the rule pins (non-null) — the basis of specificity during resolution.
-    /// <see cref="VendorId"/> is deliberately NOT counted here: vendor priority is enforced by the resolver's
-    /// primary sort key, so within the vendor-rule subset this still ranks by the refinement dimensions.</summary>
+    /// <summary>How many dimensions the rule pins (non-null) — the basis of specificity during resolution.</summary>
     public int DimensionCount =>
         (Lc116Subitem is not null ? 1 : 0) + (VendorRegime is not null ? 1 : 0)
         + (MunicipalityIbge is not null ? 1 : 0) + (CompanyId is not null ? 1 : 0)
@@ -57,8 +52,7 @@ public class WithholdingRule : IAuditable, ISoftDeletable
     public WithholdingRule(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
         string? lc116Subitem = null, TaxRegime? vendorRegime = null, string? municipalityIbge = null,
         Guid? companyId = null, BaseRule baseRule = BaseRule.Full, decimal? minimumAmount = null,
-        NonRetentionReason reason = NonRetentionReason.None, bool? cprb = null, SimplesAnexo? simplesAnexo = null,
-        Guid? vendorId = null)
+        NonRetentionReason reason = NonRetentionReason.None, bool? cprb = null, SimplesAnexo? simplesAnexo = null)
     {
         TaxType = taxType;
         Retains = retains;
@@ -73,14 +67,13 @@ public class WithholdingRule : IAuditable, ISoftDeletable
         Reason = reason;
         Cprb = cprb;
         SimplesAnexo = simplesAnexo;
-        VendorId = vendorId;
     }
 
     /// <summary>Replaces all rule fields (CRUD update).</summary>
     public void Update(WithholdingTaxType taxType, bool retains, RateSource rateSource, decimal? rate,
         string? lc116Subitem, TaxRegime? vendorRegime, string? municipalityIbge, Guid? companyId,
         BaseRule baseRule, decimal? minimumAmount, NonRetentionReason reason,
-        bool? cprb, SimplesAnexo? simplesAnexo, Guid? vendorId = null)
+        bool? cprb, SimplesAnexo? simplesAnexo)
     {
         TaxType = taxType;
         Retains = retains;
@@ -95,7 +88,6 @@ public class WithholdingRule : IAuditable, ISoftDeletable
         Reason = reason;
         Cprb = cprb;
         SimplesAnexo = simplesAnexo;
-        VendorId = vendorId;
     }
 
     public void Activate() => Active = true;

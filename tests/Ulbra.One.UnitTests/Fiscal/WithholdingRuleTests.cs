@@ -69,34 +69,4 @@ public class WithholdingRuleTests
         Assert.Equal(2, anexoIv.DimensionCount); // vendorRegime + simplesAnexo
     }
 
-    [Fact]
-    public void Constructor_and_update_carry_vendor_id()
-    {
-        var vendorId = Guid.NewGuid();
-        var rule = new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m,
-            vendorId: vendorId);
-        Assert.Equal(vendorId, rule.VendorId);
-
-        rule.Update(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.03m,
-            lc116Subitem: null, vendorRegime: null, municipalityIbge: null, companyId: null,
-            baseRule: BaseRule.Full, minimumAmount: null, reason: NonRetentionReason.None,
-            cprb: null, simplesAnexo: null, vendorId: vendorId);
-        Assert.Equal(vendorId, rule.VendorId);
-
-        // Update can clear it (back to a system rule).
-        rule.Update(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.03m,
-            lc116Subitem: null, vendorRegime: null, municipalityIbge: null, companyId: null,
-            baseRule: BaseRule.Full, minimumAmount: null, reason: NonRetentionReason.None,
-            cprb: null, simplesAnexo: null, vendorId: null);
-        Assert.Null(rule.VendorId);
-    }
-
-    [Fact]
-    public void DimensionCount_ignores_vendor_id()
-    {
-        // Vendor priority lives in the resolver's primary sort key, NOT in DimensionCount.
-        var vendorOnly = new WithholdingRule(WithholdingTaxType.Irrf, retains: true, RateSource.Fixed, 0.05m,
-            vendorId: Guid.NewGuid());
-        Assert.Equal(0, vendorOnly.DimensionCount);
-    }
 }

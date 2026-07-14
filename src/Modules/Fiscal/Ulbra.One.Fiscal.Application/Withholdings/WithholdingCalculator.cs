@@ -11,10 +11,9 @@ public sealed class WithholdingCalculator(IUnitOfWork uow) : IWithholdingCalcula
 {
     public async Task<IReadOnlyList<WithholdingResult>> CalculateAsync(WithholdingContext context, CancellationToken ct)
     {
-        // Vendor-specific rules + company-specific + group-wide rules (each dimension null = "any").
+        // Company-specific rules + group-wide rules (CompanyId == null).
         var rules = await uow.ReadSet<WithholdingRule>()
-            .Where(r => (r.CompanyId == null || r.CompanyId == context.CompanyId)
-                && (r.VendorId == null || r.VendorId == context.VendorId))
+            .Where(r => r.CompanyId == null || r.CompanyId == context.CompanyId)
             .ToListAsync(ct);
 
         var resolutionContext = new ResolutionContext(
@@ -23,7 +22,7 @@ public sealed class WithholdingCalculator(IUnitOfWork uow) : IWithholdingCalcula
             context.Lines
                 .Select(l => new ServiceLine(l.Lc116Subitem, l.MunicipalityIbge, l.InvoiceIssRate, l.Amount))
                 .ToList(),
-            context.Cprb, context.SimplesAnexo, context.VendorId);
+            context.Cprb, context.SimplesAnexo, context.RateOverrides);
 
         return WithholdingRuleResolver.Resolve(rules, resolutionContext)
             .Select(c => new WithholdingResult(c.TaxType, c.BaseAmount, c.Rate, c.Amount))

@@ -43,17 +43,28 @@ public sealed class AutoWithholdingService(IUnitOfWork uow, IWithholdingCalculat
 
         var vendorTax = await uow.ReadSet<VendorEntity>()
             .Where(v => v.Id == payable.VendorId && v.CompanyId == payable.CompanyId)
-            .Select(v => new { v.TaxRegime, v.SimplesAnexo, v.CprbForeseen })
+            .Select(v => new { v.TaxRegime, v.SimplesAnexo, v.CprbForeseen, v.WithholdingRates })
             .FirstOrDefaultAsync(ct);
         var regime = vendorTax?.TaxRegime ?? TaxRegime.Unknown;
         // INSS: usa o CPRB confirmado na NF quando houver; senão cai na sugestão do cadastro (CprbForeseen).
         var cprb = payable.CprbOnInvoice ?? vendorTax?.CprbForeseen;
 
+        // Alíquotas específicas do fornecedor (override só de alíquota): as regras do sistema decidem se retém;
+        // havendo entrada para um tributo retido, a alíquota do fornecedor substitui a da regra.
+        Dictionary<WithholdingTaxType, decimal>? rateOverrides = null;
+        if (vendorTax is { WithholdingRates.Count: > 0 })
+        {
+            rateOverrides = [];
+            foreach (var r in vendorTax.WithholdingRates)
+                if (r.Rate > 0 && Enum.TryParse<WithholdingTaxType>(r.TaxType, out var t))
+                    rateOverrides[t] = r.Rate;
+        }
+
         // Base = the payable's gross (BaseRule.Full / MVP). Single service line today; refinement signals are
         // null when there is no document or the document didn't carry them. INSS: o anexo do Simples vem do cadastro.
         var line = new ServiceLineInput(doc?.Lc116Subitem, doc?.ServiceMunicipalityIbge, doc?.InvoiceIssRate, payable.TotalAmount);
         var context = new WithholdingContext(
-            payable.CompanyId, payable.VendorId, regime, [line], cprb, vendorTax?.SimplesAnexo);
+            payable.CompanyId, payable.VendorId, regime, [line], cprb, vendorTax?.SimplesAnexo, rateOverrides);
 
         var results = await calculator.CalculateAsync(context, ct);
 

@@ -22,7 +22,9 @@ public sealed record VendorRequest(
     // Indicativos p/ INSS (cadastro sugere; NF confirma): CPRB previsto (Sim/Não/null) + anexo do Simples.
     bool? CprbForeseen = null, SimplesAnexo? SimplesAnexo = null,
     // Accepted payment methods. Omitted/empty = no restriction.
-    IReadOnlyList<PaymentMethod>? AcceptedPaymentMethods = null);
+    IReadOnlyList<PaymentMethod>? AcceptedPaymentMethods = null,
+    // Alíquotas de retenção por tributo (override só de alíquota). Omitida/vazia = usa o padrão do sistema.
+    IReadOnlyList<VendorWithholdingRate>? WithholdingRates = null);
 
 public sealed record CustomerRequest(
     CompanyId CompanyId, PersonType PersonType, [property: NormalizeText] string Name,

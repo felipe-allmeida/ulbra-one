@@ -27,9 +27,9 @@ public sealed class PreviewWithholdingRules : IEndpoint
         IUnitOfWork uow, TaxRegime regime, CompanyId? companyId, bool? cprb, SimplesAnexo? simplesAnexo,
         CancellationToken ct)
     {
-        // System rules only (VendorId == null): the preview is exactly "o padrão do sistema".
+        // System/company rules — the preview is "o padrão do sistema" para o perfil fiscal do fornecedor.
         var rules = await uow.ReadSet<WithholdingRule>()
-            .Where(r => r.Active && r.VendorId == null
+            .Where(r => r.Active
                 && (r.CompanyId == null || (companyId != null && r.CompanyId == companyId.Value.Value)))
             .ToListAsync(ct);
 

@@ -2586,10 +2586,6 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
-                    b.Property<Guid?>("VendorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("vendor_id");
-
                     b.Property<string>("VendorRegime")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
@@ -2600,9 +2596,6 @@ namespace Ulbra.One.Persistence.Migrations
 
                     b.HasIndex("CompanyId", "TaxType")
                         .HasDatabaseName("ix_withholding_rules_company_id_tax_type");
-
-                    b.HasIndex("VendorId", "TaxType")
-                        .HasDatabaseName("ix_withholding_rules_vendor_id_tax_type");
 
                     b.ToTable("withholding_rules", "fiscal");
                 });
@@ -2947,6 +2940,13 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
+
+                    b.Property<string>("WithholdingRates")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("withholding_rates")
+                        .HasDefaultValueSql("'[]'::jsonb");
 
                     b.HasKey("Id")
                         .HasName("pk_vendors");

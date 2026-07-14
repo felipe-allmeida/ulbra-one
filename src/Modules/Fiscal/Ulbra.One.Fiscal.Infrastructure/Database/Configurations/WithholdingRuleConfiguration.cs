@@ -31,7 +31,5 @@ public sealed class WithholdingRuleConfiguration : BaseEntityConfiguration<Withh
         e.Ignore(x => x.DimensionCount);
 
         e.HasIndex(x => new { x.CompanyId, x.TaxType });
-        // Vendor-scoped rules: covers the calculator load filter + the "regras deste fornecedor" listing.
-        e.HasIndex(x => new { x.VendorId, x.TaxType });
     }
 }
