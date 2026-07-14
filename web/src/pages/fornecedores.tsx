@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Truck, Power, Trash2, Pencil } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Plus, Search, Truck, Power, Trash2, Pencil, ChevronLeft } from 'lucide-react';
 import { PersonType, type Vendor } from '../api';
 import { getErrorMessage } from '../apiError';
 import { useApp } from '../store';
-import { useVendorAction, useVendors } from '../queries';
-import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
+import { useVendor, useVendorAction, useVendors } from '../queries';
+import { Button, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
 import { maskCpf, maskCnpj } from '../format';
 import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
+import { VendorWithholdingSection } from './vendor-withholding-section';
+
+const vendorDoc = (v: Vendor) => (v.personType === PersonType.Company ? maskCnpj(v.document) : maskCpf(v.document));
 
 export function FornecedoresPage() {
   const { empresa, empresaId } = useApp();
+  const nav = useNavigate();
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [drawer, setDrawer] = useState<null | { edit?: Vendor }>(null);
   const [confirm, setConfirm] = useState<null | { vendor: Vendor; action: 'toggle' | 'delete' }>(null);
 
   // Debounce the search term that feeds the query key (preserves the 250ms UX).
@@ -58,7 +62,7 @@ export function FornecedoresPage() {
     <>
       <PageHeader title='Fornecedores' sub='Pessoas físicas e jurídicas que fornecem produtos ou serviços ao grupo.'>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setDrawer({})}>
+        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/vendors/new')}>
           Novo fornecedor
         </Button>
       </PageHeader>
@@ -114,14 +118,12 @@ export function FornecedoresPage() {
                 </tr>
               ) : (
                 vendors.map((v) => (
-                  <tr key={v.id} className='row-click' onClick={() => setDrawer({ edit: v })}>
+                  <tr key={v.id} className='row-click' onClick={() => nav(`/app/vendors/${v.id}`)}>
                     <td>
                       {v.name}
                       {v.tradeName && <span className='cc-code'> · {v.tradeName}</span>}
                     </td>
-                    <td className='t-mono'>
-                      {v.personType === PersonType.Company ? maskCnpj(v.document) : maskCpf(v.document)}
-                    </td>
+                    <td className='t-mono'>{vendorDoc(v)}</td>
                     <td>{v.personType === PersonType.Company ? 'PJ' : 'PF'}</td>
                     <td>{v.email || v.phone || '—'}</td>
                     <td>
@@ -130,7 +132,7 @@ export function FornecedoresPage() {
                       </span>
                     </td>
                     <td className='td-action' onClick={(e) => e.stopPropagation()}>
-                      <button className='icon-btn' onClick={() => setDrawer({ edit: v })} aria-label='Editar'>
+                      <button className='icon-btn' onClick={() => nav(`/app/vendors/${v.id}`)} aria-label='Editar'>
                         <Pencil />
                       </button>
                       <button
@@ -156,22 +158,6 @@ export function FornecedoresPage() {
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </Panel>
       )}
-
-      <Drawer
-        open={!!drawer}
-        title={drawer?.edit ? 'Editar fornecedor' : 'Novo fornecedor'}
-        sub={empresa?.legalName}
-        onClose={() => setDrawer(null)}
-      >
-        {drawer && empresa && (
-          <VendorForm
-            companyId={empresa.id}
-            initial={drawer.edit}
-            onSaved={() => setDrawer(null)}
-            onCancel={() => setDrawer(null)}
-          />
-        )}
-      </Drawer>
 
       {confirm && (
         <ConfirmDialog
@@ -204,6 +190,88 @@ export function FornecedoresPage() {
           onCancel={() => setConfirm(null)}
         />
       )}
+    </>
+  );
+}
+
+/* ===================== DETAIL / NEW ===================== */
+export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
+  const { id } = useParams();
+  const nav = useNavigate();
+  const { empresa, empresas } = useApp();
+
+  const vendorQuery = useVendor(modo === 'detalhe' ? id : undefined);
+  const vendor = modo === 'detalhe' ? (vendorQuery.data ?? null) : null;
+  const carregando = modo === 'detalhe' && vendorQuery.isLoading;
+
+  // The vendor's company (in detail) or the selected company (in new).
+  const empresaDoVendor = vendor ? (empresas.find((e) => e.id === vendor.companyId) ?? null) : empresa;
+
+  /* ---- NEW ---- */
+  if (modo === 'novo') {
+    return (
+      <>
+        <button className='backlink' onClick={() => nav('/app/vendors')}>
+          <ChevronLeft /> Fornecedores
+        </button>
+        <div className='detail-head'>
+          <div>
+            <h1 className='detail-title'>Novo fornecedor</h1>
+            <div className='detail-sub'>{empresa?.legalName ?? 'Selecione uma empresa'}</div>
+          </div>
+        </div>
+        {empresa ? (
+          <div className='card-form'>
+            <VendorForm
+              companyId={empresa.id}
+              onSaved={(v) => nav(`/app/vendors/${v.id}`)}
+              onCancel={() => nav('/app/vendors')}
+            />
+          </div>
+        ) : (
+          <EmptyState icon={<Truck />} title='Nenhuma empresa' sub='Cadastre uma empresa primeiro.' />
+        )}
+      </>
+    );
+  }
+
+  /* ---- DETAIL ---- */
+  if (carregando) return <div className='empty-state'>Carregando…</div>;
+  if (!vendor || !empresaDoVendor)
+    return <EmptyState icon={<Truck />} title='Fornecedor não encontrado' sub='Ele pode ter sido removido.' />;
+
+  return (
+    <>
+      <button className='backlink' onClick={() => nav('/app/vendors')}>
+        <ChevronLeft /> Fornecedores
+      </button>
+      <div className='detail-head'>
+        <div>
+          <h1 className='detail-title'>
+            <Truck size={20} /> {vendor.name}
+          </h1>
+          <div className='detail-sub'>
+            {vendorDoc(vendor)} · {empresaDoVendor.legalName}
+          </div>
+        </div>
+      </div>
+
+      <div className='card-form'>
+        <VendorForm
+          companyId={vendor.companyId}
+          initial={vendor}
+          onSaved={() => void vendorQuery.refetch()}
+          onCancel={() => nav('/app/vendors')}
+        />
+      </div>
+
+      <VendorWithholdingSection
+        vendorId={vendor.id}
+        companyId={vendor.companyId}
+        regime={vendor.taxRegime}
+        cprb={vendor.cprbForeseen ?? null}
+        simplesAnexo={vendor.simplesAnexo}
+      />
     </>
   );
 }

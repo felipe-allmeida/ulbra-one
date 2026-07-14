@@ -1766,6 +1766,18 @@ const ptBR = {
       cprbUnknown: 'Desconhecido',
       simplesAnexo: 'Anexo do Simples',
       simplesAnexoNone: 'Não informado',
+      withholding: {
+        section: 'Retenções',
+        hint: 'Regras específicas deste fornecedor têm prioridade sobre as regras do sistema.',
+        new: 'Nova retenção',
+        rulesCount: '{{count}} regra(s) do fornecedor',
+        empty: 'Nenhuma retenção específica — este fornecedor usa as regras do sistema.',
+        previewTitle: 'Padrão do sistema',
+        systemDefault: 'Retenção padrão',
+        previewEmpty: 'Informe o regime tributário para ver o padrão do sistema.',
+        issNota: 'Depende da nota/município',
+        overridden: 'Sobrescrito',
+      },
     },
   },
 
