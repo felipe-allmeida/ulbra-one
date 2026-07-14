@@ -103,4 +103,74 @@ public class WithholdingRuleEndpointsTests(PostgresFixture fixture)
         Assert.True(rule.GetProperty("cprb").GetBoolean());
         Assert.Equal(0.035m, rule.GetProperty("rate").GetDecimal());
     }
+
+    [Fact]
+    public async Task Create_vendor_rule_roundtrips_and_list_filters_by_vendor()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var vendorId = $"vendor_{Guid.NewGuid():N}";
+        var otherVendorId = $"vendor_{Guid.NewGuid():N}";
+
+        var createRes = await client.PostAsJsonAsync("/api/withholding-rules", new
+        {
+            vendorId, taxType = "Irrf", retains = true, reason = "None",
+            rateSource = "Fixed", rate = 0.05m, baseRule = "Full",
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var created = await ReadJson(createRes);
+        Assert.Equal(vendorId, created.GetProperty("vendorId").GetString());
+        var id = created.GetProperty("id").GetString()!;
+
+        // A rule for a different vendor must not appear in the first vendor's filtered list.
+        var otherRes = await client.PostAsJsonAsync("/api/withholding-rules", new
+        {
+            vendorId = otherVendorId, taxType = "Irrf", retains = true, reason = "None",
+            rateSource = "Fixed", rate = 0.03m, baseRule = "Full",
+        });
+        Assert.Equal(HttpStatusCode.Created, otherRes.StatusCode);
+
+        var filtered = await ReadJson(await client.GetAsync($"/api/withholding-rules?vendorId={vendorId}"));
+        var ids = filtered.EnumerateArray().Select(r => r.GetProperty("id").GetString()).ToList();
+        Assert.Contains(id, ids);
+        Assert.All(filtered.EnumerateArray(),
+            r => Assert.Equal(vendorId, r.GetProperty("vendorId").GetString()));
+    }
+
+    [Fact]
+    public async Task Preview_returns_system_defaults_excluding_vendor_rules()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var vendorId = $"vendor_{Guid.NewGuid():N}";
+        // Vendor override for IRRF at 5% — must NOT leak into the system preview.
+        var createRes = await client.PostAsJsonAsync("/api/withholding-rules", new
+        {
+            vendorId, taxType = "Irrf", retains = true, reason = "None",
+            rateSource = "Fixed", rate = 0.05m, baseRule = "Full",
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+
+        var preview = await ReadJson(await client.GetAsync("/api/withholding-rules/preview?regime=LucroPresumido"));
+        var irrf = preview.EnumerateArray().Single(x => x.GetProperty("taxType").GetString() == "Irrf");
+        Assert.True(irrf.GetProperty("retains").GetBoolean());
+        Assert.NotEqual(0.05m, irrf.GetProperty("rate").GetDecimal()); // padrão do sistema, não a regra do fornecedor
+    }
+
+    [Fact]
+    public async Task Create_rule_with_both_vendor_and_company_is_rejected()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        var res = await client.PostAsJsonAsync("/api/withholding-rules", new
+        {
+            vendorId = $"vendor_{Guid.NewGuid():N}",
+            companyId = Guid.NewGuid().ToString(),
+            taxType = "Irrf", retains = true, reason = "None", rateSource = "Fixed", rate = 0.05m, baseRule = "Full",
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
 }

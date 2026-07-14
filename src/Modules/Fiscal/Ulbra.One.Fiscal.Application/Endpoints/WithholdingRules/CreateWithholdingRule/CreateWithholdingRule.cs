@@ -25,9 +25,13 @@ public sealed class CreateWithholdingRule : IEndpoint
             return TypedResults.Problem(detail: "A retaining Fixed rule requires a positive rate.",
                 statusCode: 400, title: "WithholdingRule.RateRequired");
 
+        if (req.VendorId is not null && req.CompanyId is not null)
+            return TypedResults.Problem(detail: "A vendor-scoped rule cannot also pin a company.",
+                statusCode: 400, title: "WithholdingRule.VendorCompanyConflict");
+
         var rule = new WithholdingRule(req.TaxType, req.Retains, req.RateSource, req.Rate,
             Lc116.Canonical(req.Lc116Subitem), req.VendorRegime, req.MunicipalityIbge, req.CompanyId, req.BaseRule,
-            req.MinimumAmount, req.Reason, req.Cprb, req.SimplesAnexo);
+            req.MinimumAmount, req.Reason, req.Cprb, req.SimplesAnexo, req.VendorId?.Value);
         await uow.AddAsync(rule, ct);
         await uow.SaveChangesAsync(ct);
         return TypedResults.Created($"/api/withholding-rules/{new WithholdingRuleId(rule.Id)}", WithholdingRuleResponse.From(rule));
