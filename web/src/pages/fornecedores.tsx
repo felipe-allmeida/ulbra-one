@@ -221,7 +221,7 @@ export function VendorDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
           </div>
         </div>
         {empresa ? (
-          <div className='card-form'>
+          <div className='card-form vendor-page-form'>
             <VendorForm
               companyId={empresa.id}
               onSaved={(v) => nav(`/app/vendors/${v.id}`)}
