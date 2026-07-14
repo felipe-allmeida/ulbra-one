@@ -696,12 +696,13 @@ export function VendorForm({
                     <td>{t(`withholdingTaxType.${tax}`)}</td>
                     <td className='t-mono'>{label}</td>
                     <td>
+                      {/* Sempre editável: a alíquota cadastrada é usada no lugar da do sistema sempre que esse
+                          tributo for retido (o preview é só uma aproximação do cadastro — ex.: ISS depende da nota). */}
                       <Input
                         inputMode='decimal'
                         value={field.value[tax] ?? ''}
                         onChange={(e) => field.onChange({ ...field.value, [tax]: e.target.value })}
                         placeholder={retains && sys?.rate != null ? String(fractionToPercent(sys.rate)) : '%'}
-                        disabled={!retains}
                       />
                     </td>
                   </tr>
