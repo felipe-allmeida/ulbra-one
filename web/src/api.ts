@@ -238,6 +238,45 @@ export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
 export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse'];
 export type PostingKind = Schemas['PostingKind'];
 
+// ---------- Livro Diário (journal book — read-only view over scriptured entries) ----------
+// Hand-declared until the OpenAPI schema is regenerated; shape mirrors JournalBookResponse.
+/** One débito/crédito line of a Livro Diário entry, with its account labels. */
+export interface JournalBookLineView {
+  ledgerAccountId: string;
+  accountCode: string;
+  accountName: string;
+  side: EntrySide;
+  amount: number;
+  costCenterId?: string | null;
+}
+/** One scriptured entry (lançamento) with its lines expanded. */
+export interface JournalBookEntryView {
+  id: string;
+  number?: number | null;
+  competenceDate: string;
+  description: string;
+  status: JournalStatus;
+  lines: JournalBookLineView[];
+  totalDebit: number;
+  totalCredit: number;
+}
+/** All entries of a single competence day, with the day's totals. */
+export interface JournalBookDayView {
+  date: string;
+  entries: JournalBookEntryView[];
+  totalDebit: number;
+  totalCredit: number;
+}
+/** The Livro Diário for a company (or consolidated) over a competence range. */
+export interface JournalBook {
+  companyId?: string | null;
+  from?: string | null;
+  to?: string | null;
+  days: JournalBookDayView[];
+  totalDebit: number;
+  totalCredit: number;
+}
+
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
 export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
@@ -1028,6 +1067,13 @@ export const api = {
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.asOf) q.set('asOf', params.asOf);
     return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
+  journalBook: (params: { companyId?: string; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<JournalBook>(`/accounting/journal-book?${q}`);
   },
   withholdingsReport: (companyId?: string) => {
     const q = new URLSearchParams();

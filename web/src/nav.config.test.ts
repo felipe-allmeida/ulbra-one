@@ -16,6 +16,10 @@ describe('itemForPath', () => {
     expect(itemForPath('/app/chart-of-accounts')).toBeNull();
   });
 
+  it('resolves the Livro Diário under the accounting books subgroup', () => {
+    expect(itemForPath('/app/accounting/journal-book')?.labelKey).toBe('nav.journalBook');
+  });
+
   it('returns null for an unknown route', () => {
     expect(itemForPath('/app/unknown')).toBeNull();
   });

@@ -107,6 +107,7 @@ export const queryKeys = {
   journalEntry: (id: string) => ['journalEntry', id] as const,
   trialBalance: (companyId?: string) => ['trialBalance', companyId ?? ''] as const,
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
+  journalBook: (params: JournalBookParams) => ['journalBook', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
   withholdingsReport: (companyId?: string) => ['withholdingsReport', companyId ?? ''] as const,
   fiscalAssessment: (params: FiscalAssessmentParams) => ['fiscalAssessment', params] as const,
@@ -131,6 +132,12 @@ export interface JournalEntriesParams {
 }
 
 export interface IncomeStatementParams {
+  companyId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface JournalBookParams {
   companyId?: string;
   from?: string;
   to?: string;
@@ -1333,6 +1340,14 @@ export function useBalanceSheet(params: BalanceSheetParams, options?: { enabled?
   return useQuery({
     queryKey: queryKeys.balanceSheet(params),
     queryFn: () => api.balanceSheet(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useJournalBook(params: JournalBookParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.journalBook(params),
+    queryFn: () => api.journalBook(params),
     enabled: options?.enabled ?? true,
   });
 }
