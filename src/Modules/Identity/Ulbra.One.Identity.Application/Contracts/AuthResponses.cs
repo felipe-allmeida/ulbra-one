@@ -9,4 +9,5 @@ public sealed record UserSummary(UserId Id, string Email, string Name, string Ro
 public sealed record LoginResponse(string Token, UserSummary User);
 
 /// <summary>Response for <c>/auth/me</c>. Matches the frontend's inline me() type.</summary>
-public sealed record MeResponse(UserId UserId, string? Name, string? Email, string? Role, bool IsAdmin);
+/// <param name="Permissions">Permissões efetivas do usuário (vazio para Admin — ele faz bypass; o front usa <c>IsAdmin</c>).</param>
+public sealed record MeResponse(UserId UserId, string? Name, string? Email, string? Role, bool IsAdmin, IReadOnlyCollection<string> Permissions);

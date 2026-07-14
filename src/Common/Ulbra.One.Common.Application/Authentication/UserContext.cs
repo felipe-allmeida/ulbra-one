@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using PermissionCatalog = Ulbra.One.Common.Application.Authentication.Permissions;
 
 namespace Ulbra.One.Common.Application.Authentication;
 
@@ -16,4 +17,12 @@ public class UserContext(IHttpContextAccessor httpContextAccessor)
 
     public bool IsAdmin => Role == "Admin";
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+
+    /// <summary>Permissões concedidas (claims <c>permission</c> do JWT). Admin não precisa listar — faz bypass.</summary>
+    public IReadOnlyCollection<string> Permissions =>
+        User?.FindAll(PermissionCatalog.ClaimType).Select(c => c.Value).ToArray() ?? [];
+
+    /// <summary>True quando o usuário é Admin (bypass) ou possui a permissão informada.</summary>
+    public bool HasPermission(string permission) =>
+        IsAdmin || (User?.HasClaim(PermissionCatalog.ClaimType, permission) ?? false);
 }
