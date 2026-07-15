@@ -12,8 +12,8 @@ const entry: JournalBookEntryView = {
   totalDebit: 100,
   totalCredit: 100,
   lines: [
-    { ledgerAccountId: 'ledgacct_1', accountCode: '4.1', accountName: 'Despesa', side: 'Debit', amount: 100 },
-    { ledgerAccountId: 'ledgacct_2', accountCode: '2.1', accountName: 'Fornecedores', side: 'Credit', amount: 100 },
+    { ledgerAccountId: 'ledgacct_1', accountCode: '4.1', accountName: 'Despesa', side: 'Debit', amount: 100, costCenterId: null },
+    { ledgerAccountId: 'ledgacct_2', accountCode: '2.1', accountName: 'Fornecedores', side: 'Credit', amount: 100, costCenterId: null },
   ],
 };
 

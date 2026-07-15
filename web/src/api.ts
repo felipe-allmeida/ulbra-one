@@ -205,8 +205,7 @@ export interface FiscalDocument {
 }
 
 // ---------- Bank accounts + payments (baixa) ----------
-// `ledgerAccountId` is hand-added until the OpenAPI schema is regenerated (BankAccountResponse gains it).
-export type BankAccount = Schemas['BankAccountResponse'] & { ledgerAccountId?: string | null };
+export type BankAccount = Schemas['BankAccountResponse'];
 export type Payment = Schemas['PaymentResponse'];
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type BankAccountType = Schemas['BankAccountType'];
@@ -251,43 +250,11 @@ export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse
 export type PostingKind = Schemas['PostingKind'];
 
 // ---------- Livro Diário (journal book — read-only view over scriptured entries) ----------
-// Hand-declared until the OpenAPI schema is regenerated; shape mirrors JournalBookResponse.
-/** One débito/crédito line of a Livro Diário entry, with its account labels. */
-export interface JournalBookLineView {
-  ledgerAccountId: string;
-  accountCode: string;
-  accountName: string;
-  side: EntrySide;
-  amount: number;
-  costCenterId?: string | null;
-}
-/** One scriptured entry (lançamento) with its lines expanded. */
-export interface JournalBookEntryView {
-  id: string;
-  number?: number | null;
-  competenceDate: string;
-  description: string;
-  status: JournalStatus;
-  lines: JournalBookLineView[];
-  totalDebit: number;
-  totalCredit: number;
-}
-/** All entries of a single competence day, with the day's totals. */
-export interface JournalBookDayView {
-  date: string;
-  entries: JournalBookEntryView[];
-  totalDebit: number;
-  totalCredit: number;
-}
-/** The Livro Diário for a company (or consolidated) over a competence range. */
-export interface JournalBook {
-  companyId?: string | null;
-  from?: string | null;
-  to?: string | null;
-  days: JournalBookDayView[];
-  totalDebit: number;
-  totalCredit: number;
-}
+// Aliases to the generated schemas; the *View names are kept stable for the pages/components.
+export type JournalBookLineView = Schemas['JournalBookLineResponse'];
+export type JournalBookEntryView = Schemas['JournalBookEntryResponse'];
+export type JournalBookDayView = Schemas['JournalBookDayResponse'];
+export type JournalBook = Schemas['JournalBookResponse'];
 
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];

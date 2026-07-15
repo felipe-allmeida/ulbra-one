@@ -204,8 +204,8 @@
         ],
         "operationId": "SeedLedgerAccounts",
         "responses": {
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -217,8 +217,8 @@
               }
             }
           },
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -695,6 +695,51 @@
         }
       }
     },
+    "/api/accounting/journal-book": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "GetJournalBook",
+        "parameters": [
+          {
+            "name": "CompanyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "From",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalBookResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/accounting/pending-postings": {
       "get": {
         "tags": [
@@ -733,6 +778,176 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PendingAccountingPostingResponsePaginatedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/pending-postings/{id}/resolve": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ResolvePendingPosting",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingAccountingPostingResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/periods": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ListAccountingPeriods",
+        "parameters": [
+          {
+            "name": "CompanyId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "FiscalYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountingPeriodResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/periods/close": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "CloseAccountingPeriod",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseAccountingPeriodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingPeriodResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounting/periods/reopen": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ReopenAccountingPeriod",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenAccountingPeriodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingPeriodResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -912,9 +1127,6 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found"
-          },
           "429": {
             "description": "Too Many Requests",
             "content": {
@@ -924,6 +1136,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -1303,6 +1518,9 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -1312,9 +1530,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }
@@ -6785,6 +7000,46 @@
         ],
         "type": "string"
       },
+      "AccountingPeriodResponse": {
+        "required": [
+          "id",
+          "companyId",
+          "fiscalYear",
+          "month",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "acctperiod_3fa85f64571742199730000000000000"
+          },
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AccountingPeriodStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AccountingPeriodStatus": {
+        "enum": [
+          "Open",
+          "Closing",
+          "Closed"
+        ],
+        "type": "string"
+      },
       "AddressRequest": {
         "required": [
           "cep",
@@ -7383,7 +7638,8 @@
           "active",
           "isDefaultForPayments",
           "defaultPaymentMethod",
-          "cnabAgreementCode"
+          "cnabAgreementCode",
+          "ledgerAccountId"
         ],
         "type": "object",
         "properties": {
@@ -7433,6 +7689,11 @@
           "cnabAgreementCode": {
             "type": "string",
             "nullable": true
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
@@ -7980,6 +8241,29 @@
         },
         "additionalProperties": false
       },
+      "CloseAccountingPeriodRequest": {
+        "required": [
+          "companyId",
+          "fiscalYear",
+          "month"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "CnpjAddress": {
         "required": [
           "cep",
@@ -8186,7 +8470,8 @@
           "openingBalance",
           "isDefaultForPayments",
           "defaultPaymentMethod",
-          "cnabAgreementCode"
+          "cnabAgreementCode",
+          "ledgerAccountId"
         ],
         "type": "object",
         "properties": {
@@ -8228,6 +8513,11 @@
           },
           "cnabAgreementCode": {
             "type": "string"
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
@@ -9437,6 +9727,164 @@
             "nullable": true
           },
           "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalBookDayResponse": {
+        "required": [
+          "date",
+          "entries",
+          "totalDebit",
+          "totalCredit"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalBookEntryResponse"
+            }
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalBookEntryResponse": {
+        "required": [
+          "id",
+          "number",
+          "competenceDate",
+          "description",
+          "status",
+          "lines",
+          "totalDebit",
+          "totalCredit"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "journal_3fa85f64571742199730000000000000"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "competenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JournalStatus"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalBookLineResponse"
+            }
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalBookLineResponse": {
+        "required": [
+          "ledgerAccountId",
+          "accountCode",
+          "accountName",
+          "side",
+          "amount",
+          "costCenterId"
+        ],
+        "type": "object",
+        "properties": {
+          "ledgerAccountId": {
+            "type": "string",
+            "example": "ledgacct_3fa85f64571742199730000000000000"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "side": {
+            "$ref": "#/components/schemas/EntrySide"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "costCenterId": {
+            "type": "string",
+            "nullable": true,
+            "example": "cost_center_3fa85f64571742199730000000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JournalBookResponse": {
+        "required": [
+          "companyId",
+          "from",
+          "to",
+          "days",
+          "totalDebit",
+          "totalCredit"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalBookDayResponse"
+            }
+          },
+          "totalDebit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCredit": {
             "type": "number",
             "format": "double"
           }
@@ -10915,7 +11363,7 @@
             "nullable": true
           }
         },
-        "additionalProperties": {}
+        "additionalProperties": { }
       },
       "RateSource": {
         "enum": [
@@ -11820,6 +12268,29 @@
         },
         "additionalProperties": false
       },
+      "ReopenAccountingPeriodRequest": {
+        "required": [
+          "companyId",
+          "fiscalYear",
+          "month"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "example": "company_3fa85f64571742199730000000000000"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "RequestFiscalUploadUrlRequest": {
         "required": [
           "fileName"
@@ -12453,7 +12924,8 @@
           "active",
           "isDefaultForPayments",
           "defaultPaymentMethod",
-          "cnabAgreementCode"
+          "cnabAgreementCode",
+          "ledgerAccountId"
         ],
         "type": "object",
         "properties": {
@@ -12494,6 +12966,11 @@
           },
           "cnabAgreementCode": {
             "type": "string"
+          },
+          "ledgerAccountId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ledgacct_3fa85f64571742199730000000000000"
           }
         },
         "additionalProperties": false
