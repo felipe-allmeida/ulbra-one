@@ -3,17 +3,19 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
-const { mockUsePayableStageItems, mockApprove, mockReject, mockUseCashFlow } = vi.hoisted(() => ({
+const { mockUsePayableStageItems, mockApprove, mockReject, mockUseCashFlow, mockUseMe } = vi.hoisted(() => ({
   mockUsePayableStageItems: vi.fn(),
   mockApprove: vi.fn(),
   mockReject: vi.fn(),
   mockUseCashFlow: vi.fn(),
+  mockUseMe: vi.fn(),
 }));
 vi.mock('../../queries', () => ({
   usePayableStageItems: mockUsePayableStageItems,
   useApprovePayable: () => ({ mutate: mockApprove, isPending: false }),
   useRejectPayable: () => ({ mutate: mockReject, isPending: false }),
   useCashFlow: mockUseCashFlow,
+  useMe: mockUseMe,
 }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
 
@@ -32,6 +34,7 @@ const item = {
 };
 
 beforeEach(() => {
+  mockUseMe.mockReturnValue({ data: { isAdmin: true, permissions: [] } });
   mockUsePayableStageItems.mockReturnValue({ data: { items: [item], total: 1, totalPages: 1 } });
   mockUseCashFlow.mockReturnValue({
     data: {
@@ -67,5 +70,17 @@ describe('ApprovalTab', () => {
     fireEvent.change(input, { target: { value: 'duplicado' } });
     fireEvent.click(screen.getByText('Confirmar'));
     expect(mockReject).toHaveBeenCalledWith({ id: 'payable_1', reason: 'duplicado' }, expect.any(Object));
+  });
+  it('hides approve/reject actions without payables:approve', () => {
+    // Cargo sem a permissão de aprovação (ex.: Financeiro) — vê a fila, mas não as ações.
+    mockUseMe.mockReturnValue({ data: { isAdmin: false, permissions: ['payables:read'] } });
+    render(
+      <MemoryRouter>
+        <ApprovalTab companyId='company_1' />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('NF 1')).toBeInTheDocument();
+    expect(screen.queryByText('Aprovar')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rejeitar')).not.toBeInTheDocument();
   });
 });
