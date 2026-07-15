@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Receipt as ReceiptIcon } from 'lucide-react';
 import { type Receivable, type ReceivableInstallment } from '../../api';
 import { brl } from '../../lib';
+import { P, usePermissions } from '../../permissions';
 import { Button, Panel } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { ReceivableStatusBadge, ReceivableInstallmentStatusBadge, OverdueBadge } from './badges';
@@ -15,6 +16,7 @@ export function InstallmentsTable({
   onRegister: (installment: ReceivableInstallment) => void;
 }) {
   const { t } = useTranslation();
+  const canReceive = usePermissions().can(P.receivablesReceive);
   return (
     <Panel title={t('receivables.installmentsTitle')}>
       <table>
@@ -56,7 +58,7 @@ export function InstallmentsTable({
                   </div>
                 </td>
                 <td className='td-action'>
-                  {r.status === 'AwaitingReceipt' && inst.status !== 'Received' && (
+                  {canReceive && r.status === 'AwaitingReceipt' && inst.status !== 'Received' && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button icon={<ReceiptIcon />} onClick={() => onRegister(inst)}>
                         {t('receipts.register')}
