@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain;
@@ -21,7 +22,7 @@ public sealed class GetFiscalAssessment : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("GetFiscalAssessment").WithTags("Fiscal")
-            .RequireAuthorization().Produces<WithholdingAssessmentResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.FiscalRead).Produces<WithholdingAssessmentResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         string perApur, CompanyId? companyId, CostCenterId? costCenterId,

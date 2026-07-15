@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain;
@@ -21,7 +22,7 @@ public sealed class PreviewWithholdingRules : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/preview", Handle).WithName("PreviewWithholdingRules").WithTags("Fiscal")
-            .RequireAuthorization().Produces<List<WithholdingPreviewItem>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.FiscalRead).Produces<List<WithholdingPreviewItem>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow, TaxRegime regime, CompanyId? companyId, bool? cprb, SimplesAnexo? simplesAnexo,

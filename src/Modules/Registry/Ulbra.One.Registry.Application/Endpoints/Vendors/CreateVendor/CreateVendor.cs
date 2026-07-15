@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Application.Normalization;
@@ -22,7 +23,7 @@ public sealed class CreateVendor : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateVendor")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryWrite)
             .WithRequestNormalizer<VendorRequest>()
             .WithValidation<VendorRequest>()
             .Produces<VendorResponse>(StatusCodes.Status201Created)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain.Validation;
@@ -22,7 +23,7 @@ public sealed class ExportEfdReinfXml : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/efd-reinf.xml", Handle).WithName("ExportEfdReinfXml").WithTags("Fiscal")
-            .RequireAuthorization();
+            .RequirePermission(Permissions.FiscalRead);
 
     private static async Task<IResult> Handle(
         string perApur, CompanyId? companyId, int? tpAmb, IUnitOfWork uow, CancellationToken ct)

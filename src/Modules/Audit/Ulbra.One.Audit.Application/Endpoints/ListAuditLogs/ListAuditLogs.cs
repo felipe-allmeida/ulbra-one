@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Audit.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -13,7 +14,7 @@ public sealed class ListAuditLogs : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("ListAuditLogs").WithTags("Audit")
-            .RequireAuthorization().Produces<PaginatedResponse<AuditLogResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.AuditRead).Produces<PaginatedResponse<AuditLogResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         string? entityType, string? entityId, string? actorUserId, DateTimeOffset? from, DateTimeOffset? to,

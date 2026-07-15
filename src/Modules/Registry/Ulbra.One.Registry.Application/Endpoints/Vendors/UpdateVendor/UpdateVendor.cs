@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -24,7 +25,7 @@ public sealed class UpdateVendor : IEndpoint
         builder.MapPut("/{id}", Handle)
             .WithName("UpdateVendor")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryWrite)
             .WithRequestNormalizer<VendorRequest>()
             .WithValidation<VendorRequest>()
             .Produces<VendorResponse>(StatusCodes.Status200OK)

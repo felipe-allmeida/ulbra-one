@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -20,7 +21,7 @@ public sealed class ActivateVendor : IEndpoint
         builder.MapPost("/{id}/activate", Handle)
             .WithName("ActivateVendor")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryWrite)
             .Produces<VendorResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
