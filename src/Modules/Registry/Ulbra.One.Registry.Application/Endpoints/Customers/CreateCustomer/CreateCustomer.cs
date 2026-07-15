@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Application.Normalization;
@@ -21,7 +22,7 @@ public sealed class CreateCustomer : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateCustomer")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryWrite)
             .WithRequestNormalizer<CustomerRequest>()
             .WithValidation<CustomerRequest>()
             .Produces<CustomerResponse>(StatusCodes.Status201Created)

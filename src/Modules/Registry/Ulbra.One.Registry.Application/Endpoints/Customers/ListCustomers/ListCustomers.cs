@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
@@ -18,7 +19,7 @@ public sealed class ListCustomers : IEndpoint
         builder.MapGet("", Handle)
             .WithName("ListCustomers")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryRead)
             .Produces<PaginatedResponse<CustomerResponse>>(StatusCodes.Status200OK);
     }
 

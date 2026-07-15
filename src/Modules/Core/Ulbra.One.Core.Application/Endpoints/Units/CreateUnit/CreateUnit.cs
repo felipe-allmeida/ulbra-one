@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -26,7 +27,7 @@ public sealed class CreateUnit : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateUnit")
             .WithTags("Core")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.CoreWrite)
             .WithRequestNormalizer<Request>()
             .Produces<UnitResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status404NotFound);

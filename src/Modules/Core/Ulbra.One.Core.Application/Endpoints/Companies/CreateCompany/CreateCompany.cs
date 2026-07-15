@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -24,7 +25,7 @@ public sealed class CreateCompany : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateCompany")
             .WithTags("Core")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.CoreWrite)
             .WithRequestNormalizer<Request>()
             .Produces<CompanyResponse>(StatusCodes.Status201Created);
     }

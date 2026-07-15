@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -25,7 +26,7 @@ public sealed class UpdateCompany : IEndpoint
         builder.MapPut("/{id}", Handle)
             .WithName("UpdateCompany")
             .WithTags("Core")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.CoreWrite)
             .WithRequestNormalizer<Request>()
             .Produces<CompanyResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);

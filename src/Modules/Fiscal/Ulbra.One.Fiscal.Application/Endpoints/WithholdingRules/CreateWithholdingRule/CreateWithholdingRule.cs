@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain.Validation;
@@ -15,7 +16,7 @@ public sealed class CreateWithholdingRule : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("", Handle).WithName("CreateWithholdingRule").WithTags("Fiscal")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.FiscalWrite)
             .Produces<WithholdingRuleResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

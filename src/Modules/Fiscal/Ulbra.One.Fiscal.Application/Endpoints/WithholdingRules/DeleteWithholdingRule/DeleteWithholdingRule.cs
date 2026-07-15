@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Fiscal.Domain.Entities;
@@ -13,7 +14,7 @@ public sealed class DeleteWithholdingRule : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapDelete("/{id}", Handle).WithName("DeleteWithholdingRule").WithTags("Fiscal")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.FiscalWrite)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
