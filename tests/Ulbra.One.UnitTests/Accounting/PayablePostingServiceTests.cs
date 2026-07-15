@@ -225,6 +225,41 @@ public class PayablePostingServiceTests
         Assert.Empty(uow.Pendings);
     }
 
+    // ── PostSettlementAsync: credits the paying bank's ledger account when mapped ──
+
+    [Fact]
+    public async Task PostSettlement_credits_mapped_bank_ledger_account()
+    {
+        const string BankCode = "1.1.05"; // the bank account's own ledger account (≠ the global CashCode)
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
+        var bank = MakeAnalytical(BankCode, AccountGroup.Asset);
+        var (uow, sut) = BuildSut(liability, cash, bank);
+
+        await sut.PostSettlementAsync(CompanyId, "payment:m", 75m, new DateOnly(2026, 7, 1), cashAccountId: bank.Id, CancellationToken.None);
+
+        var entry = Assert.Single(uow.JournalEntries);
+        var creditLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Credit);
+        Assert.Equal(bank.Id, creditLine.LedgerAccountId); // the mapped bank ledger, NOT the global CashCode
+        Assert.Empty(uow.Pendings);
+    }
+
+    [Fact]
+    public async Task PostSettlement_falls_back_to_cash_code_when_mapping_unresolvable()
+    {
+        // Bank's ledger id does not resolve (missing/inactive) → fall back to the global CashCode, never park.
+        var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
+        var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
+        var (uow, sut) = BuildSut(liability, cash);
+
+        await sut.PostSettlementAsync(CompanyId, "payment:fb", 75m, new DateOnly(2026, 7, 1), cashAccountId: Guid.NewGuid(), CancellationToken.None);
+
+        var entry = Assert.Single(uow.JournalEntries);
+        var creditLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Credit);
+        Assert.Equal(cash.Id, creditLine.LedgerAccountId); // fell back to CashCode
+        Assert.Empty(uow.Pendings); // fallback, not parked
+    }
+
     // ── ReverseAsync: success path ────────────────────────────────────────────
 
     [Fact]
