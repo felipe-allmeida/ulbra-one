@@ -58,7 +58,7 @@ public class PayablePostingClosedPeriodTests(PostgresFixture fixture)
         await posting.PostIncurralAsync(companyId, $"payable-incurral:{payableId}", 100m, expenseId, [],
             competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
-        await posting.PostSettlementAsync(companyId, $"payment:{payableId}", 100m, today, CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, $"payment:{payableId}", 100m, today, cashAccountId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // The incurral was clamped (posted), not parked.

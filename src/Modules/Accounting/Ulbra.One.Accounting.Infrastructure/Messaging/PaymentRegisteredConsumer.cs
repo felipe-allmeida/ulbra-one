@@ -16,6 +16,7 @@ public sealed class PaymentRegisteredConsumer(IPayablePostingService posting, IU
             $"payment:{m.PaymentId}",
             m.Amount,
             m.PaymentDate,
+            m.CashAccountId,
             ctx.CancellationToken);
         await uow.SaveChangesAsync(ctx.CancellationToken);
     }

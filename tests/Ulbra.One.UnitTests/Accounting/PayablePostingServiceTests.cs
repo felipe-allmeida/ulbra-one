@@ -207,7 +207,7 @@ public class PayablePostingServiceTests
         var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
         var (uow, sut) = BuildSut(liability, cash);
 
-        await sut.PostSettlementAsync(CompanyId, "payable-settlement:x", 75m, new DateOnly(2026, 7, 1), CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payable-settlement:x", 75m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
 
         var entry = Assert.Single(uow.JournalEntries);
         Assert.Equal(JournalStatus.Posted, entry.Status);
@@ -318,7 +318,7 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut(liability, cash);
         var paymentDate = new DateOnly(2026, 5, 20);
 
-        await sut.PostSettlementAsync(CompanyId, "payment:c", 75m, paymentDate, CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payment:c", 75m, paymentDate, cashAccountId: null, CancellationToken.None);
 
         Assert.Equal(paymentDate, uow.JournalEntries[0].CompetenceDate);
     }

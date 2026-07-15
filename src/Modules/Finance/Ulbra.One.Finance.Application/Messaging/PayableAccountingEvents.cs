@@ -19,13 +19,16 @@ public sealed record PayableScheduled(
     Guid CostCenterId);
 
 /// <summary>Published when a payment (baixa) is registered against a payable installment.
-/// <paramref name="PaymentDate"/> is the settlement competence (Payment.PaymentDate).</summary>
+/// <paramref name="PaymentDate"/> is the settlement competence (Payment.PaymentDate).
+/// <paramref name="CashAccountId"/> is the ledger account linked to the paying bank account (null when the
+/// bank has no mapping — the settlement then falls back to the configured global cash code).</summary>
 public sealed record PaymentRegistered(
     Guid PaymentId,
     Guid PayableId,
     Guid CompanyId,
     decimal Amount,
-    DateOnly PaymentDate);
+    DateOnly PaymentDate,
+    Guid? CashAccountId);
 
 /// <summary>Published when a payment is reversed (estornado).</summary>
 public sealed record PaymentReversed(

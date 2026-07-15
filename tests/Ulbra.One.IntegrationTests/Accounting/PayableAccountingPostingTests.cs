@@ -103,7 +103,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostSettlementAsync(companyId, sourceKey, 50m, new DateOnly(2026, 7, 1), CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, sourceKey, 50m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Settlement resolved → a real entry must exist (not pending).
@@ -203,7 +203,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         // Register the settlement entry.
-        await posting.PostSettlementAsync(companyId, paymentKey, 75m, new DateOnly(2026, 7, 1), CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, paymentKey, 75m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Reverse it.

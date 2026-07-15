@@ -40,6 +40,17 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             .FirstOrDefaultAsync(ct);
     }
 
+    // ── Resolve a POSTABLE ledger account's code by id; null when missing/inactive/synthetic/deleted. Used for
+    //    the settlement cash account: a stale bank→ledger mapping must NOT park (that would strand the paired
+    //    incurral, cf. PostEntryAsync); the caller falls back to the configured global cash code instead. ──
+    private async Task<string?> ResolvePostableCodeByIdAsync(Guid? id, CancellationToken ct)
+    {
+        if (id is not { } accountId) return null;
+        var a = await uow.ReadSet<LedgerAccount>()
+            .FirstOrDefaultAsync(x => x.Id == accountId && x.DeletedAt == null, ct);
+        return a is { } acct && acct.CanReceiveEntry ? acct.Code : null;
+    }
+
     // ── Next per-company sequential entry number ──────────────────────────────
     private async Task<int> NextNumberAsync(Guid companyId, CancellationToken ct) =>
         (await uow.ReadSet<JournalEntry>()
@@ -185,16 +196,21 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, competence, lineList, ct);
     }
 
-    public Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, CancellationToken ct) =>
-        PostEntryAsync(companyId, sourceKey,
+    public async Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, Guid? cashAccountId, CancellationToken ct)
+    {
+        // Credit the paying bank's own ledger account when it resolves to a postable account; otherwise fall
+        // back to the configured global cash code (unmapped bank, or a stale/inactive mapping).
+        var cashCode = await ResolvePostableCodeByIdAsync(cashAccountId, ct) ?? opts.CashCode;
+        await PostEntryAsync(companyId, sourceKey,
             "Pagamento de fornecedor",
             PostingKind.Settlement,
             paymentDate,
             [
                 (opts.PayablesLiabilityCode, EntrySide.Debit, amount, (Guid?)null),
-                (opts.CashCode, EntrySide.Credit, amount, (Guid?)null),
+                (cashCode, EntrySide.Credit, amount, (Guid?)null),
             ],
             ct);
+    }
 
     public async Task ReverseAsync(Guid companyId, string sourceKey, string reason, CancellationToken ct)
     {

@@ -16,8 +16,10 @@ public interface IPayablePostingService
         IReadOnlyList<(string TaxType, decimal Amount)> withholdings,
         DateOnly? competenceDate, Guid? costCenterId, CancellationToken ct);
 
-    /// <summary>Books the settlement (baixa) at <paramref name="paymentDate"/> (clamped to the open period).</summary>
-    Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, CancellationToken ct);
+    /// <summary>Books the settlement (baixa) at <paramref name="paymentDate"/> (clamped to the open period).
+    /// The cash credit uses the paying bank's ledger account (<paramref name="cashAccountId"/>) when it resolves
+    /// to a postable account, otherwise falls back to the configured global cash code.</summary>
+    Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, Guid? cashAccountId, CancellationToken ct);
 
     Task ReverseAsync(Guid companyId, string sourceKey, string reason, CancellationToken ct);
 
