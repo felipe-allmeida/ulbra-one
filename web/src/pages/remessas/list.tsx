@@ -18,6 +18,7 @@ import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { brlCents } from '../../lib';
 import { Button, EmptyState, Field, Modal, PageHeader, Pager, Panel, Select } from '../../ui';
+import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
 import { fmtDateTime, fmtDate } from '../../datetime';
 import { RemittanceLineStatusBadge } from './badges';
@@ -356,6 +357,7 @@ function RemittanceRow({ item, onDetail }: { item: RemittanceListItem; onDetail:
 export function RemessasPage() {
   const { t } = useTranslation();
   const { empresa, empresaId } = useApp();
+  const canWrite = usePermissions().can(P.treasuryWrite);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -371,9 +373,11 @@ export function RemessasPage() {
     <>
       <PageHeader title={t('remittances.title')} sub={t('remittances.subtitle')}>
         <EmpresaPicker />
-        <Button variant='brand' icon={<FileText size={16} />} disabled={!empresa} onClick={() => setDialogOpen(true)}>
-          {t('remittances.generate')}
-        </Button>
+        {canWrite && (
+          <Button variant='brand' icon={<FileText size={16} />} disabled={!empresa} onClick={() => setDialogOpen(true)}>
+            {t('remittances.generate')}
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (

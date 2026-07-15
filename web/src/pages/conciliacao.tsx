@@ -17,6 +17,7 @@ import { brl } from '../lib';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { Button, Combobox, Drawer, EmptyState, Field, Pager, Panel, Select, ToolbarField } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { EmpresaPicker } from './shared';
 import { fmtDate } from '../datetime';
 
@@ -105,6 +106,9 @@ function RowActions({ tx, onManual }: { tx: BankTransaction; onManual: (tx: Bank
   const unmatch = useUnmatchTransaction({ onError: (e) => toast.error(getErrorMessage(e)) });
   const busy = confirm.isPending || ignore.isPending || unmatch.isPending;
 
+  // Conciliação é ação de tesouraria (write). Sem a permissão, sem ações por linha.
+  if (!usePermissions().can(P.treasuryWrite)) return null;
+
   return (
     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
       {tx.matchStatus === 'Suggested' && (
@@ -136,6 +140,7 @@ export function ConciliacaoPage() {
   const { t } = useTranslation();
   const { empresa, empresaId } = useApp();
   const toast = useToast();
+  const canWrite = usePermissions().can(P.treasuryWrite);
 
   const accounts = useBankAccounts(empresaId).data ?? [];
   const [bankAccountId, setBankAccountId] = useState('');
@@ -191,23 +196,25 @@ export function ConciliacaoPage() {
         />
       ) : (
         <>
-          <Panel title={t('conciliacao.upload.label')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <input
-                ref={fileRef}
-                type='file'
-                accept='.ofx'
-                className='input'
-                disabled={!bankAccountId || importStatement.isPending}
-                onChange={(e) => onFile(e.target.files?.[0])}
-              />
-              <span className='help' style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Upload style={{ width: 14, height: 14 }} />
-                {bankAccountId ? t('conciliacao.upload.help') : t('conciliacao.upload.needBankAccount')}
-              </span>
-              {importStatement.isPending && <span className='help'>{t('conciliacao.upload.importing')}</span>}
-            </div>
-          </Panel>
+          {canWrite && (
+            <Panel title={t('conciliacao.upload.label')}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <input
+                  ref={fileRef}
+                  type='file'
+                  accept='.ofx'
+                  className='input'
+                  disabled={!bankAccountId || importStatement.isPending}
+                  onChange={(e) => onFile(e.target.files?.[0])}
+                />
+                <span className='help' style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Upload style={{ width: 14, height: 14 }} />
+                  {bankAccountId ? t('conciliacao.upload.help') : t('conciliacao.upload.needBankAccount')}
+                </span>
+                {importStatement.isPending && <span className='help'>{t('conciliacao.upload.importing')}</span>}
+              </div>
+            </Panel>
+          )}
 
           {!bankAccountId ? (
             <EmptyState
