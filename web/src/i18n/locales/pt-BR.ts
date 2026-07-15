@@ -72,7 +72,6 @@ const ptBR = {
       analysis: 'Análise',
       configuration: 'Configuração',
       movement: 'Movimento',
-      books: 'Livros',
       statements: 'Demonstrações',
       obligations: 'Obrigações',
     },
