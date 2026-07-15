@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
@@ -20,7 +21,7 @@ public sealed class ListTransactions : IEndpoint
         builder.MapGet("", Handle)
             .WithName("ListTransactions")
             .WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryRead)
             .Produces<PaginatedResponse<TransactionResponse>>(StatusCodes.Status200OK);
     }
 

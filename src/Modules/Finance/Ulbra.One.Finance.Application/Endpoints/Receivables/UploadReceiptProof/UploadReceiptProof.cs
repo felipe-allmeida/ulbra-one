@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Validation;
@@ -21,7 +22,7 @@ public sealed class UploadReceiptProof : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/receipts/{receiptId}/proof", Handle)
             .WithName("UploadReceiptProof").WithTags("Finance")
-            .RequireAuthorization().DisableAntiforgery()
+            .RequirePermission(Permissions.ReceivablesReceive).DisableAntiforgery()
             .Produces<ReceiptResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

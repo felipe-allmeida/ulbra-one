@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
@@ -20,7 +21,7 @@ public sealed class GetReceivableStageItems : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("stage-items", Handle).WithName("GetReceivableStageItems").WithTags("Finance")
-            .RequireAuthorization().Produces<PaginatedResponse<ReceivableStageItemResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.ReceivablesRead).Produces<PaginatedResponse<ReceivableStageItemResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         CompanyId companyId,

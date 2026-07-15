@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -17,7 +18,7 @@ public sealed class UpdateClassificationPolicy : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{companyId}", Handle).WithName("UpdateClassificationPolicy").WithTags("Finance")
-            .RequireAuthorization().Produces<ClassificationPolicyResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.PayablesWrite).Produces<ClassificationPolicyResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(CompanyId companyId, Request req,
         IUnitOfWork uow, CancellationToken ct)

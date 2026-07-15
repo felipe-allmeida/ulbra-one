@@ -23,7 +23,7 @@ public sealed class RegisterReceipt : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/installments/{installmentId}/receipts", Handle)
-            .WithName("RegisterReceipt").WithTags("Finance").RequireAuthorization()
+            .WithName("RegisterReceipt").WithTags("Finance").RequirePermission(Permissions.ReceivablesReceive)
             .Produces<ReceivableResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Results;
 using Ulbra.One.Common.Domain;
 
@@ -18,7 +19,7 @@ public sealed class RequestFiscalUploadUrl : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/fiscal-document/upload-url", Handle)
             .WithName("RequestFiscalUploadUrl").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.PayablesWrite)
             .Produces<UploadTarget>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

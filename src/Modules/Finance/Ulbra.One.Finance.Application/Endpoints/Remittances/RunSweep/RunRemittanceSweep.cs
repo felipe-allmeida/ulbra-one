@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Finance.Application.Remittances;
 
 namespace Ulbra.One.Finance.Application.Endpoints.Remittances.RunSweep;
@@ -12,7 +13,7 @@ public sealed class RunRemittanceSweep : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("sweep", Handle)
-            .WithName("RunRemittanceSweep").WithTags("Finance").RequireAuthorization()
+            .WithName("RunRemittanceSweep").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .Produces<RemittanceSweepResult>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(

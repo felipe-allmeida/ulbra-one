@@ -18,7 +18,7 @@ public sealed class RejectPayable : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/reject", Handle).WithName("RejectPayable").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesApprove).Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(PayableId id, RejectRequest req, UserContext user,

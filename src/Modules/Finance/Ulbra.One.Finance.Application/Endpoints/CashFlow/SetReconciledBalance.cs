@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
@@ -19,7 +20,7 @@ public sealed class SetReconciledBalance : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{id}/reconciled-balance", Handle).WithName("SetReconciledBalance").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryWrite)
             .Produces<SetReconciledBalanceResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

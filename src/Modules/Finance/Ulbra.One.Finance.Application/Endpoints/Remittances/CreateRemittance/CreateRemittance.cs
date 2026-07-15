@@ -19,7 +19,7 @@ public sealed class CreateRemittance : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("", Handle)
-            .WithName("CreateRemittance").WithTags("Finance").RequireAuthorization()
+            .WithName("CreateRemittance").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .Produces<CreateRemittanceResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);

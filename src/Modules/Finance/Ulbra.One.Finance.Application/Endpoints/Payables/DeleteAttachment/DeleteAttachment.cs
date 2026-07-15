@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
@@ -16,7 +17,7 @@ public sealed class DeleteAttachment : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapDelete("/{id}/attachments/{attachmentId}", Handle)
             .WithName("DeletePayableAttachment").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.PayablesWrite)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 

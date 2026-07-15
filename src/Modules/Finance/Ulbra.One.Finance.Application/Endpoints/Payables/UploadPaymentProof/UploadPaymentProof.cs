@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Validation;
@@ -20,7 +21,7 @@ public sealed class UploadPaymentProof : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/payments/{paymentId}/proof", Handle)
             .WithName("UploadPaymentProof").WithTags("Finance")
-            .RequireAuthorization().DisableAntiforgery()
+            .RequirePermission(Permissions.PayablesPay).DisableAntiforgery()
             .Produces<PaymentResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

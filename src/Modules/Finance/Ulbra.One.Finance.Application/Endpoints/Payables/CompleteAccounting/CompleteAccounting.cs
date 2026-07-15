@@ -23,7 +23,7 @@ public sealed class CompleteAccounting : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/accounting/confirm", Handle).WithName("CompletePayableAccounting").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesWrite).Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 

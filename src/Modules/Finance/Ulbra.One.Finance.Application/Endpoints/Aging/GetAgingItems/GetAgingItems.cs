@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Aging;
@@ -17,7 +18,7 @@ public sealed class GetAgingItems : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/items", Handle).WithName("GetAgingItems").WithTags("Finance")
-            .RequireAuthorization().Produces<List<AgingItemResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.PayablesRead).Produces<List<AgingItemResponse>>(StatusCodes.Status200OK);
 
     private const int DefaultLimit = 200;
     private const int MaxLimit = 500;

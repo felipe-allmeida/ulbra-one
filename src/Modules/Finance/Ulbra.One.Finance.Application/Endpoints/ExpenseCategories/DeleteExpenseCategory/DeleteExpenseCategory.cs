@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
@@ -14,7 +15,7 @@ public sealed class DeleteExpenseCategory : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapDelete("/{id}", Handle).WithName("DeleteExpenseCategory").WithTags("Finance")
-            .RequireAuthorization().Produces(StatusCodes.Status204NoContent)
+            .RequirePermission(Permissions.PayablesWrite).Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(

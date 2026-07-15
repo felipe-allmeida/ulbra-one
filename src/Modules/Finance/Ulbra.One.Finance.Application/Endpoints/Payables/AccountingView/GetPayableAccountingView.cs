@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -18,7 +19,7 @@ public sealed class GetPayableAccountingView : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}/accounting-view", Handle).WithName("GetPayableAccountingView").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableAccountingViewResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesRead).Produces<PayableAccountingViewResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, IUnitOfWork uow, CancellationToken ct)

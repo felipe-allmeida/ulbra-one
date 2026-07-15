@@ -19,7 +19,7 @@ public sealed class GetPayable : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}", Handle).WithName("GetPayable").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesRead).Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, IUnitOfWork uow, IUserDirectory users, CancellationToken ct)
