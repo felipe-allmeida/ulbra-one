@@ -146,7 +146,8 @@ function JournalEntryForm({
         <Input {...register('description')} />
       </Field>
 
-      <table className='journal-lines'>
+      <div className='drawer-table-scroll'>
+        <table className='journal-lines'>
         <thead>
           <tr>
             <th>{t('accounting.journal.fields.account')}</th>
@@ -214,7 +215,8 @@ function JournalEntryForm({
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       <Button
         type='button'
@@ -272,7 +274,8 @@ function JournalEntryDetail({ entry, accounts }: { entry: JournalEntry; accounts
       {entry.reversalOfEntryId && (
         <p className='help'>{t('accounting.journal.reversalOf', { number: entry.number ?? '—' })}</p>
       )}
-      <table>
+      <div className='drawer-table-scroll'>
+        <table>
         <thead>
           <tr>
             <th>{t('accounting.journal.fields.account')}</th>
@@ -304,7 +307,8 @@ function JournalEntryDetail({ entry, accounts }: { entry: JournalEntry; accounts
             </td>
           </tr>
         </tfoot>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

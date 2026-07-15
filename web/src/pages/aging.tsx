@@ -53,6 +53,7 @@ function DrillDrawer({
           <div className='t'>{t('aging.drill.empty')}</div>
         </div>
       ) : (
+        <div className='drawer-table-scroll'>
         <table>
           <thead>
             <tr>
@@ -85,6 +86,7 @@ function DrillDrawer({
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </Drawer>
   );

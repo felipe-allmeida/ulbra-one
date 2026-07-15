@@ -36,7 +36,8 @@ export function AssessmentDrillDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('fiscal.obrigacoes.drillTitle')} sub={drill.title}>
-      <table>
+      <div className='drawer-table-scroll'>
+        <table>
         <thead>
           <tr>
             <th>{t('fiscal.obrigacoes.columns.supplier')}</th>
@@ -72,6 +73,7 @@ export function AssessmentDrillDrawer({
           </tr>
         </tfoot>
       </table>
+      </div>
     </Drawer>
   );
 }

@@ -349,6 +349,7 @@ function DrillDrawer({
           <div className='t'>{t('cashFlow.drill.empty')}</div>
         </div>
       ) : (
+        <div className='drawer-table-scroll'>
         <table>
           <thead>
             <tr>
@@ -381,6 +382,7 @@ function DrillDrawer({
             </tr>
           </tfoot>
         </table>
+        </div>
       )}
     </Drawer>
   );
