@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { HandCoins } from 'lucide-react';
 import { type ReceivableListItem } from '../../api';
 import { useReceivables, useReceivable } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { brl } from '../../lib';
 import { Panel, Button, Drawer, EmptyState } from '../../ui';
 import { fmtDate } from '../../datetime';
@@ -19,6 +20,8 @@ const GROUP_LABEL: Record<string, string> = {
 
 export function AReceberTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canReceive = can(P.receivablesReceive);
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
   const list = useReceivables({ companyId, status: 'AwaitingReceipt', page }, { enabled: !!companyId });
@@ -75,7 +78,7 @@ export function AReceberTab({ companyId }: { companyId: string }) {
                     <ReceivableInstallmentStatusBadge s={l.installmentStatus} />
                   </td>
                   <td>
-                    {l.installmentStatus !== 'Received' && (
+                    {canReceive && l.installmentStatus !== 'Received' && (
                       <Button icon={<HandCoins />} onClick={() => setBaixa(l)}>
                         {t('receivables.register')}
                       </Button>

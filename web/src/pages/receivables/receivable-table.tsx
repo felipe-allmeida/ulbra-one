@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { HandCoins, Plus } from 'lucide-react';
 import { type ReceivableStageItem } from '../../api';
 import { brl } from '../../lib';
+import { P, usePermissions } from '../../permissions';
 import { Panel, Pager, EmptyState } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { SlaChips } from '../../components/workflow';
@@ -30,6 +31,7 @@ export function ReceivableTable({
 }) {
   const { t } = useTranslation();
   const nav = useNavigate();
+  const { can } = usePermissions();
   const { centroNome } = useNames(companyId);
 
   if (items.length === 0) {
@@ -38,9 +40,11 @@ export function ReceivableTable({
         icon={<HandCoins />}
         title={`${stageLabel} — ${t('receivables.empty.noItemsTitle')}`}
         action={
-          <button className='btn empty-action' onClick={() => nav(`/${companyId}/receivables/new`)}>
-            <Plus /> {t('receivables.new')}
-          </button>
+          can(P.receivablesWrite) ? (
+            <button className='btn empty-action' onClick={() => nav(`/${companyId}/receivables/new`)}>
+              <Plus /> {t('receivables.new')}
+            </button>
+          ) : undefined
         }
       />
     );

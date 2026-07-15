@@ -50,6 +50,7 @@ vi.mock('../queries', async (orig) => {
   });
   return {
     ...actual,
+    useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
     useBankAccounts: () => ({ data: [], isLoading: false }),
     useSaveBankAccount: mockSaveBankAccount,
     useDeleteBankAccount: noopMut,

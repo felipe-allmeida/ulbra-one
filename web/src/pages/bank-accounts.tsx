@@ -19,6 +19,7 @@ import {
   Combobox,
   type ComboboxItem,
 } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { EmpresaPicker } from './shared';
 import { resolver, fieldError, bankAccountSchema, PAYMENT_METHODS, type BankAccountValues } from './schemas';
 
@@ -278,6 +279,7 @@ function BankAccountForm({
 export function BankAccountsPage() {
   const { t } = useTranslation();
   const { empresa, empresaId } = useApp();
+  const { can } = usePermissions();
   const list = useBankAccounts(empresaId, true);
   const contas = list.data ?? [];
 
@@ -335,9 +337,11 @@ export function BankAccountsPage() {
     <>
       <PageHeader title={t('bankAccounts.title')} sub={t('bankAccounts.subtitle')}>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={openCreate}>
-          {t('bankAccounts.new')}
-        </Button>
+        {can(P.treasuryWrite) && (
+          <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={openCreate}>
+            {t('bankAccounts.new')}
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (
@@ -382,23 +386,25 @@ export function BankAccountsPage() {
                     </span>
                   </td>
                   <td className='td-action'>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      <Button icon={<Pencil />} onClick={() => openEdit(c)}>
-                        {t('bankAccounts.edit')}
-                      </Button>
-                      <Button onClick={() => toggleActive(c)}>
-                        {c.active ? t('bankAccounts.deactivate') : t('bankAccounts.activate')}
-                      </Button>
-                      <Button
-                        icon={<Trash2 />}
-                        onClick={() => {
-                          setDeleteErr(null);
-                          setToDelete(c);
-                        }}
-                      >
-                        {t('bankAccounts.delete')}
-                      </Button>
-                    </div>
+                    {can(P.treasuryWrite) && (
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <Button icon={<Pencil />} onClick={() => openEdit(c)}>
+                          {t('bankAccounts.edit')}
+                        </Button>
+                        <Button onClick={() => toggleActive(c)}>
+                          {c.active ? t('bankAccounts.deactivate') : t('bankAccounts.activate')}
+                        </Button>
+                        <Button
+                          icon={<Trash2 />}
+                          onClick={() => {
+                            setDeleteErr(null);
+                            setToDelete(c);
+                          }}
+                        >
+                          {t('bankAccounts.delete')}
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

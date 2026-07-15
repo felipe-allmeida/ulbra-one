@@ -13,6 +13,7 @@ vi.mock('../../queries', () => ({
   useReceivableAuditTrail: mockUseAudit,
   useCancelReceivable: () => ({ mutate: vi.fn() }),
   useCostCenters: () => ({ data: [] }),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
 }));
 
 import { ReceivableDetailPage } from './detail';

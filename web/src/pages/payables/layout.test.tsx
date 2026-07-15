@@ -14,6 +14,7 @@ vi.mock('../shared', () => ({ EmpresaPicker: () => <div data-testid='empresa-pic
 vi.mock('../../queries', () => ({
   usePayableStageSummary: mockUseStageSummary,
   usePayableStageItems: mockUsePayableStageItems,
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
 }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
 

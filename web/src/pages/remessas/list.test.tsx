@@ -42,6 +42,7 @@ vi.mock('../../queries', () => ({
   useCreateRemittance: () => ({ mutate: vi.fn(), isPending: false }),
   useBankAccounts: () => ({ data: [] }),
   useCompanies: () => ({ data: [{ id: 'c1', legalName: 'Empresa Teste' }] }),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
 }));
 
 vi.mock('../../store', () => ({

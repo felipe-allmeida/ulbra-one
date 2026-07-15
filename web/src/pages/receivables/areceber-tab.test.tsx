@@ -4,7 +4,11 @@ import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
 const { mockUseReceivables } = vi.hoisted(() => ({ mockUseReceivables: vi.fn() }));
-vi.mock('../../queries', () => ({ useReceivables: mockUseReceivables, useReceivable: vi.fn() }));
+vi.mock('../../queries', () => ({
+  useReceivables: mockUseReceivables,
+  useReceivable: vi.fn(),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
+}));
 
 import { AReceberTab } from './areceber-tab';
 

@@ -17,6 +17,7 @@ vi.mock('../../queries', () => ({
   useReceivables: mockUseReceivables,
   useReceivableStageItems: mockUseReceivableStageItems,
   useReceivable: vi.fn(),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
 }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {} }) }));
 
