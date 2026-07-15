@@ -349,38 +349,40 @@ function DrillDrawer({
           <div className='t'>{t('cashFlow.drill.empty')}</div>
         </div>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>{t('cashFlow.drill.counterparty')}</th>
-              <th>{t('cashFlow.drill.document')}</th>
-              <th>{t('cashFlow.drill.dueDate')}</th>
-              <th style={{ textAlign: 'right' }}>{t('cashFlow.drill.amount')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((it) => (
-              <tr key={it.installmentId}>
-                <td>{it.counterpartyName || '—'}</td>
-                <td>{it.documentNumber || '—'}</td>
-                <td className='t-mono'>{fmtDate(it.dueDate)}</td>
-                <td className='amount-cell' style={{ textAlign: 'right' }}>
-                  {brl(it.amount)}
+        <div className='drawer-table-scroll'>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('cashFlow.drill.counterparty')}</th>
+                <th>{t('cashFlow.drill.document')}</th>
+                <th>{t('cashFlow.drill.dueDate')}</th>
+                <th style={{ textAlign: 'right' }}>{t('cashFlow.drill.amount')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((it) => (
+                <tr key={it.installmentId}>
+                  <td>{it.counterpartyName || '—'}</td>
+                  <td>{it.documentNumber || '—'}</td>
+                  <td className='t-mono'>{fmtDate(it.dueDate)}</td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    {brl(it.amount)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={3} style={{ fontWeight: 600 }}>
+                  {t('cashFlow.drill.total')}
+                </td>
+                <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                  {brl(total)}
                 </td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={3} style={{ fontWeight: 600 }}>
-                {t('cashFlow.drill.total')}
-              </td>
-              <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
-                {brl(total)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </table>
+        </div>
       )}
     </Drawer>
   );

@@ -1605,6 +1605,9 @@ tfoot td {
 }
 .drawer-body {
   flex: 1;
+  /* Set overflow-x explicitly: with only overflow-y:auto it computes to auto, so any too-wide child
+     adds a stray horizontal scrollbar to the whole drawer. Wide tables get their own local scroll. */
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 20px 22px;
   display: flex;
@@ -1623,6 +1626,11 @@ tfoot td {
   .drawer {
     width: 100% !important;
   }
+}
+/* Local scroll for wide tables inside a drawer, so they scroll here instead of being clipped by
+   the drawer-body overflow-x guard (which would silently hide nowrap money/badge columns). */
+.drawer-table-scroll {
+  overflow-x: auto;
 }
 
 /* ===== COMBOBOX (searchable single-select) ===== */
@@ -2894,8 +2902,13 @@ tfoot td {
 }
 
 /* ===== Accounting (núcleo contábil) ===== */
+/* Fixed layout + proportional columns so the row of controls fits the drawer instead of spilling
+   sideways; min-width keeps it usable and scrolls locally (.drawer-table-scroll) on narrow screens. */
 .journal-lines {
   margin: 14px 0 8px;
+  width: 100%;
+  table-layout: fixed;
+  min-width: 600px;
 }
 .journal-lines th {
   font-size: 11px;
@@ -2907,8 +2920,28 @@ tfoot td {
   vertical-align: top;
   padding: 4px 6px;
 }
-.journal-lines td:first-child {
-  min-width: 220px;
+/* Neutralize the global 220px min-widths so the controls shrink into their column (as .form-grid does). */
+.journal-lines .combobox-trigger,
+.journal-lines .select,
+.journal-lines .input {
+  min-width: 0;
+  width: 100%;
+}
+.journal-lines th:nth-child(2),
+.journal-lines td:nth-child(2) {
+  width: 15%;
+}
+.journal-lines th:nth-child(3),
+.journal-lines td:nth-child(3) {
+  width: 16%;
+}
+.journal-lines th:nth-child(4),
+.journal-lines td:nth-child(4) {
+  width: 26%;
+}
+.journal-lines th:last-child,
+.journal-lines td:last-child {
+  width: 44px;
 }
 .journal-totals {
   display: flex;
