@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Registry.Application.Lookups;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Lookup.LookupCep;
@@ -13,7 +14,7 @@ public sealed class LookupCep : IEndpoint
         builder.MapGet("/cep/{cep}", Handle)
             .WithName("LookupCep")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryRead)
             .Produces<CepResult>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
     }

@@ -36,8 +36,12 @@ import { RemessasPage } from './pages/remessas/list';
 import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 import { ReceivablesLayout, ReceivableDetailPage, NewReceivablePage, EditReceivablePage } from './pages/receivables';
 import { PendenciesPage } from './pages/pendencies';
+import { RoleGate, RequirePermission, RoleLanding } from './auth-guards';
+import { P, type Permission } from './permissions';
 
 export default function App() {
+  // Guarda de rota: renderiza a página só se o cargo tiver alguma das permissões (Admin passa).
+  const g = (el: ReactNode, anyOf: Permission[]) => <RequirePermission anyOf={anyOf}>{el}</RequirePermission>;
   return (
     <Routes>
       <Route path='/' element={<LandingPage />} />
@@ -46,38 +50,40 @@ export default function App() {
         path='/app'
         element={
           <RequireAuth>
-            <AppLayout />
+            <RoleGate>
+              <AppLayout />
+            </RoleGate>
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to='home' replace />} />
+        <Route index element={<RoleLanding />} />
         <Route path='home' element={<DashboardPage />} />
         <Route path='payables' element={<PayablesLayout />} />
-        <Route path='payables/new' element={<NewPayablePage />} />
+        <Route path='payables/new' element={g(<NewPayablePage />, [P.payablesWrite])} />
         <Route path='payables/:id' element={<PayableDetailPage />} />
-        <Route path='payables/:id/edit' element={<EditPayablePage />} />
+        <Route path='payables/:id/edit' element={g(<EditPayablePage />, [P.payablesWrite])} />
         <Route path='receivables' element={<ReceivablesLayout />} />
-        <Route path='receivables/new' element={<NewReceivablePage />} />
+        <Route path='receivables/new' element={g(<NewReceivablePage />, [P.receivablesWrite])} />
         <Route path='receivables/:id' element={<ReceivableDetailPage />} />
-        <Route path='receivables/:id/edit' element={<EditReceivablePage />} />
+        <Route path='receivables/:id/edit' element={g(<EditReceivablePage />, [P.receivablesWrite])} />
         <Route path='expense-categories' element={<ExpenseCategoriesPage />} />
         <Route path='retention-rules' element={<RegrasRetencaoPage />} />
-        <Route path='bank-accounts' element={<BankAccountsPage />} />
-        <Route path='remittances' element={<RemessasPage />} />
-        <Route path='accounting/chart-of-accounts' element={<ContabilPlanoPage />} />
-        <Route path='accounting/journal-entries' element={<ContabilLancamentosPage />} />
-        <Route path='accounting/journal-book' element={<LivroDiarioPage />} />
+        <Route path='bank-accounts' element={g(<BankAccountsPage />, [P.treasuryRead])} />
+        <Route path='remittances' element={g(<RemessasPage />, [P.treasuryRead])} />
+        <Route path='accounting/chart-of-accounts' element={g(<ContabilPlanoPage />, [P.accountingRead])} />
+        <Route path='accounting/journal-entries' element={g(<ContabilLancamentosPage />, [P.accountingRead])} />
+        <Route path='accounting/journal-book' element={g(<LivroDiarioPage />, [P.accountingRead])} />
         <Route path='accounting/trial-balance' element={<ContabilBalancetePage />} />
         <Route path='accounting/income-statement' element={<ContabilDrePage />} />
         <Route path='accounting/balance-sheet' element={<ContabilBalancoPage />} />
         <Route path='accounting/withholdings' element={<RetencoesPage />} />
-        <Route path='fiscal/obrigacoes' element={<ObrigacoesPage />} />
-        <Route path='accounting/pending' element={<ContabilPendentesPage />} />
-        <Route path='accounting/expense-recording' element={<ContabilDespesasPage />} />
-        <Route path='accounting/classification' element={<ClassificacaoPage />} />
-        <Route path='reconciliation' element={<ConciliacaoPage />} />
+        <Route path='fiscal/obrigacoes' element={g(<ObrigacoesPage />, [P.fiscalRead])} />
+        <Route path='accounting/pending' element={g(<ContabilPendentesPage />, [P.accountingRead])} />
+        <Route path='accounting/expense-recording' element={g(<ContabilDespesasPage />, [P.accountingRead])} />
+        <Route path='accounting/classification' element={g(<ClassificacaoPage />, [P.accountingRead])} />
+        <Route path='reconciliation' element={g(<ConciliacaoPage />, [P.treasuryRead])} />
         <Route path='aging' element={<AgingPage />} />
-        <Route path='cash-flow' element={<CashFlowPage />} />
+        <Route path='cash-flow' element={g(<CashFlowPage />, [P.treasuryRead])} />
         <Route path='accounts-payable' element={<LancamentosPage tipo='Payable' />} />
         <Route path='accounts-receivable' element={<LancamentosPage tipo='Receivable' />} />
         <Route path='pendencies' element={<PendenciesPage />} />

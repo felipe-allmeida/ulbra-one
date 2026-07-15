@@ -98,18 +98,33 @@ export const NAV_DOMAINS: NavDomain[] = [
       {
         labelKey: 'nav.subgroups.operation',
         items: [
-          { labelKey: 'nav.accountsPayable', to: '/app/payables', icon: <ArrowUpRight /> },
-          { labelKey: 'nav.accountsReceivable', to: '/app/receivables', icon: <ArrowDownLeft /> },
-          { labelKey: 'nav.pendencies', to: '/app/pendencies', icon: <ClipboardCheck /> },
-          { labelKey: 'nav.conciliacao', to: '/app/reconciliation', icon: <ArrowLeftRight /> },
-          { labelKey: 'nav.remittances', to: '/app/remittances', icon: <SendHorizonal /> },
+          { labelKey: 'nav.accountsPayable', to: '/app/payables', requires: [P.payablesRead], icon: <ArrowUpRight /> },
+          {
+            labelKey: 'nav.accountsReceivable',
+            to: '/app/receivables',
+            requires: [P.receivablesRead],
+            icon: <ArrowDownLeft />,
+          },
+          {
+            labelKey: 'nav.pendencies',
+            to: '/app/pendencies',
+            requires: [P.payablesApprove, P.treasuryApprove],
+            icon: <ClipboardCheck />,
+          },
+          {
+            labelKey: 'nav.conciliacao',
+            to: '/app/reconciliation',
+            requires: [P.treasuryRead],
+            icon: <ArrowLeftRight />,
+          },
+          { labelKey: 'nav.remittances', to: '/app/remittances', requires: [P.treasuryRead], icon: <SendHorizonal /> },
         ],
       },
       {
         labelKey: 'nav.subgroups.analysis',
         items: [
-          { labelKey: 'nav.cashFlow', to: '/app/cash-flow', icon: <Activity /> },
-          { labelKey: 'nav.aging', to: '/app/aging', icon: <CalendarClock /> },
+          { labelKey: 'nav.cashFlow', to: '/app/cash-flow', requires: [P.treasuryRead], icon: <Activity /> },
+          { labelKey: 'nav.aging', to: '/app/aging', requires: [P.payablesRead], icon: <CalendarClock /> },
           { labelKey: 'nav.projections', icon: <LineChart />, soon: true },
           { labelKey: 'nav.reports', icon: <FileText />, soon: true },
           { labelKey: 'nav.documents', icon: <FileBox />, soon: true },
@@ -121,32 +136,82 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'accounting',
     icon: <BookText />,
     labelKey: 'nav.domains.accounting',
-    requires: [P.accountingRead, P.reportsRead],
+    requires: [P.accountingRead],
     groups: [
       {
         labelKey: 'nav.subgroups.movement',
         items: [
-          { labelKey: 'nav.expenseRecording', to: '/app/accounting/expense-recording', icon: <Calculator /> },
-          { labelKey: 'nav.journalEntries', to: '/app/accounting/journal-entries', icon: <BookOpen /> },
-          { labelKey: 'nav.pendingPostings', to: '/app/accounting/pending', icon: <ClipboardCheck /> },
+          {
+            labelKey: 'nav.expenseRecording',
+            to: '/app/accounting/expense-recording',
+            requires: [P.accountingWrite],
+            icon: <Calculator />,
+          },
+          {
+            labelKey: 'nav.journalEntries',
+            to: '/app/accounting/journal-entries',
+            requires: [P.accountingRead],
+            icon: <BookOpen />,
+          },
+          {
+            labelKey: 'nav.pendingPostings',
+            to: '/app/accounting/pending',
+            requires: [P.accountingRead],
+            icon: <ClipboardCheck />,
+          },
         ],
       },
       {
         labelKey: 'nav.subgroups.statements',
         items: [
-          { labelKey: 'nav.journalBook', to: '/app/accounting/journal-book', icon: <BookOpen /> },
-          { labelKey: 'nav.trialBalance', to: '/app/accounting/trial-balance', icon: <Scale /> },
-          { labelKey: 'nav.incomeStatement', to: '/app/accounting/income-statement', icon: <LineChart /> },
-          { labelKey: 'nav.balanceSheet', to: '/app/accounting/balance-sheet', icon: <BookText /> },
-          { labelKey: 'nav.withholdings', to: '/app/accounting/withholdings', icon: <Percent /> },
+          {
+            labelKey: 'nav.journalBook',
+            to: '/app/accounting/journal-book',
+            requires: [P.accountingRead],
+            icon: <BookOpen />,
+          },
+          {
+            labelKey: 'nav.trialBalance',
+            to: '/app/accounting/trial-balance',
+            requires: [P.accountingRead, P.reportsRead],
+            icon: <Scale />,
+          },
+          {
+            labelKey: 'nav.incomeStatement',
+            to: '/app/accounting/income-statement',
+            requires: [P.accountingRead, P.reportsRead],
+            icon: <LineChart />,
+          },
+          {
+            labelKey: 'nav.balanceSheet',
+            to: '/app/accounting/balance-sheet',
+            requires: [P.accountingRead, P.reportsRead],
+            icon: <BookText />,
+          },
+          {
+            labelKey: 'nav.withholdings',
+            to: '/app/accounting/withholdings',
+            requires: [P.accountingRead, P.fiscalRead],
+            icon: <Percent />,
+          },
         ],
       },
       {
         labelKey: 'nav.subgroups.configuration',
         items: [
-          { labelKey: 'nav.ledgerAccounts', to: '/app/accounting/chart-of-accounts', icon: <ListTree /> },
-          { labelKey: 'nav.costCenters', to: '/app/accounting/cost-centers', icon: <Target /> },
-          { labelKey: 'nav.classification', to: '/app/accounting/classification', icon: <Tags /> },
+          {
+            labelKey: 'nav.ledgerAccounts',
+            to: '/app/accounting/chart-of-accounts',
+            requires: [P.accountingRead],
+            icon: <ListTree />,
+          },
+          { labelKey: 'nav.costCenters', to: '/app/accounting/cost-centers', requires: [P.coreRead], icon: <Target /> },
+          {
+            labelKey: 'nav.classification',
+            to: '/app/accounting/classification',
+            requires: [P.accountingWrite],
+            icon: <Tags />,
+          },
         ],
       },
     ],
@@ -159,7 +224,9 @@ export const NAV_DOMAINS: NavDomain[] = [
     groups: [
       {
         labelKey: 'nav.subgroups.obligations',
-        items: [{ labelKey: 'nav.obrigacoes', to: '/app/fiscal/obrigacoes', icon: <ScrollText /> }],
+        items: [
+          { labelKey: 'nav.obrigacoes', to: '/app/fiscal/obrigacoes', requires: [P.fiscalRead], icon: <ScrollText /> },
+        ],
       },
     ],
   },
@@ -171,12 +238,17 @@ export const NAV_DOMAINS: NavDomain[] = [
     groups: [
       {
         items: [
-          { labelKey: 'nav.vendors', to: '/app/vendors', icon: <Truck /> },
-          { labelKey: 'nav.customers', to: '/app/customers', icon: <UserSquare /> },
-          { labelKey: 'nav.employees', to: '/app/employees', icon: <Contact /> },
-          { labelKey: 'nav.expenseCategories', to: '/app/expense-categories', icon: <Tag /> },
-          { labelKey: 'nav.retentionRules', to: '/app/retention-rules', icon: <Percent /> },
-          { labelKey: 'nav.bankAccounts', to: '/app/bank-accounts', icon: <Landmark /> },
+          { labelKey: 'nav.vendors', to: '/app/vendors', requires: [P.registryRead], icon: <Truck /> },
+          { labelKey: 'nav.customers', to: '/app/customers', requires: [P.registryRead], icon: <UserSquare /> },
+          { labelKey: 'nav.employees', to: '/app/employees', requires: [P.registryRead], icon: <Contact /> },
+          {
+            labelKey: 'nav.expenseCategories',
+            to: '/app/expense-categories',
+            requires: [P.payablesRead],
+            icon: <Tag />,
+          },
+          { labelKey: 'nav.retentionRules', to: '/app/retention-rules', requires: [P.fiscalRead], icon: <Percent /> },
+          { labelKey: 'nav.bankAccounts', to: '/app/bank-accounts', requires: [P.treasuryRead], icon: <Landmark /> },
         ],
       },
     ],
@@ -186,7 +258,11 @@ export const NAV_DOMAINS: NavDomain[] = [
     icon: <Building2 />,
     labelKey: 'nav.domains.structure',
     requires: [P.coreRead],
-    groups: [{ items: [{ labelKey: 'nav.companiesUnits', to: '/app/structure', icon: <Building2 /> }] }],
+    groups: [
+      {
+        items: [{ labelKey: 'nav.companiesUnits', to: '/app/structure', requires: [P.coreRead], icon: <Building2 /> }],
+      },
+    ],
   },
   {
     key: 'settings',

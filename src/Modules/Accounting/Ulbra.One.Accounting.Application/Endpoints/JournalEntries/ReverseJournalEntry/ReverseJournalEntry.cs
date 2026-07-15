@@ -8,6 +8,7 @@ using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -28,7 +29,7 @@ public sealed class ReverseJournalEntry : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/reverse", Handle).WithName("ReverseJournalEntry").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingPost)
             .Produces<JournalEntryResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)

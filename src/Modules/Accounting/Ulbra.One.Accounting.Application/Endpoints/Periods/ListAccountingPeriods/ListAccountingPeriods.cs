@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -20,7 +21,7 @@ public sealed class ListAccountingPeriods : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("ListAccountingPeriods").WithTags("Accounting")
-            .RequireAuthorization().Produces<List<AccountingPeriodResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.AccountingRead).Produces<List<AccountingPeriodResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow, [AsParameters] ListAccountingPeriodsRequest req, CancellationToken ct)

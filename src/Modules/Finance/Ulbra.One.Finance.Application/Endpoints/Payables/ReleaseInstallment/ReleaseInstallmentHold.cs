@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
@@ -13,7 +14,7 @@ public sealed class ReleaseInstallmentHold : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/installments/{installmentId}/release-hold", Handle)
-            .WithName("ReleaseInstallmentHold").WithTags("Finance").RequireAuthorization()
+            .WithName("ReleaseInstallmentHold").WithTags("Finance").RequirePermission(Permissions.PayablesWrite)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 

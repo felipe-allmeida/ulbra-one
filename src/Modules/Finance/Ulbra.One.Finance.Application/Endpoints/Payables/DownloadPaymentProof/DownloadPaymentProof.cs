@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Domain.Entities;
@@ -15,7 +16,7 @@ public sealed class DownloadPaymentProof : IEndpoint
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}/payments/{paymentId}/proof", Handle)
             .WithName("DownloadPaymentProof").WithTags("Finance")
-            .RequireAuthorization();
+            .RequirePermission(Permissions.PayablesRead);
 
     private static async Task<IResult> Handle(
         PayableId id,

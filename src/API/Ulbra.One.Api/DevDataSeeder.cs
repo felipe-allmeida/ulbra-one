@@ -40,9 +40,9 @@ public static class DevDataSeeder
         var wanted = new (string Email, string Name, string Role)[]
         {
             ("admin@ulbra.local", "Admin (dev)", Roles.Admin),
-            ("financeiro@ulbra.local", "Financeiro (dev)", Roles.Financeiro),
-            ("controladoria@ulbra.local", "Controladoria (dev)", Roles.Controladoria),
-            ("contabil@ulbra.local", "Contábil (dev)", Roles.Contabil),
+            ("financeiro@ulbra.local", "Finance (dev)", Roles.Finance),
+            ("controladoria@ulbra.local", "Controllership (dev)", Roles.Controllership),
+            ("contabil@ulbra.local", "Accounting (dev)", Roles.Accounting),
         };
 
         var emails = wanted.Select(u => u.Email).ToArray();

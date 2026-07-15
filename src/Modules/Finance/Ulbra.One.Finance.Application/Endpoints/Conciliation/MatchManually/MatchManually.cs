@@ -19,7 +19,7 @@ public sealed class MatchManually : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/match", Handle).WithName("MatchManually").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryWrite)
             .Produces<BankTransactionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -18,7 +19,7 @@ public sealed class CreateExpenseCategory : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("", Handle).WithName("CreateExpenseCategory").WithTags("Finance")
-            .RequireAuthorization().WithRequestNormalizer<Request>()
+            .RequirePermission(Permissions.PayablesWrite).WithRequestNormalizer<Request>()
             .Produces<ExpenseCategoryResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

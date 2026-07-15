@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
@@ -16,7 +17,7 @@ public sealed class ListBankTransactions : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("ListBankTransactions").WithTags("Finance")
-            .RequireAuthorization().Produces<PaginatedResponse<BankTransactionResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.TreasuryRead).Produces<PaginatedResponse<BankTransactionResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow,

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Finance.Application.Remittances;
 
@@ -18,7 +19,7 @@ public sealed class ReturnRemittanceLine : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/lines/{lineId}/mark-returned", Handle)
-            .WithName("ReturnRemittanceLine").WithTags("Finance").RequireAuthorization()
+            .WithName("ReturnRemittanceLine").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

@@ -7,6 +7,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Seeding;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -18,7 +19,7 @@ public sealed class SeedLedgerAccounts : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/seed", Handle).WithName("SeedLedgerAccounts").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingWrite)
             .Produces<List<LedgerAccountResponse>>(StatusCodes.Status201Created)
             .Produces<List<LedgerAccountResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);

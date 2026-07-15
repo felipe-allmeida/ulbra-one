@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
 using Ulbra.One.Common.Application.Normalization;
@@ -21,7 +22,7 @@ public sealed class CreateEmployee : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateEmployee")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryWrite)
             .WithRequestNormalizer<EmployeeRequest>()
             .WithValidation<EmployeeRequest>()
             .Produces<EmployeeResponse>(StatusCodes.Status201Created)

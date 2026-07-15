@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Reports;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -22,7 +23,7 @@ public sealed class GetJournalBook : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/journal-book", Handle).WithName("GetJournalBook").WithTags("Accounting")
-            .RequireAuthorization().Produces<JournalBookResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.AccountingRead).Produces<JournalBookResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow, [AsParameters] GetJournalBookRequest req, CancellationToken ct)

@@ -20,7 +20,7 @@ public sealed class UploadAttachment : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/attachments", Handle).WithName("UploadPayableAttachment").WithTags("Finance")
-            .RequireAuthorization().DisableAntiforgery()
+            .RequirePermission(Permissions.PayablesWrite).DisableAntiforgery()
             .Produces<PayableAttachmentResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

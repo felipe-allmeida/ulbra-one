@@ -7,6 +7,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Common.Application.Persistence;
@@ -31,7 +32,7 @@ public sealed class UpdateLedgerAccount : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{id}", Handle).WithName("UpdateLedgerAccount").WithTags("Accounting")
-            .RequireAuthorization().WithRequestNormalizer<Request>()
+            .RequirePermission(Permissions.AccountingWrite).WithRequestNormalizer<Request>()
             .Produces<LedgerAccountResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

@@ -9,7 +9,7 @@ public static class Roles
 {
     public const string Admin = "Admin";
     public const string User = "User";
-    public const string Financeiro = "Financeiro";
-    public const string Controladoria = "Controladoria";
-    public const string Contabil = "Contabil";
+    public const string Finance = "Finance";
+    public const string Controllership = "Controllership";
+    public const string Accounting = "Accounting";
 }

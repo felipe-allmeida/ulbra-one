@@ -36,42 +36,44 @@ export function AssessmentDrillDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('fiscal.obrigacoes.drillTitle')} sub={drill.title}>
-      <table>
-        <thead>
-          <tr>
-            <th>{t('fiscal.obrigacoes.columns.supplier')}</th>
-            <th>{t('fiscal.obrigacoes.columns.document')}</th>
-            <th style={{ textAlign: 'right' }}>{t('fiscal.obrigacoes.columns.withheld')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {byPayable.map((p) => (
-            <tr key={p.payableId}>
-              <td>{p.counterpartyName}</td>
-              <td className='t-mono'>{p.documentNumber ?? '—'}</td>
-              <td className='amount-cell' style={{ textAlign: 'right' }}>
-                {brlCents(p.withheld)}
-              </td>
-              <td>
-                <Link className='linklike' to={`/app/payables/${p.payableId}`}>
-                  {t('fiscal.obrigacoes.openPayable')}
-                </Link>
-              </td>
+      <div className='drawer-table-scroll'>
+        <table>
+          <thead>
+            <tr>
+              <th>{t('fiscal.obrigacoes.columns.supplier')}</th>
+              <th>{t('fiscal.obrigacoes.columns.document')}</th>
+              <th style={{ textAlign: 'right' }}>{t('fiscal.obrigacoes.columns.withheld')}</th>
+              <th />
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td style={{ fontWeight: 600 }}>{t('fiscal.obrigacoes.total')}</td>
-            <td />
-            <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
-              {brlCents(total)}
-            </td>
-            <td />
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {byPayable.map((p) => (
+              <tr key={p.payableId}>
+                <td>{p.counterpartyName}</td>
+                <td className='t-mono'>{p.documentNumber ?? '—'}</td>
+                <td className='amount-cell' style={{ textAlign: 'right' }}>
+                  {brlCents(p.withheld)}
+                </td>
+                <td>
+                  <Link className='linklike' to={`/app/payables/${p.payableId}`}>
+                    {t('fiscal.obrigacoes.openPayable')}
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ fontWeight: 600 }}>{t('fiscal.obrigacoes.total')}</td>
+              <td />
+              <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                {brlCents(total)}
+              </td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </Drawer>
   );
 }

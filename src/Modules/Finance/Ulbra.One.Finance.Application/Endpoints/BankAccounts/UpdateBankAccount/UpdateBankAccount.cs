@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -40,7 +41,7 @@ public sealed class UpdateBankAccount : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{id}", Handle).WithName("UpdateBankAccount").WithTags("Finance")
-            .RequireAuthorization().WithRequestNormalizer<Request>()
+            .RequirePermission(Permissions.TreasuryWrite).WithRequestNormalizer<Request>()
             .Produces<BankAccountResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

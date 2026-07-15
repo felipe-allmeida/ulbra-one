@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -23,7 +24,7 @@ public sealed class ReopenAccountingPeriod : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/reopen", Handle).WithName("ReopenAccountingPeriod").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingPost)
             .Produces<AccountingPeriodResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

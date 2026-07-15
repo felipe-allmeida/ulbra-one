@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Registry.Application.Lookups;
 
 namespace Ulbra.One.Registry.Application.Endpoints.Lookup.LookupCnpj;
@@ -13,7 +14,7 @@ public sealed class LookupCnpj : IEndpoint
         builder.MapGet("/cnpj/{cnpj}", Handle)
             .WithName("LookupCnpj")
             .WithTags("Registry")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.RegistryRead)
             .Produces<CnpjResult>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
     }

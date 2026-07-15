@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -15,7 +16,7 @@ public sealed class GetJournalEntry : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}", Handle).WithName("GetJournalEntry").WithTags("Accounting")
-            .RequireAuthorization().Produces<JournalEntryResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.AccountingRead).Produces<JournalEntryResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(JournalEntryId id, IUnitOfWork uow, CancellationToken ct)

@@ -6,6 +6,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Posting;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -18,7 +19,7 @@ public sealed class ResolvePendingPosting : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/resolve", Handle).WithName("ResolvePendingPosting").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingPost)
             .Produces<PendingAccountingPostingResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

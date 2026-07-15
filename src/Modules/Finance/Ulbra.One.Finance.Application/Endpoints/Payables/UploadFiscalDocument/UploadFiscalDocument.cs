@@ -27,7 +27,7 @@ public sealed class UploadFiscalDocument : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/fiscal-document", Handle).WithName("UploadPayableFiscalDocument").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.PayablesWrite)
             .Produces<FiscalDocumentResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

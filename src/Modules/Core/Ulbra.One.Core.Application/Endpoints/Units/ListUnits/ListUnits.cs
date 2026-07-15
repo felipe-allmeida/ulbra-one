@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Application.Contracts;
@@ -18,7 +19,7 @@ public sealed class ListUnits : IEndpoint
         builder.MapGet("", Handle)
             .WithName("ListUnits")
             .WithTags("Core")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.CoreRead)
             .Produces<List<UnitResponse>>(StatusCodes.Status200OK);
     }
 
