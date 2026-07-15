@@ -30,6 +30,7 @@ import {
   Plug,
   ShieldCheck,
   ScrollText,
+  KeyRound,
 } from 'lucide-react';
 import { P, type Permission } from './permissions';
 
@@ -267,6 +268,12 @@ export const NAV_DOMAINS: NavDomain[] = [
     groups: [
       {
         items: [
+          {
+            labelKey: 'nav.roles',
+            to: '/app/settings/roles',
+            requires: [P.adminUsers],
+            icon: <KeyRound />,
+          },
           { labelKey: 'nav.integrations', icon: <Plug />, soon: true },
           { labelKey: 'nav.audit', icon: <ShieldCheck />, soon: true },
           { labelKey: 'nav.settings', icon: <Settings />, soon: true },

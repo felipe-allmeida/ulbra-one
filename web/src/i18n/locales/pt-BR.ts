@@ -50,6 +50,7 @@ const ptBR = {
     obrigacoes: 'Obrigações acessórias',
     companiesUnits: 'Empresas e unidades',
     integrations: 'Integrações',
+    roles: 'Cargos & permissões',
     settings: 'Configurações',
     hr: 'RH',
     accounting: 'Contábil',

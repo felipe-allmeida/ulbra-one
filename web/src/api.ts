@@ -56,6 +56,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 // ---------- Wire types (aliases to generated OpenAPI schemas) ----------
 // Exported names are kept stable so pages/queries don't need to change.
 export type User = Schemas['UserSummary'];
+
+/** Cargo + suas permissões (endpoints /roles — administração de acessos). */
+export interface AdminRole {
+  id: string;
+  name: string;
+  permissions: string[];
+}
 export type Company = Schemas['CompanyResponse'];
 export type Unit = Schemas['UnitResponse'];
 export type Transaction = Schemas['TransactionResponse'];
@@ -478,6 +485,12 @@ export const api = {
       body: JSON.stringify({ idToken }),
     }),
   me: () => request<Schemas['MeResponse']>('/auth/me'),
+
+  // Administração de acessos (cargos → permissões). Gated por admin:users no back.
+  listRoles: () => request<AdminRole[]>('/roles'),
+  listPermissionCatalog: () => request<string[]>('/permissions'),
+  setRolePermissions: (id: string, permissions: string[]) =>
+    request<AdminRole>(`/roles/${id}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) }),
 
   listCompanies: () => request<Company[]>('/companies'),
   createCompany: (legalName: string, cnpj: string) =>

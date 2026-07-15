@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
+  type AdminRole,
   type AccountGroup,
   type AgingBucket,
   type AiClassificationSuggestion,
@@ -74,6 +75,8 @@ import {
 export const queryKeys = {
   companies: ['companies'] as const,
   me: ['me'] as const,
+  roles: ['roles'] as const,
+  permissionCatalog: ['permissionCatalog'] as const,
   units: (companyId: string) => ['units', companyId] as const,
   costCenters: (companyId: string) => ['costCenters', companyId] as const,
   costCenter: (id: string) => ['costCenter', id] as const,
@@ -259,6 +262,25 @@ export function useCompanies() {
 
 export function useMe() {
   return useQuery({ queryKey: queryKeys.me, queryFn: () => api.me() });
+}
+
+// ---------- Administração de acessos (cargos → permissões) ----------
+export function useRoles() {
+  return useQuery({ queryKey: queryKeys.roles, queryFn: () => api.listRoles() });
+}
+
+export function usePermissionCatalog() {
+  return useQuery({ queryKey: queryKeys.permissionCatalog, queryFn: () => api.listPermissionCatalog() });
+}
+
+export function useSetRolePermissions(
+  options?: UseMutationOptions<AdminRole, unknown, { id: string; permissions: string[] }>,
+) {
+  return useInvalidatingMutation(
+    ({ id, permissions }) => api.setRolePermissions(id, permissions),
+    (qc) => void qc.invalidateQueries({ queryKey: queryKeys.roles }),
+    options,
+  );
 }
 
 export function useUnits(companyId: string) {

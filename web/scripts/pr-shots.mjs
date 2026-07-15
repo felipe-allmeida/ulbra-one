@@ -130,5 +130,78 @@ for (const role of ['Finance', 'Controllership', 'Accounting', 'Admin']) {
   await ctx.close();
 }
 
+// 4) Tela "Cargos & permissões" (Admin) — matriz cargo × permissão.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1360, height: 1000 }, deviceScaleFactor: 2 });
+  await blockExternal(ctx);
+  await ctx.addInitScript(() => localStorage.setItem('ulbra-one.token', 'pr-shots'));
+  await mockApi(ctx, 'Admin');
+  // Rotas específicas registradas por último têm precedência sobre o catch-all `[]`.
+  await ctx.route('**/api/permissions', (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        'core:read',
+        'core:write',
+        'registry:read',
+        'registry:write',
+        'payables:read',
+        'payables:write',
+        'payables:approve',
+        'payables:pay',
+        'receivables:read',
+        'receivables:write',
+        'receivables:receive',
+        'treasury:read',
+        'treasury:write',
+        'treasury:approve',
+        'accounting:read',
+        'accounting:write',
+        'accounting:post',
+        'fiscal:read',
+        'fiscal:write',
+        'reports:read',
+        'admin:users',
+        'audit:read',
+      ]),
+    }),
+  );
+  await ctx.route('**/api/roles', (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'role_admin', name: 'Admin', permissions: [] },
+        {
+          id: 'role_finance',
+          name: 'Finance',
+          permissions: ['payables:read', 'payables:write', 'payables:pay', 'receivables:read', 'treasury:read'],
+        },
+        {
+          id: 'role_controllership',
+          name: 'Controllership',
+          permissions: ['payables:read', 'payables:approve', 'treasury:approve', 'accounting:read', 'audit:read'],
+        },
+        {
+          id: 'role_accounting',
+          name: 'Accounting',
+          permissions: ['accounting:read', 'accounting:write', 'accounting:post', 'fiscal:read'],
+        },
+        { id: 'role_user', name: 'User', permissions: [] },
+      ]),
+    }),
+  );
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/app/settings/roles`, { waitUntil: 'domcontentloaded' });
+  await page
+    .getByText('Matriz de acesso')
+    .waitFor({ timeout: 8000 })
+    .catch(() => {});
+  await page.waitForTimeout(600);
+  await shot(page, '04-cargos-permissoes');
+  await ctx.close();
+}
+
 await browser.close();
 console.log('done →', OUT);
