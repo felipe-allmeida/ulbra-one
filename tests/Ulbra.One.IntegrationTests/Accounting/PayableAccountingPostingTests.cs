@@ -59,7 +59,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], competenceDate: null, costCenterId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var entry = await uow.ReadSet<JournalEntry>()
@@ -103,7 +103,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostSettlementAsync(companyId, sourceKey, 50m, CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, sourceKey, 50m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Settlement resolved → a real entry must exist (not pending).
@@ -148,7 +148,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var posting = scope.ServiceProvider.GetRequiredService<IPayablePostingService>();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownAccountId, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 200m, unknownAccountId, [], competenceDate: null, costCenterId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No journal entry created.
@@ -178,11 +178,11 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], competenceDate: null, costCenterId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Second call with same key — must be idempotent.
-        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 100m, expenseId, [], competenceDate: null, costCenterId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var count = await uow.ReadSet<JournalEntry>()
@@ -203,7 +203,7 @@ public class PayableAccountingPostingTests(PostgresFixture fixture)
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         // Register the settlement entry.
-        await posting.PostSettlementAsync(companyId, paymentKey, 75m, CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, paymentKey, 75m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // Reverse it.

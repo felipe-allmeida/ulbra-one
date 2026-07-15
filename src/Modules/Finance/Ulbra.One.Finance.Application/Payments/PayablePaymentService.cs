@@ -55,9 +55,13 @@ public sealed class PayablePaymentService : IPayablePaymentService
             return Result.Failure<Payable>(Error.Failure("Payment.Overpay",
                 "Payment principal exceeds the installment's outstanding balance."));
 
-        var bankOk = await _uow.ReadSet<BankAccount>()
-            .AnyAsync(b => b.Id == input.BankAccountId && b.CompanyId == payable.CompanyId, ct);
-        if (!bankOk)
+        // Project existence AND the bank's ledger-account link in one read (a plain Guid? projection would
+        // conflate "bank not found" with "found but unmapped").
+        var bank = await _uow.ReadSet<BankAccount>()
+            .Where(b => b.Id == input.BankAccountId && b.CompanyId == payable.CompanyId)
+            .Select(b => new { b.LedgerAccountId })
+            .FirstOrDefaultAsync(ct);
+        if (bank is null)
             return Result.Failure<Payable>(Error.Failure("Payment.BankAccountInvalid",
                 "Bank account is invalid for this company."));
 
@@ -76,7 +80,7 @@ public sealed class PayablePaymentService : IPayablePaymentService
         payable.RecomputeSettlement();
         await _uow.AddAsync(payment, ct);
 
-        await _publish.Publish(new PaymentRegistered(payment.Id, payable.Id, payable.CompanyId, payment.Amount), ct);
+        await _publish.Publish(new PaymentRegistered(payment.Id, payable.Id, payable.CompanyId, payment.Amount, payment.PaymentDate, bank.LedgerAccountId), ct);
 
         return Result.Success(payable);
     }

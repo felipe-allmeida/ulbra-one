@@ -26,6 +26,11 @@ public class BankAccount : IAuditable, ISoftDeletable
     /// <summary>CNAB 240 agreement/convenio code assigned by the bank for this account. Empty string when not configured.</summary>
     public string CnabAgreementCode { get; private set; } = string.Empty;
 
+    /// <summary>Loose reference (no cross-module FK) to the accounting <c>LedgerAccount</c> that represents this bank
+    /// account. Used as the credit account when settling a payable (baixa); null falls back to the configured
+    /// global cash code. Mirrors <c>Payable.AccountingAccountId</c> / <c>Receivable.LedgerAccountId</c>.</summary>
+    public Guid? LedgerAccountId { get; private set; }
+
     public bool IsDefaultForPayments { get; private set; }
     public PaymentMethod? DefaultPaymentMethod { get; private set; }
 
@@ -41,20 +46,20 @@ public class BankAccount : IAuditable, ISoftDeletable
 
     public BankAccount(Guid companyId, string bankCode, string bankName, string agency, string accountNumber,
         string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
-        string cnabAgreementCode = "")
+        string cnabAgreementCode = "", Guid? ledgerAccountId = null)
     {
         CompanyId = companyId;
-        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode);
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode, ledgerAccountId);
     }
 
     public void Update(string bankCode, string bankName, string agency, string accountNumber,
         string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
-        string cnabAgreementCode = "") =>
-        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode);
+        string cnabAgreementCode = "", Guid? ledgerAccountId = null) =>
+        Apply(bankCode, bankName, agency, accountNumber, accountDigit, accountType, alias, openingBalance, cnabAgreementCode, ledgerAccountId);
 
     private void Apply(string bankCode, string bankName, string agency, string accountNumber,
         string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
-        string cnabAgreementCode)
+        string cnabAgreementCode, Guid? ledgerAccountId)
     {
         BankCode = bankCode.Trim();
         BankName = bankName.Trim();
@@ -65,6 +70,7 @@ public class BankAccount : IAuditable, ISoftDeletable
         Alias = alias.Trim();
         OpeningBalance = openingBalance;
         CnabAgreementCode = string.IsNullOrWhiteSpace(cnabAgreementCode) ? "" : cnabAgreementCode.Trim();
+        LedgerAccountId = ledgerAccountId;
     }
 
     /// <summary>Sets the reconciled-balance anchor: the real balance of the account as of a given date.</summary>

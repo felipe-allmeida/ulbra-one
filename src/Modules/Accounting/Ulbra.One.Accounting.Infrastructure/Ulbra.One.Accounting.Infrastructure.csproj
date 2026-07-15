@@ -14,5 +14,6 @@
     <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
     <!-- Event contracts only — plain records, no entity coupling. Finance does NOT reference Accounting. -->
     <ProjectReference Include="../../Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
+    <ProjectReference Include="../../Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
   </ItemGroup>
 </Project>

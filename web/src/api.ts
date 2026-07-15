@@ -256,6 +256,13 @@ export type BalanceSheetLine = Schemas['BalanceSheetLineResponse'];
 export type PendingAccountingPosting = Schemas['PendingAccountingPostingResponse'];
 export type PostingKind = Schemas['PostingKind'];
 
+// ---------- Livro Diário (journal book — read-only view over scriptured entries) ----------
+// Aliases to the generated schemas; the *View names are kept stable for the pages/components.
+export type JournalBookLineView = Schemas['JournalBookLineResponse'];
+export type JournalBookEntryView = Schemas['JournalBookEntryResponse'];
+export type JournalBookDayView = Schemas['JournalBookDayResponse'];
+export type JournalBook = Schemas['JournalBookResponse'];
+
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
 export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
@@ -366,6 +373,8 @@ export interface BankAccountInput {
   isDefaultForPayments?: boolean;
   defaultPaymentMethod?: PaymentMethod | null;
   cnabAgreementCode?: string | null;
+  /** Accounting ledger account for this bank (credit account when settling a payable). Required on create. */
+  ledgerAccountId?: string | null;
 }
 
 /** Request body for updating a bank account (no companyId; `active` toggles status). */
@@ -854,10 +863,7 @@ export const api = {
   // ---------- Classification ----------
   classifyPayable: (id: string, body: { accountingAccountId?: string | null }) =>
     request<Payable>(`/payables/${id}/classify`, { method: 'POST', body: JSON.stringify(body) }),
-  classifyBatch: (body: {
-    payableIds: string[];
-    accountingAccountId?: string | null;
-  }) =>
+  classifyBatch: (body: { payableIds: string[]; accountingAccountId?: string | null }) =>
     request<{ classifiedCount: number }>('/payables/classify-batch', { method: 'POST', body: JSON.stringify(body) }),
   classificationSuggestion: (payableId: string) =>
     request<ClassificationSuggestion>(`/payables/${payableId}/classification-suggestion`),
@@ -993,11 +999,7 @@ export const api = {
   removeEmployee: (id: string) => request<void>(`/employees/${id}`, { method: 'DELETE' }),
 
   // ---------- Accounting: Ledger accounts (plano de contas contábil) ----------
-  listLedgerAccounts: (params: {
-    accountGroup?: AccountGroup;
-    kind?: LedgerAccountKind;
-    activeOnly?: boolean;
-  }) => {
+  listLedgerAccounts: (params: { accountGroup?: AccountGroup; kind?: LedgerAccountKind; activeOnly?: boolean }) => {
     const q = new URLSearchParams();
     if (params.accountGroup) q.set('accountGroup', params.accountGroup);
     if (params.kind) q.set('kind', params.kind);
@@ -1009,8 +1011,7 @@ export const api = {
     request<LedgerAccount>('/ledger-accounts', { method: 'POST', body: JSON.stringify(body) }),
   updateLedgerAccount: (id: string, body: LedgerAccountUpdateInput) =>
     request<LedgerAccount>(`/ledger-accounts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  seedLedgerAccounts: () =>
-    request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST' }),
+  seedLedgerAccounts: () => request<LedgerAccount[]>('/ledger-accounts/seed', { method: 'POST' }),
 
   // ---------- Accounting: Journal entries (lançamentos) ----------
   listJournalEntries: (params: { companyId?: string; status?: JournalStatus; from?: string; to?: string }) => {
@@ -1060,6 +1061,13 @@ export const api = {
     if (params.companyId) q.set('companyId', params.companyId);
     if (params.asOf) q.set('asOf', params.asOf);
     return request<BalanceSheet>(`/accounting/balance-sheet?${q}`);
+  },
+  journalBook: (params: { companyId?: string; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    return request<JournalBook>(`/accounting/journal-book?${q}`);
   },
   withholdingsReport: (companyId?: string) => {
     const q = new URLSearchParams();

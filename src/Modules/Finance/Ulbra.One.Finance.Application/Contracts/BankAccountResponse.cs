@@ -8,10 +8,12 @@ public sealed record BankAccountResponse(
     BankAccountId Id, CompanyId CompanyId, string BankCode, string BankName, string Agency,
     string AccountNumber, string AccountDigit, BankAccountType AccountType, string Alias,
     decimal? OpeningBalance, bool Active,
-    bool IsDefaultForPayments, PaymentMethod? DefaultPaymentMethod, string? CnabAgreementCode)
+    bool IsDefaultForPayments, PaymentMethod? DefaultPaymentMethod, string? CnabAgreementCode,
+    LedgerAccountId? LedgerAccountId)
 {
     public static BankAccountResponse From(BankAccount a) => new(
         new BankAccountId(a.Id), new CompanyId(a.CompanyId), a.BankCode, a.BankName, a.Agency,
         a.AccountNumber, a.AccountDigit, a.AccountType, a.Alias, a.OpeningBalance, a.Active,
-        a.IsDefaultForPayments, a.DefaultPaymentMethod, a.CnabAgreementCode);
+        a.IsDefaultForPayments, a.DefaultPaymentMethod, a.CnabAgreementCode,
+        a.LedgerAccountId is { } lid ? new LedgerAccountId(lid) : null);
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Ulbra.One.Accounting.Application.CostCenters;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -29,6 +30,33 @@ internal static class JournalLineValidation
                 return TypedResults.Problem(detail: $"Ledger account not found.", statusCode: 400, title: "JournalEntry.AccountNotFound");
             if (!account.CanReceiveEntry)
                 return TypedResults.Problem(detail: "Lines may only reference active analytical accounts.", statusCode: 400, title: "JournalEntry.NonPostableAccount");
+        }
+
+        return null;
+    }
+
+    /// <summary>Validates each line's cost center (when present) against Core: it must exist, be active,
+    /// and belong to the entry's company. Returns a Problem on the first violation, else null. Cost center
+    /// is referenced by loose Guid (no FK), so this cross-module check is the integrity guard.</summary>
+    public static async Task<IResult?> ValidateCostCentersAsync(
+        IReadOnlyList<JournalLineInput> lines, Guid companyId, ICostCenterLookup lookup, CancellationToken ct)
+    {
+        var ids = (lines ?? [])
+            .Where(l => l.CostCenterId is not null)
+            .Select(l => l.CostCenterId!.Value.Value)
+            .Distinct()
+            .ToList();
+        if (ids.Count == 0) return null;
+
+        var byId = await lookup.GetAsync(ids, ct);
+        foreach (var id in ids)
+        {
+            if (!byId.TryGetValue(id, out var cc))
+                return TypedResults.Problem(detail: "Cost center not found.", statusCode: 400, title: "JournalEntry.CostCenterNotFound");
+            if (!cc.Active)
+                return TypedResults.Problem(detail: "Cost center is inactive.", statusCode: 400, title: "JournalEntry.CostCenterInactive");
+            if (cc.CompanyId != companyId)
+                return TypedResults.Problem(detail: "Cost center belongs to another company.", statusCode: 400, title: "JournalEntry.CostCenterCompanyMismatch");
         }
 
         return null;

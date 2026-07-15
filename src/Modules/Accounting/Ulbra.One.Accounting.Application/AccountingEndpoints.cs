@@ -12,8 +12,13 @@ using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.ListLedgerAccoun
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.SeedLedgerAccounts;
 using Ulbra.One.Accounting.Application.Endpoints.LedgerAccounts.UpdateLedgerAccount;
 using Ulbra.One.Accounting.Application.Endpoints.PendingPostings.GetPendingPostings;
+using Ulbra.One.Accounting.Application.Endpoints.PendingPostings.ResolvePendingPosting;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.CloseAccountingPeriod;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.ListAccountingPeriods;
+using Ulbra.One.Accounting.Application.Endpoints.Periods.ReopenAccountingPeriod;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetBalanceSheet;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetIncomeStatement;
+using Ulbra.One.Accounting.Application.Endpoints.Reports.GetJournalBook;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetTrialBalance;
 using Ulbra.One.Common.Application.Extensions;
 
@@ -42,9 +47,16 @@ public static class AccountingEndpoints
         reports.MapEndpoint<GetTrialBalance>();
         reports.MapEndpoint<GetIncomeStatement>();
         reports.MapEndpoint<GetBalanceSheet>();
+        reports.MapEndpoint<GetJournalBook>();
 
         var pendingPostings = builder.MapGroup("/accounting/pending-postings");
         pendingPostings.MapEndpoint<GetPendingPostings>();
+        pendingPostings.MapEndpoint<ResolvePendingPosting>();
+
+        var periods = builder.MapGroup("/accounting/periods");
+        periods.MapEndpoint<ListAccountingPeriods>();
+        periods.MapEndpoint<CloseAccountingPeriod>();
+        periods.MapEndpoint<ReopenAccountingPeriod>();
 
         return builder;
     }

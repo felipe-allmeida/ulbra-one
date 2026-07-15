@@ -335,6 +335,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
         var companyId = Guid.Parse(companyPrefixedId[(companyPrefixedId.LastIndexOf('_') + 1)..]);
 
         // Create a non-033 bank account via the HTTP API (isDefaultForPayments = false).
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var bankAccountRes = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
             companyId = companyPrefixedId,
@@ -346,6 +347,7 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
             accountType = "Checking",
             alias = "Conta Itaú",
             isDefaultForPayments = false,
+            ledgerAccountId,
         });
         bankAccountRes.EnsureSuccessStatusCode();
         var bankAccountPrefixedId = (await ReadJson(bankAccountRes)).GetProperty("id").GetString()!;

@@ -71,11 +71,13 @@ public class CashFlowEndpointsTests(PostgresFixture fixture)
 
     private static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string accountNumber, decimal opening)
     {
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var res = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
             companyId, bankCode = "033", bankName = "Banco Santander", agency = "1234",
             accountNumber, accountDigit = "6", accountType = "Checking",
             alias = "Conta " + accountNumber, openingBalance = opening,
+            ledgerAccountId,
         });
         res.EnsureSuccessStatusCode();
         return (await ReadJson(res)).GetProperty("id").GetString()!;

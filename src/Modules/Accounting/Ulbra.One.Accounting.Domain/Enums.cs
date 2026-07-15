@@ -20,3 +20,7 @@ public enum JournalOrigin { Manual, Automatic }
 
 /// <summary>What accounting event a <see cref="PendingAccountingPosting"/> represents.</summary>
 public enum PostingKind { Incurral, Settlement, Reversal }
+
+/// <summary>Lifecycle of an accounting period (competência mensal): Open accepts postings, Closed blocks
+/// them (the closed-period guard), Closing is the transitional state used by the monthly-close routine.</summary>
+public enum AccountingPeriodStatus { Open, Closing, Closed }

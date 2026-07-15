@@ -94,8 +94,12 @@ public static class FinanceSeed
         return (await ReadJson(res)).GetProperty("id").GetString()!;
     }
 
-    public static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string accountNumber)
+    public static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string accountNumber, string? ledgerAccountId = null)
     {
+        // A ledger account is required on create (it is the credit account when settling a payable).
+        // Resolve an analytical account from the global chart (auto-seeded on startup) unless the caller
+        // pinned a specific one.
+        ledgerAccountId ??= await CreateAccountingAccountAsync(client);
         var res = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
             companyId,
@@ -107,6 +111,7 @@ public static class FinanceSeed
             accountType = "Checking",
             alias = "Conta " + accountNumber,
             openingBalance = 1_000_000m,
+            ledgerAccountId,
         });
         res.EnsureSuccessStatusCode();
         return (await ReadJson(res)).GetProperty("id").GetString()!;

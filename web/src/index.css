@@ -2910,6 +2910,11 @@ tfoot td {
   table-layout: fixed;
   min-width: 600px;
 }
+/* Livro Diário: the spanning header row that opens each entry's tbody group. */
+.journal-entry-head {
+  background: var(--surface);
+  font-weight: 500;
+}
 .journal-lines th {
   font-size: 11px;
   text-transform: uppercase;

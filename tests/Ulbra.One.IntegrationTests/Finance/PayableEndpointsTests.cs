@@ -723,6 +723,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
         var seed = await SeedAsync(client);
 
         // Seed a bank account for the company.
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var bankRes = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
             companyId = seed.CompanyId,
@@ -733,6 +734,7 @@ public class PayableEndpointsTests(PostgresFixture fixture)
             accountDigit = "7",
             accountType = "Checking",
             alias = "Conta Pagamentos",
+            ledgerAccountId,
         });
         bankRes.EnsureSuccessStatusCode();
         var bankId = (await ReadJson(bankRes)).GetProperty("id").GetString()!;

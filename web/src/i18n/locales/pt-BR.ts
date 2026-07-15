@@ -43,6 +43,7 @@ const ptBR = {
     pendingPostings: 'Pendentes de contabilização',
     expenseRecording: 'Registro de Despesa',
     remittances: 'Remessas CNAB240',
+    journalBook: 'Livro Diário',
     trialBalance: 'Balancete',
     incomeStatement: 'DRE',
     balanceSheet: 'Balanço Patrimonial',
@@ -1011,6 +1012,23 @@ const ptBR = {
         sub: 'Todos os lançamentos contábeis foram processados com sucesso.',
       },
     },
+    journalBook: {
+      title: 'Livro Diário',
+      subtitle: 'Lançamentos escriturados em ordem cronológica (competência → número).',
+      columns: {
+        account: 'Conta',
+        debit: 'Débito',
+        credit: 'Crédito',
+      },
+      entry: 'Lançamento',
+      reversed: 'Estornado',
+      dayTotal: 'Total do dia',
+      grandTotal: 'Total do período',
+      empty: {
+        title: 'Sem lançamentos no período',
+        sub: 'Selecione a empresa e ajuste o intervalo de competência.',
+      },
+    },
     trialBalance: {
       title: 'Balancete',
       subtitle: 'Saldos por conta — débitos, créditos e saldo.',
@@ -1124,6 +1142,10 @@ const ptBR = {
       cnabAgreementCode: 'Código de convênio CNAB (opcional)',
       cnabAgreementCodeHelp:
         'Número que o banco (ex.: Santander) fornece ao contratar o serviço de Pagamento a Fornecedores. Só é necessário para gerar a remessa CNAB desta conta — peça ao seu gerente PJ ou consulte o internet banking da empresa.',
+      ledgerAccount: 'Conta contábil',
+      ledgerAccountHelp:
+        'Conta do plano de contas que representa este banco. É a conta creditada no lançamento contábil quando um título é pago por esta conta bancária (no Livro Diário/Razão).',
+      ledgerAccountRequired: 'Selecione a conta contábil desta conta bancária.',
     },
     placeholders: {
       bankName: 'ex.: Banco do Brasil',

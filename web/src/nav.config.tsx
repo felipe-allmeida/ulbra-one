@@ -166,6 +166,12 @@ export const NAV_DOMAINS: NavDomain[] = [
         labelKey: 'nav.subgroups.statements',
         items: [
           {
+            labelKey: 'nav.journalBook',
+            to: '/app/accounting/journal-book',
+            requires: [P.accountingRead],
+            icon: <BookOpen />,
+          },
+          {
             labelKey: 'nav.trialBalance',
             to: '/app/accounting/trial-balance',
             requires: [P.accountingRead, P.reportsRead],

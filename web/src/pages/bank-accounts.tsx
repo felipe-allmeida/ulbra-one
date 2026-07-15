@@ -4,9 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Landmark, Pencil, Trash2 } from 'lucide-react';
 import { type BankAccount, type BankAccountInput, type BankAccountUpdateInput, type PaymentMethod } from '../api';
 import { useApp } from '../store';
-import { useBankAccounts, useDeleteBankAccount, useSaveBankAccount } from '../queries';
+import { useBankAccounts, useDeleteBankAccount, useLedgerAccounts, useSaveBankAccount } from '../queries';
 import { getErrorMessage } from '../apiError';
-import { Button, Input, Select, Field, PageHeader, Panel, EmptyState, Drawer, ConfirmDialog } from '../ui';
+import {
+  Button,
+  Input,
+  Select,
+  Field,
+  PageHeader,
+  Panel,
+  EmptyState,
+  Drawer,
+  ConfirmDialog,
+  Combobox,
+  type ComboboxItem,
+} from '../ui';
 import { P, usePermissions } from '../permissions';
 import { EmpresaPicker } from './shared';
 import { resolver, fieldError, bankAccountSchema, PAYMENT_METHODS, type BankAccountValues } from './schemas';
@@ -39,9 +51,16 @@ function BankAccountForm({
       isDefaultForPayments: initial?.isDefaultForPayments ?? false,
       defaultPaymentMethod: initial?.defaultPaymentMethod ?? null,
       cnabAgreementCode: initial?.cnabAgreementCode ?? '',
+      ledgerAccountId: initial?.ledgerAccountId ?? null,
     },
   });
   const isDefault = watch('isDefaultForPayments');
+  // Only analytical, active accounts can receive a posting; mirrors the payable classification picker.
+  const ledgerAccounts = useLedgerAccounts({ kind: 'Analytical', activeOnly: true }).data ?? [];
+  const ledgerItems: ComboboxItem[] = ledgerAccounts.map((a) => ({ id: a.id, label: a.name, sub: a.code }));
+  const ledgerAccountId = watch('ledgerAccountId');
+  // Required on create (UI gate); optional when editing an existing account.
+  const ledgerMissingOnCreate = !initial && !ledgerAccountId;
 
   const save = useSaveBankAccount({ onSuccess: () => onSaved() });
   const erro = save.error ? getErrorMessage(save.error) : null;
@@ -66,6 +85,7 @@ function BankAccountForm({
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
         cnabAgreementCode,
+        ledgerAccountId: v.ledgerAccountId,
       };
       save.mutate({ id: initial.id, update: body });
     } else {
@@ -82,6 +102,7 @@ function BankAccountForm({
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
         cnabAgreementCode,
+        ledgerAccountId: v.ledgerAccountId,
       };
       save.mutate({ create: body });
     }
@@ -182,6 +203,16 @@ function BankAccountForm({
         </Field>
       </div>
       <div style={{ marginTop: 14 }}>
+        <Field label={t('bankAccounts.fields.ledgerAccount')} help={t('bankAccounts.fields.ledgerAccountHelp')}>
+          <Controller
+            control={control}
+            name='ledgerAccountId'
+            render={({ field }) => <Combobox value={field.value} onChange={field.onChange} items={ledgerItems} />}
+          />
+          {ledgerMissingOnCreate && <div className='field-err'>{t('bankAccounts.fields.ledgerAccountRequired')}</div>}
+        </Field>
+      </div>
+      <div style={{ marginTop: 14 }}>
         <Controller
           control={control}
           name='isDefaultForPayments'
@@ -233,7 +264,7 @@ function BankAccountForm({
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-        <Button type='submit' variant='brand' disabled={!formState.isValid || save.isPending}>
+        <Button type='submit' variant='brand' disabled={!formState.isValid || save.isPending || ledgerMissingOnCreate}>
           {save.isPending ? t('forms.actions.saving') : t('forms.actions.save')}
         </Button>
         <Button type='button' onClick={onCancel}>
@@ -284,6 +315,9 @@ export function BankAccountsPage() {
         active: !c.active,
         isDefaultForPayments: c.isDefaultForPayments,
         defaultPaymentMethod: c.defaultPaymentMethod ?? null,
+        // This handler rebuilds the whole payload; carry these through or they'd be cleared on toggle.
+        cnabAgreementCode: c.cnabAgreementCode ?? null,
+        ledgerAccountId: c.ledgerAccountId ?? null,
       },
     });
 

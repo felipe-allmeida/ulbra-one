@@ -9,6 +9,7 @@ using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
 using Ulbra.One.Finance.Application.Contracts;
+using Ulbra.One.Finance.Application.Endpoints.Payables;
 using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 
@@ -32,6 +33,10 @@ public sealed class CreateBankAccount : IEndpoint
 
         /// <summary>CNAB payment-remittance agreement code (convênio). Required to generate a remittance for this account.</summary>
         public string CnabAgreementCode { get; set; } = string.Empty;
+
+        /// <summary>Accounting ledger account that represents this bank account (the credit account when settling a
+        /// payable). Required on create.</summary>
+        public LedgerAccountId? LedgerAccountId { get; set; }
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -47,6 +52,13 @@ public sealed class CreateBankAccount : IEndpoint
         if (string.IsNullOrWhiteSpace(req.BankCode) || string.IsNullOrWhiteSpace(req.Agency) || string.IsNullOrWhiteSpace(req.AccountNumber))
             return TypedResults.Problem(detail: "Bank code, agency and account number are required.", statusCode: 400, title: "BankAccount.Invalid");
 
+        // The accounting account is required on create: it is the credit account when settling a payable.
+        if (req.LedgerAccountId is not { } ledgerId || ledgerId.Value == Guid.Empty)
+            return TypedResults.Problem(detail: "The accounting account is required.", statusCode: 400, title: "BankAccount.LedgerAccountRequired");
+        var ledgerProblem = await ClassificationValidation.ValidateAsync(uow, ledgerId.Value, ct);
+        if (ledgerProblem is not null)
+            return TypedResults.Problem(detail: "The accounting account is invalid.", statusCode: 400, title: ledgerProblem);
+
         var companyId = req.CompanyId.Value;
         var duplicate = await uow.ReadSet<BankAccount>().AnyAsync(a =>
             a.CompanyId == companyId && a.BankCode == req.BankCode && a.Agency == req.Agency &&
@@ -55,7 +67,7 @@ public sealed class CreateBankAccount : IEndpoint
             return TypedResults.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
 
         var acc = new BankAccount(companyId, req.BankCode, req.BankName, req.Agency, req.AccountNumber,
-            req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode);
+            req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode, ledgerId.Value);
 
         if (req.IsDefaultForPayments)
         {

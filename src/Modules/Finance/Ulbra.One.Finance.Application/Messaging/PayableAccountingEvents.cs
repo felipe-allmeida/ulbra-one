@@ -5,20 +5,30 @@ namespace Ulbra.One.Finance.Application.Messaging;
 public sealed record ScheduledWithholding(string TaxType, decimal Amount);
 
 /// <summary>Published when a payable transitions into the Scheduled status (approved + ready for payment).
-/// <paramref name="AccountingAccountId"/> is the classified global <c>LedgerAccount</c> id (null when unclassified).</summary>
+/// <paramref name="AccountingAccountId"/> is the classified global <c>LedgerAccount</c> id (null when unclassified).
+/// <paramref name="CompetenceDate"/> is the título's accounting competence (Payable.IssueDate; null for advances
+/// with no NF — the incurral falls back to the posting date). <paramref name="CostCenterId"/> is propagated to
+/// the expense line of the automatic incurral.</summary>
 public sealed record PayableScheduled(
     Guid PayableId,
     Guid CompanyId,
     decimal Amount,
     Guid? AccountingAccountId,
-    IReadOnlyList<ScheduledWithholding> Withholdings);
+    IReadOnlyList<ScheduledWithholding> Withholdings,
+    DateOnly? CompetenceDate,
+    Guid CostCenterId);
 
-/// <summary>Published when a payment (baixa) is registered against a payable installment.</summary>
+/// <summary>Published when a payment (baixa) is registered against a payable installment.
+/// <paramref name="PaymentDate"/> is the settlement competence (Payment.PaymentDate).
+/// <paramref name="CashAccountId"/> is the ledger account linked to the paying bank account (null when the
+/// bank has no mapping — the settlement then falls back to the configured global cash code).</summary>
 public sealed record PaymentRegistered(
     Guid PaymentId,
     Guid PayableId,
     Guid CompanyId,
-    decimal Amount);
+    decimal Amount,
+    DateOnly PaymentDate,
+    Guid? CashAccountId);
 
 /// <summary>Published when a payment is reversed (estornado).</summary>
 public sealed record PaymentReversed(

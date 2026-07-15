@@ -164,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounting/journal-book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetJournalBook"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounting/pending-postings": {
         parameters: {
             query?: never;
@@ -174,6 +190,70 @@ export interface paths {
         get: operations["GetPendingPostings"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/pending-postings/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResolvePendingPosting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListAccountingPeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/periods/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CloseAccountingPeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/periods/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReopenAccountingPeriod"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1706,6 +1786,19 @@ export interface components {
     schemas: {
         /** @enum {string} */
         AccountGroup: "Asset" | "Liability" | "Equity" | "Revenue" | "Expense";
+        AccountingPeriodResponse: {
+            /** @example acctperiod_3fa85f64571742199730000000000000 */
+            id: string;
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** Format: int32 */
+            month: number;
+            status: components["schemas"]["AccountingPeriodStatus"];
+        };
+        /** @enum {string} */
+        AccountingPeriodStatus: "Open" | "Closing" | "Closed";
         AddressRequest: {
             cep: string | null;
             street: string | null;
@@ -1897,6 +1990,8 @@ export interface components {
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
             cnabAgreementCode: string | null;
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string | null;
         };
         /** @enum {string} */
         BankAccountType: "Checking" | "Savings";
@@ -2058,6 +2153,14 @@ export interface components {
             /** @example ledgacct_3fa85f64571742199730000000000000 */
             accountingAccountId: string | null;
         };
+        CloseAccountingPeriodRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** Format: int32 */
+            month: number;
+        };
         CnpjAddress: {
             cep: string;
             street: string;
@@ -2129,6 +2232,8 @@ export interface components {
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
             cnabAgreementCode: string;
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string | null;
         };
         CreateCompanyRequest: {
             legalName: string;
@@ -2478,6 +2583,54 @@ export interface components {
             rate: number | null;
             /** Format: double */
             amount: number;
+        };
+        JournalBookDayResponse: {
+            /** Format: date */
+            date: string;
+            entries: components["schemas"]["JournalBookEntryResponse"][];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+        };
+        JournalBookEntryResponse: {
+            /** @example journal_3fa85f64571742199730000000000000 */
+            id: string;
+            /** Format: int32 */
+            number: number | null;
+            /** Format: date */
+            competenceDate: string;
+            description: string;
+            status: components["schemas"]["JournalStatus"];
+            lines: components["schemas"]["JournalBookLineResponse"][];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+        };
+        JournalBookLineResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            accountCode: string;
+            accountName: string;
+            side: components["schemas"]["EntrySide"];
+            /** Format: double */
+            amount: number;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string | null;
+        };
+        JournalBookResponse: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string | null;
+            /** Format: date */
+            from: string | null;
+            /** Format: date */
+            to: string | null;
+            days: components["schemas"]["JournalBookDayResponse"][];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
         };
         JournalEntryResponse: {
             /** @example journal_3fa85f64571742199730000000000000 */
@@ -3184,6 +3337,14 @@ export interface components {
             /** Format: int32 */
             installmentsIncluded: number;
         };
+        ReopenAccountingPeriodRequest: {
+            /** @example company_3fa85f64571742199730000000000000 */
+            companyId: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** Format: int32 */
+            month: number;
+        };
         RequestFiscalUploadUrlRequest: {
             fileName: string;
         };
@@ -3386,6 +3547,8 @@ export interface components {
             isDefaultForPayments: boolean;
             defaultPaymentMethod: components["schemas"]["PaymentMethod"];
             cnabAgreementCode: string;
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string | null;
         };
         UpdateClassificationPolicyRequest: {
             requireToApprove: boolean;
@@ -3910,6 +4073,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     GetJournalEntry: {
@@ -4176,6 +4348,30 @@ export interface operations {
             };
         };
     };
+    GetJournalBook: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                From?: string;
+                To?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalBookResponse"];
+                };
+            };
+        };
+    };
     GetPendingPostings: {
         parameters: {
             query?: {
@@ -4196,6 +4392,135 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingAccountingPostingResponsePaginatedResponse"];
+                };
+            };
+        };
+    };
+    ResolvePendingPosting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingAccountingPostingResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListAccountingPeriods: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                FiscalYear?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountingPeriodResponse"][];
+                };
+            };
+        };
+    };
+    CloseAccountingPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseAccountingPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountingPeriodResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReopenAccountingPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReopenAccountingPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountingPeriodResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

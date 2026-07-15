@@ -128,10 +128,18 @@ public static class DevDataSeeder
         // ---------- Bank accounts (outflow accounts for payables) ----------
         if (!await finance.BankAccounts.AnyAsync(ct))
         {
+            // Ledger account each demo bank settles against (analytical/active/postable in the AELBRA chart,
+            // seeded above). The chart has no "Santander" account, so the demo Santander accounts map to
+            // distinct Banrisul analytical accounts — the point is a valid, non-fallback account so a
+            // settlement credits it (not the global CashCode 1.2.05.15.015) in the Livro Diário.
+            var santanderMovimentoLedger = await db.LedgerAccounts.FirstAsync(a => a.Code == "1.2.05.15.030", ct);
+            var bancoDoBrasilLedger = await db.LedgerAccounts.FirstAsync(a => a.Code == "1.2.05.15.150", ct);
+            var celspSantanderLedger = await db.LedgerAccounts.FirstAsync(a => a.Code == "1.2.05.15.045", ct);
+
             finance.BankAccounts.AddRange(
-                new BankAccount(ulbra.Id, "033", "Banco Santander", "1234", "00012345", "6", BankAccountType.Checking, "Santander - Conta Movimento", 250_000m),
-                new BankAccount(ulbra.Id, "001", "Banco do Brasil", "5678", "00098765", "4", BankAccountType.Checking, "Banco do Brasil - Conta Principal", 180_000m),
-                new BankAccount(celsp.Id, "033", "Banco Santander", "4321", "00054321", "0", BankAccountType.Checking, "Santander - CELSP", 60_000m));
+                new BankAccount(ulbra.Id, "033", "Banco Santander", "1234", "00012345", "6", BankAccountType.Checking, "Santander - Conta Movimento", 250_000m, ledgerAccountId: santanderMovimentoLedger.Id),
+                new BankAccount(ulbra.Id, "001", "Banco do Brasil", "5678", "00098765", "4", BankAccountType.Checking, "Banco do Brasil - Conta Principal", 180_000m, ledgerAccountId: bancoDoBrasilLedger.Id),
+                new BankAccount(celsp.Id, "033", "Banco Santander", "4321", "00054321", "0", BankAccountType.Checking, "Santander - CELSP", 60_000m, ledgerAccountId: celspSantanderLedger.Id));
             await finance.SaveChangesAsync(ct);
             logger.LogInformation("Dev seed: 3 bank accounts seeded.");
         }

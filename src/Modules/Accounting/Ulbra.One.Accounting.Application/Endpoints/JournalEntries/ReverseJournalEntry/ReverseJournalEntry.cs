@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
+using Ulbra.One.Accounting.Application.Periods;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
@@ -46,12 +47,19 @@ public sealed class ReverseJournalEntry : IEndpoint
             if (entry.Status != JournalStatus.Posted)
                 return TypedResults.Problem(detail: "Only a posted entry can be reversed.", statusCode: 409, title: "JournalEntry.NotPosted");
 
+            var competenceDate = req.CompetenceDate ?? entry.CompetenceDate;
+
+            // Closed-period guard: the reversal lands in this competence — block if that period is closed
+            // (reversing an entry from a closed period requires supplying an open competence).
+            var periodProblem = await AccountingPeriodGuard.EnsureOpenAsync(uow, entry.CompanyId, competenceDate, ct);
+            if (periodProblem is not null) return periodProblem;
+
             var maxNumber = await uow.ReadSet<JournalEntry>()
                 .Where(e => e.CompanyId == entry.CompanyId && e.Number != null)
                 .MaxAsync(e => (int?)e.Number, ct) ?? 0;
 
             JournalEntry reversal;
-            try { reversal = entry.Reverse(req.Reason, req.CompetenceDate ?? entry.CompetenceDate, maxNumber + 1, clock.GetUtcNow()); }
+            try { reversal = entry.Reverse(req.Reason, competenceDate, maxNumber + 1, clock.GetUtcNow()); }
             catch (JournalEntryException ex)
             {
                 // A posted entry mirrored into a reversal re-validates structurally; surface the
