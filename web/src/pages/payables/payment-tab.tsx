@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Receipt, FileOutput, Lock } from 'lucide-react';
 import { type PayableListItem } from '../../api';
 import { usePayables, usePayable, useHoldInstallment, useReleaseInstallmentHold } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { brl } from '../../lib';
 import { Panel, Button, Drawer, EmptyState, Input } from '../../ui';
 import { fmtDate } from '../../datetime';
@@ -198,6 +199,8 @@ function RemessasRail({
 
 function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (item: PayableListItem) => void }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canPay = can(P.payablesPay);
   const today = todayIso();
   const releaseMutation = useReleaseInstallmentHold();
 
@@ -245,7 +248,7 @@ function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (i
                     <InstallmentRailChip line={toRailLine(l)} today={today} />
                   </td>
                   <td>
-                    {l.installmentStatus !== 'InRemittance' && l.installmentStatus !== 'Paid' && (
+                    {canPay && l.installmentStatus !== 'InRemittance' && l.installmentStatus !== 'Paid' && (
                       <Button icon={<Receipt />} onClick={() => onBaixa(l)}>
                         {t('payments.register')}
                       </Button>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { type PayableStageItem } from '../../api';
 import { usePayableStageItems, useApprovePayable, useRejectPayable } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { Button, ConfirmDialog, Input } from '../../ui';
 import { BalanceForecastBanner, BalanceForecastPanel } from '../../components/workflow';
 import { STAGE_STATUS } from './stages';
@@ -10,6 +11,8 @@ import { PayableTable } from './payable-table';
 
 export function ApprovalTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canApprove = can(P.payablesApprove);
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
   const list = usePayableStageItems({ companyId, status: STAGE_STATUS.approval, page }, { enabled: !!companyId });
@@ -34,25 +37,29 @@ export function ApprovalTab({ companyId }: { companyId: string }) {
         page={page}
         totalPages={data?.totalPages ?? 1}
         onPage={setPage}
-        extraColumn={{
-          header: t('payables.columns.status'),
-          cell: (item) => (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <Button variant='brand' icon={<Check />} onClick={() => setToApprove(item)}>
-                {t('payables.actions.approve')}
-              </Button>
-              <Button
-                icon={<X />}
-                onClick={() => {
-                  setToReject(item);
-                  setReason('');
-                }}
-              >
-                {t('payables.actions.reject')}
-              </Button>
-            </div>
-          ),
-        }}
+        extraColumn={
+          canApprove
+            ? {
+                header: t('payables.columns.status'),
+                cell: (item) => (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Button variant='brand' icon={<Check />} onClick={() => setToApprove(item)}>
+                      {t('payables.actions.approve')}
+                    </Button>
+                    <Button
+                      icon={<X />}
+                      onClick={() => {
+                        setToReject(item);
+                        setReason('');
+                      }}
+                    >
+                      {t('payables.actions.reject')}
+                    </Button>
+                  </div>
+                ),
+              }
+            : undefined
+        }
       />
 
       {toApprove && (

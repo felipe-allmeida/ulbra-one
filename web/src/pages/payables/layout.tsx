@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Wallet } from 'lucide-react';
 import { useApp } from '../../store';
 import { usePayableStageSummary } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { PageHeader, Button, EmptyState } from '../../ui';
 import { EmpresaPicker } from '../shared';
 import { PendencyDashboard, StageTabBar, type StageTab } from '../../components/workflow';
@@ -18,6 +19,7 @@ export function PayablesLayout() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const { empresa, empresaId } = useApp();
+  const { can } = usePermissions();
   const [params, setParams] = useSearchParams();
 
   const stageParam = params.get('stage');
@@ -47,17 +49,19 @@ export function PayablesLayout() {
     <>
       <PageHeader title={t('payables.title')} sub={t('payables.subtitle')}>
         <EmpresaPicker />
-        <Button
-          variant='brand'
-          icon={<Plus />}
-          disabled={!empresa}
-          style={{ alignSelf: 'flex-end' }}
-          onClick={() => {
-            void nav('/app/payables/new');
-          }}
-        >
-          {t('payables.new')}
-        </Button>
+        {can(P.payablesWrite) && (
+          <Button
+            variant='brand'
+            icon={<Plus />}
+            disabled={!empresa}
+            style={{ alignSelf: 'flex-end' }}
+            onClick={() => {
+              void nav('/app/payables/new');
+            }}
+          >
+            {t('payables.new')}
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (

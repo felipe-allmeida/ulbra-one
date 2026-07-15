@@ -14,6 +14,7 @@ vi.mock('../../queries', () => ({
   usePayable: mockUsePayable,
   useHoldInstallment: () => ({ mutate: mockHoldMutate }),
   useReleaseInstallmentHold: () => ({ mutate: mockReleaseMutate }),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
 }));
 
 import { PaymentTab } from './payment-tab';
