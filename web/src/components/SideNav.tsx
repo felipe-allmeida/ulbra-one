@@ -6,6 +6,7 @@ import { auth } from '../api';
 import { useMe } from '../queries';
 import { iniciais } from '../lib';
 import { NAV_DOMAINS, domainForPath, itemForPath, type NavDomain, type NavItem } from '../nav.config';
+import { canAny } from '../permissions';
 
 const norm = (s: string) =>
   s
@@ -35,6 +36,11 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
   const selected = NAV_DOMAINS.find((d) => d.key === selectedKey) ?? NAV_DOMAINS[0];
   const activeTo = itemForPath(pathname)?.to ?? null;
 
+  // Renderização por cargo: esconde domínios/itens cujas permissões o usuário não possui.
+  // `requires` ausente = visível para todos (canAny com lista vazia retorna true). Admin faz bypass.
+  const domainVisible = (d: NavDomain) => canAny(me, d.requires ?? []);
+  const itemVisible = (it: NavItem) => canAny(me, it.requires ?? []);
+
   const go = (to?: string) => {
     if (!to) return;
     nav(to);
@@ -58,17 +64,19 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
     if (!q) return null;
     const out: { domain: NavDomain; item: NavItem }[] = [];
     for (const domain of NAV_DOMAINS) {
+      if (!domainVisible(domain)) continue;
       for (const group of domain.groups) {
         for (const item of group.items) {
-          if (item.to && norm(t(item.labelKey)).includes(q)) out.push({ domain, item });
+          if (item.to && itemVisible(item) && norm(t(item.labelKey)).includes(q)) out.push({ domain, item });
         }
       }
     }
     return out;
-  }, [query, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, t, me]);
 
-  const topDomains = NAV_DOMAINS.filter((d) => !d.footer);
-  const footerDomains = NAV_DOMAINS.filter((d) => d.footer);
+  const topDomains = NAV_DOMAINS.filter((d) => !d.footer && domainVisible(d));
+  const footerDomains = NAV_DOMAINS.filter((d) => d.footer && domainVisible(d));
 
   return (
     <>
@@ -155,12 +163,15 @@ function DomainPanel({
   onGo: (to?: string) => void;
 }) {
   const { t } = useTranslation();
+  const me = useMe().data ?? null;
+  const domainVisible = (d: NavDomain) => canAny(me, d.requires ?? []);
+  const itemVisible = (it: NavItem) => canAny(me, it.requires ?? []);
 
   if (selected.index) {
     return (
       <div className='nav-panel-body'>
-        {NAV_DOMAINS.filter((d) => !d.footer && !d.index).map((d) => {
-          const items = d.groups.flatMap((g) => g.items).filter((it) => it.to && !it.soon);
+        {NAV_DOMAINS.filter((d) => !d.footer && !d.index && domainVisible(d)).map((d) => {
+          const items = d.groups.flatMap((g) => g.items).filter((it) => it.to && !it.soon && itemVisible(it));
           if (items.length === 0) return null;
           return (
             <div className='nav-group' key={d.key}>
@@ -187,7 +198,7 @@ function DomainPanel({
       {selected.groups.map((group, gi) => (
         <div className='nav-group' key={group.labelKey ?? gi}>
           {group.labelKey && <div className='nav-subgroup'>{t(group.labelKey)}</div>}
-          {group.items.map((item) => (
+          {group.items.filter(itemVisible).map((item) => (
             <PanelItem
               key={item.labelKey}
               icon={item.icon}
