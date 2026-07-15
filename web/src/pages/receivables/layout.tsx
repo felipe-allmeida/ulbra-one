@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Wallet } from 'lucide-react';
 import { useApp } from '../../store';
 import { useReceivableStageSummary } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { PageHeader, Button, EmptyState } from '../../ui';
 import { EmpresaPicker } from '../shared';
 import { PendencyDashboard, StageTabBar, type StageTab } from '../../components/workflow';
@@ -14,6 +15,7 @@ export function ReceivablesLayout() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const { empresa, empresaId } = useApp();
+  const { can } = usePermissions();
   const [params, setParams] = useSearchParams();
 
   const tabParam = params.get('stage');
@@ -44,17 +46,19 @@ export function ReceivablesLayout() {
     <>
       <PageHeader title={t('receivables.title')} sub={t('receivables.subtitle')}>
         <EmpresaPicker />
-        <Button
-          variant='brand'
-          icon={<Plus />}
-          disabled={!empresa}
-          style={{ alignSelf: 'flex-end' }}
-          onClick={() => {
-            void nav('/app/receivables/new');
-          }}
-        >
-          {t('receivables.new')}
-        </Button>
+        {can(P.receivablesWrite) && (
+          <Button
+            variant='brand'
+            icon={<Plus />}
+            disabled={!empresa}
+            style={{ alignSelf: 'flex-end' }}
+            onClick={() => {
+              void nav('/app/receivables/new');
+            }}
+          >
+            {t('receivables.new')}
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (

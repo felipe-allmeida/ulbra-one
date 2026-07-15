@@ -9,6 +9,10 @@ vi.mock('react-router-dom', async (orig) => {
   return { ...actual, useNavigate: () => navigate };
 });
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: { cc_1: 'Vendas' } }) }));
+vi.mock('../../permissions', async (orig) => ({
+  ...(await orig<typeof import('../../permissions')>()),
+  usePermissions: () => ({ me: null, isAdmin: true, can: () => true, canAny: () => true }),
+}));
 
 import { ReceivableTable } from './receivable-table';
 

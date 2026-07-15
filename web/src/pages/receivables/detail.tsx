@@ -5,6 +5,7 @@ import { ChevronLeft, HandCoins, Pencil, X } from 'lucide-react';
 import { type ReceivableInstallment } from '../../api';
 import { useCancelReceivable, useCostCenters, useReceivable, useReceivableAuditTrail } from '../../queries';
 import { brl } from '../../lib';
+import { P, usePermissions } from '../../permissions';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { AuditTimeline, SlaChips } from '../../components/workflow';
@@ -18,6 +19,7 @@ export function ReceivableDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
   const query = useReceivable(id);
   const r = query.data ?? null;
 
@@ -59,12 +61,12 @@ export function ReceivableDetailPage() {
           {r.installments[0] && (
             <SlaChips stageLabel={t('receivables.status.' + r.status)} dueDate={r.installments[0].dueDate} />
           )}
-          {editable && (
+          {editable && can(P.receivablesWrite) && (
             <Button icon={<Pencil />} onClick={() => nav(`/app/receivables/${r.id}/edit`)}>
               {t('receivables.actions.edit')}
             </Button>
           )}
-          {editable && (
+          {editable && can(P.receivablesWrite) && (
             <Button icon={<X />} onClick={() => setCancelOpen(true)}>
               {t('receivables.actions.cancel')}
             </Button>
