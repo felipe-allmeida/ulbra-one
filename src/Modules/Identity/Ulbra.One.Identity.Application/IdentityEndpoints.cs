@@ -4,9 +4,9 @@ using Ulbra.One.Common.Application.Extensions;
 using Ulbra.One.Identity.Application.Endpoints.Auth.DevToken;
 using Ulbra.One.Identity.Application.Endpoints.Auth.GoogleSignIn;
 using Ulbra.One.Identity.Application.Endpoints.Auth.Me;
-using Ulbra.One.Identity.Application.Endpoints.Roles.ListPermissions;
-using Ulbra.One.Identity.Application.Endpoints.Roles.ListRoles;
-using Ulbra.One.Identity.Application.Endpoints.Roles.SetRolePermissions;
+using Ulbra.One.Identity.Application.Endpoints.RoleAdmin.ListPermissions;
+using Ulbra.One.Identity.Application.Endpoints.RoleAdmin.ListRoles;
+using Ulbra.One.Identity.Application.Endpoints.RoleAdmin.SetRolePermissions;
 
 namespace Ulbra.One.Identity.Application;
 

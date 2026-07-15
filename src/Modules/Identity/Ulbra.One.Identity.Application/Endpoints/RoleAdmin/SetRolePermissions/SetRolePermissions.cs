@@ -9,7 +9,7 @@ using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Identity.Application.Contracts;
 using Ulbra.One.Identity.Domain.Entities;
 
-namespace Ulbra.One.Identity.Application.Endpoints.Roles.SetRolePermissions;
+namespace Ulbra.One.Identity.Application.Endpoints.RoleAdmin.SetRolePermissions;
 
 public sealed class SetRolePermissions : IEndpoint
 {

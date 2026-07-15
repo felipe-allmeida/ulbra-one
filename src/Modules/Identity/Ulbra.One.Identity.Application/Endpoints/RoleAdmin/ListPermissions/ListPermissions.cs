@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Authentication;
 
-namespace Ulbra.One.Identity.Application.Endpoints.Roles.ListPermissions;
+namespace Ulbra.One.Identity.Application.Endpoints.RoleAdmin.ListPermissions;
 
 public sealed class ListPermissions : IEndpoint
 {
