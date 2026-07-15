@@ -58,7 +58,7 @@ vi.mock('../queries', async (orig) => {
     useVendors: () => ({ data: { items: [] }, isLoading: false }),
     useCostCenters: () => ({ data: [] }),
     useExpenseCategories: () => ({ data: [] }),
-    useLedgerAccounts: () => ({ data: [] }),
+    useLedgerAccounts: () => ({ data: [{ id: 'ledgacct_1', code: '1.1.01', name: 'Banco X' }] }),
     useCreatePayable: noopMut,
     useUpdatePayable: noopMut,
     useUploadPayableAttachment: noopMut,
@@ -176,6 +176,10 @@ describe('BankAccountForm — default payment toggle', () => {
       return opts.some((o) => o.value === 'Pix');
     }) as HTMLSelectElement;
     fireEvent.change(methodSelect, { target: { value: 'Ted' } });
+
+    // Create requires a ledger account — open the picker and select one (Save is disabled until then).
+    fireEvent.click(screen.getByRole('button', { name: 'Selecione…' }));
+    fireEvent.click(screen.getByRole('option', { name: /Banco X/ }));
 
     // Form should be valid — submit it (button label is "Salvar")
     const saveBtn = screen.getByRole('button', { name: /^salvar$/i });

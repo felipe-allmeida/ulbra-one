@@ -1142,6 +1142,10 @@ const ptBR = {
       cnabAgreementCode: 'Código de convênio CNAB (opcional)',
       cnabAgreementCodeHelp:
         'Número que o banco (ex.: Santander) fornece ao contratar o serviço de Pagamento a Fornecedores. Só é necessário para gerar a remessa CNAB desta conta — peça ao seu gerente PJ ou consulte o internet banking da empresa.',
+      ledgerAccount: 'Conta contábil',
+      ledgerAccountHelp:
+        'Conta do plano de contas que representa este banco. É a conta creditada no lançamento contábil quando um título é pago por esta conta bancária (no Livro Diário/Razão).',
+      ledgerAccountRequired: 'Selecione a conta contábil desta conta bancária.',
     },
     placeholders: {
       bankName: 'ex.: Banco do Brasil',
