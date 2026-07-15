@@ -35,40 +35,40 @@ export function WithholdingDetailDrawer({
 
       {row.lines.length > 0 ? (
         <div className='drawer-table-scroll'>
-        <table>
-          <thead>
-            <tr>
-              <th>{t('accounting.withholdings.detail.columns.tax')}</th>
-              <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.base')}</th>
-              <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.rate')}</th>
-              <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.amount')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {row.lines.map((l) => (
-              <tr key={l.id}>
-                <td>{t(`payables.withholding.taxType.${l.taxType}`)}</td>
-                <td className='amount-cell' style={{ textAlign: 'right' }}>
-                  {brlCents(l.baseAmount)}
-                </td>
-                <td style={{ textAlign: 'right' }}>{l.rate != null ? `${(l.rate * 100).toFixed(2)}%` : '—'}</td>
-                <td className='amount-cell' style={{ textAlign: 'right' }}>
-                  {brlCents(l.amount)}
+          <table>
+            <thead>
+              <tr>
+                <th>{t('accounting.withholdings.detail.columns.tax')}</th>
+                <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.base')}</th>
+                <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.rate')}</th>
+                <th style={{ textAlign: 'right' }}>{t('accounting.withholdings.detail.columns.amount')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {row.lines.map((l) => (
+                <tr key={l.id}>
+                  <td>{t(`payables.withholding.taxType.${l.taxType}`)}</td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    {brlCents(l.baseAmount)}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>{l.rate != null ? `${(l.rate * 100).toFixed(2)}%` : '—'}</td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    {brlCents(l.amount)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td style={{ fontWeight: 600 }}>{t('accounting.withholdings.total')}</td>
+                <td />
+                <td />
+                <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                  {brlCents(row.totalWithheld)}
                 </td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td style={{ fontWeight: 600 }}>{t('accounting.withholdings.total')}</td>
-              <td />
-              <td />
-              <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
-                {brlCents(row.totalWithheld)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </table>
         </div>
       ) : (
         <div className='help'>{t('accounting.withholdings.detail.empty')}</div>

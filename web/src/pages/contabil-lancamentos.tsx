@@ -148,73 +148,73 @@ function JournalEntryForm({
 
       <div className='drawer-table-scroll'>
         <table className='journal-lines'>
-        <thead>
-          <tr>
-            <th>{t('accounting.journal.fields.account')}</th>
-            <th>{t('accounting.journal.fields.side')}</th>
-            <th style={{ textAlign: 'right' }}>{t('accounting.journal.fields.amount')}</th>
-            <th>{t('accounting.journal.fields.costCenter')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {fields.map((f, i) => (
-            <tr key={f.id}>
-              <td>
-                <Controller
-                  control={control}
-                  name={`lines.${i}.ledgerAccountId`}
-                  render={({ field }) => (
-                    <Combobox
-                      value={field.value || null}
-                      onChange={(id) => field.onChange(id ?? '')}
-                      items={accountItems}
-                      invalid={!!errors.lines?.[i]?.ledgerAccountId}
-                    />
-                  )}
-                />
-              </td>
-              <td>
-                <Select {...register(`lines.${i}.side`)}>
-                  <option value='Debit'>{t('accounting.sides.Debit')}</option>
-                  <option value='Credit'>{t('accounting.sides.Credit')}</option>
-                </Select>
-              </td>
-              <td>
-                <Input
-                  type='number'
-                  step='0.01'
-                  min='0'
-                  style={{ textAlign: 'right' }}
-                  {...register(`lines.${i}.amount`)}
-                />
-              </td>
-              <td>
-                <Controller
-                  control={control}
-                  name={`lines.${i}.costCenterId`}
-                  render={({ field }) => (
-                    <Combobox
-                      value={field.value || null}
-                      onChange={(id) => field.onChange(id ?? '')}
-                      items={ccItems}
-                      placeholder={t('accounting.journal.noCostCenter')}
-                    />
-                  )}
-                />
-              </td>
-              <td>
-                <Button
-                  type='button'
-                  icon={<Trash2 />}
-                  disabled={fields.length <= 2}
-                  onClick={() => remove(i)}
-                  aria-label={t('accounting.journal.removeLine')}
-                />
-              </td>
+          <thead>
+            <tr>
+              <th>{t('accounting.journal.fields.account')}</th>
+              <th>{t('accounting.journal.fields.side')}</th>
+              <th style={{ textAlign: 'right' }}>{t('accounting.journal.fields.amount')}</th>
+              <th>{t('accounting.journal.fields.costCenter')}</th>
+              <th />
             </tr>
-          ))}
-        </tbody>
+          </thead>
+          <tbody>
+            {fields.map((f, i) => (
+              <tr key={f.id}>
+                <td>
+                  <Controller
+                    control={control}
+                    name={`lines.${i}.ledgerAccountId`}
+                    render={({ field }) => (
+                      <Combobox
+                        value={field.value || null}
+                        onChange={(id) => field.onChange(id ?? '')}
+                        items={accountItems}
+                        invalid={!!errors.lines?.[i]?.ledgerAccountId}
+                      />
+                    )}
+                  />
+                </td>
+                <td>
+                  <Select {...register(`lines.${i}.side`)}>
+                    <option value='Debit'>{t('accounting.sides.Debit')}</option>
+                    <option value='Credit'>{t('accounting.sides.Credit')}</option>
+                  </Select>
+                </td>
+                <td>
+                  <Input
+                    type='number'
+                    step='0.01'
+                    min='0'
+                    style={{ textAlign: 'right' }}
+                    {...register(`lines.${i}.amount`)}
+                  />
+                </td>
+                <td>
+                  <Controller
+                    control={control}
+                    name={`lines.${i}.costCenterId`}
+                    render={({ field }) => (
+                      <Combobox
+                        value={field.value || null}
+                        onChange={(id) => field.onChange(id ?? '')}
+                        items={ccItems}
+                        placeholder={t('accounting.journal.noCostCenter')}
+                      />
+                    )}
+                  />
+                </td>
+                <td>
+                  <Button
+                    type='button'
+                    icon={<Trash2 />}
+                    disabled={fields.length <= 2}
+                    onClick={() => remove(i)}
+                    aria-label={t('accounting.journal.removeLine')}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
@@ -276,37 +276,37 @@ function JournalEntryDetail({ entry, accounts }: { entry: JournalEntry; accounts
       )}
       <div className='drawer-table-scroll'>
         <table>
-        <thead>
-          <tr>
-            <th>{t('accounting.journal.fields.account')}</th>
-            <th style={{ textAlign: 'right' }}>{t('accounting.journal.columns.debit')}</th>
-            <th style={{ textAlign: 'right' }}>{t('accounting.journal.columns.credit')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entry.lines.map((l) => (
-            <tr key={l.id}>
-              <td>{nameOf(l.ledgerAccountId)}</td>
-              <td className='amount-cell' style={{ textAlign: 'right' }}>
-                {l.side === 'Debit' ? brlCents(l.amount) : ''}
+          <thead>
+            <tr>
+              <th>{t('accounting.journal.fields.account')}</th>
+              <th style={{ textAlign: 'right' }}>{t('accounting.journal.columns.debit')}</th>
+              <th style={{ textAlign: 'right' }}>{t('accounting.journal.columns.credit')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entry.lines.map((l) => (
+              <tr key={l.id}>
+                <td>{nameOf(l.ledgerAccountId)}</td>
+                <td className='amount-cell' style={{ textAlign: 'right' }}>
+                  {l.side === 'Debit' ? brlCents(l.amount) : ''}
+                </td>
+                <td className='amount-cell' style={{ textAlign: 'right' }}>
+                  {l.side === 'Credit' ? brlCents(l.amount) : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ fontWeight: 600 }}>{t('accounting.journal.totalDebit')}</td>
+              <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                {brlCents(entry.totalDebit)}
               </td>
-              <td className='amount-cell' style={{ textAlign: 'right' }}>
-                {l.side === 'Credit' ? brlCents(l.amount) : ''}
+              <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
+                {brlCents(entry.totalCredit)}
               </td>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td style={{ fontWeight: 600 }}>{t('accounting.journal.totalDebit')}</td>
-            <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
-              {brlCents(entry.totalDebit)}
-            </td>
-            <td className='amount-cell' style={{ textAlign: 'right', fontWeight: 700 }}>
-              {brlCents(entry.totalCredit)}
-            </td>
-          </tr>
-        </tfoot>
+          </tfoot>
         </table>
       </div>
     </div>
