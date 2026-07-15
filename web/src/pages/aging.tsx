@@ -53,38 +53,40 @@ function DrillDrawer({
           <div className='t'>{t('aging.drill.empty')}</div>
         </div>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>{t('aging.drill.vendor')}</th>
-              <th>{t('aging.drill.document')}</th>
-              <th>{t('aging.drill.dueDate')}</th>
-              <th>{t('aging.drill.daysOverdue')}</th>
-              <th style={{ textAlign: 'right' }}>{t('aging.drill.remaining')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((it) => (
-              <tr key={it.installmentId}>
-                <td>{it.counterpartyName || '—'}</td>
-                <td>{it.documentNumber || '—'}</td>
-                <td className='t-mono'>{fmtDate(it.dueDate)}</td>
-                <td>
-                  {it.daysOverdue > 0 ? (
-                    <span className='badge-status badge-rejeitado'>
-                      {t('aging.drill.daysOverdueValue', { count: it.daysOverdue })}
-                    </span>
-                  ) : (
-                    <span className='badge-status badge-pago'>{t('aging.drill.onTime')}</span>
-                  )}
-                </td>
-                <td className='amount-cell' style={{ textAlign: 'right' }}>
-                  {brl(it.remaining)}
-                </td>
+        <div className='drawer-table-scroll'>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('aging.drill.vendor')}</th>
+                <th>{t('aging.drill.document')}</th>
+                <th>{t('aging.drill.dueDate')}</th>
+                <th>{t('aging.drill.daysOverdue')}</th>
+                <th style={{ textAlign: 'right' }}>{t('aging.drill.remaining')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {list.map((it) => (
+                <tr key={it.installmentId}>
+                  <td>{it.counterpartyName || '—'}</td>
+                  <td>{it.documentNumber || '—'}</td>
+                  <td className='t-mono'>{fmtDate(it.dueDate)}</td>
+                  <td>
+                    {it.daysOverdue > 0 ? (
+                      <span className='badge-status badge-rejeitado'>
+                        {t('aging.drill.daysOverdueValue', { count: it.daysOverdue })}
+                      </span>
+                    ) : (
+                      <span className='badge-status badge-pago'>{t('aging.drill.onTime')}</span>
+                    )}
+                  </td>
+                  <td className='amount-cell' style={{ textAlign: 'right' }}>
+                    {brl(it.remaining)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Drawer>
   );
