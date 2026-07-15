@@ -119,7 +119,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         }
 
         var finalDescription = clamped
-            ? $"{description} (competência {competenceDate:yyyy-MM} em período fechado; ajustada para {competence:yyyy-MM})"
+            ? PostingNarratives.ClampedCompetence(description, competenceDate, competence)
             : description;
 
         var entry = new JournalEntry(companyId, competence, finalDescription,
@@ -193,7 +193,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
         // Competence = título's real competence (IssueDate); null (e.g. advances with no NF) falls back to today.
         var competence = competenceDate ?? DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-        await PostEntryAsync(companyId, sourceKey, "Provisão de despesa (a pagar)", PostingKind.Incurral, competence, lineList, ct);
+        await PostEntryAsync(companyId, sourceKey, PostingNarratives.Incurral, PostingKind.Incurral, competence, lineList, ct);
     }
 
     public async Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, Guid? cashAccountId, CancellationToken ct)
@@ -202,7 +202,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         // back to the configured global cash code (unmapped bank, or a stale/inactive mapping).
         var cashCode = await ResolvePostableCodeByIdAsync(cashAccountId, ct) ?? opts.CashCode;
         await PostEntryAsync(companyId, sourceKey,
-            "Pagamento de fornecedor",
+            PostingNarratives.Settlement,
             PostingKind.Settlement,
             paymentDate,
             [
