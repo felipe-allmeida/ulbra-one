@@ -17,7 +17,7 @@ public sealed class ApprovePayable : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/approve", Handle).WithName("ApprovePayable").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesApprove).Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 

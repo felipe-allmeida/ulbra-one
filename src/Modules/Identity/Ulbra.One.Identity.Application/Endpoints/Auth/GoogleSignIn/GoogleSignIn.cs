@@ -80,7 +80,13 @@ public sealed class GoogleSignIn : IEndpoint
         user.RegisterGoogleLogin(payload.Subject, payload.Name, clock.GetUtcNow());
         await uow.SaveChangesAsync(ct);
 
-        var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email);
+        var permissions = await uow.Set<Role>()
+            .Where(r => r.Name == user.Role)
+            .SelectMany(r => r.Claims)
+            .Select(c => c.Permission)
+            .ToListAsync(ct);
+
+        var token = jwt.GenerateToken(user.Id.ToString(), user.Role, user.Name, user.Email, permissions);
         return TypedResults.Ok(new LoginResponse(token, new UserSummary(new UserId(user.Id), user.Email, user.Name, user.Role)));
     }
 }

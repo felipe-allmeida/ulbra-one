@@ -15,7 +15,7 @@ public class JwtTokenService(IConfiguration configuration, TimeProvider clock) :
     private readonly string _secret = configuration["Authentication:JwtSecret"]
         ?? throw new InvalidOperationException("Authentication:JwtSecret is required");
 
-    public string GenerateToken(string userId, string role, string? userName = null, string? userEmail = null)
+    public string GenerateToken(string userId, string role, string? userName = null, string? userEmail = null, IEnumerable<string>? permissions = null)
     {
         var claims = new List<Claim>
         {
@@ -26,6 +26,10 @@ public class JwtTokenService(IConfiguration configuration, TimeProvider clock) :
 
         if (userName is not null) claims.Add(new Claim(ClaimTypes.Name, userName));
         if (userEmail is not null) claims.Add(new Claim(ClaimTypes.Email, userEmail));
+
+        if (permissions is not null)
+            foreach (var permission in permissions)
+                claims.Add(new Claim(Permissions.ClaimType, permission));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
