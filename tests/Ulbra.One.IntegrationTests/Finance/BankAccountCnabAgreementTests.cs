@@ -39,6 +39,7 @@ public class BankAccountCnabAgreementTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await CreateCompanyAsync(client);
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
         var res = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
@@ -47,6 +48,7 @@ public class BankAccountCnabAgreementTests(PostgresFixture fixture)
             accountNumber = "00012345", accountDigit = "6", accountType = "Checking",
             alias = "Conta pagadora", openingBalance = 10_000m,
             cnabAgreementCode = "987654",
+            ledgerAccountId,
         });
         res.EnsureSuccessStatusCode();
         var created = await ReadJson(res);
@@ -64,6 +66,7 @@ public class BankAccountCnabAgreementTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await CreateCompanyAsync(client);
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
         var createRes = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
@@ -71,6 +74,7 @@ public class BankAccountCnabAgreementTests(PostgresFixture fixture)
             bankCode = "033", bankName = "Banco Santander", agency = "1234",
             accountNumber = "00099999", accountDigit = "6", accountType = "Checking",
             alias = "Conta", openingBalance = 0m, cnabAgreementCode = "111",
+            ledgerAccountId,
         });
         createRes.EnsureSuccessStatusCode();
         var id = (await ReadJson(createRes)).GetProperty("id").GetString()!;

@@ -52,6 +52,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
 
     private static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId)
     {
+        var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var res = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
             companyId,
@@ -63,6 +64,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
             accountType = "Checking",
             alias = "Conta principal",
             openingBalance = 10_000m,
+            ledgerAccountId,
         });
         res.EnsureSuccessStatusCode();
         return (await ReadJson(res)).GetProperty("id").GetString()!;

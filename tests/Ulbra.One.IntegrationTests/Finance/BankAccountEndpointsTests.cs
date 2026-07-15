@@ -19,7 +19,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         return (await ReadJson(res)).GetProperty("id").GetString()!;
     }
 
-    private static object NewAccount(string companyId, string accountNumber = "00012345", string accountDigit = "6",
+    private static object NewAccount(string companyId, string? ledgerAccountId = null, string accountNumber = "00012345", string accountDigit = "6",
         string alias = "Conta Movimento", string bankCode = "033", string agency = "1234") => new
     {
         companyId,
@@ -31,6 +31,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         accountType = "Checking",
         alias,
         openingBalance = 10_000m,
+        ledgerAccountId,
     };
 
     // ---------------------------------------------------------------------------
@@ -56,9 +57,10 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await SeedCompanyAsync(client);
+        var ledgerId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
         // 1. Create
-        var createRes = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId, alias: "Conta Movimento"));
+        var createRes = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId, ledgerId, alias: "Conta Movimento"));
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
         var created = await ReadJson(createRes);
         var id = created.GetProperty("id").GetString();
@@ -118,11 +120,12 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await SeedCompanyAsync(client);
+        var ledgerId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
-        var first = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId));
+        var first = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId, ledgerId));
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
-        var second = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId, alias: "Outro Apelido"));
+        var second = await client.PostAsJsonAsync("/api/bank-accounts", NewAccount(companyId, ledgerId, alias: "Outro Apelido"));
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
         Assert.Equal("BankAccount.Duplicate", (await ReadJson(second)).GetProperty("title").GetString());
     }
@@ -194,6 +197,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await SeedCompanyAsync(client);
+        var ledgerId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
         var createRes = await client.PostAsJsonAsync("/api/bank-accounts", new
         {
@@ -208,6 +212,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
             openingBalance = 5_000m,
             isDefaultForPayments = true,
             defaultPaymentMethod = "Pix",
+            ledgerAccountId = ledgerId,
         });
 
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
@@ -222,6 +227,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
         await using var factory = new ApiFactory(fixture.ConnectionString);
         var client = await factory.CreateAdminClientAsync();
         var companyId = await SeedCompanyAsync(client);
+        var ledgerId = await FinanceSeed.CreateAccountingAccountAsync(client);
 
         // First default account.
         var first = await client.PostAsJsonAsync("/api/bank-accounts", new
@@ -236,6 +242,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
             alias = "Conta A",
             isDefaultForPayments = true,
             defaultPaymentMethod = "Ted",
+            ledgerAccountId = ledgerId,
         });
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         var firstId = (await ReadJson(first)).GetProperty("id").GetString()!;
@@ -253,6 +260,7 @@ public class BankAccountEndpointsTests(PostgresFixture fixture)
             alias = "Conta B",
             isDefaultForPayments = true,
             defaultPaymentMethod = "Pix",
+            ledgerAccountId = ledgerId,
         });
         Assert.Equal(HttpStatusCode.Created, second.StatusCode);
         var secondBody = await ReadJson(second);
