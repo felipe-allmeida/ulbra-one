@@ -256,6 +256,8 @@ if (app.Environment.IsDevelopment())
     await Ulbra.One.Api.DevDataSeeder.SeedLedgerChartAsync(app.Services);
     await Ulbra.One.Api.DevDataSeeder.SeedWithholdingRulesAsync(app.Services);
     await Ulbra.One.Api.DevDataSeeder.SeedAsync(app.Services);
+    // Usuários locais de teste (um por cargo) para exercitar a autorização por claim.
+    await Ulbra.One.Api.DevDataSeeder.SeedLocalUsersAsync(app.Services);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
