@@ -7,6 +7,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -16,7 +17,7 @@ public sealed class ListLedgerAccounts : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("ListLedgerAccounts").WithTags("Accounting")
-            .RequireAuthorization().Produces<List<LedgerAccountResponse>>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.AccountingRead).Produces<List<LedgerAccountResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow, AccountGroup? accountGroup, LedgerAccountKind? kind,

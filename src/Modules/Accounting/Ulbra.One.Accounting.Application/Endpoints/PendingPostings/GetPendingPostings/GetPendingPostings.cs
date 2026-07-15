@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Pagination;
 using Ulbra.One.Common.Application.Persistence;
@@ -21,7 +22,7 @@ public sealed class GetPendingPostings : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("GetPendingPostings").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingRead)
             .Produces<PaginatedResponse<PendingAccountingPostingResponse>>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(

@@ -6,6 +6,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Endpoints.JournalEntries;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -24,7 +25,7 @@ public sealed class CreateJournalEntry : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("", Handle).WithName("CreateJournalEntry").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingWrite)
             .Produces<JournalEntryResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
