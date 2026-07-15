@@ -92,6 +92,7 @@ vi.mock('../../queries', () => ({
   useCreateRemittance: () => ({ mutate: vi.fn(), isPending: false }),
   useBankAccounts: () => ({ data: [] }),
   useCompanies: () => ({ data: [{ id: 'c1', legalName: 'Empresa Teste' }] }),
+  useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
   useImportRemittanceReturn: ({ onSuccess }: { onSuccess?: (data: unknown) => void } = {}) => ({
     mutate: mockImportMutate.mockImplementation((_vars: unknown, opts?: { onSuccess?: (d: unknown) => void }) => {
       const outcome = { matched: 2, paid: 1, returned: 1, unmatched: 0, divergent: 0, notes: [] };
