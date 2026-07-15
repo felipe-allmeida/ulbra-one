@@ -6,11 +6,25 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Ulbra.One.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAccountingPeriod : Migration
+    public partial class AddAccountingPeriodPendingPlanAndBankLedger : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<string>(
+                name: "plan",
+                schema: "accounting",
+                table: "pending_accounting_postings",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ledger_account_id",
+                schema: "finance",
+                table: "bank_accounts",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "accounting_periods",
                 schema: "accounting",
@@ -32,6 +46,14 @@ namespace Ulbra.One.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_pending_accounting_postings_company_source_key_open",
+                schema: "accounting",
+                table: "pending_accounting_postings",
+                columns: new[] { "company_id", "source_key" },
+                unique: true,
+                filter: "resolved_at IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_accounting_periods_company_id_fiscal_year_month",
                 schema: "accounting",
                 table: "accounting_periods",
@@ -45,6 +67,21 @@ namespace Ulbra.One.Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "accounting_periods",
                 schema: "accounting");
+
+            migrationBuilder.DropIndex(
+                name: "ix_pending_accounting_postings_company_source_key_open",
+                schema: "accounting",
+                table: "pending_accounting_postings");
+
+            migrationBuilder.DropColumn(
+                name: "plan",
+                schema: "accounting",
+                table: "pending_accounting_postings");
+
+            migrationBuilder.DropColumn(
+                name: "ledger_account_id",
+                schema: "finance",
+                table: "bank_accounts");
         }
     }
 }
