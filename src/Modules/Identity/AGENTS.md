@@ -7,7 +7,7 @@
 - Read identity from `UserContext` (UserId/Role/IsAdmin/IsAuthenticated/**Permissions**/**HasPermission**), never from `HttpContext` directly. Admin gate is `.RequireAdmin()`; permission gate is `.RequirePermission(Permissions.X)`.
 - Does NOT belong: org chart (Core), parties (Registry), finance (Finance). Authorization *policies* are consumed everywhere but **defined/owned** here.
 ## Autorização por claim (Cargos → Permissões)
-- **Cargo** (`Role`) agrupa permissões (`RoleClaim`, formato `recurso:ação`) semeadas em `Database/Configurations/RoleSeed.cs`. Cargos: `Admin` (bypass global — sem claims), `Financeiro`, `Controladoria`, `Contabil`, `User`. `User.Role` referencia o cargo por **nome**.
+- **Cargo** (`Role`) agrupa permissões (`RoleClaim`, formato `recurso:ação`) semeadas em `Database/Configurations/RoleSeed.cs`. Cargos (nomes em inglês): `Admin` (bypass global — sem claims), `Finance`, `Controllership`, `Accounting`, `User`. `User.Role` referencia o cargo por **nome**.
 - **Catálogo** de permissões: `Common.Application/Authentication/Permissions.cs` (vocabulário compartilhado — módulos referenciam por constante). Endpoints exigem uma permissão com `.RequirePermission(Permissions.X)`; Admin faz bypass.
 - **Emissão**: os endpoints de login carregam `Role.Claims` do cargo do usuário e as passam a `ITokenService.GenerateToken(...)`, que emite uma claim `permission` por permissão. `PermissionPolicyProvider` (registrado em `AddJwtAuthentication`) resolve as policies `perm:<permissão>` sob demanda.
 - **Front**: `/auth/me` devolve `permissions: string[]`; o SPA (`web/src/permissions.ts`) usa `can()`/`canAny()` para renderizar o menu por cargo (`web/src/nav.config.tsx` → `requires`).

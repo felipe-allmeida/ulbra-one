@@ -8,7 +8,7 @@ public class RoleTests
     [Fact]
     public void Grant_adds_a_claim()
     {
-        var role = new Role(Guid.NewGuid(), "Financeiro");
+        var role = new Role(Guid.NewGuid(), "Finance");
 
         role.Grant("payables:read");
 
@@ -19,7 +19,7 @@ public class RoleTests
     [Fact]
     public void Grant_is_idempotent()
     {
-        var role = new Role(Guid.NewGuid(), "Financeiro");
+        var role = new Role(Guid.NewGuid(), "Finance");
 
         role.Grant("payables:read");
         role.Grant("payables:read");
@@ -30,7 +30,7 @@ public class RoleTests
     [Fact]
     public void Revoke_removes_the_claim()
     {
-        var role = new Role(Guid.NewGuid(), "Financeiro");
+        var role = new Role(Guid.NewGuid(), "Finance");
         role.Grant("payables:read");
 
         role.Revoke("payables:read");
