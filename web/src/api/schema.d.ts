@@ -1396,6 +1396,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/withholding-rules/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreviewWithholdingRules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/withholding-rules/{id}": {
         parameters: {
             query?: never;
@@ -2552,7 +2568,6 @@ export interface components {
             email: string | null;
             role: string | null;
             isAdmin: boolean;
-            /** Permissões efetivas (vazio para Admin — ele faz bypass; use isAdmin). */
             permissions: string[];
         };
         /** @enum {string} */
@@ -3489,6 +3504,7 @@ export interface components {
             cprbForeseen: boolean | null;
             simplesAnexo: components["schemas"]["SimplesAnexo"];
             acceptedPaymentMethods: components["schemas"]["PaymentMethod"][] | null;
+            withholdingRates: components["schemas"]["VendorWithholdingRate"][] | null;
         };
         VendorResponse: {
             /** @example vendor_3fa85f64571742199730000000000000 */
@@ -3512,6 +3528,7 @@ export interface components {
             cprbForeseen: boolean | null;
             simplesAnexo: components["schemas"]["SimplesAnexo"];
             acceptedPaymentMethods: components["schemas"]["PaymentMethod"][];
+            withholdingRates: components["schemas"]["VendorWithholdingRate"][];
         };
         VendorResponsePaginatedResponse: {
             items: components["schemas"]["VendorResponse"][];
@@ -3523,6 +3540,11 @@ export interface components {
             total: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        VendorWithholdingRate: {
+            taxType: string;
+            /** Format: double */
+            rate: number;
         };
         WithholdingAssessmentResponse: {
             perApur: string;
@@ -3578,6 +3600,15 @@ export interface components {
             /** Format: double */
             netTotal: number;
             lines: components["schemas"]["PayableWithholdingResponse"][];
+        };
+        WithholdingPreviewItem: {
+            taxType: components["schemas"]["WithholdingTaxType"];
+            retains: boolean;
+            reason: components["schemas"]["NonRetentionReason"];
+            rateSource: components["schemas"]["RateSource"];
+            /** Format: double */
+            rate: number | null;
+            invoiceDependent: boolean;
         };
         WithholdingRuleRequest: {
             /** Format: uuid */
@@ -7481,6 +7512,31 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PreviewWithholdingRules: {
+        parameters: {
+            query: {
+                regime: components["schemas"]["TaxRegime"];
+                companyId?: string;
+                cprb?: boolean;
+                simplesAnexo?: components["schemas"]["SimplesAnexo"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingPreviewItem"][];
                 };
             };
         };

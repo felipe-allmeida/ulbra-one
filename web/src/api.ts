@@ -67,18 +67,12 @@ export type Address = Schemas['AddressResponse'];
 type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
 /** LC123 Simples annex (serialised as string). */
 export type SimplesAnexoValue = Schemas['SimplesAnexo'];
-// `simplesAnexo` is a nullable enum on the backend (`SimplesAnexo?`); Swashbuckle can't express nullable enums, so
-// the generated type is non-null — restore the honest nullability. `cprbForeseen` (a nullable bool) generates
-// correctly and flows through untouched.
 /** Per-tax withholding RATE override on the vendor (rate = decimal fraction, 0.015 = 1,5%). */
-export interface VendorWithholdingRate {
-  taxType: string;
-  rate: number;
-}
-// `withholdingRates` added here until `openapi.json`/`schema.d.ts` are regenerated from the running API.
+export type VendorWithholdingRate = Schemas['VendorWithholdingRate'];
+// `simplesAnexo` is nullable server-side (`SimplesAnexo?`) but the generated schema types it as a non-null
+// required enum — restore the honest nullability. `withholdingRates` and `cprbForeseen` already generate correctly.
 export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
   simplesAnexo: SimplesAnexoValue | null;
-  withholdingRates: VendorWithholdingRate[];
 };
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
@@ -139,16 +133,9 @@ export type RateSource = Schemas['RateSource'];
 export type BaseRule = Schemas['BaseRule'];
 export type NonRetentionReason = Schemas['NonRetentionReason'];
 
-// System-default outcome per tax for a vendor tax profile (GET /withholding-rules/preview). Hand-written until
-// `WithholdingPreviewItem` lands in the regenerated schema.
-export interface WithholdingPreviewItem {
-  taxType: WithholdingTaxType;
-  retains: boolean;
-  reason: NonRetentionReason;
-  rateSource: RateSource;
-  rate: number | null;
-  invoiceDependent: boolean;
-}
+// System-default outcome per tax for a vendor tax profile (GET /withholding-rules/preview).
+export type WithholdingPreviewItem = Schemas['WithholdingPreviewItem'];
+// Client-side query params for the preview call (not a wire schema).
 export interface WithholdingPreviewParams {
   regime: TaxRegime;
   companyId?: string | null;
