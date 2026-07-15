@@ -22,7 +22,7 @@ public sealed class RegisterPayment : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/installments/{installmentId}/payments", Handle)
-            .WithName("RegisterPayment").WithTags("Finance").RequireAuthorization()
+            .WithName("RegisterPayment").WithTags("Finance").RequirePermission(Permissions.PayablesPay)
             .Produces<PayableResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

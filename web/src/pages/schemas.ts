@@ -106,6 +106,8 @@ export const vendorSchema = refineDocument(
       paymentScheduleDay: z.number().nullable().default(null),
       // Accepted payment methods.
       acceptedPaymentMethods: z.array(z.enum(PAYMENT_METHODS)).default([]),
+      // Per-tax withholding rate overrides (map taxType → rate as % string; '' = no override).
+      withholdingRates: z.record(z.string(), z.string()).default({}),
     })
     .superRefine((val, ctx) => {
       if (val.paymentScheduleMode === 'FixedDayOfMonth') {

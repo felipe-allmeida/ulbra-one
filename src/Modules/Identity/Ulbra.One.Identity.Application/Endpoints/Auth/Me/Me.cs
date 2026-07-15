@@ -20,5 +20,5 @@ public sealed class Me : IEndpoint
     }
 
     private static IResult Handle(UserContext user) =>
-        TypedResults.Ok(new MeResponse(new UserId(Guid.Parse(user.UserId)), user.UserName, user.UserEmail, user.Role, user.IsAdmin));
+        TypedResults.Ok(new MeResponse(new UserId(Guid.Parse(user.UserId)), user.UserName, user.UserEmail, user.Role, user.IsAdmin, user.Permissions));
 }

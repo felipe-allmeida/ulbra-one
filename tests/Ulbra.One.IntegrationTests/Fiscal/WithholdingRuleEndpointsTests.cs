@@ -103,4 +103,17 @@ public class WithholdingRuleEndpointsTests(PostgresFixture fixture)
         Assert.True(rule.GetProperty("cprb").GetBoolean());
         Assert.Equal(0.035m, rule.GetProperty("rate").GetDecimal());
     }
+
+    [Fact]
+    public async Task Preview_returns_system_default_per_tax()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+
+        // The system defaults are auto-seeded on startup; the preview resolves them for a LucroPresumido vendor.
+        var preview = await ReadJson(await client.GetAsync("/api/withholding-rules/preview?regime=LucroPresumido"));
+        var irrf = preview.EnumerateArray().Single(x => x.GetProperty("taxType").GetString() == "Irrf");
+        Assert.True(irrf.GetProperty("retains").GetBoolean());
+        Assert.True(irrf.GetProperty("rate").GetDecimal() > 0);
+    }
 }

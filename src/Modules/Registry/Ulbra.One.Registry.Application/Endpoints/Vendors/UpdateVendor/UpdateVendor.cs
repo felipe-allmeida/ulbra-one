@@ -44,7 +44,7 @@ public sealed class UpdateVendor : IEndpoint
         vendor.Update(req.PersonType, req.Name, req.TradeName, req.Document, req.Email, req.Phone,
             req.Address.ToAddress(), req.PaymentTerms, req.BankInfo.ToBankInfo(), req.TaxRegime,
             new PaymentSchedule(req.PaymentScheduleMode, req.PaymentScheduleDay),
-            req.CprbForeseen, req.SimplesAnexo, req.AcceptedPaymentMethods);
+            req.CprbForeseen, req.SimplesAnexo, req.AcceptedPaymentMethods, req.WithholdingRates);
         await uow.SaveChangesAsync(ct);
         return Result.Success(VendorResponse.From(vendor)).ToOk();
     }

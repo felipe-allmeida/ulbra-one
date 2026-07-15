@@ -31,6 +31,7 @@ import {
   ShieldCheck,
   ScrollText,
 } from 'lucide-react';
+import { P, type Permission } from './permissions';
 
 /**
  * Single source of truth for the primary navigation (rail + panel).
@@ -48,6 +49,8 @@ export interface NavItem {
   icon: ReactNode;
   /** Placeholder shown disabled with an "em breve" badge. */
   soon?: boolean;
+  /** Permissões que liberam o item (qualquer uma). Ausente = visível para todos os autenticados. */
+  requires?: Permission[];
 }
 
 export interface NavGroup {
@@ -69,6 +72,8 @@ export interface NavDomain {
   index?: boolean;
   /** Pin to the bottom of the rail (e.g. settings). */
   footer?: boolean;
+  /** Permissões que liberam o domínio no rail (qualquer uma). Ausente = visível para todos. */
+  requires?: Permission[];
   groups: NavGroup[];
 }
 
@@ -88,6 +93,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'finance',
     icon: <Wallet />,
     labelKey: 'nav.domains.finance',
+    requires: [P.payablesRead, P.receivablesRead, P.treasuryRead],
     groups: [
       {
         labelKey: 'nav.subgroups.operation',
@@ -115,6 +121,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'accounting',
     icon: <BookText />,
     labelKey: 'nav.domains.accounting',
+    requires: [P.accountingRead, P.reportsRead],
     groups: [
       {
         labelKey: 'nav.subgroups.movement',
@@ -153,6 +160,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'fiscal',
     icon: <ScrollText />,
     labelKey: 'nav.domains.fiscal',
+    requires: [P.fiscalRead],
     groups: [
       {
         labelKey: 'nav.subgroups.obligations',
@@ -164,6 +172,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'registry',
     icon: <Contact />,
     labelKey: 'nav.domains.registry',
+    requires: [P.registryRead],
     groups: [
       {
         items: [
@@ -181,6 +190,7 @@ export const NAV_DOMAINS: NavDomain[] = [
     key: 'structure',
     icon: <Building2 />,
     labelKey: 'nav.domains.structure',
+    requires: [P.coreRead],
     groups: [{ items: [{ labelKey: 'nav.companiesUnits', to: '/app/structure', icon: <Building2 /> }] }],
   },
   {

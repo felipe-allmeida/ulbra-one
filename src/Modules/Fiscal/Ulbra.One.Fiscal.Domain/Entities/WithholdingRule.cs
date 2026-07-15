@@ -9,7 +9,8 @@ namespace Ulbra.One.Fiscal.Domain.Entities;
 /// (null = "any"): <see cref="Lc116Subitem"/>, <see cref="VendorRegime"/>, <see cref="MunicipalityIbge"/>,
 /// <see cref="CompanyId"/>, and the INSS-specific <see cref="Cprb"/> / <see cref="SimplesAnexo"/>. The outcome
 /// is <see cref="Retains"/> + rate/base/minimum. Specificity (which rule wins when several match) is COMPUTED
-/// during resolution, not stored.
+/// during resolution, not stored. Per-vendor tuning is a rate override on the vendor record (not a rule here):
+/// the system rules decide WHETHER to retain; the vendor may only override the rate.
 /// </summary>
 public class WithholdingRule : IAuditable, ISoftDeletable
 {

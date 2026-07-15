@@ -1025,6 +1025,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Keep the editable rows a tidy form width instead of stretching the inputs across the full-width
+     detail page (the PendingAccounting stage renders this editable grid). Narrow contexts (accounting
+     drawer) are already below this cap, so they are unaffected. */
+  max-width: 820px;
 }
 .wh-head,
 .wh-row {
@@ -1151,6 +1155,17 @@ body {
   border-radius: calc(var(--radius) + 4px);
   padding: 20px;
   max-width: 640px;
+}
+/* Vendor form rendered as a full-width page (the reused VendorForm, not the drawer): fill the content
+   area and lay the drawer's 2-col grids out in 3 columns. span-2 fields still span every column
+   (grid-column: 1 / -1), so wide fields stay full-width. */
+.card-form.vendor-page-form {
+  max-width: none;
+}
+@media (min-width: 720px) {
+  .vendor-page-form .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* inline form (estrutura) */

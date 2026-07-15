@@ -1,7 +1,9 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Ulbra.One.Common.Application.Authentication;
 
 namespace Ulbra.One.Common.Infrastructure.Authentication;
 
@@ -36,6 +38,8 @@ public static class AuthenticationExtensions
             });
 
         services.AddAuthorization();
+        // Resolve policies "perm:<permissão>" sob demanda (ver PermissionPolicyProvider / .RequirePermission).
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddHttpContextAccessor();
 
         return services;

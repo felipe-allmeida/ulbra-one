@@ -7,6 +7,7 @@ using Ulbra.One.Fiscal.Application.Endpoints.Assessment.GetFiscalAssessment;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.CreateWithholdingRule;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.DeleteWithholdingRule;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.ListWithholdingRules;
+using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.PreviewWithholdingRules;
 using Ulbra.One.Fiscal.Application.Endpoints.WithholdingRules.UpdateWithholdingRule;
 
 namespace Ulbra.One.Fiscal.Application;
@@ -17,6 +18,7 @@ public static class FiscalEndpoints
     {
         var rules = builder.MapGroup("/withholding-rules");
         rules.MapEndpoint<ListWithholdingRules>();
+        rules.MapEndpoint<PreviewWithholdingRules>();
         rules.MapEndpoint<CreateWithholdingRule>();
         rules.MapEndpoint<UpdateWithholdingRule>();
         rules.MapEndpoint<DeleteWithholdingRule>();

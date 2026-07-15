@@ -318,6 +318,7 @@ describe('VendorForm', () => {
         paymentScheduleMode: 'FixedDayOfMonth' as const,
         paymentScheduleDay: 20,
         acceptedPaymentMethods: [],
+        withholdingRates: [],
         active: true,
       };
       renderWithProviders(

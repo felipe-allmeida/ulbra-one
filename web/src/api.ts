@@ -67,9 +67,10 @@ export type Address = Schemas['AddressResponse'];
 type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & { address: Address | null };
 /** LC123 Simples annex (serialised as string). */
 export type SimplesAnexoValue = Schemas['SimplesAnexo'];
-// `simplesAnexo` is a nullable enum on the backend (`SimplesAnexo?`); Swashbuckle can't express nullable enums, so
-// the generated type is non-null — restore the honest nullability. `cprbForeseen` (a nullable bool) generates
-// correctly and flows through untouched.
+/** Per-tax withholding RATE override on the vendor (rate = decimal fraction, 0.015 = 1,5%). */
+export type VendorWithholdingRate = Schemas['VendorWithholdingRate'];
+// `simplesAnexo` is nullable server-side (`SimplesAnexo?`) but the generated schema types it as a non-null
+// required enum — restore the honest nullability. `withholdingRates` and `cprbForeseen` already generate correctly.
 export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
   simplesAnexo: SimplesAnexoValue | null;
 };
@@ -131,6 +132,16 @@ export type WithholdingRuleInput = Omit<WithholdingRule, 'id' | 'active'>;
 export type RateSource = Schemas['RateSource'];
 export type BaseRule = Schemas['BaseRule'];
 export type NonRetentionReason = Schemas['NonRetentionReason'];
+
+// System-default outcome per tax for a vendor tax profile (GET /withholding-rules/preview).
+export type WithholdingPreviewItem = Schemas['WithholdingPreviewItem'];
+// Client-side query params for the preview call (not a wire schema).
+export interface WithholdingPreviewParams {
+  regime: TaxRegime;
+  companyId?: string | null;
+  cprb?: boolean | null;
+  simplesAnexo?: SimplesAnexoValue | null;
+}
 
 // ---------- Fiscal documents (leitor de NF) ----------
 export type FiscalDocumentFormat = Schemas['FiscalDocumentFormat'];
@@ -958,6 +969,14 @@ export const api = {
   // ---------- Withholding rules (Regras de Retenção) ----------
   listWithholdingRules: (includeInactive?: boolean) =>
     request<WithholdingRule[]>(`/withholding-rules${includeInactive ? '?includeInactive=true' : ''}`),
+  // System default per tax for the vendor's tax profile (vendor overrides excluded).
+  previewWithholdingRules: (params: WithholdingPreviewParams) => {
+    const qs = new URLSearchParams({ regime: params.regime });
+    if (params.companyId) qs.set('companyId', params.companyId);
+    if (params.cprb != null) qs.set('cprb', String(params.cprb));
+    if (params.simplesAnexo) qs.set('simplesAnexo', params.simplesAnexo);
+    return request<WithholdingPreviewItem[]>(`/withholding-rules/preview?${qs.toString()}`);
+  },
   createWithholdingRule: (body: WithholdingRuleInput) =>
     request<WithholdingRule>('/withholding-rules', { method: 'POST', body: JSON.stringify(body) }),
   updateWithholdingRule: (id: string, body: WithholdingRuleInput) =>

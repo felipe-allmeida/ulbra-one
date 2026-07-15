@@ -9,6 +9,8 @@ using Ulbra.One.Finance.Domain;
 using Ulbra.One.Finance.Domain.Entities;
 using Ulbra.One.Fiscal.Domain;
 using Ulbra.One.Fiscal.Domain.Entities;
+using Ulbra.One.Identity.Domain;
+using Ulbra.One.Identity.Domain.Entities;
 using Ulbra.One.Persistence;
 using Ulbra.One.Registry.Domain.Entities;
 using Ulbra.One.Registry.Domain.ValueObjects;
@@ -22,6 +24,48 @@ namespace Ulbra.One.Api;
 /// </summary>
 public static class DevDataSeeder
 {
+    /// <summary>
+    /// Cria usuários locais de teste — um por cargo — em Development, para exercitar a
+    /// autorização por claim e a renderização por cargo via <c>/auth/dev-token</c> (que
+    /// respeita o cargo de usuários já existentes). Idempotente. Não roda em produção
+    /// (só é chamado no bloco <c>IsDevelopment</c> de Program.cs).
+    /// Emails: <c>{admin,financeiro,controladoria,contabil}@ulbra.local</c>.
+    /// </summary>
+    public static async Task SeedLocalUsersAsync(IServiceProvider services, CancellationToken ct = default)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DevDataSeeder");
+
+        var wanted = new (string Email, string Name, string Role)[]
+        {
+            ("admin@ulbra.local", "Admin (dev)", Roles.Admin),
+            ("financeiro@ulbra.local", "Financeiro (dev)", Roles.Financeiro),
+            ("controladoria@ulbra.local", "Controladoria (dev)", Roles.Controladoria),
+            ("contabil@ulbra.local", "Contábil (dev)", Roles.Contabil),
+        };
+
+        var emails = wanted.Select(u => u.Email).ToArray();
+        var existing = await db.Set<User>()
+            .Where(u => emails.Contains(u.Email))
+            .Select(u => u.Email)
+            .ToListAsync(ct);
+
+        var added = 0;
+        foreach (var (email, name, role) in wanted)
+        {
+            if (existing.Contains(email)) continue;
+            await db.Set<User>().AddAsync(new User(email, name, role), ct);
+            added++;
+        }
+
+        if (added > 0)
+        {
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("Dev seed: {Count} usuário(s) local(is) de cargo criados (admin/financeiro/controladoria/contabil @ulbra.local).", added);
+        }
+    }
+
     public static async Task SeedAsync(IServiceProvider services, CancellationToken ct = default)
     {
         using var scope = services.CreateScope();
