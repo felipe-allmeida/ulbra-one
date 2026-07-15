@@ -58,7 +58,7 @@ public sealed class UpdateBankAccount : IEndpoint
         Guid? ledgerId = req.LedgerAccountId is { } l && l.Value != Guid.Empty ? l.Value : null;
         var ledgerProblem = await ClassificationValidation.ValidateAsync(uow, ledgerId, ct);
         if (ledgerProblem is not null)
-            return TypedResults.Problem(detail: "A conta contábil informada é inválida.", statusCode: 400, title: ledgerProblem);
+            return TypedResults.Problem(detail: "The accounting account is invalid.", statusCode: 400, title: ledgerProblem);
 
         var companyId = acc.CompanyId;
         var duplicate = await uow.ReadSet<BankAccount>().AnyAsync(a =>

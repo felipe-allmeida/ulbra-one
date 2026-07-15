@@ -53,10 +53,10 @@ public sealed class CreateBankAccount : IEndpoint
 
         // The accounting account is required on create: it is the credit account when settling a payable.
         if (req.LedgerAccountId is not { } ledgerId || ledgerId.Value == Guid.Empty)
-            return TypedResults.Problem(detail: "A conta contábil é obrigatória.", statusCode: 400, title: "BankAccount.LedgerAccountRequired");
+            return TypedResults.Problem(detail: "The accounting account is required.", statusCode: 400, title: "BankAccount.LedgerAccountRequired");
         var ledgerProblem = await ClassificationValidation.ValidateAsync(uow, ledgerId.Value, ct);
         if (ledgerProblem is not null)
-            return TypedResults.Problem(detail: "A conta contábil informada é inválida.", statusCode: 400, title: ledgerProblem);
+            return TypedResults.Problem(detail: "The accounting account is invalid.", statusCode: 400, title: ledgerProblem);
 
         var companyId = req.CompanyId.Value;
         var duplicate = await uow.ReadSet<BankAccount>().AnyAsync(a =>
