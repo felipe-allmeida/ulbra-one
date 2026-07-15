@@ -1,7 +1,26 @@
 import type { ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { auth } from './api';
-import { usePermissions, type Permission } from './permissions';
+import { P, usePermissions, type Permission } from './permissions';
+
+/**
+ * Home por cargo (v1 por redirecionamento): leva cada cargo direto à sua tela de trabalho
+ * ao abrir `/app`, em vez do dashboard genérico. Distingue os cargos por permissões-assinatura.
+ */
+export function RoleLanding() {
+  const { me, isAdmin, canAny } = usePermissions();
+  if (!me) return null; // /auth/me ainda carregando
+  const to = isAdmin
+    ? '/app/home'
+    : canAny([P.accountingWrite, P.accountingPost])
+      ? '/app/accounting/pending' // Contábil → postagens pendentes
+      : canAny([P.payablesApprove, P.treasuryApprove])
+        ? '/app/pendencies' // Controladoria → fila de aprovações
+        : canAny([P.payablesWrite, P.payablesPay, P.receivablesWrite, P.treasuryWrite])
+          ? '/app/payables' // Financeiro → contas a pagar
+          : '/app/home';
+  return <Navigate to={to} replace />;
+}
 
 /**
  * Guarda de rota por permissão — defesa em profundidade (a segurança real é o servidor).

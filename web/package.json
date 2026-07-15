@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "checks": "pnpm format:check && pnpm lint && pnpm typecheck",
-    "gen:api": "openapi-typescript ./openapi.json -o ./src/api/schema.d.ts"
+    "gen:api": "openapi-typescript ./openapi.json -o ./src/api/schema.d.ts",
+    "shots": "node scripts/pr-shots.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

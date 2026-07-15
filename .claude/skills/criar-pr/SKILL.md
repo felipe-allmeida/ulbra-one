@@ -39,17 +39,22 @@ Gera a descrição de PR seguindo o template oficial (`.github/pull_request_temp
    - **Fora de escopo:** retenção/expurgo, UI.
    ```
 
-3. **Defina o título** no formato `tipo(AEL-<n>): descrição` (`feat`, `fix`, `chore`, `ci`, `refactor`, `docs`, `test`). **Sem issue, use o marcador explícito** `no-issue`: `tipo(no-issue): descrição`. O título é validado no CI pelo workflow `.github/workflows/pr-title.yml` — fora do padrão, o PR não passa.
+3. **Mudanças de frontend (`web/`) → prints obrigatórios.** Todo PR que altera a UI leva screenshots das telas afetadas.
+   - Suba o dev server (`pnpm --dir web dev --port 5199 --strictPort`) e rode `pnpm --dir web shots` (`web/scripts/pr-shots.mjs`). O script usa Playwright com o Chromium pré-instalado e **mocka `/auth/me` por cargo** (+ um catch-all), então captura login, estado "sem cargo" e o **menu por cargo sem depender do backend .NET**. Saída em `web/pr-shots/` (gitignored).
+   - Para telas novas/diferentes, ajuste as rotas e os mocks no script antes de rodar.
+   - **Anexe ao PR:** o repositório é privado — imagens não renderizam via URL externa/raw. Arraste os PNGs direto na descrição do PR no GitHub (upload nativo) e coloque cada print junto do bullet relevante em "O que foi alterado?". Operando headless (sem UI do GitHub), **envie os arquivos ao usuário** para ele anexar.
 
-4. **Verifique a regra de 1 migration por PR** antes de abrir:
+4. **Defina o título** no formato `tipo(AEL-<n>): descrição` (`feat`, `fix`, `chore`, `ci`, `refactor`, `docs`, `test`). **Sem issue, use o marcador explícito** `no-issue`: `tipo(no-issue): descrição`. O título é validado no CI pelo workflow `.github/workflows/pr-title.yml` — fora do padrão, o PR não passa.
+
+5. **Verifique a regra de 1 migration por PR** antes de abrir:
    - `git diff main...HEAD --name-only | grep -E 'Migrations/.*\.cs$' | grep -v Designer | grep -v Snapshot` — conte os arquivos de migration. **Ideal: ≤ 1.** Se houver mais, avise o usuário (é a regra do time) e siga só com confirmação.
 
-5. **Abra o PR (draft por padrão)**:
+6. **Abra o PR (draft por padrão)**:
    - Garanta que a branch foi publicada (`git push -u origin <branch>` se necessário).
    - `gh pr create --draft --base main --head <branch> --title "<título>" --body "<corpo>"`.
    - Abra **sempre como draft**; o autor marca "ready for review" (`gh pr ready <n>`) quando estiver pronto pra revisão.
 
-6. Retorne a URL do PR ao usuário (e lembre que está em draft).
+7. Retorne a URL do PR ao usuário (e lembre que está em draft).
 
 ## Regras
 
@@ -57,4 +62,5 @@ Gera a descrição de PR seguindo o template oficial (`.github/pull_request_temp
 - **Draft por padrão** — todo PR abre como rascunho.
 - **No máximo 1 migration por PR** (snapshot junto). Mais que isso, sinalize.
 - Não marque itens do checklist que você não validou.
+- **Mudou frontend (`web/`) → sempre com prints** das telas afetadas (passo 3; `pnpm --dir web shots`).
 - O corpo do PR deve espelhar as seções de `.github/pull_request_template.md` — se o template mudar, siga o template.

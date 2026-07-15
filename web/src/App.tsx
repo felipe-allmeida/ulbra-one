@@ -35,7 +35,7 @@ import { RemessasPage } from './pages/remessas/list';
 import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 import { ReceivablesLayout, ReceivableDetailPage, NewReceivablePage, EditReceivablePage } from './pages/receivables';
 import { PendenciesPage } from './pages/pendencies';
-import { RoleGate, RequirePermission } from './auth-guards';
+import { RoleGate, RequirePermission, RoleLanding } from './auth-guards';
 import { P, type Permission } from './permissions';
 
 export default function App() {
@@ -55,7 +55,7 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to='home' replace />} />
+        <Route index element={<RoleLanding />} />
         <Route path='home' element={<DashboardPage />} />
         <Route path='payables' element={<PayablesLayout />} />
         <Route path='payables/new' element={g(<NewPayablePage />, [P.payablesWrite])} />

@@ -8,3 +8,4 @@ dist
 playwright-report
 test-results
 /e2e/.auth
+pr-shots/
