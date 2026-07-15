@@ -69,12 +69,10 @@ type WithNullableAddress<T extends { address: Address }> = Omit<T, 'address'> & 
 export type SimplesAnexoValue = Schemas['SimplesAnexo'];
 /** Per-tax withholding RATE override on the vendor (rate = decimal fraction, 0.015 = 1,5%). */
 export type VendorWithholdingRate = Schemas['VendorWithholdingRate'];
-// Swashbuckle can't express nullable enums, so `simplesAnexo` (`SimplesAnexo?`) comes through non-null — restore
-// the honest nullability. `withholdingRates` is always a list server-side (defaults to []) but Swashbuckle emits
-// it nullable — force it non-null here so callers map it without a guard. `cprbForeseen` flows through untouched.
-export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo' | 'withholdingRates'> & {
+// `simplesAnexo` is nullable server-side (`SimplesAnexo?`) but the generated schema types it as a non-null
+// required enum — restore the honest nullability. `withholdingRates` and `cprbForeseen` already generate correctly.
+export type Vendor = Omit<WithNullableAddress<Schemas['VendorResponse']>, 'simplesAnexo'> & {
   simplesAnexo: SimplesAnexoValue | null;
-  withholdingRates: VendorWithholdingRate[];
 };
 export type Customer = WithNullableAddress<Schemas['CustomerResponse']>;
 export type Employee = WithNullableAddress<Schemas['EmployeeResponse']>;
