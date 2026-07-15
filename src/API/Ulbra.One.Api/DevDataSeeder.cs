@@ -48,21 +48,31 @@ public static class DevDataSeeder
         var emails = wanted.Select(u => u.Email).ToArray();
         var existing = await db.Set<User>()
             .Where(u => emails.Contains(u.Email))
-            .Select(u => u.Email)
             .ToListAsync(ct);
+        var byEmail = existing.ToDictionary(u => u.Email);
 
         var added = 0;
+        var healed = 0;
         foreach (var (email, name, role) in wanted)
         {
-            if (existing.Contains(email)) continue;
+            if (byEmail.TryGetValue(email, out var user))
+            {
+                // Reconcilia cargo defasado: usuários semeados antes do rename PT→EN mantiveram o
+                // nome antigo (ex.: "Financeiro"), que não casa mais com nenhuma linha de `role`, então
+                // o dev-token emitiria um token sem permissões (→ tela "seu acesso está sendo configurado").
+                if (user.Role != role) { user.SetRole(role); healed++; }
+                continue;
+            }
             await db.Set<User>().AddAsync(new User(email, name, role), ct);
             added++;
         }
 
-        if (added > 0)
+        if (added > 0 || healed > 0)
         {
             await db.SaveChangesAsync(ct);
-            logger.LogInformation("Dev seed: {Count} usuário(s) local(is) de cargo criados (admin/financeiro/controladoria/contabil @ulbra.local).", added);
+            logger.LogInformation(
+                "Dev seed: {Added} usuário(s) de cargo criado(s), {Healed} cargo(s) reconciliado(s) (admin/financeiro/controladoria/contabil @ulbra.local).",
+                added, healed);
         }
     }
 
