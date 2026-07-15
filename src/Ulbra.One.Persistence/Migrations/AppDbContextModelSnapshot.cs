@@ -957,6 +957,10 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_default_for_payments");
 
+                    b.Property<Guid?>("LedgerAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ledger_account_id");
+
                     b.Property<decimal?>("OpeningBalance")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
