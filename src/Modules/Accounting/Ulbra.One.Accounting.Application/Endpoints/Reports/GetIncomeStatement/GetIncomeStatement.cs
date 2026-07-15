@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Reports;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -15,7 +16,7 @@ public sealed class GetIncomeStatement : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/income-statement", Handle).WithName("GetIncomeStatement").WithTags("Accounting")
-            .RequireAuthorization().Produces<IncomeStatementResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.AccountingRead).Produces<IncomeStatementResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
     private static async Task<IResult> Handle(

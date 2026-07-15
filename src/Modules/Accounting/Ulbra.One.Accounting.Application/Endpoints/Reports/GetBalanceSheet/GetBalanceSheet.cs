@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Application.Reports;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -15,7 +16,7 @@ public sealed class GetBalanceSheet : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/balance-sheet", Handle).WithName("GetBalanceSheet").WithTags("Accounting")
-            .RequireAuthorization().Produces<BalanceSheetResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.AccountingRead).Produces<BalanceSheetResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         IUnitOfWork uow, TimeProvider clock, CompanyId? companyId, DateOnly? asOf, CancellationToken ct)

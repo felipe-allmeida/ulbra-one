@@ -7,6 +7,7 @@ using Ulbra.One.Accounting.Application.Contracts;
 using Ulbra.One.Accounting.Domain;
 using Ulbra.One.Accounting.Domain.Entities;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 
@@ -21,7 +22,7 @@ public sealed class PostJournalEntry : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/post", Handle).WithName("PostJournalEntry").WithTags("Accounting")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.AccountingPost)
             .Produces<JournalEntryResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
