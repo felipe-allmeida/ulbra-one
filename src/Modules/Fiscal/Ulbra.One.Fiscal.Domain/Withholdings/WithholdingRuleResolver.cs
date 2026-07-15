@@ -12,11 +12,14 @@ public sealed record ServiceLine(string? Lc116Subitem, string? MunicipalityIbge,
 
 /// <summary>Resolution inputs: company, vendor regime and the service lines. The Simples federal exemption is
 /// keyed off the regime alone — a vendor registered as SimplesNacional is assumed to have the declaration on file.
-/// <para><paramref name="Cprb"/> (CPRB destacado na NF, confirmado no lançamento) e <paramref name="SimplesAnexo"/>
-/// (anexo do Simples) refinam a retenção de INSS: CPRB → 3,5%; Anexo IV → 11%; demais anexos → isento.</para></summary>
+/// <para><paramref name="Cprb"/> (CPRB stated on the invoice, confirmed on the payable) and <paramref name="SimplesAnexo"/>
+/// (Simples annex) refine the INSS withholding: CPRB → 3.5%; Annex IV → 11%; other annexes → exempt.</para>
+/// <para><paramref name="RateOverrides"/> are the per-tax rates configured on the vendor: the system rules decide
+/// WHETHER to retain; when there is an override for a retained tax, the vendor's rate replaces the rule's.</para></summary>
 public sealed record ResolutionContext(
     Guid? CompanyId, TaxRegime VendorRegime, IReadOnlyList<ServiceLine> Lines,
-    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null);
+    bool? Cprb = null, SimplesAnexo? SimplesAnexo = null,
+    IReadOnlyDictionary<WithholdingTaxType, decimal>? RateOverrides = null);
 
 /// <summary>A computed withholding (atomic per tax), ready to become a PayableWithholding.</summary>
 public sealed record WithholdingComputation(WithholdingTaxType TaxType, decimal BaseAmount, decimal Rate, decimal Amount);
@@ -51,6 +54,9 @@ public static class WithholdingRuleResolver
 
                 // Fixed: rate from the rule. FromNota: rate from the invoice itself (Simples ISS = provider's band).
                 var rate = rule.RateSource == RateSource.FromNota ? line.InvoiceIssRate : rule.Rate;
+                // Per-vendor override: the system rule decided it retains; the vendor's record may only swap the rate.
+                if (context.RateOverrides is { } overrides && overrides.TryGetValue(tax, out var vendorRate) && vendorRate > 0)
+                    rate = vendorRate;
                 if (rate is null or <= 0) continue; // best-effort: without a rate we cannot compute
 
                 var baseAmount = line.Amount; // BaseRule.Full (MVP)
@@ -67,6 +73,21 @@ public static class WithholdingRuleResolver
         return perTax
             .Select(kv => new WithholdingComputation(kv.Key, kv.Value.Base, kv.Value.Rate, kv.Value.Amount))
             .OrderBy(c => c.TaxType)
+            .ToList();
+    }
+
+    /// <summary>Resolves, for each of the 6 taxes, the winning rule (or null when none matches) for a single
+    /// service line — used to PREVIEW what the system would apply to a vendor before any invoice exists. Unlike
+    /// <see cref="Resolve"/> this exposes the matched rule itself (including does-not-retain rules and rules
+    /// without a rate), so the UI can render "does not withhold"/"invoice-dependent" as well as a rate.</summary>
+    public static IReadOnlyList<(WithholdingTaxType Tax, WithholdingRule? Rule)> ResolvePerTax(
+        IReadOnlyCollection<WithholdingRule> rules, ResolutionContext context)
+    {
+        var line = context.Lines.Count > 0
+            ? context.Lines[0]
+            : new ServiceLine(null, null, null, 0m);
+        return WithholdingTaxes
+            .Select(tax => (tax, ResolveRule(rules, tax, line, context)))
             .ToList();
     }
 

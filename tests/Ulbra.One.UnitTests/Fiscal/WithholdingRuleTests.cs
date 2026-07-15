@@ -68,4 +68,5 @@ public class WithholdingRuleTests
             vendorRegime: TaxRegime.SimplesNacional, simplesAnexo: SimplesAnexo.IV);
         Assert.Equal(2, anexoIv.DimensionCount); // vendorRegime + simplesAnexo
     }
+
 }

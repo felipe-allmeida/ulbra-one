@@ -34,6 +34,7 @@ import {
   type FiscalDocument,
   type WithholdingRule,
   type WithholdingRuleInput,
+  type WithholdingPreviewParams,
   type MatchStatus,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
@@ -95,6 +96,7 @@ export const queryKeys = {
   receivableAuditTrail: (id: string) => ['receivableAuditTrail', id] as const,
   expenseCategories: (includeInactive = false) => ['expenseCategories', includeInactive] as const,
   withholdingRules: (includeInactive = false) => ['withholdingRules', includeInactive] as const,
+  withholdingPreview: (params: WithholdingPreviewParams) => ['withholdingPreview', params] as const,
   bankAccounts: (companyId: string, includeInactive = false) => ['bankAccounts', companyId, includeInactive] as const,
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
@@ -438,6 +440,14 @@ export function useWithholdingRules(includeInactive = false) {
   return useQuery({
     queryKey: queryKeys.withholdingRules(includeInactive),
     queryFn: () => api.listWithholdingRules(includeInactive),
+  });
+}
+
+export function useWithholdingPreview(params: WithholdingPreviewParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.withholdingPreview(params),
+    queryFn: () => api.previewWithholdingRules(params),
+    enabled: options?.enabled ?? true,
   });
 }
 

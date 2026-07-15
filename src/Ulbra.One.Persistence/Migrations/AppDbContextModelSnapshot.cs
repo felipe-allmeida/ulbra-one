@@ -3180,6 +3180,13 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("updated_by");
 
+                    b.Property<string>("WithholdingRates")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("withholding_rates")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.HasKey("Id")
                         .HasName("pk_vendors");
 

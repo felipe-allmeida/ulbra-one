@@ -32,5 +32,18 @@ public sealed class VendorRequestValidator : AbstractValidator<VendorRequest>
                 .Must(m => m.Distinct().Count() == m.Count)
                 .WithMessage("Duplicate payment methods are not allowed.");
         });
+        When(x => x.WithholdingRates is not null, () =>
+        {
+            // Rate is a decimal fraction (0.015 = 1,5%); a retention rate is always within (0, 1].
+            RuleForEach(x => x.WithholdingRates!).ChildRules(r =>
+            {
+                r.RuleFor(w => w.TaxType).NotEmpty().WithMessage("Withholding tax type is required.");
+                r.RuleFor(w => w.Rate).GreaterThan(0m).LessThanOrEqualTo(1m)
+                    .WithMessage("Withholding rate must be a fraction in (0, 1].");
+            });
+            RuleFor(x => x.WithholdingRates!)
+                .Must(r => r.Select(w => w.TaxType).Distinct().Count() == r.Count)
+                .WithMessage("Duplicate withholding tax types are not allowed.");
+        });
     }
 }

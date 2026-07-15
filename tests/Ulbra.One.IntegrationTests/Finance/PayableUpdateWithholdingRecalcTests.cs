@@ -153,6 +153,39 @@ public class PayableUpdateWithholdingRecalcTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task Consumer_applies_vendor_rate_override()
+    {
+        // Proves the vendor rate override flows end-to-end: vendor record → AutoWithholdingService →
+        // WithholdingCalculator → resolver. IRRF is withheld by the system (1.5%); the vendor override swaps only the rate → 5%.
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+
+        // Save the rate override (5% IRRF) on the vendor record (same path as the frontend: PUT /vendors).
+        var put = await client.PutAsJsonAsync($"/api/vendors/{seed.VendorId}", new
+        {
+            companyId = seed.CompanyId,
+            personType = 1,
+            name = "Fornecedor Recalc",
+            document = "11.222.333/0001-81",
+            taxRegime = "LucroPresumido",
+            paymentScheduleMode = "OnDueDate",
+            withholdingRates = new[] { new { taxType = "Irrf", rate = 0.05m } },
+        });
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        var (prefixedId, rawId) = await CreatePayableAsync(client, seed, SingleInstallment(10_000m), type: "Product");
+        var updateRes = await UpdatePayableAsync(client, prefixedId, seed, SingleInstallment(10_000m), type: "Service");
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+        await RunConsumerAsync(factory, rawId);
+
+        var body = await ReadJson(await client.GetAsync($"/api/payables/{prefixedId}"));
+        var irrf = body.GetProperty("withholdings").EnumerateArray()
+            .Single(w => w.GetProperty("taxType").GetString() == "Irrf");
+        Assert.Equal(500m, irrf.GetProperty("amount").GetDecimal()); // 5% override on 10,000, not 1.5%
+    }
+
+    [Fact]
     public async Task Update_ServiceToProduct_consumer_clears_withholdings_and_restores_net()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);
