@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -16,7 +17,7 @@ public sealed class IgnoreTransaction : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/ignore", Handle).WithName("IgnoreTransaction").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryWrite)
             .Produces<BankTransactionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

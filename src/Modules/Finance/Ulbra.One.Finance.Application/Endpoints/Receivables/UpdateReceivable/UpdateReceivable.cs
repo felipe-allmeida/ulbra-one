@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -34,7 +35,7 @@ public sealed class UpdateReceivable : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPut("/{id}", Handle).WithName("UpdateReceivable").WithTags("Finance")
-            .RequireAuthorization().WithRequestNormalizer<UpdateReceivableRequest>()
+            .RequirePermission(Permissions.ReceivablesWrite).WithRequestNormalizer<UpdateReceivableRequest>()
             .Produces<ReceivableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

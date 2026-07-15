@@ -17,7 +17,7 @@ public sealed class ConfirmMatch : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/confirm", Handle).WithName("ConfirmMatch").WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryWrite)
             .Produces<BankTransactionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)

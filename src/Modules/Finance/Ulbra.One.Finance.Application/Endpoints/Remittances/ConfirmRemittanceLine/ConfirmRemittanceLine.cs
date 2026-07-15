@@ -18,7 +18,7 @@ public sealed class ConfirmRemittanceLine : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/lines/{lineId}/confirm-paid", Handle)
-            .WithName("ConfirmRemittanceLine").WithTags("Finance").RequireAuthorization()
+            .WithName("ConfirmRemittanceLine").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);

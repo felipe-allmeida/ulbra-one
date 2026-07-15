@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Finance.Application.Remittances;
 
@@ -19,7 +20,7 @@ public sealed class SimulateRemittanceReturn : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/simulate-return", Handle)
-            .WithName("SimulateRemittanceReturn").WithTags("Finance").RequireAuthorization()
+            .WithName("SimulateRemittanceReturn").WithTags("Finance").RequirePermission(Permissions.TreasuryRead)
             .Produces<byte[]>(StatusCodes.Status200OK, "text/plain")
             .ProducesProblem(StatusCodes.Status404NotFound);
 

@@ -20,7 +20,7 @@ public sealed class ReverseReceipt : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/receipts/{receiptId}/reverse", Handle)
-            .WithName("ReverseReceipt").WithTags("Finance").RequireAuthorization()
+            .WithName("ReverseReceipt").WithTags("Finance").RequirePermission(Permissions.ReceivablesReceive)
             .Produces<ReceivableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 

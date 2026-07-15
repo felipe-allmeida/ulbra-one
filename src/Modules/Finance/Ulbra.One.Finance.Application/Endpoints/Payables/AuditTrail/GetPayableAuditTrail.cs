@@ -18,7 +18,7 @@ public sealed class GetPayableAuditTrail : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("{id}/audit-trail", Handle).WithName("GetPayableAuditTrail").WithTags("Finance")
-            .RequireAuthorization().Produces<IReadOnlyList<AuditTrailEventResponse>>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesRead).Produces<IReadOnlyList<AuditTrailEventResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(

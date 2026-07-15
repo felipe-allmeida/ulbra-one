@@ -20,7 +20,7 @@ public sealed class CancelReceivable : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/cancel", Handle).WithName("CancelReceivable").WithTags("Finance")
-            .RequireAuthorization().Produces<ReceivableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.ReceivablesWrite).Produces<ReceivableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(ReceivableId id, CancelReceivableRequest req,

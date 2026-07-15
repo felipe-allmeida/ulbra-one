@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.CashFlow;
@@ -16,7 +17,7 @@ public sealed class GetCashFlow : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("GetCashFlow").WithTags("Finance")
-            .RequireAuthorization().Produces<CashFlowResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.TreasuryRead).Produces<CashFlowResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         CompanyId? companyId,

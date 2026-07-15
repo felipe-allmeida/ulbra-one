@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Application.Normalization;
@@ -35,7 +36,7 @@ public sealed class CreateTransaction : IEndpoint
         builder.MapPost("", Handle)
             .WithName("CreateTransaction")
             .WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryWrite)
             .WithRequestNormalizer<Request>()
             .Produces<TransactionResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);

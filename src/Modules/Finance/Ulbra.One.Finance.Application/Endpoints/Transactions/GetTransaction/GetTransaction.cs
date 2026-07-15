@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -18,7 +19,7 @@ public sealed class GetTransaction : IEndpoint
         builder.MapGet("/{id}", Handle)
             .WithName("GetTransaction")
             .WithTags("Finance")
-            .RequireAuthorization()
+            .RequirePermission(Permissions.TreasuryRead)
             .Produces<TransactionResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
     }

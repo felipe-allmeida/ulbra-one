@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -16,7 +17,7 @@ public sealed class GetAgingReport : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("", Handle).WithName("GetAgingReport").WithTags("Finance")
-            .RequireAuthorization().Produces<AgingReportResponse>(StatusCodes.Status200OK);
+            .RequirePermission(Permissions.PayablesRead).Produces<AgingReportResponse>(StatusCodes.Status200OK);
 
     private static async Task<IResult> Handle(
         CompanyId companyId,

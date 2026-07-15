@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Contracts;
@@ -16,7 +17,7 @@ public sealed class ClassificationSuggestion : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}/classification-suggestion", Handle).WithName("ClassificationSuggestion").WithTags("Finance")
-            .RequireAuthorization().Produces<ClassificationSuggestionResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesRead).Produces<ClassificationSuggestionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id,

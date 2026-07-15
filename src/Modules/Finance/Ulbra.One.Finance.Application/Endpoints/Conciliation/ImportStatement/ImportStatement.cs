@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Finance.Application.Conciliation;
@@ -17,7 +18,7 @@ public sealed class ImportStatement : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("", Handle).WithName("ImportStatement").WithTags("Finance")
-            .RequireAuthorization().DisableAntiforgery()
+            .RequirePermission(Permissions.TreasuryWrite).DisableAntiforgery()
             .Produces<StatementImportResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

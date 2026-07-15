@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Core.Domain.Entities;
@@ -20,7 +21,7 @@ public sealed class ClassifyPayable : IEndpoint
 
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/classify", Handle).WithName("ClassifyPayable").WithTags("Finance")
-            .RequireAuthorization().Produces<PayableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.PayablesWrite).Produces<PayableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(PayableId id, Request req,

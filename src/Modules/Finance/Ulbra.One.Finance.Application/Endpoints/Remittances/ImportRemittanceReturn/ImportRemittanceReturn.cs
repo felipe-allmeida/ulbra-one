@@ -21,7 +21,7 @@ public sealed class ImportRemittanceReturn : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapPost("/{id}/return", Handle)
-            .WithName("ImportRemittanceReturn").WithTags("Finance").RequireAuthorization()
+            .WithName("ImportRemittanceReturn").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .DisableAntiforgery()
             .Produces<RemittanceReturnOutcome>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
 using Ulbra.One.Common.Application.Persistence;
 using Ulbra.One.Common.Domain;
@@ -17,7 +18,7 @@ public sealed class GetReceivable : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder) =>
         builder.MapGet("/{id}", Handle).WithName("GetReceivable").WithTags("Finance")
-            .RequireAuthorization().Produces<ReceivableResponse>(StatusCodes.Status200OK)
+            .RequirePermission(Permissions.ReceivablesRead).Produces<ReceivableResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
     private static async Task<IResult> Handle(ReceivableId id, IUnitOfWork uow,
