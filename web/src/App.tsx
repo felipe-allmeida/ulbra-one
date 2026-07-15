@@ -35,6 +35,7 @@ import { RemessasPage } from './pages/remessas/list';
 import { PayablesLayout, PayableDetailPage, NewPayablePage, EditPayablePage } from './pages/payables';
 import { ReceivablesLayout, ReceivableDetailPage, NewReceivablePage, EditReceivablePage } from './pages/receivables';
 import { PendenciesPage } from './pages/pendencies';
+import { RolesPage } from './pages/roles';
 import { RoleGate, RequirePermission, RoleLanding } from './auth-guards';
 import { P, type Permission } from './permissions';
 
@@ -98,6 +99,7 @@ export default function App() {
         <Route path='vendors/:id' element={<VendorDetailPage mode='detail' />} />
         <Route path='customers' element={<ClientesPage />} />
         <Route path='employees' element={<ColaboradoresPage />} />
+        <Route path='settings/roles' element={g(<RolesPage />, [P.adminUsers])} />
         <Route path='*' element={<Navigate to='/app/home' replace />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
