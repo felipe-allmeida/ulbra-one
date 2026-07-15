@@ -28,7 +28,8 @@ public sealed class CreateJournalEntry : IEndpoint
         builder.MapPost("", Handle).WithName("CreateJournalEntry").WithTags("Accounting")
             .RequireAuthorization()
             .Produces<JournalEntryResponse>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> Handle(Request req, IUnitOfWork uow, ICostCenterLookup costCenters, CancellationToken ct)
     {
