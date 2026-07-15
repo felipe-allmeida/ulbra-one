@@ -2568,7 +2568,6 @@ export interface components {
             email: string | null;
             role: string | null;
             isAdmin: boolean;
-            /** Permissões efetivas (vazio para Admin — ele faz bypass; use isAdmin). */
             permissions: string[];
         };
         /** @enum {string} */

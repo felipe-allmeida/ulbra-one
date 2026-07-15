@@ -9727,7 +9727,8 @@
           "name",
           "email",
           "role",
-          "isAdmin"
+          "isAdmin",
+          "permissions"
         ],
         "type": "object",
         "properties": {
@@ -9749,6 +9750,12 @@
           },
           "isAdmin": {
             "type": "boolean"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false
