@@ -42,4 +42,20 @@ public class AiFiscalExtractorTests
         Assert.Equal(FiscalDocumentFormat.Pdf, parsed.Format);
         Assert.Null(parsed.DocumentNumber);
     }
+
+    [Theory]
+    [InlineData("Service", PayableType.Service)]
+    [InlineData("product", PayableType.Product)] // case-insensitive
+    [InlineData("bogus", null)]                  // hallucinated label → dropped
+    [InlineData(null, null)]                     // model unsure
+    public async Task Validates_and_maps_ai_type(string? aiType, PayableType? expected)
+    {
+        var res = new FiscalExtractionResult("NF-9", "2026-06-01", 1500m, "12345678000199", "Acme",
+            "Cloud", [], null, null, null, 0.9, Type: aiType);
+        var sut = new AiFiscalExtractor(new StubAi(() => res));
+
+        var parsed = await sut.ExtractAsync("nota.pdf", new byte[] { 1 }, default);
+
+        Assert.Equal(expected, parsed.SuggestedType);
+    }
 }

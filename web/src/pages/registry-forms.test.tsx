@@ -16,6 +16,12 @@ vi.mock('../api', async (orig) => {
   };
 });
 
+// FormActions esconde Salvar/Criar sem registry:write; força a permissão aqui (o form é o alvo do teste).
+vi.mock('../permissions', async (orig) => ({
+  ...(await orig<typeof import('../permissions')>()),
+  usePermissions: () => ({ can: () => true, canAny: () => true, me: null, isAdmin: true }),
+}));
+
 const renderForm = () => renderWithProviders(<VendorForm companyId='c1' onSaved={() => {}} onCancel={() => {}} />);
 
 describe('VendorForm', () => {

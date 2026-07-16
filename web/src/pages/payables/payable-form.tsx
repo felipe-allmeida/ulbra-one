@@ -231,9 +231,11 @@ function PayableForm({ initial }: { initial?: Payable }) {
       filled.add('description');
     }
 
-    // Type (service/product) from the document format — authoritative for XML (NFS-e → Service,
-    // NF-e → Product). PDF/image stays undetermined (the user sets it).
-    const derivedType = p.format === 'NfseXml' ? 'Service' : p.format === 'NfeXml' ? 'Product' : null;
+    // Type (service/product): authoritative from the document format for XML (NFS-e → Service,
+    // NF-e → Product). For a PDF/image, use the AI extractor's suggested type.
+    const derivedType = p.format === 'NfseXml' ? 'Service'
+      : p.format === 'NfeXml' ? 'Product'
+      : (p.suggestedType ?? null);
     if (derivedType) {
       setPayableType(derivedType);
       filled.add('type');

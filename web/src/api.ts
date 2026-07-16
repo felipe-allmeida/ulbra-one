@@ -191,6 +191,9 @@ export interface ParsedFiscalDocument {
   } | null;
   // Fiscal signals (NF-e): CFOPs/NCMs/tax totals; null for NFS-e/PDF.
   fiscal?: FiscalSummary | null;
+  // Tipo do payable (Service/Product) inferido pelo extrator de IA num PDF/imagem;
+  // null para XML (derivado do formato) e quando o modelo não tem certeza.
+  suggestedType?: PayableType | null;
 }
 
 /** The fiscal document of record persisted against a payable. */
