@@ -44,7 +44,10 @@ public sealed record ParsedFiscalDocument(
     string? IssuerPhone = null,
     ParsedAddress? IssuerAddress = null,
     // Fiscal signals (NF-e): distinct CFOPs/NCMs across items + ICMSTot tax totals; null for NFS-e/PDF.
-    FiscalSummary? Fiscal = null);
+    FiscalSummary? Fiscal = null,
+    // Payable type (Service/Product) inferred by the AI vision extractor for a PDF/image; null for XML
+    // (derived from Format at upload) and when the model is unsure. Already validated against PayableType.
+    PayableType? SuggestedType = null);
 
 /// <summary>Document-level fiscal signals (NF-e). Distinct CFOPs/NCMs across items + ICMSTot tax totals.</summary>
 public sealed record FiscalSummary(

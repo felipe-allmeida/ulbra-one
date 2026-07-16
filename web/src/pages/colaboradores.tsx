@@ -6,6 +6,7 @@ import { useApp } from '../store';
 import { useCostCenters, useEmployeeAction, useEmployees, useUnits } from '../queries';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
+import { P, usePermissions } from '../permissions';
 import { maskCpf } from '../format';
 import { EmpresaPicker } from './shared';
 import { EmployeeForm } from './registry-forms';
@@ -13,6 +14,7 @@ import { EmployeeForm } from './registry-forms';
 export function ColaboradoresPage() {
   const { empresa, empresaId } = useApp();
   const toast = useToast();
+  const canWrite = usePermissions().can(P.registryWrite);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -63,9 +65,11 @@ export function ColaboradoresPage() {
     <>
       <PageHeader title='Colaboradores' sub='Pessoas físicas vinculadas a uma unidade do grupo.'>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setDrawer({})}>
-          Novo colaborador
-        </Button>
+        {canWrite && (
+          <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setDrawer({})}>
+            Novo colaborador
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (
@@ -126,23 +130,27 @@ export function ColaboradoresPage() {
                       </span>
                     </td>
                     <td className='td-action' onClick={(e) => e.stopPropagation()}>
-                      <button className='icon-btn' onClick={() => setDrawer({ edit: emp })} aria-label='Editar'>
-                        <Pencil />
-                      </button>
-                      <button
-                        className='icon-btn'
-                        onClick={() => setConfirm({ employee: emp, action: 'toggle' })}
-                        aria-label={emp.active ? 'Desativar' : 'Ativar'}
-                      >
-                        <Power />
-                      </button>
-                      <button
-                        className='icon-btn'
-                        onClick={() => setConfirm({ employee: emp, action: 'delete' })}
-                        aria-label='Excluir'
-                      >
-                        <Trash2 />
-                      </button>
+                      {canWrite && (
+                        <>
+                          <button className='icon-btn' onClick={() => setDrawer({ edit: emp })} aria-label='Editar'>
+                            <Pencil />
+                          </button>
+                          <button
+                            className='icon-btn'
+                            onClick={() => setConfirm({ employee: emp, action: 'toggle' })}
+                            aria-label={emp.active ? 'Desativar' : 'Ativar'}
+                          >
+                            <Power />
+                          </button>
+                          <button
+                            className='icon-btn'
+                            onClick={() => setConfirm({ employee: emp, action: 'delete' })}
+                            aria-label='Excluir'
+                          >
+                            <Trash2 />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
