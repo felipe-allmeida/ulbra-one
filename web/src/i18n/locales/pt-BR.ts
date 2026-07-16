@@ -1035,8 +1035,8 @@ const ptBR = {
         },
         viewModel: {
           label: 'Visualização',
-          modelo1: 'Modelo 1 — Com grade e cores nas sintéticas',
-          modelo2: 'Modelo 2 — Sem grade e sublinhado nas sintéticas',
+          modelo1: 'Modelo 1 — Com grade e destaque no total do dia',
+          modelo2: 'Modelo 2 — Sem grade e sublinhado no total do dia',
           modelo3: 'Modelo 3 — Sem grade',
         },
       },
