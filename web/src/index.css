@@ -3108,10 +3108,18 @@ tfoot td {
   vertical-align: top;
   text-align: center;
 }
+/* Date + description columns read better left-aligned; the remaining columns stay centered. */
+.razao-planilha thead th:nth-child(1),
+.razao-planilha thead th:nth-child(2),
+.razao-planilha-move td:nth-child(1),
+.razao-planilha-move td:nth-child(2) {
+  text-align: left;
+}
 .razao-planilha-account td {
   font-weight: 700;
   border-top: 2px solid var(--foreground);
   padding-top: 12px;
+  text-align: left;
 }
 .razao-planilha-opening td {
   font-style: italic;
@@ -3120,6 +3128,12 @@ tfoot td {
 .razao-planilha-total td {
   font-weight: 700;
   border-top: 1px solid var(--border);
+}
+/* The opening/closing balance labels span the leading columns — right-align them so they read next to
+   their amount instead of floating in the middle of the row. */
+.razao-planilha-opening td:first-child,
+.razao-planilha-total td:first-child {
+  text-align: right;
 }
 
 /* Vertical rhythm between the dashboard's stacked panels. */

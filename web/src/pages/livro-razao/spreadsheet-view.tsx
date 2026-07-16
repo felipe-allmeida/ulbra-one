@@ -7,7 +7,7 @@ import { Panel } from '../../ui';
 
 /** Planilha (spreadsheet) view of the Livro Razão: a single flat table grouped by account — an account
  *  header row, the opening-balance row, one row per movement with its running balance, and an account
- *  total (closing) row. All columns are centered (see .razao-planilha in index.css). */
+ *  total (closing) row. Column alignment lives in .razao-planilha (index.css). */
 export function SpreadsheetView({
   accounts,
   ccLabels,
@@ -43,7 +43,7 @@ export function SpreadsheetView({
                   <td className='amount-cell'>{brlCents(a.openingBalance)}</td>
                 </tr>
                 {a.movements.map((m, i) => (
-                  <tr key={i}>
+                  <tr key={i} className='razao-planilha-move'>
                     <td>{fmtDate(m.competenceDate)}</td>
                     <td>{m.history}</td>
                     <td className='t-mono'>{m.documentRef ?? ''}</td>
