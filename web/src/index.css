@@ -3016,22 +3016,22 @@ tfoot td {
   font-size: 13px;
   color: var(--muted-foreground);
 }
-/* Modelo 1 — grid + highlighted day-total rows. */
-.diario-planilha--modelo1 td,
-.diario-planilha--modelo1 th {
+/* model1 — grid + highlighted day-total rows. */
+.diario-planilha--model1 td,
+.diario-planilha--model1 th {
   border: 1px solid var(--border);
 }
-.diario-planilha--modelo1 .diario-planilha-daytotal td {
+.diario-planilha--model1 .diario-planilha-daytotal td {
   background: var(--brand-subtle);
   color: var(--brand);
 }
-/* Modelo 2 — no grid + underlined day-total rows. */
-.diario-planilha--modelo2 .diario-planilha-daytotal td {
+/* model2 — no grid + underlined day-total rows. */
+.diario-planilha--model2 .diario-planilha-daytotal td {
   text-decoration: underline;
   text-underline-offset: 3px;
   border-bottom: 2px solid var(--foreground);
 }
-/* Modelo 3 — no grid (only the default horizontal separators). */
+/* model3 — no grid (only the default horizontal separators). */
 
 .dre-table .dre-section td {
   padding-top: 14px;

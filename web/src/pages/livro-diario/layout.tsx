@@ -21,7 +21,7 @@ import {
 /** Livro Diário — read-only chronological book of scriptured entries (Posted/Reversed). Two tabs
  *  over the same data: "Planilha" (a single columnar spreadsheet with selectable display models,
  *  the default view) and "Cronológico" (per-day panels). Active tab (`?tab=`) and spreadsheet
- *  model (`?modelo=`) live in the URL. Filters by company (or consolidated) + competence range. */
+ *  model (`?view=`) live in the URL. Filters by company (or consolidated) + competence range. */
 export function LivroDiarioPage() {
   const { t } = useTranslation();
   const [companyId, setCompanyId] = useState('');
@@ -31,7 +31,7 @@ export function LivroDiarioPage() {
 
   const tabParam = params.get('tab');
   const tab: JournalTabKey = isTabKey(tabParam) ? tabParam : DEFAULT_TAB;
-  const modelParam = params.get('modelo');
+  const modelParam = params.get('view');
   const model: ViewModelKey = isViewModelKey(modelParam) ? modelParam : DEFAULT_VIEW_MODEL;
 
   const setTab = (key: string) =>
@@ -41,7 +41,7 @@ export function LivroDiarioPage() {
     });
   const setModel = (m: ViewModelKey) =>
     setParams((prev) => {
-      prev.set('modelo', m);
+      prev.set('view', m);
       return prev;
     });
 
@@ -54,8 +54,8 @@ export function LivroDiarioPage() {
   const hasData = (book?.days.length ?? 0) > 0;
 
   const tabs: StageTab[] = [
-    { key: 'planilha', label: t('accounting.journalBook.tabs.spreadsheet') },
-    { key: 'cronologico', label: t('accounting.journalBook.tabs.chronological') },
+    { key: 'spreadsheet', label: t('accounting.journalBook.tabs.spreadsheet') },
+    { key: 'chronological', label: t('accounting.journalBook.tabs.chronological') },
   ];
 
   return (
@@ -81,7 +81,7 @@ export function LivroDiarioPage() {
           title={t('accounting.journalBook.empty.title')}
           sub={t('accounting.journalBook.empty.sub')}
         />
-      ) : tab === 'planilha' ? (
+      ) : tab === 'spreadsheet' ? (
         <SpreadsheetView book={book} model={model} onModelChange={setModel} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
