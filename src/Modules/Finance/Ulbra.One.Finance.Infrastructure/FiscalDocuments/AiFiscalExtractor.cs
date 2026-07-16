@@ -14,7 +14,9 @@ public sealed class AiFiscalExtractor(IAiCompletion ai)
     private const string System =
         "You extract structured fields from a Brazilian fiscal document (NF-e/NFS-e/boleto/fatura). " +
         "Return ONLY the requested structure. Dates as yyyy-MM-dd. Amounts as numbers. " +
-        "If a field is absent, use null. Confidence 0..1 reflects how sure you are overall.";
+        "If a field is absent, use null. Confidence 0..1 reflects how sure you are overall. " +
+        "Classify Type as \"Service\" for a service invoice (NFS-e, prestação de serviços) or " +
+        "\"Product\" for a goods invoice (NF-e, venda de mercadorias/produtos); use null when unsure.";
 
     public async Task<ParsedFiscalDocument> ExtractAsync(string fileName, byte[] bytes, CancellationToken ct)
     {
@@ -38,7 +40,8 @@ public sealed class AiFiscalExtractor(IAiCompletion ai)
             format, null, r.DocumentNumber, ParseDate(r.IssueDate), r.TotalAmount,
             DocumentValidator.Normalize(r.IssuerDocument), r.IssuerName, null,
             RawExtractionJson: "{}", Installments: installments,
-            ServiceDescription: r.Description, Fiscal: fiscal);
+            ServiceDescription: r.Description, Fiscal: fiscal,
+            SuggestedType: ParseType(r.Type));
     }
 
     private static ParsedFiscalDocument Empty(FiscalDocumentFormat format) =>
@@ -46,6 +49,11 @@ public sealed class AiFiscalExtractor(IAiCompletion ai)
 
     private static DateOnly? ParseDate(string? s) =>
         DateOnly.TryParse(s, CultureInfo.InvariantCulture, out var d) ? d : null;
+
+    // Validate the model's free-text Type against the PayableType enum (accepts "Service"/"Product",
+    // case-insensitive); anything else (unknown label, numeric junk, null) becomes null.
+    private static PayableType? ParseType(string? value) =>
+        Enum.TryParse<PayableType>(value, ignoreCase: true, out var t) && Enum.IsDefined(t) ? t : null;
 
     private static bool IsImage(string f) =>
         f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)

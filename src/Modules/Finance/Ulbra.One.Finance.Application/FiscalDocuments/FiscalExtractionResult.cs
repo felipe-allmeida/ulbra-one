@@ -12,6 +12,7 @@ public sealed record FiscalExtractionResult(
     IReadOnlyList<string>? Cfops,
     IReadOnlyList<string>? Ncms,
     decimal? TotalTaxes,
-    double Confidence);
+    double Confidence,
+    string? Type = null);      // "Service" or "Product" (or null if undetermined) — the payable classification
 
 public sealed record FiscalExtractionInstallment(string DueDate, decimal Amount); // DueDate ISO yyyy-MM-dd
