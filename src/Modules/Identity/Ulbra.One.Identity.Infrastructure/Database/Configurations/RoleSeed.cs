@@ -41,7 +41,10 @@ internal static class RoleSeed
             Permissions.AccountingRead, Permissions.AccountingWrite, Permissions.AccountingPost,
             Permissions.FiscalRead, Permissions.FiscalWrite,
             Permissions.ReportsRead,
-            Permissions.PayablesRead, Permissions.ReceivablesRead,
+            // payables:write habilita o fluxo de Registro de Despesa / Classificação (contabilizar,
+            // classificar, anexar NF) — todos backed por payables:write no backend. É o trabalho do
+            // time Contábil sobre a despesa; não confere aprovação/pagamento (payables:approve/pay).
+            Permissions.PayablesRead, Permissions.PayablesWrite, Permissions.ReceivablesRead,
             Permissions.RegistryRead, Permissions.CoreRead,
         ]),
     ];
