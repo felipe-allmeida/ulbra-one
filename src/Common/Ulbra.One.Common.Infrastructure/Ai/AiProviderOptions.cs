@@ -11,7 +11,7 @@ public sealed class AiProviderOptions
     public AiProvider Provider { get; set; } = AiProvider.Fake;
 
     /// <summary>Default model id passed to the provider.</summary>
-    public string Model { get; set; } = "claude-opus-4-8";
+    public string Model { get; set; } = "claude-sonnet-4-6";
 
     /// <summary>Provider API key. NEVER in appsettings — supplied via Key Vault (Ai--ApiKey) or env.</summary>
     public string? ApiKey { get; set; }

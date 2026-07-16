@@ -32,7 +32,7 @@ public class AiRegistrationTests
         {
             ["Ai:Provider"] = "Anthropic",
             ["Ai:ApiKey"] = "test-key",
-            ["Ai:Model"] = "claude-opus-4-8",
+            ["Ai:Model"] = "claude-sonnet-4-6",
         });
 
         Assert.IsType<MeaiAiCompletion>(sp.GetRequiredService<IAiCompletion>());
