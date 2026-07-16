@@ -2971,6 +2971,54 @@ tfoot td {
   color: var(--muted-foreground);
 }
 
+/* Livro Diário — aba "Planilha": grade colunada única (1 linha por partida). The daily/grand total
+   rows are the "synthetic" summary rows that the display models highlight. */
+.diario-planilha {
+  min-width: 640px;
+}
+.diario-planilha td,
+.diario-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.diario-planilha-dash {
+  color: var(--muted-foreground);
+}
+.diario-planilha-entrystart td {
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-daytotal td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-grandtotal td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+}
+.diario-planilha-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+/* Modelo 1 — com grade e cores nas sintéticas (linhas de total do dia). */
+.diario-planilha--modelo1 td,
+.diario-planilha--modelo1 th {
+  border: 1px solid var(--border);
+}
+.diario-planilha--modelo1 .diario-planilha-daytotal td {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+/* Modelo 2 — sem grade e sublinhado nas sintéticas. */
+.diario-planilha--modelo2 .diario-planilha-daytotal td {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom: 2px solid var(--foreground);
+}
+/* Modelo 3 — sem grade (apenas os separadores horizontais padrão). */
+
 .dre-table .dre-section td {
   padding-top: 14px;
   color: var(--muted-foreground);

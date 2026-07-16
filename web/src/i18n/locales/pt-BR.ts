@@ -1015,10 +1015,30 @@ const ptBR = {
     journalBook: {
       title: 'Livro Diário',
       subtitle: 'Lançamentos escriturados em ordem cronológica (competência → número).',
+      tabs: {
+        book: 'Livro',
+        spreadsheet: 'Planilha',
+      },
       columns: {
         account: 'Conta',
         debit: 'Débito',
         credit: 'Crédito',
+      },
+      spreadsheet: {
+        columns: {
+          date: 'Data',
+          description: 'Descrição',
+          debitAccount: 'Conta débito',
+          debit: 'Débito',
+          creditAccount: 'Conta crédito',
+          credit: 'Crédito',
+        },
+        viewModel: {
+          label: 'Visualização',
+          modelo1: 'Modelo 1 — Com grade e cores nas sintéticas',
+          modelo2: 'Modelo 2 — Sem grade e sublinhado nas sintéticas',
+          modelo3: 'Modelo 3 — Sem grade',
+        },
       },
       entry: 'Lançamento',
       reversed: 'Estornado',
