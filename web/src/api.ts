@@ -264,31 +264,10 @@ export type JournalBookDayView = Schemas['JournalBookDayResponse'];
 export type JournalBook = Schemas['JournalBookResponse'];
 
 // ---------- Livro Razão (general ledger — read-only, per account, running balance) ----------
-// Hand-written to mirror the backend GeneralLedger*Response (same practice as AdminRole/Paginated).
-// Response is paginated by account (Paginated<GeneralLedgerAccountView>).
-export interface GeneralLedgerMovementView {
-  entryId: string;
-  number: number | null;
-  competenceDate: string;
-  history: string;
-  documentRef: string | null;
-  costCenterId: string | null;
-  debit: number;
-  credit: number;
-  accumulatedBalance: number;
-}
-export interface GeneralLedgerAccountView {
-  ledgerAccountId: string;
-  accountCode: string;
-  reducedCode: string | null;
-  accountName: string;
-  normalBalance: 'Debit' | 'Credit';
-  openingBalance: number;
-  movements: GeneralLedgerMovementView[];
-  totalDebit: number;
-  totalCredit: number;
-  closingBalance: number;
-}
+// Aliases to the generated schemas; the *View names are kept stable for the pages/components.
+// The response is paginated by account (Paginated<GeneralLedgerAccountView>).
+export type GeneralLedgerMovementView = Schemas['GeneralLedgerMovementResponse'];
+export type GeneralLedgerAccountView = Schemas['GeneralLedgerAccountResponse'];
 
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
