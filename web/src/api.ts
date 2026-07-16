@@ -263,6 +263,33 @@ export type JournalBookEntryView = Schemas['JournalBookEntryResponse'];
 export type JournalBookDayView = Schemas['JournalBookDayResponse'];
 export type JournalBook = Schemas['JournalBookResponse'];
 
+// ---------- Livro Razão (general ledger — read-only, por conta, com saldo acumulado) ----------
+// Tipos escritos à mão espelhando GeneralLedger*Response do backend (mesma prática de AdminRole/Paginated).
+// A resposta é paginada por conta (Paginated<GeneralLedgerAccountView>).
+export interface GeneralLedgerMovementView {
+  entryId: string;
+  number: number | null;
+  competenceDate: string;
+  history: string;
+  documentRef: string | null;
+  costCenterId: string | null;
+  debit: number;
+  credit: number;
+  accumulatedBalance: number;
+}
+export interface GeneralLedgerAccountView {
+  ledgerAccountId: string;
+  accountCode: string;
+  reducedCode: string | null;
+  accountName: string;
+  normalBalance: 'Debit' | 'Credit';
+  openingBalance: number;
+  movements: GeneralLedgerMovementView[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}
+
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
 export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
@@ -1068,6 +1095,45 @@ export const api = {
     if (params.from) q.set('from', params.from);
     if (params.to) q.set('to', params.to);
     return request<JournalBook>(`/accounting/journal-book?${q}`);
+  },
+  generalLedger: (params: {
+    companyId?: string;
+    ledgerAccountId?: string;
+    root?: string;
+    from?: string;
+    to?: string;
+    costCenterId?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.ledgerAccountId) q.set('ledgerAccountId', params.ledgerAccountId);
+    if (params.root) q.set('root', params.root);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<GeneralLedgerAccountView>>(`/accounting/ledger?${q}`);
+  },
+  /** Direct URL do export CSV do Razão (text/csv). Requer Bearer → baixe via downloadGeneralLedgerExport. */
+  generalLedgerExportUrl: (params: {
+    companyId?: string;
+    ledgerAccountId?: string;
+    root?: string;
+    from?: string;
+    to?: string;
+    costCenterId?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.ledgerAccountId) q.set('ledgerAccountId', params.ledgerAccountId);
+    if (params.root) q.set('root', params.root);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    return `${BASE_URL}/accounting/ledger/export?${q}`;
   },
   withholdingsReport: (companyId?: string) => {
     const q = new URLSearchParams();
