@@ -155,6 +155,8 @@ function ReturnReasonDialog({
 function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev?: boolean }) {
   const { t } = useTranslation();
   const toast = useToast();
+  // Importar retorno / confirmar pago / devolver linha são backed por treasury:write.
+  const canWrite = usePermissions().can(P.treasuryWrite);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [returnLineId, setReturnLineId] = useState<string | null>(null);
 
@@ -198,18 +200,23 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
     <div style={{ marginTop: 16 }}>
       {/* Import .RET + simulate (dev) */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
-        <label className='btn btn-default' style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Upload size={14} />
-          {importReturn.isPending ? t('remittances.loading') : t('remittances.return.importButton')}
-          <input
-            ref={fileInputRef}
-            type='file'
-            accept='.ret,.RET,text/plain'
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-            disabled={importReturn.isPending}
-          />
-        </label>
+        {canWrite && (
+          <label
+            className='btn btn-default'
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Upload size={14} />
+            {importReturn.isPending ? t('remittances.loading') : t('remittances.return.importButton')}
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='.ret,.RET,text/plain'
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              disabled={importReturn.isPending}
+            />
+          </label>
+        )}
 
         {isDev && (
           <a
@@ -256,7 +263,7 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
                   <td>{line.effectiveDate ? fmtDate(line.effectiveDate) : '—'}</td>
                   <td>{line.bankReference ?? '—'}</td>
                   <td>
-                    {isPending && (
+                    {isPending && canWrite && (
                       <div style={{ display: 'flex', gap: 6 }}>
                         <Button
                           style={{ padding: '2px 8px', fontSize: 12 }}
