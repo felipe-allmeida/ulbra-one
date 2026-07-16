@@ -17,6 +17,7 @@ import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
 import { brlCents } from '../lib';
 import { Button, Combobox, Drawer, EmptyState, Field, Input, PageHeader, Panel, Select, ToolbarField } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { EmpresaPicker } from './shared';
 import { fieldError, journalEntrySchema, resolver, type JournalEntryValues } from './schemas';
 import { fmtDate } from '../datetime';
@@ -354,6 +355,9 @@ function ReverseForm({ entry, onDone, onCancel }: { entry: JournalEntry; onDone:
 export function ContabilLancamentosPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { can } = usePermissions();
+  const canWrite = can(P.accountingWrite);
+  const canPost = can(P.accountingPost);
   const { empresa, empresaId } = useApp();
   const [status, setStatus] = useState<JournalStatus | ''>('');
   const [from, setFrom] = useState('');
@@ -386,7 +390,7 @@ export function ContabilLancamentosPage() {
     <>
       <PageHeader title={t('accounting.journal.title')} sub={t('accounting.journal.subtitle')}>
         <EmpresaPicker />
-        {empresa && (
+        {empresa && canWrite && (
           <Button variant='brand' icon={<Plus />} onClick={openCreate}>
             {t('accounting.journal.new')}
           </Button>
@@ -460,27 +464,31 @@ export function ContabilLancamentosPage() {
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         {e.status === 'Draft' ? (
                           <>
-                            <Button
-                              icon={<Pencil />}
-                              onClick={() => {
-                                setEditing(e);
-                                setFormOpen(true);
-                              }}
-                            >
-                              {t('accounting.journal.edit')}
-                            </Button>
-                            <Button
-                              icon={<CheckCircle2 />}
-                              disabled={post.isPending}
-                              onClick={() => post.mutate({ id: e.id })}
-                            >
-                              {t('accounting.journal.post')}
-                            </Button>
+                            {canWrite && (
+                              <Button
+                                icon={<Pencil />}
+                                onClick={() => {
+                                  setEditing(e);
+                                  setFormOpen(true);
+                                }}
+                              >
+                                {t('accounting.journal.edit')}
+                              </Button>
+                            )}
+                            {canPost && (
+                              <Button
+                                icon={<CheckCircle2 />}
+                                disabled={post.isPending}
+                                onClick={() => post.mutate({ id: e.id })}
+                              >
+                                {t('accounting.journal.post')}
+                              </Button>
+                            )}
                           </>
                         ) : (
                           <>
                             <Button onClick={() => setViewing(e)}>{t('accounting.journal.view')}</Button>
-                            {e.status === 'Posted' && !e.reversedByEntryId && (
+                            {canPost && e.status === 'Posted' && !e.reversedByEntryId && (
                               <Button icon={<Undo2 />} onClick={() => setReversing(e)}>
                                 {t('accounting.journal.reverse')}
                               </Button>

@@ -5,6 +5,7 @@ import { type AccountGroup, type LedgerAccount, type LedgerAccountKind, type Nor
 import { useCreateLedgerAccount, useLedgerAccounts, useSeedLedgerAccounts, useUpdateLedgerAccount } from '../queries';
 import { getErrorMessage } from '../apiError';
 import { useToast } from '../toast';
+import { P, usePermissions } from '../permissions';
 import { Button, Combobox, Drawer, EmptyState, Field, Input, Kpi, PageHeader, Panel, Select } from '../ui';
 
 const GROUPS: AccountGroup[] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
@@ -169,6 +170,8 @@ function LedgerAccountForm({
 export function ContabilPlanoPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { can } = usePermissions();
+  const canWrite = can(P.accountingWrite);
   const list = useLedgerAccounts({});
   const accounts = list.data ?? [];
 
@@ -246,14 +249,16 @@ export function ContabilPlanoPage() {
   return (
     <>
       <PageHeader title={t('accounting.ledger.title')} sub={t('accounting.ledger.subtitle')}>
-        {accounts.length === 0 && !list.isLoading && (
+        {canWrite && accounts.length === 0 && !list.isLoading && (
           <Button icon={<Sparkles />} disabled={seed.isPending} onClick={() => seed.mutate()}>
             {seed.isPending ? t('accounting.ledger.seeding') : t('accounting.ledger.seed')}
           </Button>
         )}
-        <Button variant='brand' icon={<Plus />} onClick={openCreate}>
-          {t('accounting.ledger.new')}
-        </Button>
+        {canWrite && (
+          <Button variant='brand' icon={<Plus />} onClick={openCreate}>
+            {t('accounting.ledger.new')}
+          </Button>
+        )}
       </PageHeader>
 
       {accounts.length > 0 && (
@@ -309,14 +314,16 @@ export function ContabilPlanoPage() {
                     </div>
                   </td>
                   <td className='td-action'>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      <Button icon={<Pencil />} onClick={() => openEdit(account)}>
-                        {t('accounting.ledger.edit')}
-                      </Button>
-                      <Button onClick={() => toggleActive(account)}>
-                        {account.isActive ? t('accounting.ledger.deactivate') : t('accounting.ledger.activate')}
-                      </Button>
-                    </div>
+                    {canWrite && (
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <Button icon={<Pencil />} onClick={() => openEdit(account)}>
+                          {t('accounting.ledger.edit')}
+                        </Button>
+                        <Button onClick={() => toggleActive(account)}>
+                          {account.isActive ? t('accounting.ledger.deactivate') : t('accounting.ledger.activate')}
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

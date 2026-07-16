@@ -44,6 +44,8 @@ vi.mock('../queries', () => {
     useReverseJournalEntry: noopMutation,
     useCostCenters: () => ({ data: [] }),
     useCompanies: () => ({ data: [{ id: 'c1', legalName: 'Empresa Teste' }] }),
+    // usePermissions() (via ../permissions) reads useMe; admin so the write/post actions render.
+    useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
   };
 });
 
