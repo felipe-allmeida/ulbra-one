@@ -81,7 +81,7 @@ export default function App() {
         <Route path='fiscal/obrigacoes' element={g(<ObrigacoesPage />, [P.fiscalRead])} />
         <Route path='accounting/pending' element={g(<ContabilPendentesPage />, [P.accountingRead])} />
         <Route path='accounting/expense-recording' element={g(<ContabilDespesasPage />, [P.accountingRead])} />
-        <Route path='accounting/classification' element={g(<ClassificacaoPage />, [P.accountingRead])} />
+        <Route path='accounting/classification' element={g(<ClassificacaoPage />, [P.payablesWrite])} />
         <Route path='reconciliation' element={g(<ConciliacaoPage />, [P.treasuryRead])} />
         <Route path='aging' element={<AgingPage />} />
         <Route path='cash-flow' element={g(<CashFlowPage />, [P.treasuryRead])} />

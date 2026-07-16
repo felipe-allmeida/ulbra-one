@@ -12,6 +12,7 @@ import {
 } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
+import { P, usePermissions } from '../../permissions';
 import { Drawer, Button, Field, Input, Combobox, FilePicker, type ComboboxItem } from '../../ui';
 import { fmtDoc } from '../../format';
 import { WithholdingSection } from './withholding-section';
@@ -26,6 +27,9 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
   const { t } = useTranslation();
   const nav = useNavigate();
   const toast = useToast();
+  const { can } = usePermissions();
+  // Contabilizar/reclassificar/retenções/anexar NF são backed por payables:write no backend.
+  const canWrite = can(P.payablesWrite);
   const { data: p } = usePayable(payableId);
   const view = usePayableAccountingView(payableId);
   const v = view.data;
@@ -60,26 +64,28 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
       title={t('payables.accounting.title')}
       sub={v?.counterpartyName ?? p?.counterpartyName}
       footer={
-        <Button
-          variant='brand'
-          icon={<Calculator />}
-          disabled={confirmBlocked || confirm.isPending}
-          title={confirmBlocked ? t('payables.accounting.confirmBlockedNoNf') : undefined}
-          onClick={() =>
-            confirm.mutate(
-              { id: payableId },
-              {
-                onSuccess: () => {
-                  toast.success(t('payables.actions.confirmAccountingSuccess'));
-                  onClose();
+        canWrite ? (
+          <Button
+            variant='brand'
+            icon={<Calculator />}
+            disabled={confirmBlocked || confirm.isPending}
+            title={confirmBlocked ? t('payables.accounting.confirmBlockedNoNf') : undefined}
+            onClick={() =>
+              confirm.mutate(
+                { id: payableId },
+                {
+                  onSuccess: () => {
+                    toast.success(t('payables.actions.confirmAccountingSuccess'));
+                    onClose();
+                  },
+                  onError: (e) => toast.error(getErrorMessage(e)),
                 },
-                onError: (e) => toast.error(getErrorMessage(e)),
-              },
-            )
-          }
-        >
-          {t('payables.actions.confirmAccounting')}
-        </Button>
+              )
+            }
+          >
+            {t('payables.actions.confirmAccounting')}
+          </Button>
+        ) : undefined
       }
     >
       {!p || !v ? (
@@ -118,38 +124,40 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
             </div>
           </div>
 
-          {/* Retentions — editable, same behavior as the other screens (bare = no Panel card in the drawer). */}
+          {/* Retentions — editable só com payables:write; leitura para os demais (bare = sem card no drawer). */}
           <div className='drawer-section'>
             <div className='section-title'>{t('payables.withholding.sectionTitle')}</div>
-            <WithholdingSection payable={p} editable bare />
+            <WithholdingSection payable={p} editable={canWrite} bare />
           </div>
 
-          {/* Ledger account (conta contábil) — reclassify. */}
-          <div className='drawer-section'>
-            <div className='section-title'>{t('payables.accounting.reclassifyTitle')}</div>
-            <Field label={t('payables.accounting.fields.ledgerAccount')}>
-              <Combobox value={accountingId} onChange={setAccountingId} items={toItems(accounts)} />
-            </Field>
-            <div style={{ marginTop: 12 }}>
-              <Button
-                disabled={classify.isPending || !accountingId}
-                onClick={() =>
-                  classify.mutate(
-                    { id: payableId, body: { accountingAccountId: accountingId } },
-                    {
-                      onSuccess: () => {
-                        toast.success(t('payables.accounting.reclassifySuccess'));
-                        void view.refetch();
+          {/* Ledger account (conta contábil) — reclassify. Ação escondida sem payables:write. */}
+          {canWrite && (
+            <div className='drawer-section'>
+              <div className='section-title'>{t('payables.accounting.reclassifyTitle')}</div>
+              <Field label={t('payables.accounting.fields.ledgerAccount')}>
+                <Combobox value={accountingId} onChange={setAccountingId} items={toItems(accounts)} />
+              </Field>
+              <div style={{ marginTop: 12 }}>
+                <Button
+                  disabled={classify.isPending || !accountingId}
+                  onClick={() =>
+                    classify.mutate(
+                      { id: payableId, body: { accountingAccountId: accountingId } },
+                      {
+                        onSuccess: () => {
+                          toast.success(t('payables.accounting.reclassifySuccess'));
+                          void view.refetch();
+                        },
+                        onError: (e) => toast.error(getErrorMessage(e)),
                       },
-                      onError: (e) => toast.error(getErrorMessage(e)),
-                    },
-                  )
-                }
-              >
-                {t('payables.accounting.reclassify')}
-              </Button>
+                    )
+                  }
+                >
+                  {t('payables.accounting.reclassify')}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Nota Fiscal — attached as a document (no parse); required before completing accounting. */}
           <div className='drawer-section'>
@@ -187,25 +195,27 @@ export function AccountingDrawer({ payableId, onClose }: { payableId: string; on
                 ))}
               </div>
             )}
-            <FilePicker
-              accept='.xml,application/xml,text/xml,.pdf,application/pdf'
-              fileName={file?.name}
-              placeholder={t('common.noFileSelected')}
-              onSelect={(f) => {
-                setFile(f);
-                if (!f) return;
-                uploadAttachment.mutate(
-                  { id: payableId, file: f },
-                  {
-                    onSuccess: () => {
-                      toast.success(t('pendencies.fiscal.attachSuccess'));
-                      void view.refetch();
+            {canWrite && (
+              <FilePicker
+                accept='.xml,application/xml,text/xml,.pdf,application/pdf'
+                fileName={file?.name}
+                placeholder={t('common.noFileSelected')}
+                onSelect={(f) => {
+                  setFile(f);
+                  if (!f) return;
+                  uploadAttachment.mutate(
+                    { id: payableId, file: f },
+                    {
+                      onSuccess: () => {
+                        toast.success(t('pendencies.fiscal.attachSuccess'));
+                        void view.refetch();
+                      },
+                      onError: (e) => toast.error(getErrorMessage(e)),
                     },
-                    onError: (e) => toast.error(getErrorMessage(e)),
-                  },
-                );
-              }}
-            />
+                  );
+                }}
+              />
+            )}
           </div>
         </>
       )}

@@ -210,7 +210,7 @@ export const NAV_DOMAINS: NavDomain[] = [
           {
             labelKey: 'nav.classification',
             to: '/app/accounting/classification',
-            requires: [P.accountingWrite],
+            requires: [P.payablesWrite],
             icon: <Tags />,
           },
         ],
