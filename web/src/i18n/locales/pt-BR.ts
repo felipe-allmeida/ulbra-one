@@ -1017,8 +1017,8 @@ const ptBR = {
       title: 'Livro Diário',
       subtitle: 'Lançamentos escriturados em ordem cronológica (competência → número).',
       tabs: {
-        book: 'Livro',
         spreadsheet: 'Planilha',
+        chronological: 'Cronológico',
       },
       columns: {
         account: 'Conta',

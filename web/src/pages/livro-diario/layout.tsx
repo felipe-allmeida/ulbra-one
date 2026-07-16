@@ -54,8 +54,8 @@ export function LivroDiarioPage() {
   const hasData = (book?.days.length ?? 0) > 0;
 
   const tabs: StageTab[] = [
-    { key: 'livro', label: t('accounting.journalBook.tabs.book') },
     { key: 'planilha', label: t('accounting.journalBook.tabs.spreadsheet') },
+    { key: 'cronologico', label: t('accounting.journalBook.tabs.chronological') },
   ];
 
   return (
