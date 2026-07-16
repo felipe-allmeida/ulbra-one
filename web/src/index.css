@@ -2971,8 +2971,8 @@ tfoot td {
   color: var(--muted-foreground);
 }
 
-/* Contábil — CNPJ informativo ancorado abaixo do seletor de empresa (fora do fluxo, para não
-   empurrar a linha de filtros que é center-aligned). */
+/* Accounting — informative CNPJ anchored below the company picker (out of flow, so it doesn't
+   push the center-aligned filter row). */
 .picker-cnpj-anchor {
   position: relative;
 }
@@ -2985,8 +2985,8 @@ tfoot td {
   color: var(--muted-foreground);
 }
 
-/* Livro Diário — aba "Planilha": grade colunada única (1 linha por partida). The daily/grand total
-   rows are the "synthetic" summary rows that the display models highlight. */
+/* Livro Diário — "Planilha" tab: single columnar grid (one row per posting line). The daily and
+   grand-total rows are the summary rows that the display models highlight. */
 .diario-planilha {
   min-width: 640px;
 }
@@ -3016,7 +3016,7 @@ tfoot td {
   font-size: 13px;
   color: var(--muted-foreground);
 }
-/* Modelo 1 — com grade e cores nas sintéticas (linhas de total do dia). */
+/* Modelo 1 — grid + highlighted day-total rows. */
 .diario-planilha--modelo1 td,
 .diario-planilha--modelo1 th {
   border: 1px solid var(--border);
@@ -3025,13 +3025,13 @@ tfoot td {
   background: var(--brand-subtle);
   color: var(--brand);
 }
-/* Modelo 2 — sem grade e sublinhado nas sintéticas. */
+/* Modelo 2 — no grid + underlined day-total rows. */
 .diario-planilha--modelo2 .diario-planilha-daytotal td {
   text-decoration: underline;
   text-underline-offset: 3px;
   border-bottom: 2px solid var(--foreground);
 }
-/* Modelo 3 — sem grade (apenas os separadores horizontais padrão). */
+/* Modelo 3 — no grid (only the default horizontal separators). */
 
 .dre-table .dre-section td {
   padding-top: 14px;

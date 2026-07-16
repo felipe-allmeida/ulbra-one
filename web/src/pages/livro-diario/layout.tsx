@@ -19,9 +19,9 @@ import {
 } from './tabs';
 
 /** Livro Diário — read-only chronological book of scriptured entries (Posted/Reversed). Two tabs
- *  over the same data: "Livro" (per-day panels) and "Planilha" (a single columnar spreadsheet with
- *  selectable display models). Active tab (`?tab=`) and spreadsheet model (`?modelo=`) live in the URL.
- *  Filters by company (or consolidated) + competence range. */
+ *  over the same data: "Planilha" (a single columnar spreadsheet with selectable display models,
+ *  the default view) and "Cronológico" (per-day panels). Active tab (`?tab=`) and spreadsheet
+ *  model (`?modelo=`) live in the URL. Filters by company (or consolidated) + competence range. */
 export function LivroDiarioPage() {
   const { t } = useTranslation();
   const [companyId, setCompanyId] = useState('');

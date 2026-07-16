@@ -1,6 +1,6 @@
 /** The two views of the Livro Diário, surfaced as tabs. Extensible: add a key here + a render
- *  branch in the layout. Persisted in the URL as `?tab=`. Planilha (grade colunada) é a visão
- *  principal; Cronológico é a visão agrupada por dia. */
+ *  branch in the layout. Persisted in the URL as `?tab=`. Planilha (columnar grid) is the primary
+ *  view; Cronológico is the per-day grouped view. */
 export type JournalTabKey = 'planilha' | 'cronologico';
 
 export const TAB_ORDER: JournalTabKey[] = ['planilha', 'cronologico'];

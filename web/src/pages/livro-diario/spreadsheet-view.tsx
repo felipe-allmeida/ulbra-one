@@ -38,7 +38,7 @@ export function SpreadsheetView({
   );
 
   return (
-    <Panel title={t('accounting.journalBook.tabs.spreadsheet')} action={modelPicker}>
+    <Panel title='' action={modelPicker}>
       <div style={{ overflowX: 'auto' }}>
         <table className={cx('diario-planilha', `diario-planilha--${model}`)}>
           <thead>
