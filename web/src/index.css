@@ -2973,6 +2973,68 @@ tfoot td {
   color: var(--muted-foreground);
 }
 
+/* Accounting — informative CNPJ anchored below the company picker (out of flow, so it doesn't
+   push the center-aligned filter row). */
+.picker-cnpj-anchor {
+  position: relative;
+}
+.picker-cnpj {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+/* Livro Diário — "Planilha" tab: single columnar grid (one row per posting line). The daily and
+   grand-total rows are the summary rows that the display models highlight. */
+.diario-planilha {
+  min-width: 640px;
+}
+.diario-planilha td,
+.diario-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.diario-planilha-dash {
+  color: var(--muted-foreground);
+}
+.diario-planilha-entrystart td {
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-daytotal td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-grandtotal td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+}
+.diario-planilha-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+/* model1 — grid + highlighted day-total rows. */
+.diario-planilha--model1 td,
+.diario-planilha--model1 th {
+  border: 1px solid var(--border);
+}
+.diario-planilha--model1 .diario-planilha-daytotal td {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+/* model2 — no grid + underlined day-total rows. */
+.diario-planilha--model2 .diario-planilha-daytotal td {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom: 2px solid var(--foreground);
+}
+/* model3 — no grid (only the default horizontal separators). */
+
 .dre-table .dre-section td {
   padding-top: 14px;
   color: var(--muted-foreground);

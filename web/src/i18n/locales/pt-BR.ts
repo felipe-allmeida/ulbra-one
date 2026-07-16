@@ -863,6 +863,7 @@ const ptBR = {
   accounting: {
     consolidated: 'Consolidado',
     company: 'Empresa',
+    cnpj: 'CNPJ',
     groups: {
       Asset: 'Ativo',
       Liability: 'Passivo',
@@ -1015,10 +1016,30 @@ const ptBR = {
     journalBook: {
       title: 'Livro Diário',
       subtitle: 'Lançamentos escriturados em ordem cronológica (competência → número).',
+      tabs: {
+        spreadsheet: 'Planilha',
+        chronological: 'Cronológico',
+      },
       columns: {
         account: 'Conta',
         debit: 'Débito',
         credit: 'Crédito',
+      },
+      spreadsheet: {
+        columns: {
+          date: 'Data',
+          description: 'Descrição',
+          debitAccount: 'Conta débito',
+          debit: 'Débito',
+          creditAccount: 'Conta crédito',
+          credit: 'Crédito',
+        },
+        viewModel: {
+          label: 'Visualização',
+          model1: 'Modelo 1 — Com grade e destaque no total do dia',
+          model2: 'Modelo 2 — Sem grade e sublinhado no total do dia',
+          model3: 'Modelo 3 — Sem grade',
+        },
       },
       entry: 'Lançamento',
       reversed: 'Estornado',
