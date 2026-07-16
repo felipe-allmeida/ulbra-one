@@ -1800,10 +1800,12 @@ tfoot td {
 .form-grid .span-2 {
   grid-column: 1 / -1;
 }
-/* Selects fill their column and may shrink like inputs do, so two side by side keep the gap
-   instead of overflowing at the global .select 220px min-width (drawers are only ~440px wide). */
+/* Selects and comboboxes fill their column and may shrink like inputs do, so two side by side keep
+   the gap instead of overflowing at the global 220px min-width (drawers are only ~440px wide). */
 .form-grid .select,
-.edit-grid .select {
+.form-grid .combobox-trigger,
+.edit-grid .select,
+.edit-grid .combobox-trigger {
   width: 100%;
   min-width: 0;
 }
