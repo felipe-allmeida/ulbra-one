@@ -2971,6 +2971,20 @@ tfoot td {
   color: var(--muted-foreground);
 }
 
+/* Contábil — CNPJ informativo ancorado abaixo do seletor de empresa (fora do fluxo, para não
+   empurrar a linha de filtros que é center-aligned). */
+.picker-cnpj-anchor {
+  position: relative;
+}
+.picker-cnpj {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
 /* Livro Diário — aba "Planilha": grade colunada única (1 linha por partida). The daily/grand total
    rows are the "synthetic" summary rows that the display models highlight. */
 .diario-planilha {

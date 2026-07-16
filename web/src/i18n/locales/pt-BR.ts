@@ -863,6 +863,7 @@ const ptBR = {
   accounting: {
     consolidated: 'Consolidado',
     company: 'Empresa',
+    cnpj: 'CNPJ',
     groups: {
       Asset: 'Ativo',
       Liability: 'Passivo',
