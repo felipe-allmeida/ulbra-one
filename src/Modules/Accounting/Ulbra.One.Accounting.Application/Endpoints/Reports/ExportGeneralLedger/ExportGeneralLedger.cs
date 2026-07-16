@@ -58,8 +58,10 @@ public sealed class ExportGeneralLedger : IEndpoint
         var ccLabels = ccInfo.ToDictionary(kv => kv.Key, kv => Label(kv.Value));
 
         var csv = GeneralLedgerCsv.Build(sections, ccLabels);
-        // UTF-8 BOM so Excel (pt-BR) detects the encoding and renders the accents correctly.
-        var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(csv);
+        // Prepend the UTF-8 BOM so Excel (pt-BR) detects the encoding and renders accents correctly.
+        // (Encoding.GetBytes does NOT emit the preamble, so add it explicitly.)
+        byte[] bom = [0xEF, 0xBB, 0xBF];
+        var bytes = bom.Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
         return TypedResults.File(bytes, "text/csv", "livro-razao.csv");
     }
 
