@@ -3,6 +3,7 @@ import { type Company, type Unit, type CostCenter } from '../api';
 import { useApp } from '../store';
 import { useSaveCostCenter } from '../queries';
 import { getErrorMessage } from '../apiError';
+import { P, usePermissions } from '../permissions';
 import { Button, Input, Select, Field, ToolbarField } from '../ui';
 import { resolver, fieldError, costCenterSchema, type CostCenterValues } from './schemas';
 
@@ -73,6 +74,7 @@ export function CentroForm({
   onSaved: (cc: CostCenter) => void;
   onCancel: () => void;
 }) {
+  const canWrite = usePermissions().can(P.coreWrite);
   const { control, handleSubmit, formState } = useForm<CostCenterValues>({
     resolver: resolver(costCenterSchema),
     mode: 'onChange',
@@ -163,11 +165,13 @@ export function CentroForm({
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-        <Button type='submit' variant='brand' disabled={!formState.isValid || salvando}>
-          {salvando ? 'Salvando…' : 'Salvar'}
-        </Button>
+        {canWrite && (
+          <Button type='submit' variant='brand' disabled={!formState.isValid || salvando}>
+            {salvando ? 'Salvando…' : 'Salvar'}
+          </Button>
+        )}
         <Button type='button' onClick={onCancel}>
-          Cancelar
+          {canWrite ? 'Cancelar' : 'Fechar'}
         </Button>
       </div>
     </form>

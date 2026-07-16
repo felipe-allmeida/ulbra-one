@@ -6,11 +6,13 @@ import { useApp } from '../store';
 import { useCreateCompany, useCreateUnit, useUnits, useUpdateCompany, useUpdateUnit } from '../queries';
 import { getErrorMessage } from '../apiError';
 import { Button, Input, PageHeader, Panel } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { EmpresaPicker } from './shared';
 import { resolver, companySchema, unitSchema, type CompanyValues, type UnitValues } from './schemas';
 
 export function EstruturaPage() {
   const { empresas, empresa, empresaId, refreshEmpresas } = useApp();
+  const canWrite = usePermissions().can(P.coreWrite);
   const unidades = useUnits(empresaId).data ?? [];
   const [empresaForm, setEmpresaForm] = useState<null | { edit?: Company }>(null);
   const [unidadeForm, setUnidadeForm] = useState<null | { edit?: Unit }>(null);
@@ -26,9 +28,11 @@ export function EstruturaPage() {
         <Panel
           title='Empresas'
           action={
-            <Button variant='brand' icon={<Plus />} onClick={() => setEmpresaForm({})}>
-              Nova empresa
-            </Button>
+            canWrite ? (
+              <Button variant='brand' icon={<Plus />} onClick={() => setEmpresaForm({})}>
+                Nova empresa
+              </Button>
+            ) : undefined
           }
         >
           {empresaForm && (
@@ -64,9 +68,11 @@ export function EstruturaPage() {
                     <td className='t-mono'>{e.cnpj}</td>
                     <td>{e.active ? 'Ativa' : 'Inativa'}</td>
                     <td className='td-action'>
-                      <button className='icon-btn' onClick={() => setEmpresaForm({ edit: e })} aria-label='Editar'>
-                        <Pencil />
-                      </button>
+                      {canWrite && (
+                        <button className='icon-btn' onClick={() => setEmpresaForm({ edit: e })} aria-label='Editar'>
+                          <Pencil />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -81,9 +87,11 @@ export function EstruturaPage() {
         action={
           <div className='toolbar'>
             <EmpresaPicker />
-            <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setUnidadeForm({})}>
-              Nova unidade
-            </Button>
+            {canWrite && (
+              <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setUnidadeForm({})}>
+                Nova unidade
+              </Button>
+            )}
           </div>
         }
       >
@@ -124,9 +132,11 @@ export function EstruturaPage() {
                   <td className='t-mono'>{u.acronym}</td>
                   <td>{u.active ? 'Ativa' : 'Inativa'}</td>
                   <td className='td-action'>
-                    <button className='icon-btn' onClick={() => setUnidadeForm({ edit: u })} aria-label='Editar'>
-                      <Pencil />
-                    </button>
+                    {canWrite && (
+                      <button className='icon-btn' onClick={() => setUnidadeForm({ edit: u })} aria-label='Editar'>
+                        <Pencil />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
