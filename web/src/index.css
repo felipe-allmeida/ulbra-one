@@ -3081,6 +3081,22 @@ tfoot td {
   gap: 10px 14px;
 }
 
+/* ===== Livro Razão ===== */
+/* Header: title row on top, full-width wrapping toolbar below — the Razão has more filters than fit
+   beside the title. Local to this page so the global .page-head is untouched (same as the cash-flow head). */
+.razao-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.razao-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
 /* Vertical rhythm between the dashboard's stacked panels. */
 .cf-stack {
   display: flex;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NotebookText, Download } from 'lucide-react';
 import { useGeneralLedger, useCostCenters } from '../../queries';
-import { Button, EmptyState, PageHeader, Pager } from '../../ui';
+import { Button, EmptyState, Pager } from '../../ui';
 import { LedgerFilters } from './filters';
 import { AccountSection } from './account-section';
 import { downloadGeneralLedgerExport } from './download';
@@ -35,39 +35,45 @@ export function LivroRazaoPage() {
 
   return (
     <>
-      <PageHeader title={t('accounting.generalLedger.title')} sub={t('accounting.generalLedger.subtitle')}>
-        <LedgerFilters
-          companyId={companyId}
-          root={root}
-          from={from}
-          to={to}
-          costCenterId={costCenterId}
-          onCompanyChange={(v) => {
-            setCompanyId(v);
-            setCostCenterId('');
-            setPage(1);
-          }}
-          onRootChange={(v) => {
-            setRoot(v);
-            setPage(1);
-          }}
-          onFromChange={(v) => {
-            setFrom(v);
-            setPage(1);
-          }}
-          onToChange={(v) => {
-            setTo(v);
-            setPage(1);
-          }}
-          onCostCenterChange={(v) => {
-            setCostCenterId(v);
-            setPage(1);
-          }}
-        />
-        <Button icon={<Download />} onClick={() => downloadGeneralLedgerExport(filters)}>
-          {t('accounting.generalLedger.export')}
-        </Button>
-      </PageHeader>
+      <div className='razao-head'>
+        <div>
+          <h1 className='page-title'>{t('accounting.generalLedger.title')}</h1>
+          <p className='page-sub'>{t('accounting.generalLedger.subtitle')}</p>
+        </div>
+        <div className='razao-toolbar'>
+          <LedgerFilters
+            companyId={companyId}
+            root={root}
+            from={from}
+            to={to}
+            costCenterId={costCenterId}
+            onCompanyChange={(v) => {
+              setCompanyId(v);
+              setCostCenterId('');
+              setPage(1);
+            }}
+            onRootChange={(v) => {
+              setRoot(v);
+              setPage(1);
+            }}
+            onFromChange={(v) => {
+              setFrom(v);
+              setPage(1);
+            }}
+            onToChange={(v) => {
+              setTo(v);
+              setPage(1);
+            }}
+            onCostCenterChange={(v) => {
+              setCostCenterId(v);
+              setPage(1);
+            }}
+          />
+          <Button icon={<Download />} onClick={() => downloadGeneralLedgerExport(filters)}>
+            {t('accounting.generalLedger.export')}
+          </Button>
+        </div>
+      </div>
 
       {query.isLoading ? (
         <div className='help'>{t('accounting.journal.loading')}</div>
