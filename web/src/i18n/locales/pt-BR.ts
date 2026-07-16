@@ -1054,10 +1054,6 @@ const ptBR = {
     generalLedger: {
       title: 'Livro Razão',
       subtitle: 'Movimentação por conta com saldo de abertura e saldo acumulado.',
-      tabs: {
-        spreadsheet: 'Planilha',
-        accounts: 'Por conta',
-      },
       filters: {
         accounts: 'Contas',
         account: 'Conta específica',

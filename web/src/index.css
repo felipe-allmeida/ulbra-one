@@ -3106,6 +3106,7 @@ tfoot td {
 .razao-planilha th {
   padding: 6px 10px;
   vertical-align: top;
+  text-align: center;
 }
 .razao-planilha-account td {
   font-weight: 700;

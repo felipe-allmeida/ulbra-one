@@ -7,7 +7,7 @@ import { Panel } from '../../ui';
 
 /** Planilha (spreadsheet) view of the Livro Razão: a single flat table grouped by account — an account
  *  header row, the opening-balance row, one row per movement with its running balance, and an account
- *  total (closing) row. Same data as the per-account panels, denser and continuous. */
+ *  total (closing) row. All columns are centered (see .razao-planilha in index.css). */
 export function SpreadsheetView({
   accounts,
   ccLabels,
@@ -27,9 +27,9 @@ export function SpreadsheetView({
               <th>{col('history')}</th>
               <th>{col('document')}</th>
               <th>{col('costCenter')}</th>
-              <th style={{ textAlign: 'right' }}>{col('debit')}</th>
-              <th style={{ textAlign: 'right' }}>{col('credit')}</th>
-              <th style={{ textAlign: 'right' }}>{col('balance')}</th>
+              <th>{col('debit')}</th>
+              <th>{col('credit')}</th>
+              <th>{col('balance')}</th>
             </tr>
           </thead>
           <tbody>
@@ -40,9 +40,7 @@ export function SpreadsheetView({
                 </tr>
                 <tr className='razao-planilha-opening'>
                   <td colSpan={6}>{t('accounting.generalLedger.opening')}</td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brlCents(a.openingBalance)}
-                  </td>
+                  <td className='amount-cell'>{brlCents(a.openingBalance)}</td>
                 </tr>
                 {a.movements.map((m, i) => (
                   <tr key={i}>
@@ -50,28 +48,16 @@ export function SpreadsheetView({
                     <td>{m.history}</td>
                     <td className='t-mono'>{m.documentRef ?? ''}</td>
                     <td>{m.costCenterId ? (ccLabels.get(m.costCenterId) ?? '') : ''}</td>
-                    <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {m.debit ? brlCents(m.debit) : ''}
-                    </td>
-                    <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {m.credit ? brlCents(m.credit) : ''}
-                    </td>
-                    <td className='amount-cell' style={{ textAlign: 'right' }}>
-                      {brlCents(m.accumulatedBalance)}
-                    </td>
+                    <td className='amount-cell'>{m.debit ? brlCents(m.debit) : ''}</td>
+                    <td className='amount-cell'>{m.credit ? brlCents(m.credit) : ''}</td>
+                    <td className='amount-cell'>{brlCents(m.accumulatedBalance)}</td>
                   </tr>
                 ))}
                 <tr className='razao-planilha-total'>
                   <td colSpan={4}>{t('accounting.generalLedger.closing')}</td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brlCents(a.totalDebit)}
-                  </td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brlCents(a.totalCredit)}
-                  </td>
-                  <td className='amount-cell' style={{ textAlign: 'right' }}>
-                    {brlCents(a.closingBalance)}
-                  </td>
+                  <td className='amount-cell'>{brlCents(a.totalDebit)}</td>
+                  <td className='amount-cell'>{brlCents(a.totalCredit)}</td>
+                  <td className='amount-cell'>{brlCents(a.closingBalance)}</td>
                 </tr>
               </Fragment>
             ))}
