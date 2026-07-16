@@ -16,7 +16,7 @@ public sealed record GetGeneralLedgerRequest
     public CompanyId? CompanyId { get; set; }
     public LedgerAccountId? LedgerAccountId { get; set; }
 
-    /// <summary>Optional account-root filter: the first code digit "1".."5" (Ativo/Passivo/Receita/Despesa/Custo).</summary>
+    /// <summary>Optional account-root filter: the first code digit "1".."5" (Asset/Liability/Revenue/Expense/Cost).</summary>
     public string? Root { get; set; }
 
     public DateOnly? From { get; set; }

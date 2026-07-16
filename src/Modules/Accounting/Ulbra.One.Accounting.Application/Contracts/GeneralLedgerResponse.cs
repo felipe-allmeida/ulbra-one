@@ -22,8 +22,8 @@ public sealed record GeneralLedgerMovementResponse(
         m.Debit, m.Credit, m.AccumulatedBalance);
 }
 
-/// <summary>One account section of the Livro Razão: código (+ código reduzido), opening balance, movements with
-/// running balance, período débito/crédito totals and the closing balance.</summary>
+/// <summary>One account section of the Livro Razão: code (+ reduced code), opening balance, movements with a
+/// running balance, period debit/credit totals and the closing balance.</summary>
 public sealed record GeneralLedgerAccountResponse(
     LedgerAccountId LedgerAccountId,
     string AccountCode,

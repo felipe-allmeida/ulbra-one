@@ -4,8 +4,8 @@ import { brlCents } from '../../lib';
 import { fmtDate } from '../../datetime';
 import { Panel } from '../../ui';
 
-/** Uma conta do Livro Razão: cabeçalho `código · (reduzido) · nome`, linha de abertura, uma linha por
- *  movimento (com saldo acumulado à direita) e rodapé com totais + saldo final. Read-only. */
+/** One Livro Razão account: header `code · (reduced) · name`, an opening row, one row per movement
+ *  (running balance on the right), and a footer with totals + closing balance. Read-only. */
 export function AccountSection({
   account,
   ccLabels,

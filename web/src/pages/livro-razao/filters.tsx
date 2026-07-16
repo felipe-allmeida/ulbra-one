@@ -3,7 +3,7 @@ import { Input, Select, ToolbarField } from '../../ui';
 import { ConsolidatedPicker } from '../contabil-shared';
 import { useCostCenters } from '../../queries';
 
-/** Empresa (consolidado) + raiz da conta (1–5) + intervalo de competência + centro de custo. */
+/** Company (consolidated) + account root (1–5) + competence range + cost-center filters. */
 export function LedgerFilters({
   companyId,
   root,

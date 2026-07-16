@@ -7,8 +7,8 @@ import { LedgerFilters } from './filters';
 import { AccountSection } from './account-section';
 import { downloadGeneralLedgerExport } from './download';
 
-/** Livro Razão — read-only, por conta: saldo de abertura + movimentos com saldo acumulado. Paginado por conta;
- *  filtros por empresa (ou consolidado), raiz da conta (1–5), intervalo de competência e centro de custo. */
+/** Livro Razão — read-only, per account: opening balance + movements with a running balance. Paginated by
+ *  account; filters by company (or consolidated), account root (1–5), competence range and cost center. */
 export function LivroRazaoPage() {
   const { t } = useTranslation();
   const [companyId, setCompanyId] = useState('');
@@ -18,7 +18,7 @@ export function LivroRazaoPage() {
   const [costCenterId, setCostCenterId] = useState('');
   const [page, setPage] = useState(1);
 
-  // Rótulos de centro de custo (código — nome) para as linhas; só há dados com empresa selecionada.
+  // Cost-center labels (code — name) for the rows; only populated when a company is selected.
   const costCenters = useCostCenters(companyId);
   const ccLabels = new Map<string, string>((costCenters.data ?? []).map((c) => [c.id, `${c.code} — ${c.name}`]));
 

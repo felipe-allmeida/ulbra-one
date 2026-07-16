@@ -21,7 +21,7 @@ public sealed record GeneralLedgerPostedLine(
     Guid? CostCenterId,
     string? LineDescription);
 
-/// <summary>One movement row of an account's Livro Razão: a posted partida with its running accumulated balance
+/// <summary>One movement row of an account's Livro Razão: a posted line with its running accumulated balance
 /// (signed by the account's <see cref="NormalBalance"/>).</summary>
 public sealed record GeneralLedgerMovement(
     Guid EntryId,
@@ -35,7 +35,7 @@ public sealed record GeneralLedgerMovement(
     decimal AccumulatedBalance);
 
 /// <summary>One account section of the Livro Razão: the opening balance, the in-range movements with a running
-/// balance, the period débito/crédito totals and the closing balance. (Record name distinct from the
+/// balance, the period debit/credit totals and the closing balance. (Record name distinct from the
 /// <c>LedgerAccount</c> entity.)</summary>
 public sealed record GeneralLedgerAccount(
     Guid LedgerAccountId,

@@ -263,9 +263,9 @@ export type JournalBookEntryView = Schemas['JournalBookEntryResponse'];
 export type JournalBookDayView = Schemas['JournalBookDayResponse'];
 export type JournalBook = Schemas['JournalBookResponse'];
 
-// ---------- Livro Razão (general ledger — read-only, por conta, com saldo acumulado) ----------
-// Tipos escritos à mão espelhando GeneralLedger*Response do backend (mesma prática de AdminRole/Paginated).
-// A resposta é paginada por conta (Paginated<GeneralLedgerAccountView>).
+// ---------- Livro Razão (general ledger — read-only, per account, running balance) ----------
+// Hand-written to mirror the backend GeneralLedger*Response (same practice as AdminRole/Paginated).
+// Response is paginated by account (Paginated<GeneralLedgerAccountView>).
 export interface GeneralLedgerMovementView {
   entryId: string;
   number: number | null;
@@ -1117,7 +1117,7 @@ export const api = {
     if (params.pageSize) q.set('pageSize', String(params.pageSize));
     return request<Paginated<GeneralLedgerAccountView>>(`/accounting/ledger?${q}`);
   },
-  /** Direct URL do export CSV do Razão (text/csv). Requer Bearer → baixe via downloadGeneralLedgerExport. */
+  /** Direct URL for the ledger CSV export (text/csv). Requires Bearer → fetch via downloadGeneralLedgerExport. */
   generalLedgerExportUrl: (params: {
     companyId?: string;
     ledgerAccountId?: string;

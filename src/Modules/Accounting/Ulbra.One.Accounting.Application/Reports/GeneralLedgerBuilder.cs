@@ -4,7 +4,7 @@ namespace Ulbra.One.Accounting.Application.Reports;
 
 /// <summary>Pure calculator that folds flat Posted lines into the Livro Razão: grouped by account, each with an
 /// opening balance (the signed sum of movements strictly before <c>from</c>), the in-range movements ordered
-/// chronologically (CompetenceDate → Number → Side, débito before crédito) carrying a running accumulated
+/// chronologically (CompetenceDate → Number → Side, debit before credit) carrying a running accumulated
 /// balance, and the resulting closing balance. The balance is signed by the account's NormalBalance — the same
 /// rule as TrialBalance/BalanceSheet — so a Razão closing balance equals the account's Balancete balance at the
 /// same date. No EF, no I/O.</summary>
@@ -54,7 +54,7 @@ public static class GeneralLedgerBuilder
     }
 
     /// <summary>Signed contribution of a line to its account balance: +Amount on the account's normal side,
-    /// −Amount on the opposite side (débito−crédito for debit-normal accounts, crédito−débito for credit-normal).</summary>
+    /// −Amount on the opposite side (debit−credit for debit-normal accounts, credit−debit for credit-normal).</summary>
     private static decimal Signed(GeneralLedgerPostedLine r)
     {
         var onNormalSide = (r.NormalBalance == NormalBalance.Debit) == (r.Side == EntrySide.Debit);
