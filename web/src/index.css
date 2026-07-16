@@ -3094,7 +3094,9 @@ tfoot td {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 10px 14px;
+  /* Larger row-gap so a wrapped field clears the CNPJ caption that the company picker anchors
+     ~17px below its dropdown (out of flow) — otherwise it overlaps the next row's label. */
+  gap: 26px 14px;
 }
 
 /* Vertical rhythm between the dashboard's stacked panels. */
