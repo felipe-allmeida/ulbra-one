@@ -6,6 +6,7 @@ import { useApp } from '../store';
 import { useCustomerAction, useCustomers } from '../queries';
 import { Button, Drawer, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
+import { P, usePermissions } from '../permissions';
 import { maskCpf, maskCnpj } from '../format';
 import { brl } from '../lib';
 import { EmpresaPicker } from './shared';
@@ -14,6 +15,7 @@ import { CustomerForm } from './registry-forms';
 export function ClientesPage() {
   const { empresa, empresaId } = useApp();
   const toast = useToast();
+  const canWrite = usePermissions().can(P.registryWrite);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -58,9 +60,11 @@ export function ClientesPage() {
     <>
       <PageHeader title='Clientes' sub='Pessoas físicas e jurídicas que compram produtos ou serviços do grupo.'>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setDrawer({})}>
-          Novo cliente
-        </Button>
+        {canWrite && (
+          <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => setDrawer({})}>
+            Novo cliente
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (
@@ -130,6 +134,8 @@ export function ClientesPage() {
                       </span>
                     </td>
                     <td className='td-action' onClick={(e) => e.stopPropagation()}>
+                      {canWrite && (
+                      <>
                       <button className='icon-btn' onClick={() => setDrawer({ edit: c })} aria-label='Editar'>
                         <Pencil />
                       </button>
@@ -147,6 +153,8 @@ export function ClientesPage() {
                       >
                         <Trash2 />
                       </button>
+                      </>
+                      )}
                     </td>
                   </tr>
                 ))

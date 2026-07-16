@@ -7,6 +7,7 @@ import { useApp } from '../store';
 import { useVendor, useVendorAction, useVendors } from '../queries';
 import { Button, ConfirmDialog, EmptyState, PageHeader, Pager, Panel, SkeletonRows } from '../ui';
 import { useToast } from '../toast';
+import { P, usePermissions } from '../permissions';
 import { maskCpf, maskCnpj } from '../format';
 import { EmpresaPicker } from './shared';
 import { VendorForm } from './registry-forms';
@@ -17,6 +18,7 @@ export function FornecedoresPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
   const toast = useToast();
+  const canWrite = usePermissions().can(P.registryWrite);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -61,9 +63,11 @@ export function FornecedoresPage() {
     <>
       <PageHeader title='Fornecedores' sub='Pessoas físicas e jurídicas que fornecem produtos ou serviços ao grupo.'>
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/vendors/new')}>
-          Novo fornecedor
-        </Button>
+        {canWrite && (
+          <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/vendors/new')}>
+            Novo fornecedor
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (
@@ -131,23 +135,27 @@ export function FornecedoresPage() {
                       </span>
                     </td>
                     <td className='td-action' onClick={(e) => e.stopPropagation()}>
-                      <button className='icon-btn' onClick={() => nav(`/app/vendors/${v.id}`)} aria-label='Editar'>
-                        <Pencil />
-                      </button>
-                      <button
-                        className='icon-btn'
-                        onClick={() => setConfirm({ vendor: v, action: 'toggle' })}
-                        aria-label={v.active ? 'Desativar' : 'Ativar'}
-                      >
-                        <Power />
-                      </button>
-                      <button
-                        className='icon-btn'
-                        onClick={() => setConfirm({ vendor: v, action: 'delete' })}
-                        aria-label='Excluir'
-                      >
-                        <Trash2 />
-                      </button>
+                      {canWrite && (
+                        <>
+                          <button className='icon-btn' onClick={() => nav(`/app/vendors/${v.id}`)} aria-label='Editar'>
+                            <Pencil />
+                          </button>
+                          <button
+                            className='icon-btn'
+                            onClick={() => setConfirm({ vendor: v, action: 'toggle' })}
+                            aria-label={v.active ? 'Desativar' : 'Ativar'}
+                          >
+                            <Power />
+                          </button>
+                          <button
+                            className='icon-btn'
+                            onClick={() => setConfirm({ vendor: v, action: 'delete' })}
+                            aria-label='Excluir'
+                          >
+                            <Trash2 />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
