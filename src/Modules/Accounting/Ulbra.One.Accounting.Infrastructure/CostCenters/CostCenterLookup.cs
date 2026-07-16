@@ -16,7 +16,7 @@ public sealed class CostCenterLookup(IUnitOfWork uow) : ICostCenterLookup
         if (ids.Count == 0) return new Dictionary<Guid, CostCenterInfo>();
         var rows = await uow.ReadSet<CostCenter>()
             .Where(c => ids.Contains(c.Id))
-            .Select(c => new CostCenterInfo(c.Id, c.CompanyId, c.Active))
+            .Select(c => new CostCenterInfo(c.Id, c.CompanyId, c.Active, c.Code, c.Name))
             .ToListAsync(ct);
         return rows.ToDictionary(c => c.Id);
     }

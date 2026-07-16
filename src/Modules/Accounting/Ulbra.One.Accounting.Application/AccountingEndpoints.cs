@@ -16,6 +16,7 @@ using Ulbra.One.Accounting.Application.Endpoints.PendingPostings.ResolvePendingP
 using Ulbra.One.Accounting.Application.Endpoints.Periods.CloseAccountingPeriod;
 using Ulbra.One.Accounting.Application.Endpoints.Periods.ListAccountingPeriods;
 using Ulbra.One.Accounting.Application.Endpoints.Periods.ReopenAccountingPeriod;
+using Ulbra.One.Accounting.Application.Endpoints.Reports.ExportGeneralLedger;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetBalanceSheet;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetGeneralLedger;
 using Ulbra.One.Accounting.Application.Endpoints.Reports.GetIncomeStatement;
@@ -50,6 +51,7 @@ public static class AccountingEndpoints
         reports.MapEndpoint<GetBalanceSheet>();
         reports.MapEndpoint<GetJournalBook>();
         reports.MapEndpoint<GetGeneralLedger>();
+        reports.MapEndpoint<ExportGeneralLedger>();
 
         var pendingPostings = builder.MapGroup("/accounting/pending-postings");
         pendingPostings.MapEndpoint<GetPendingPostings>();
