@@ -1,34 +1,46 @@
 import { useTranslation } from 'react-i18next';
-import { Input, Select, ToolbarField } from '../../ui';
+import { Combobox, Input, Select, ToolbarField } from '../../ui';
 import { ConsolidatedPicker } from '../contabil-shared';
-import { useCostCenters } from '../../queries';
+import { useCostCenters, useLedgerAccounts } from '../../queries';
 
-/** Company (consolidated) + account root (1–5) + competence range + cost-center filters. */
+/** Company (consolidated) + account group (root 1–5) + specific-account search + competence range +
+ *  cost center. The group dropdown and the specific-account picker are mutually exclusive — the parent
+ *  clears one when the other is set. */
 export function LedgerFilters({
   companyId,
   root,
+  ledgerAccountId,
   from,
   to,
   costCenterId,
   onCompanyChange,
   onRootChange,
+  onAccountChange,
   onFromChange,
   onToChange,
   onCostCenterChange,
 }: {
   companyId: string;
   root: string;
+  ledgerAccountId: string;
   from: string;
   to: string;
   costCenterId: string;
   onCompanyChange: (v: string) => void;
   onRootChange: (v: string) => void;
+  onAccountChange: (v: string) => void;
   onFromChange: (v: string) => void;
   onToChange: (v: string) => void;
   onCostCenterChange: (v: string) => void;
 }) {
   const { t } = useTranslation();
   const costCenters = useCostCenters(companyId);
+  const accounts = useLedgerAccounts({ kind: 'Analytical', activeOnly: true });
+  const accountItems = (accounts.data ?? []).map((a) => ({
+    id: a.id,
+    label: `${a.code} · ${a.name}`,
+    sub: a.reducedCode ?? undefined,
+  }));
   return (
     <>
       <ConsolidatedPicker value={companyId} onChange={onCompanyChange} />
@@ -41,6 +53,16 @@ export function LedgerFilters({
           <option value='4'>{t('accounting.generalLedger.roots.4')}</option>
           <option value='5'>{t('accounting.generalLedger.roots.5')}</option>
         </Select>
+      </ToolbarField>
+      <ToolbarField label={t('accounting.generalLedger.filters.account')}>
+        <Combobox
+          value={ledgerAccountId || null}
+          onChange={(id) => onAccountChange(id ?? '')}
+          items={accountItems}
+          placeholder={t('accounting.generalLedger.filters.allAccounts')}
+          searchPlaceholder={t('accounting.generalLedger.filters.accountSearch')}
+          loading={accounts.isLoading}
+        />
       </ToolbarField>
       <ToolbarField label={t('accounting.journal.filters.from')}>
         <Input type='date' value={from} onChange={(e) => onFromChange(e.target.value)} />

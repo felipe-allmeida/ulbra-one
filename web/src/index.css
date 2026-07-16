@@ -3098,6 +3098,28 @@ tfoot td {
      ~17px below its dropdown (out of flow) — otherwise it overlaps the next row's label. */
   gap: 26px 14px;
 }
+/* "Planilha" tab: a single flat table, grouped by account (header → opening → movements → total). */
+.razao-planilha {
+  min-width: 720px;
+}
+.razao-planilha td,
+.razao-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.razao-planilha-account td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+  padding-top: 12px;
+}
+.razao-planilha-opening td {
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+.razao-planilha-total td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
 
 /* Vertical rhythm between the dashboard's stacked panels. */
 .cf-stack {
