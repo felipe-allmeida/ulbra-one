@@ -2894,6 +2894,11 @@ namespace Ulbra.One.Persistence.Migrations
                         new
                         {
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            Permission = "payables:write"
+                        },
+                        new
+                        {
+                            RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
                             Permission = "receivables:read"
                         },
                         new
