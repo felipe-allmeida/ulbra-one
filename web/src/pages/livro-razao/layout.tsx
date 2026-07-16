@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NotebookText, Download } from 'lucide-react';
+import { NotebookText } from 'lucide-react';
 import { useGeneralLedger, useCostCenters } from '../../queries';
-import { Button, EmptyState, Pager } from '../../ui';
+import { EmptyState, Pager } from '../../ui';
 import { LedgerFilters } from './filters';
 import { SpreadsheetView } from './spreadsheet-view';
 import { downloadGeneralLedgerExport } from './download';
@@ -43,46 +43,42 @@ export function LivroRazaoPage() {
           <h1 className='page-title'>{t('accounting.generalLedger.title')}</h1>
           <p className='page-sub'>{t('accounting.generalLedger.subtitle')}</p>
         </div>
-        <div className='razao-toolbar'>
-          <LedgerFilters
-            companyId={companyId}
-            root={root}
-            ledgerAccountId={ledgerAccountId}
-            from={from}
-            to={to}
-            costCenterId={costCenterId}
-            onCompanyChange={(v) => {
-              setCompanyId(v);
-              setCostCenterId('');
-              setPage(1);
-            }}
-            onRootChange={(v) => {
-              setRoot(v);
-              setLedgerAccountId('');
-              setPage(1);
-            }}
-            onAccountChange={(v) => {
-              setLedgerAccountId(v);
-              if (v) setRoot('');
-              setPage(1);
-            }}
-            onFromChange={(v) => {
-              setFrom(v);
-              setPage(1);
-            }}
-            onToChange={(v) => {
-              setTo(v);
-              setPage(1);
-            }}
-            onCostCenterChange={(v) => {
-              setCostCenterId(v);
-              setPage(1);
-            }}
-          />
-          <Button icon={<Download />} onClick={() => downloadGeneralLedgerExport(filters)}>
-            {t('accounting.generalLedger.export')}
-          </Button>
-        </div>
+        <LedgerFilters
+          companyId={companyId}
+          root={root}
+          ledgerAccountId={ledgerAccountId}
+          from={from}
+          to={to}
+          costCenterId={costCenterId}
+          onCompanyChange={(v) => {
+            setCompanyId(v);
+            setCostCenterId('');
+            setPage(1);
+          }}
+          onRootChange={(v) => {
+            setRoot(v);
+            setLedgerAccountId('');
+            setPage(1);
+          }}
+          onAccountChange={(v) => {
+            setLedgerAccountId(v);
+            if (v) setRoot('');
+            setPage(1);
+          }}
+          onFromChange={(v) => {
+            setFrom(v);
+            setPage(1);
+          }}
+          onToChange={(v) => {
+            setTo(v);
+            setPage(1);
+          }}
+          onCostCenterChange={(v) => {
+            setCostCenterId(v);
+            setPage(1);
+          }}
+          onExport={() => downloadGeneralLedgerExport(filters)}
+        />
       </div>
 
       {query.isLoading ? (

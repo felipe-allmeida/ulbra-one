@@ -3090,13 +3090,40 @@ tfoot td {
   gap: 16px;
   margin-bottom: 22px;
 }
-.razao-toolbar {
+/* Two fixed rows: row 1 = company + account group + specific account (export button pinned right),
+   row 2 = competence range + cost center. Fixed field widths keep the layout stable — selecting a long
+   account label never resizes a field or reflows the row. The 26px row-gap clears the CNPJ caption the
+   company picker anchors ~17px below its dropdown (out of flow). */
+.razao-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.razao-filters-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  /* Larger row-gap so a wrapped field clears the CNPJ caption that the company picker anchors
-     ~17px below its dropdown (out of flow) — otherwise it overlaps the next row's label. */
-  gap: 26px 14px;
+  gap: 14px;
+}
+.razao-filters-row .field {
+  width: 220px;
+  flex: 0 0 auto;
+}
+.razao-filters-row .field.razao-field-account {
+  width: 320px;
+}
+.razao-filters-row .field .select,
+.razao-filters-row .field .combobox-trigger,
+.razao-filters-row .field .input {
+  width: 100%;
+  min-width: 0;
+}
+/* Let the selected account label ellipsis-truncate instead of growing the trigger. */
+.razao-filters-row .combobox-value {
+  min-width: 0;
+}
+.razao-export {
+  margin-left: auto;
 }
 /* "Planilha" tab: a single flat table, grouped by account (header → opening → movements → total). */
 .razao-planilha {
