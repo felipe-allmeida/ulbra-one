@@ -13,6 +13,7 @@ import {
   type CostCenter,
 } from '../api';
 import { Button, Field, Input, MaskedInput, Select } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { useToast } from '../toast';
 import { onlyDigits, maskCpf, maskCnpj, maskCep, maskPhone } from '../format';
 import { getErrorMessage, ApiError } from '../apiError';
@@ -254,6 +255,7 @@ export function VendorForm({
 }) {
   const toast = useToast();
   const { t } = useTranslation();
+  const canWrite = usePermissions().can(P.registryWrite);
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
 
   const form = useForm<VendorValues>({
@@ -713,7 +715,7 @@ export function VendorForm({
         )}
       />
 
-      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} canWrite={canWrite} />
     </form>
   );
 }
@@ -734,6 +736,7 @@ export function CustomerForm({
 }) {
   const toast = useToast();
   const { t } = useTranslation();
+  const canWrite = usePermissions().can(P.registryWrite);
   const [nameAuto, setNameAuto] = useState<Set<'name' | 'tradeName'>>(new Set());
 
   const form = useForm<CustomerValues>({
@@ -897,7 +900,7 @@ export function CustomerForm({
 
       <AddressFields control={control} setValue={setValue} getAddress={() => getValues('address')} />
 
-      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} canWrite={canWrite} />
     </form>
   );
 }
@@ -921,6 +924,7 @@ export function EmployeeForm({
   onCancel: () => void;
 }) {
   const toast = useToast();
+  const canWrite = usePermissions().can(P.registryWrite);
 
   const form = useForm<EmployeeValues>({
     resolver: resolver(employeeSchema),
@@ -1062,7 +1066,7 @@ export function EmployeeForm({
 
       <AddressFields control={control} setValue={setValue} getAddress={() => getValues('address')} />
 
-      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} />
+      <FormActions valid={formState.isValid} saving={saving} onCancel={onCancel} editing={!!initial} canWrite={canWrite} />
     </form>
   );
 }
@@ -1094,20 +1098,25 @@ export function FormActions({
   saving,
   onCancel,
   editing,
+  canWrite = true,
 }: {
   valid: boolean;
   saving: boolean;
   onCancel: () => void;
   editing: boolean;
+  /** Quando false, esconde Salvar/Criar (form somente-leitura). O caller passa a permissão do recurso. */
+  canWrite?: boolean;
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
       <Button type='button' onClick={onCancel} disabled={saving}>
-        Cancelar
+        {canWrite ? 'Cancelar' : 'Fechar'}
       </Button>
-      <Button type='submit' variant='brand' disabled={!valid || saving}>
-        {saving ? 'Salvando…' : editing ? 'Salvar' : 'Criar'}
-      </Button>
+      {canWrite && (
+        <Button type='submit' variant='brand' disabled={!valid || saving}>
+          {saving ? 'Salvando…' : editing ? 'Salvar' : 'Criar'}
+        </Button>
+      )}
     </div>
   );
 }
