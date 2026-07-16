@@ -3121,17 +3121,25 @@ tfoot td {
   padding-top: 12px;
   text-align: left;
 }
-.razao-planilha-opening td {
+/* Account title on the left, its opening balance pinned to the far right on the same line. */
+.razao-planilha-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.razao-planilha-account-opening {
+  font-weight: 400;
   font-style: italic;
   color: var(--muted-foreground);
+  white-space: nowrap;
 }
 .razao-planilha-total td {
   font-weight: 700;
   border-top: 1px solid var(--border);
 }
-/* The opening/closing balance labels span the leading columns — right-align them so they read next to
-   their amount instead of floating in the middle of the row. */
-.razao-planilha-opening td:first-child,
+/* The closing-balance label spans the leading columns — right-align it so it reads next to its amount
+   instead of floating in the middle of the row. */
 .razao-planilha-total td:first-child {
   text-align: right;
 }

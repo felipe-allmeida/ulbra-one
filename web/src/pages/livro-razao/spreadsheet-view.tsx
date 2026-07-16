@@ -6,8 +6,8 @@ import { fmtDate } from '../../datetime';
 import { Panel } from '../../ui';
 
 /** Planilha (spreadsheet) view of the Livro Razão: a single flat table grouped by account — an account
- *  header row, the opening-balance row, one row per movement with its running balance, and an account
- *  total (closing) row. Column alignment lives in .razao-planilha (index.css). */
+ *  header row (title on the left, opening balance on the right), one row per movement with its running
+ *  balance, and an account total (closing) row. Column alignment lives in .razao-planilha (index.css). */
 export function SpreadsheetView({
   accounts,
   ccLabels,
@@ -36,11 +36,14 @@ export function SpreadsheetView({
             {accounts.map((a) => (
               <Fragment key={a.ledgerAccountId}>
                 <tr className='razao-planilha-account'>
-                  <td colSpan={7}>{[a.accountCode, a.reducedCode, a.accountName].filter(Boolean).join(' · ')}</td>
-                </tr>
-                <tr className='razao-planilha-opening'>
-                  <td colSpan={6}>{t('accounting.generalLedger.opening')}</td>
-                  <td className='amount-cell'>{brlCents(a.openingBalance)}</td>
+                  <td colSpan={7}>
+                    <div className='razao-planilha-account-row'>
+                      <span>{[a.accountCode, a.reducedCode, a.accountName].filter(Boolean).join(' · ')}</span>
+                      <span className='razao-planilha-account-opening'>
+                        {t('accounting.generalLedger.opening')}: {brlCents(a.openingBalance)}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
                 {a.movements.map((m, i) => (
                   <tr key={i} className='razao-planilha-move'>
