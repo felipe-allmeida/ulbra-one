@@ -133,15 +133,17 @@ public sealed class UploadFiscalDocument : IEndpoint
             FiscalDocumentResponse.From(doc));
     }
 
-    // NFS-e = Service, NF-e = Product. For a PDF/image (AI-extracted) it is best-effort: a service signal
-    // (LC116) → Service; a product fingerprint (CFOP/NCM) → Product; otherwise undetermined (manual review).
+    // NFS-e = Service, NF-e = Product (authoritative by format). For a PDF/image, the AI vision extractor's
+    // SuggestedType is the primary signal; when the model was unsure, fall back to the best-effort fingerprint:
+    // a service signal (LC116) → Service; a product fingerprint (CFOP/NCM) → Product; otherwise undetermined.
     private static PayableType? DeriveType(ParsedFiscalDocument parsed) => parsed.Format switch
     {
         FiscalDocumentFormat.NfseXml => PayableType.Service,
         FiscalDocumentFormat.NfeXml => PayableType.Product,
-        _ => parsed.Lc116Subitem is not null ? PayableType.Service
-           : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? PayableType.Product
-           : (PayableType?)null,
+        _ => parsed.SuggestedType
+           ?? (parsed.Lc116Subitem is not null ? PayableType.Service
+              : parsed.Fiscal?.Cfops is { Count: > 0 } || parsed.Fiscal?.Ncms is { Count: > 0 } ? PayableType.Product
+              : (PayableType?)null),
     };
 }
 
