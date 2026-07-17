@@ -60,8 +60,8 @@ variable "enable_remittance_sweep_job" {
 
 variable "remittance_sweep_cron" {
   type        = string
-  default     = "0 9 * * *"
-  description = "Cron (UTC) for the remittance-sweep job. Default 09:00 UTC = 06:00 BRT (horário de corte diário)."
+  default     = "0 20 * * *"
+  description = "Cron (UTC) for the remittance-sweep job. ACA Jobs schedule in UTC; default 20:00 UTC = 17:00 BRT (horário de corte diário; Brasília é UTC-3, sem DST). Runs every day."
 }
 
 variable "web_min_replicas" {

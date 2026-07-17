@@ -101,7 +101,7 @@ reliably. The job **reuses the API image** with `args = ["--job","remittance-swe
 mode in `Program.cs` → `JobRunner`), reuses the API's user-assigned identity (KV Secrets User +
 Storage Blob Data Contributor + AcrPull), and shares the Container Apps Environment.
 
-- `remittance_sweep_cron` (default `"0 9 * * *"` = 06:00 BRT) — the daily cutoff schedule (UTC).
+- `remittance_sweep_cron` (default `"0 20 * * *"` = 20:00 UTC = 17:00 BRT) — the daily cutoff schedule. ACA Jobs schedule in UTC; Brasília is UTC-3 (no DST).
 - `enable_remittance_sweep_job` (default `true`) — set `false` to skip the job in an environment (e.g. dev).
 
 The in-process `RemittanceSweepJob` stays disabled (`RemittanceSweep__Enabled=false`) so the scheduled

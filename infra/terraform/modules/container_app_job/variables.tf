@@ -30,7 +30,7 @@ variable "args" {
 
 variable "cron_expression" {
   type        = string
-  description = "Cron schedule (UTC) for the job trigger, e.g. \"0 9 * * *\" (06:00 BRT)."
+  description = "Cron schedule (UTC) for the job trigger, e.g. \"0 20 * * *\" (17:00 BRT — Brasília is UTC-3)."
 }
 
 variable "identity_id" {
