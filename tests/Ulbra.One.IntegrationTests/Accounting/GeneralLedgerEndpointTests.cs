@@ -38,13 +38,14 @@ public class GeneralLedgerEndpointTests(PostgresFixture fixture)
     }
 
     private static async Task<string> PostEntryAsync(HttpClient client, string companyId, string competence,
-        string debitCode, string creditCode, Dictionary<string, string> acc, decimal amount)
+        string debitCode, string creditCode, Dictionary<string, string> acc, decimal amount, string? sourceReference = null)
     {
         var createRes = await client.PostAsJsonAsync("/api/journal-entries", new
         {
             companyId,
             competenceDate = competence,
             description = $"{debitCode} -> {creditCode}",
+            sourceReference,
             lines = new[]
             {
                 new { ledgerAccountId = acc[debitCode], side = "Debit", amount },
@@ -87,6 +88,21 @@ public class GeneralLedgerEndpointTests(PostgresFixture fixture)
         Assert.Equal(20_000m, account.GetProperty("closingBalance").GetDecimal()); // debit-normal: 50k - 30k
         Assert.Equal(50_000m, movements[0].GetProperty("accumulatedBalance").GetDecimal());
         Assert.Equal(20_000m, movements[1].GetProperty("accumulatedBalance").GetDecimal());
+    }
+
+    [Fact] // "Documento" surfaces the entry's SourceReference (a payable's document number), never the idempotency key
+    public async Task Ledger_movement_exposes_document_reference()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var companyId = await SeedCompanyAsync(client);
+        var acc = await SeedChartAsync(client, companyId);
+        await PostEntryAsync(client, companyId, "2026-01-15", EnergyCode, PayablesCode, acc, 1_000m, sourceReference: "NF-77");
+
+        var page = await ReadJson(await client.GetAsync(
+            $"/api/accounting/ledger?companyId={companyId}&ledgerAccountId={acc[EnergyCode]}&from=2026-01-01&to=2026-12-31"));
+        var movement = page.GetProperty("items")[0].GetProperty("movements")[0];
+        Assert.Equal("NF-77", movement.GetProperty("documentRef").GetString());
     }
 
     [Fact] // (b) closing balance == balancete balance at the same date
