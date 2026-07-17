@@ -22,13 +22,15 @@ public sealed class ListBankTransactions : IEndpoint
     private static async Task<IResult> Handle(
         IUnitOfWork uow,
         CompanyId? companyId, BankAccountId? bankAccountId, StatementImportId? importId, MatchStatus? matchStatus,
-        DateOnly? dueFrom, DateOnly? dueTo, [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
+        TransactionDirection? direction, DateOnly? dueFrom, DateOnly? dueTo,
+        [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
         var q = uow.ReadSet<BankTransaction>();
         if (companyId is { } c) q = q.Where(t => t.CompanyId == c.Value);
         if (bankAccountId is { } b) q = q.Where(t => t.BankAccountId == b.Value);
         if (importId is { } im) q = q.Where(t => t.ImportId == im.Value);
         if (matchStatus is { } ms) q = q.Where(t => t.MatchStatus == ms);
+        if (direction is { } dir) q = q.Where(t => t.Direction == dir);
         if (dueFrom is { } from) q = q.Where(t => t.Date >= from);
         if (dueTo is { } to) q = q.Where(t => t.Date <= to);
         var page = await q.OrderBy(t => t.Date).ToPaginatedAsync(pagination, ct);

@@ -50,7 +50,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         return new Seed(companyId, costCenterId, vendorId);
     }
 
-    private static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId)
+    private static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string? ofxAccountId = null)
     {
         var ledgerAccountId = await FinanceSeed.CreateAccountingAccountAsync(client);
         var res = await client.PostAsJsonAsync("/api/bank-accounts", new
@@ -65,6 +65,7 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
             alias = "Conta principal",
             openingBalance = 10_000m,
             ledgerAccountId,
+            ofxAccountId = ofxAccountId ?? "",
         });
         res.EnsureSuccessStatusCode();
         return (await ReadJson(res)).GetProperty("id").GetString()!;
@@ -483,5 +484,242 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
 
         var reopened = await GetInstallmentAsync(client, payableId);
         Assert.Equal("Open", reopened.GetProperty("status").GetString());
+    }
+
+    // ---------------------------------------------------------------------------
+    // AEL-767: real Santander format (pt-BR decimals, CHARSET:1252, bracketed TZ,
+    // unclosed leaf tags), account identification (warn), period summary, direction
+    // filter, and the duplicate-amount one-to-one matcher.
+    // ---------------------------------------------------------------------------
+
+    // Faithful to a Santander site export: no blank line before <OFX>, unclosed leaf tags,
+    // comma decimals, a dot-thousands+comma value, bracketed-timezone single-day period.
+    private const string SantanderOfxContent = """
+        OFXHEADER:100
+        DATA:OFXSGML
+        VERSION:102
+        SECURITY:NONE
+        ENCODING:USASCII
+        CHARSET:1252
+        COMPRESSION:NONE
+        OLDFILEUID:NONE
+        NEWFILEUID:NONE
+        <OFX>
+        <SIGNONMSGSRSV1><SONRS><STATUS><CODE>0<SEVERITY>INFO</STATUS><DTSERVER>20260615120151[-3:GMT]<LANGUAGE>ENG<FI><ORG>SANTANDER<FID>SANTANDER</FI></SONRS></SIGNONMSGSRSV1>
+        <BANKMSGSRSV1><STMTTRNRS><TRNUID>1<STATUS><CODE>0<SEVERITY>INFO</STATUS><STMTRS>
+        <CURDEF>BRL
+        <BANKACCTFROM>
+            <BANKID>033
+            <ACCTID>3578130509766
+            <ACCTTYPE>CHECKING
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+            <DTSTART>20260612000000[-3:GMT]
+            <DTEND>20260612000000[-3:GMT]
+            <STMTTRN>
+                <TRNTYPE>DEBIT
+                <DTPOSTED>20260612000000[-3:GMT]
+                <TRNAMT>-200,00
+                <FITID>S1
+                <CHECKNUM>493627
+                <MEMO>TARIFA PAGFOR COMPROVANTE LOTE
+            </STMTTRN>
+            <STMTTRN>
+                <TRNTYPE>CREDIT
+                <DTPOSTED>20260612000000[-3:GMT]
+                <TRNAMT>2650.000,00
+                <FITID>S2
+                <CHECKNUM>18404534
+                <MEMO>PIX RECEBIDO
+            </STMTTRN>
+            <STMTTRN>
+                <TRNTYPE>DEBIT
+                <DTPOSTED>20260612000000[-3:GMT]
+                <TRNAMT>-1975,87
+                <FITID>S3
+                <CHECKNUM>030612
+                <MEMO>PAGFOR PIX OUTRA INST- DIFEREN TIT
+            </STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL><BALAMT>586577,87<DTASOF>20260615120151[-3:GMT]</LEDGERBAL>
+        </STMTRS></STMTTRNRS></BANKMSGSRSV1>
+        </OFX>
+        """;
+
+    // A statement whose account clearly differs from the created one (bank 001, ACCTID 99999999).
+    private const string ForeignAccountOfxContent = """
+        OFXHEADER:100
+        DATA:OFXSGML
+        VERSION:102
+        SECURITY:NONE
+        ENCODING:USASCII
+
+        <OFX>
+        <SIGNONMSGSRSV1><SONRS><STATUS><CODE>0<SEVERITY>INFO</STATUS><DTSERVER>20260731<LANGUAGE>POR</SONRS></SIGNONMSGSRSV1>
+        <BANKMSGSRSV1><STMTTRNRS><TRNUID>0<STATUS><CODE>0<SEVERITY>INFO</STATUS><STMTRS>
+        <CURDEF>BRL
+        <BANKACCTFROM><BANKID>001<ACCTID>99999999<ACCTTYPE>CHECKING</BANKACCTFROM>
+        <BANKTRANLIST>
+        <DTSTART>20260701
+        <DTEND>20260731
+        <STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260710<TRNAMT>-50,00<FITID>FA-1<MEMO>TARIFA</STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL><BALAMT>0,00<DTASOF>20260731</LEDGERBAL>
+        </STMTRS></STMTTRNRS></BANKMSGSRSV1>
+        </OFX>
+        """;
+
+    // Two debits with the SAME amount (-1000) — only one matching installment exists.
+    private const string DuplicateDebitsOfxContent = """
+        OFXHEADER:100
+        DATA:OFXSGML
+        VERSION:102
+        SECURITY:NONE
+        ENCODING:USASCII
+
+        <OFX>
+        <SIGNONMSGSRSV1><SONRS><STATUS><CODE>0<SEVERITY>INFO</STATUS><DTSERVER>20260731<LANGUAGE>POR</SONRS></SIGNONMSGSRSV1>
+        <BANKMSGSRSV1><STMTTRNRS><TRNUID>0<STATUS><CODE>0<SEVERITY>INFO</STATUS><STMTRS>
+        <CURDEF>BRL
+        <BANKACCTFROM><BANKID>033<ACCTID>12345<ACCTTYPE>CHECKING</BANKACCTFROM>
+        <BANKTRANLIST>
+        <DTSTART>20260701
+        <DTEND>20260731
+        <STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260710<TRNAMT>-1000.00<FITID>DUP-1<MEMO>PAGFOR PIX</STMTTRN>
+        <STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260711<TRNAMT>-1000.00<FITID>DUP-2<MEMO>PAGFOR PIX</STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL><BALAMT>0.00<DTASOF>20260731</LEDGERBAL>
+        </STMTRS></STMTTRNRS></BANKMSGSRSV1>
+        </OFX>
+        """;
+
+    private static MultipartFormDataContent OfxFileRaw(string content, string filename = "extrato.ofx")
+    {
+        var mp = new MultipartFormDataContent();
+        var bytes = new ByteArrayContent(Encoding.Latin1.GetBytes(content));
+        bytes.Headers.ContentType = new MediaTypeHeaderValue("application/x-ofx");
+        mp.Add(bytes, "file", filename);
+        return mp;
+    }
+
+    private static string? WarningOf(JsonElement body) =>
+        body.TryGetProperty("warning", out var w) && w.ValueKind == JsonValueKind.String ? w.GetString() : null;
+
+    [Fact]
+    public async Task ImportStatement_ParsesRealSantanderFormat_ptBRDecimals_Returns201()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+
+        using var content = OfxFileRaw(SantanderOfxContent);
+        var res = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode); // formerly failed: 2650.000,00 threw a FormatException
+        var body = await ReadJson(res);
+        Assert.Equal(3, body.GetProperty("transactionCount").GetInt32());
+        Assert.Equal("2026-06-12", body.GetProperty("periodStart").GetString());
+        Assert.Equal("2026-06-12", body.GetProperty("periodEnd").GetString());
+
+        // The pt-BR amounts must be parsed correctly (not ×100, not truncated).
+        var listRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&pageSize=50");
+        listRes.EnsureSuccessStatusCode();
+        var amounts = (await ReadJson(listRes)).GetProperty("items").EnumerateArray()
+            .Select(i => i.GetProperty("amount").GetDecimal()).ToList();
+        Assert.Contains(-200.00m, amounts);
+        Assert.Contains(2650000.00m, amounts);
+        Assert.Contains(-1975.87m, amounts);
+    }
+
+    [Fact]
+    public async Task ImportStatement_ForeignAccount_Imports_WithWarning()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId, ofxAccountId: "12345");
+
+        using var content = OfxFileRaw(ForeignAccountOfxContent);
+        var res = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode); // warn-and-allow: still imported
+        Assert.NotNull(WarningOf(await ReadJson(res)));
+    }
+
+    [Fact]
+    public async Task ImportStatement_MatchingAccount_NoWarning()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        // The standard OfxFile()'s ACCTID is 12345; configure the account with the same OFX id.
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId, ofxAccountId: "12345");
+
+        using var content = OfxFile();
+        var res = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        Assert.Null(WarningOf(await ReadJson(res)));
+    }
+
+    [Fact]
+    public async Task PeriodSummary_GroupsByStatus_AndTotalsDebitCredit()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId); // -1000 debit → Suggested; 2500 credit → Unmatched
+
+        var res = await client.GetAsync($"/api/bank-transactions/period-summary?companyId={seed.CompanyId}&bankAccountId={bankId}");
+        res.EnsureSuccessStatusCode();
+        var body = await ReadJson(res);
+
+        Assert.Equal(1, body.GetProperty("suggested").GetProperty("count").GetInt32());
+        Assert.Equal(-1000.00m, body.GetProperty("suggested").GetProperty("total").GetDecimal());
+        Assert.Equal(1, body.GetProperty("unmatched").GetProperty("count").GetInt32());
+        Assert.Equal(2500.00m, body.GetProperty("unmatched").GetProperty("total").GetDecimal());
+        Assert.Equal(-1000.00m, body.GetProperty("debitTotal").GetDecimal());
+        Assert.Equal(2500.00m, body.GetProperty("creditTotal").GetDecimal());
+    }
+
+    [Fact]
+    public async Task ListBankTransactions_DirectionFilter_SplitsDebitCredit()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await ImportAsync(client, bankId);
+
+        var debitRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&direction=Debit");
+        debitRes.EnsureSuccessStatusCode();
+        Assert.Equal(1, (await ReadJson(debitRes)).GetProperty("total").GetInt32());
+
+        var creditRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&direction=Credit");
+        creditRes.EnsureSuccessStatusCode();
+        Assert.Equal(1, (await ReadJson(creditRes)).GetProperty("total").GetInt32());
+    }
+
+    [Fact]
+    public async Task RunMatcher_DuplicateAmounts_SuggestsOnlyOne()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        // ONE installment of 1000 vs TWO -1000 debits → only one may be suggested (one-to-one pool).
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
+
+        using var content = OfxFileRaw(DuplicateDebitsOfxContent);
+        var res = await client.PostAsync($"/api/statement-imports?bankAccountId={bankId}", content);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+
+        var suggestedRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Suggested");
+        suggestedRes.EnsureSuccessStatusCode();
+        Assert.Equal(1, (await ReadJson(suggestedRes)).GetProperty("total").GetInt32());
+
+        var unmatchedRes = await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Unmatched");
+        unmatchedRes.EnsureSuccessStatusCode();
+        Assert.Equal(1, (await ReadJson(unmatchedRes)).GetProperty("total").GetInt32());
     }
 }
