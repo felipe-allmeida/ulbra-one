@@ -204,6 +204,17 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Run-once job mode for Azure Container Apps scheduled Jobs (e.g. `--job remittance-sweep`):
+// resolve the service, run to completion, and exit with a status code — skipping the web pipeline,
+// migrations and dev seeding. Hosted services never start (app.Run() is not called), so a scheduled
+// run and the web replicas do not double-execute the sweep.
+if (args is ["--job", var jobName, ..])
+{
+    var jobLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    var jobClock = app.Services.GetRequiredService<TimeProvider>();
+    return await Ulbra.One.Api.JobRunner.RunAsync(app.Services, jobName, jobClock, jobLogger, CancellationToken.None);
+}
+
 // Apply migrations on startup (Postgres may not be ready when the API starts up).
 using (var scope = app.Services.CreateScope())
 {
@@ -296,5 +307,7 @@ apiGroup.MapAccountingEndpoints();
 apiGroup.MapFiscalEndpoints();
 
 app.Run();
+
+return 0;
 
 public partial class Program;
