@@ -246,6 +246,45 @@ public class RemittanceGenerationTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task GenerateAsync_ConcurrentCalls_DoNotCollide_Or_DoubleInclude()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(factory, client);
+
+        var cutoff = new DateOnly(2026, 6, 30);
+
+        async Task<bool> RunSucceededAsync()
+        {
+            await using var scope = factory.Services.CreateAsyncScope();
+            var service = scope.ServiceProvider.GetRequiredService<IRemittanceGenerationService>();
+            // The sequence-number race resolves via retry-on-unique-violation — never a thrown 500.
+            var result = await service.GenerateAsync(seed.CompanyId, seed.BankAccountId, cutoff, "test-user", CancellationToken.None);
+            return result.IsSuccess;
+        }
+
+        // Two generations for the same paying account, fired concurrently.
+        var results = await Task.WhenAll(Task.Run(RunSucceededAsync), Task.Run(RunSucceededAsync));
+
+        // At least one succeeds; neither throws (no unhandled unique-violation → 500).
+        Assert.Contains(true, results);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        // Exactly one remittance persisted (no duplicate sequence number).
+        var remittances = await uow.ReadSet<Remittance>()
+            .Where(r => r.PayingBankAccountId == seed.BankAccountId)
+            .ToListAsync();
+        Assert.Single(remittances);
+
+        // Each eligible installment is InRemittance exactly once — never double-included.
+        var payableA = await uow.ReadSet<Payable>().Include(p => p.Installments).FirstAsync(p => p.Id == seed.PayableAId);
+        Assert.All(payableA.Installments.Where(i => i.DueDate <= cutoff),
+            i => Assert.Equal(InstallmentStatus.InRemittance, i.Status));
+    }
+
+    [Fact]
     public async Task CancelAsync_Restores_Installments_To_Open_And_Marks_Cancelled()
     {
         await using var factory = new ApiFactory(fixture.ConnectionString);

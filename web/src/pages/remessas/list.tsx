@@ -17,6 +17,7 @@ import { useApp } from '../../store';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { brlCents } from '../../lib';
+import { downloadWithAuth } from '../../download';
 import { Button, EmptyState, Field, Modal, PageHeader, Pager, Panel, Select } from '../../ui';
 import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
@@ -37,11 +38,21 @@ function RemittanceStatusBadge({ status }: { status: string }) {
 }
 
 /* ============ Generate remittance dialog ============ */
+// A paying account can ride the CNAB240 rail only if it is Santander (COMPE 033, in any
+// entered form) and has a convênio code — mirrors the backend eligibility. Filtering the
+// dropdown to eligible accounts keeps the operator out of the "banco não suportado" dead-end.
+function isSantander(bankCode?: string | null): boolean {
+  return (bankCode ?? '').replace(/\D/g, '').replace(/^0+/, '') === '33';
+}
+function isCnabEligible(a: { bankCode?: string | null; cnabAgreementCode?: string | null }): boolean {
+  return isSantander(a.bankCode) && !!a.cnabAgreementCode?.trim();
+}
+
 function GenerateDialog({ companyId, onClose }: { companyId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
   const bankAccounts = useBankAccounts(companyId);
-  const accounts = (bankAccounts.data ?? []).filter((a) => a.active);
+  const accounts = (bankAccounts.data ?? []).filter((a) => a.active && isCnabEligible(a));
   const [bankAccountId, setBankAccountId] = useState('');
   const [dueCutoff, setDueCutoff] = useState('');
 
@@ -101,6 +112,11 @@ function GenerateDialog({ companyId, onClose }: { companyId: string; onClose: ()
               </option>
             ))}
           </Select>
+          {!bankAccounts.isLoading && accounts.length === 0 && (
+            <p style={{ marginTop: 6, fontSize: 13, color: 'var(--muted-foreground, #6b7280)' }}>
+              {t('remittances.generate_dialog.noEligibleAccount')}
+            </p>
+          )}
         </Field>
         <Field label={t('remittances.generate_dialog.dueCutoff')}>
           <input type='date' className='input' value={dueCutoff} onChange={(e) => setDueCutoff(e.target.value)} />
@@ -219,22 +235,28 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
         )}
 
         {isDev && (
-          <a
-            href={api.remittanceSimulateReturnUrl(remittance.id)}
-            download
+          <button
+            type='button'
             className='btn btn-ghost'
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() =>
+              void downloadWithAuth(
+                api.remittanceSimulateReturnUrl(remittance.id),
+                `retorno-${remittance.sequenceNumber}.ret`,
+              ).catch(() => toast.error(t('remittances.downloadError')))
+            }
           >
             <ExternalLink size={14} />
             {t('remittances.return.simulateReturn')}
-          </a>
+          </button>
         )}
       </div>
 
       {/* Lines table */}
       <div style={{ fontSize: 13 }}>
         <strong>{t('remittances.return.linesTitle')}</strong>
-        <table style={{ marginTop: 8 }}>
+        <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <table>
           <thead>
             <tr>
               <th>{t('remittances.return.columns.reference')}</th>
@@ -286,7 +308,8 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {returnLineId && (
@@ -316,6 +339,7 @@ function RemittanceDetailModal({
   return (
     <Modal
       title={t('remittances.title')}
+      size='wide'
       onClose={onClose}
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -332,6 +356,16 @@ function RemittanceDetailModal({
 /* ============ List row ============ */
 function RemittanceRow({ item, onDetail }: { item: RemittanceListItem; onDetail: (id: string) => void }) {
   const { t } = useTranslation();
+  const toast = useToast();
+  // The .REM download endpoint requires the Bearer token, which a plain `<a href download>` navigation
+  // cannot send (→ 401). Fetch it with auth and trigger a blob download instead.
+  const handleDownload = async () => {
+    try {
+      await downloadWithAuth(api.remittanceFileUrl(item.id), `remessa-${item.sequenceNumber}.rem`);
+    } catch {
+      toast.error(t('remittances.downloadError'));
+    }
+  };
   return (
     <tr>
       <td>{item.sequenceNumber}</td>
@@ -346,10 +380,15 @@ function RemittanceRow({ item, onDetail }: { item: RemittanceListItem; onDetail:
       <td>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {item.status === 'Generated' && (
-            <a href={api.remittanceFileUrl(item.id)} download className='btn btn-ghost' style={{ padding: '4px 8px' }}>
+            <button
+              type='button'
+              className='btn btn-ghost'
+              style={{ padding: '4px 8px' }}
+              onClick={() => void handleDownload()}
+            >
               <Download size={14} style={{ marginRight: 4 }} />
               {t('remittances.download')}
-            </a>
+            </button>
           )}
           <Button style={{ padding: '4px 8px' }} onClick={() => onDetail(item.id)}>
             {t('remittances.return.linesTitle')}
