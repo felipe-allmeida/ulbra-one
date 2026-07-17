@@ -19,6 +19,7 @@ import { ContabilBalancetePage } from './pages/contabil-balancete';
 import { ContabilDrePage } from './pages/contabil-dre';
 import { ContabilBalancoPage } from './pages/contabil-balanco';
 import { LivroDiarioPage } from './pages/livro-diario';
+import { LivroRazaoPage } from './pages/livro-razao';
 import { RetencoesPage } from './pages/retencoes';
 import { ObrigacoesPage } from './pages/fiscal/obrigacoes';
 import { ContabilPendentesPage } from './pages/contabil-pendentes';
@@ -74,6 +75,7 @@ export default function App() {
         <Route path='accounting/chart-of-accounts' element={g(<ContabilPlanoPage />, [P.accountingRead])} />
         <Route path='accounting/journal-entries' element={g(<ContabilLancamentosPage />, [P.accountingRead])} />
         <Route path='accounting/journal-book' element={g(<LivroDiarioPage />, [P.accountingRead])} />
+        <Route path='accounting/ledger' element={g(<LivroRazaoPage />, [P.accountingRead])} />
         <Route path='accounting/trial-balance' element={<ContabilBalancetePage />} />
         <Route path='accounting/income-statement' element={<ContabilDrePage />} />
         <Route path='accounting/balance-sheet' element={<ContabilBalancoPage />} />

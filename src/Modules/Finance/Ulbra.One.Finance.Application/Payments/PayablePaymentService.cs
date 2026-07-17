@@ -80,7 +80,7 @@ public sealed class PayablePaymentService : IPayablePaymentService
         payable.RecomputeSettlement();
         await _uow.AddAsync(payment, ct);
 
-        await _publish.Publish(new PaymentRegistered(payment.Id, payable.Id, payable.CompanyId, payment.Amount, payment.PaymentDate, bank.LedgerAccountId), ct);
+        await _publish.Publish(new PaymentRegistered(payment.Id, payable.Id, payable.CompanyId, payment.Amount, payment.PaymentDate, bank.LedgerAccountId, payable.DocumentNumber), ct);
 
         return Result.Success(payable);
     }

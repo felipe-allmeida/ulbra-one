@@ -266,6 +266,12 @@ export type JournalBookEntryView = Schemas['JournalBookEntryResponse'];
 export type JournalBookDayView = Schemas['JournalBookDayResponse'];
 export type JournalBook = Schemas['JournalBookResponse'];
 
+// ---------- Livro Razão (general ledger — read-only, per account, running balance) ----------
+// Aliases to the generated schemas; the *View names are kept stable for the pages/components.
+// The response is paginated by account (Paginated<GeneralLedgerAccountView>).
+export type GeneralLedgerMovementView = Schemas['GeneralLedgerMovementResponse'];
+export type GeneralLedgerAccountView = Schemas['GeneralLedgerAccountResponse'];
+
 // ---------- Remittances (Remessas CNAB240) ----------
 export type Remittance = Schemas['RemittanceResponse'];
 export type RemittanceListItem = Schemas['RemittanceListItemResponse'];
@@ -1071,6 +1077,45 @@ export const api = {
     if (params.from) q.set('from', params.from);
     if (params.to) q.set('to', params.to);
     return request<JournalBook>(`/accounting/journal-book?${q}`);
+  },
+  generalLedger: (params: {
+    companyId?: string;
+    ledgerAccountId?: string;
+    root?: string;
+    from?: string;
+    to?: string;
+    costCenterId?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.ledgerAccountId) q.set('ledgerAccountId', params.ledgerAccountId);
+    if (params.root) q.set('root', params.root);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    if (params.page) q.set('page', String(params.page));
+    if (params.pageSize) q.set('pageSize', String(params.pageSize));
+    return request<Paginated<GeneralLedgerAccountView>>(`/accounting/ledger?${q}`);
+  },
+  /** Direct URL for the ledger CSV export (text/csv). Requires Bearer → fetch via downloadGeneralLedgerExport. */
+  generalLedgerExportUrl: (params: {
+    companyId?: string;
+    ledgerAccountId?: string;
+    root?: string;
+    from?: string;
+    to?: string;
+    costCenterId?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.ledgerAccountId) q.set('ledgerAccountId', params.ledgerAccountId);
+    if (params.root) q.set('root', params.root);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    if (params.costCenterId) q.set('costCenterId', params.costCenterId);
+    return `${BASE_URL}/accounting/ledger/export?${q}`;
   },
   withholdingsReport: (companyId?: string) => {
     const q = new URLSearchParams();

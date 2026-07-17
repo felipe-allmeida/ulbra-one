@@ -113,6 +113,7 @@ export const queryKeys = {
   trialBalance: (companyId?: string) => ['trialBalance', companyId ?? ''] as const,
   incomeStatement: (params: IncomeStatementParams) => ['incomeStatement', params] as const,
   journalBook: (params: JournalBookParams) => ['journalBook', params] as const,
+  generalLedger: (params: GeneralLedgerParams) => ['generalLedger', params] as const,
   balanceSheet: (params: BalanceSheetParams) => ['balanceSheet', params] as const,
   withholdingsReport: (companyId?: string) => ['withholdingsReport', companyId ?? ''] as const,
   fiscalAssessment: (params: FiscalAssessmentParams) => ['fiscalAssessment', params] as const,
@@ -146,6 +147,17 @@ export interface JournalBookParams {
   companyId?: string;
   from?: string;
   to?: string;
+}
+
+export interface GeneralLedgerParams {
+  companyId?: string;
+  ledgerAccountId?: string;
+  root?: string;
+  from?: string;
+  to?: string;
+  costCenterId?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface BalanceSheetParams {
@@ -1381,6 +1393,15 @@ export function useJournalBook(params: JournalBookParams, options?: { enabled?: 
     queryKey: queryKeys.journalBook(params),
     queryFn: () => api.journalBook(params),
     enabled: options?.enabled ?? true,
+  });
+}
+
+export function useGeneralLedger(params: GeneralLedgerParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.generalLedger(params),
+    queryFn: () => api.generalLedger(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 
