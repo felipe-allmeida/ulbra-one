@@ -32,7 +32,7 @@ public sealed class RemittanceSweepService(
 
         var accounts = candidates.Where(b => BankCodes.IsSantander(b.BankCode)).ToList();
 
-        int companies = 0, remittances = 0, lines = 0;
+        int companies = 0, remittances = 0, lines = 0, failures = 0;
 
         foreach (var account in accounts)
         {
@@ -56,6 +56,7 @@ public sealed class RemittanceSweepService(
 
             if (result.IsFailure)
             {
+                failures++;
                 log.LogWarning(
                     "Sweep: company {CompanyId} account {AccountId} generation failed: {Code} — {Description}",
                     account.CompanyId, account.Id, result.Error.Code, result.Error.Description);
@@ -69,6 +70,11 @@ public sealed class RemittanceSweepService(
                 lines += generated.Lines.Count;
             }
         }
+
+        // Structured run summary (generated / skipped-companies / errors) → OTel/App Insights.
+        log.LogInformation(
+            "RemittanceSweep {AsOf}: {Companies} companies, {Remittances} remittances, {Installments} installments, {Failures} failures.",
+            asOf, companies, remittances, lines, failures);
 
         return new RemittanceSweepResult(companies, remittances, lines);
     }

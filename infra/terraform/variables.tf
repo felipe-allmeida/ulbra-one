@@ -52,6 +52,18 @@ variable "api_max_replicas" {
   description = "Maximum replica count for the API container app."
 }
 
+variable "enable_remittance_sweep_job" {
+  type        = bool
+  default     = true
+  description = "Provision the daily CNAB remittance-sweep Container App Job. Set false to disable in an environment (e.g. dev)."
+}
+
+variable "remittance_sweep_cron" {
+  type        = string
+  default     = "0 20 * * *"
+  description = "Cron (UTC) for the remittance-sweep job. ACA Jobs schedule in UTC; default 20:00 UTC = 17:00 BRT (horário de corte diário; Brasília é UTC-3, sem DST). Runs every day."
+}
+
 variable "web_min_replicas" {
   type        = number
   default     = 0
@@ -92,17 +104,20 @@ variable "tags" {
 # CAF-computed names (locals in main.tf reference var.environment)
 # ---------------------------------------------------------------------------
 locals {
-  rg_name       = "rg-ulbraone-${var.environment}"
-  cae_name      = "cae-ulbraone-${var.environment}"
-  ca_api_name   = "ca-ulbraone-api-${var.environment}"
-  ca_web_name   = "ca-ulbraone-web-${var.environment}"
-  psql_name     = "psql-ulbraone-${var.environment}"
-  sb_name       = "sb-ulbraone-${var.environment}"
-  storage_name  = "stulbraone${var.environment}" # no dashes, <=24 chars
-  kv_name       = "kv-ulbraone-${var.environment}"
-  identity_name = "id-ulbraone-api-${var.environment}"
-  log_name      = "log-ulbraone-${var.environment}"
-  appi_name     = "appi-ulbraone-${var.environment}"
+  rg_name     = "rg-ulbraone-${var.environment}"
+  cae_name    = "cae-ulbraone-${var.environment}"
+  ca_api_name = "ca-ulbraone-api-${var.environment}"
+  ca_web_name = "ca-ulbraone-web-${var.environment}"
+
+  # Container App Job (scheduled) — daily CNAB remittance sweep.
+  caj_remittance_sweep_name = "caj-ulbraone-remittance-sweep-${var.environment}"
+  psql_name                 = "psql-ulbraone-${var.environment}"
+  sb_name                   = "sb-ulbraone-${var.environment}"
+  storage_name              = "stulbraone${var.environment}" # no dashes, <=24 chars
+  kv_name                   = "kv-ulbraone-${var.environment}"
+  identity_name             = "id-ulbraone-api-${var.environment}"
+  log_name                  = "log-ulbraone-${var.environment}"
+  appi_name                 = "appi-ulbraone-${var.environment}"
 
   # ACR is shared across environments — created by bootstrap (Task C3)
   acr_name    = "crulbraone"

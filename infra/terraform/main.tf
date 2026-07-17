@@ -217,3 +217,53 @@ module "container_app_web" {
 
   depends_on = [module.identity, module.container_app_api]
 }
+
+# Remittance-sweep Container App Job (scheduled) — daily CNAB remittance generation.
+# Reuses the API image (`--job remittance-sweep`) and the API's user-assigned identity (already has
+# KV Secrets User + Storage Blob Data Contributor + AcrPull). Kept as a scheduled ACA Job — not the
+# in-process PeriodicTimer — because the API scales to zero, so an in-process timer would not fire
+# reliably. The in-process RemittanceSweepJob stays disabled (RemittanceSweep__Enabled=false).
+module "remittance_sweep_job" {
+  count  = var.enable_remittance_sweep_job ? 1 : 0
+  source = "./modules/container_app_job"
+
+  name                         = local.caj_remittance_sweep_name
+  resource_group_name          = module.resource_group.name
+  location                     = module.resource_group.location
+  container_app_environment_id = module.container_app_env.id
+
+  image            = var.api_image
+  args             = ["--job", "remittance-sweep"]
+  cron_expression  = var.remittance_sweep_cron
+  identity_id      = module.identity.id
+  acr_login_server = data.azurerm_container_registry.shared.login_server
+
+  # Same runtime config the API uses (the job builds the same host), minus web-only vars (CORS/Google).
+  env_vars = {
+    ASPNETCORE_ENVIRONMENT                = var.environment == "prod" ? "Production" : "Development"
+    APPLICATIONINSIGHTS_CONNECTION_STRING = module.observability.application_insights_connection_string
+    AZURE_CLIENT_ID                       = module.identity.client_id
+
+    MassTransit__Transport = "AzureServiceBus"
+    MassTransit__Namespace = local.sb_name
+
+    ObjectStorage__Provider   = "AzureBlob"
+    ObjectStorage__AccountUrl = "https://${local.storage_name}.blob.core.windows.net"
+    ObjectStorage__Bucket     = "attachments"
+
+    Ai__Provider = "Anthropic"
+
+    # The scheduled job IS the sweep; keep the in-process PeriodicTimer off inside the job process.
+    RemittanceSweep__Enabled = "false"
+  }
+
+  secret_env_vars = {
+    "Authentication__JwtSecret"   = module.key_vault.secret_versionless_ids["Authentication--JwtSecret"]
+    "ConnectionStrings__Database" = module.key_vault.secret_versionless_ids["ConnectionStrings--Database"]
+    "Ai__ApiKey"                  = module.key_vault.secret_versionless_ids["Ai--ApiKey"]
+  }
+
+  tags = local.common_tags
+
+  depends_on = [module.identity]
+}

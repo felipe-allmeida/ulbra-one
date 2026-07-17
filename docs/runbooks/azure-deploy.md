@@ -119,6 +119,42 @@ In Azure Container Apps the managed identity (`id-ulbraone-api-<env>`) is automa
 
 ---
 
+## Scheduled Jobs (CNAB remittance sweep)
+
+The daily CNAB remittance generation runs as an **Azure Container Apps Job** (`azurerm_container_app_job`,
+Terraform module `container_app_job`), provisioned alongside the API/web apps. It is a scheduled job — not
+an in-process timer — because the API scales to zero, so a `PeriodicTimer` would not fire reliably.
+
+- **Image / entrypoint:** reuses the SHA-tagged `api` image with `args = ["--job","remittance-sweep"]`.
+  `Program.cs` detects `--job <name>` right after building the host and runs `JobRunner` once
+  (resolve `IRemittanceSweepService` → `SweepAsync` → exit code), skipping the web pipeline, migrations
+  and seeding. No hosted services start, so the job and web replicas never double-run.
+- **Identity/config:** reuses the API's user-assigned identity and the same env/secrets (DB connection
+  string via Key Vault, `ObjectStorage__*`, `AZURE_CLIENT_ID`). The in-process `RemittanceSweepJob`
+  stays disabled (`RemittanceSweep__Enabled=false`).
+- **Schedule:** `remittance_sweep_cron` (default `"0 20 * * *"` = 20:00 UTC = **17:00 BRT**). Runs every
+  day; ACA Jobs schedule in UTC and Brasília is UTC-3 (no DST), so 17:00 BRT ⇒ 20:00 UTC. The run's
+  `asOf` = current date (at 20:00 UTC the UTC date equals the Brasília date), so it produces that day's
+  remittance. Disable per-env with `enable_remittance_sweep_job=false`.
+- **No CI change:** the job flows through the same `terraform apply` as the app images.
+
+Operate / observe:
+
+```bash
+# List executions of the scheduled job
+az containerapp job execution list -n caj-ulbraone-remittance-sweep-prod -g rg-ulbraone-prod -o table
+
+# Trigger a run on demand (e.g. to homologate or catch up)
+az containerapp job start -n caj-ulbraone-remittance-sweep-prod -g rg-ulbraone-prod
+
+# Logs (run summary: companies / remittances / installments / failures)
+az containerapp job logs show -n caj-ulbraone-remittance-sweep-prod -g rg-ulbraone-prod --container caj-ulbraone-remittance-sweep-prod
+```
+
+The same sweep can also be triggered via `POST /api/remittances/sweep` (permission `TreasuryWrite`).
+
+---
+
 ## Scaling Postgres Vertically
 
 The Postgres Flexible Server SKU is controlled by the `postgres_sku_name` variable (default `B_Standard_B1ms` for both envs). To scale up:
