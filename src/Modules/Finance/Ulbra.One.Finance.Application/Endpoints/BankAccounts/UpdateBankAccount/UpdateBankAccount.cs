@@ -37,6 +37,10 @@ public sealed class UpdateBankAccount : IEndpoint
         /// <summary>Accounting ledger account for this bank account. Optional on update (validated when provided);
         /// null leaves it unmapped (settlement falls back to the global cash code).</summary>
         public LedgerAccountId? LedgerAccountId { get; set; }
+
+        /// <summary>OFX account identifier (BANKACCTFROM/ACCTID) used to warn when an imported statement belongs to
+        /// another account. Optional.</summary>
+        [NormalizeText] public string OfxAccountId { get; set; } = string.Empty;
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -68,7 +72,7 @@ public sealed class UpdateBankAccount : IEndpoint
         if (duplicate)
             return TypedResults.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
 
-        acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode, ledgerId);
+        acc.Update(req.BankCode, req.BankName, req.Agency, req.AccountNumber, req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode, ledgerId, req.OfxAccountId);
         if (req.Active) acc.Activate(); else acc.Deactivate();
 
         if (req.IsDefaultForPayments)

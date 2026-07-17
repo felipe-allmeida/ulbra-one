@@ -8,7 +8,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="EFCore.NamingConventions" />
-    <PackageReference Include="jcoliz.OfxSharp.NetStandard" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />

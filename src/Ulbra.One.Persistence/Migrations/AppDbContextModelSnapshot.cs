@@ -964,6 +964,11 @@ namespace Ulbra.One.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("ledger_account_id");
 
+                    b.Property<string>("OfxAccountId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ofx_account_id");
+
                     b.Property<decimal?>("OpeningBalance")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")

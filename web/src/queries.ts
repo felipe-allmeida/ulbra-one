@@ -37,6 +37,9 @@ import {
   type WithholdingRuleInput,
   type WithholdingPreviewParams,
   type MatchStatus,
+  type TransactionDirection,
+  type ReconciliationStage,
+  type PeriodSummary,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
   type PayableStageItem,
@@ -104,6 +107,7 @@ export const queryKeys = {
   statementImports: (companyId?: string, bankAccountId?: string) =>
     ['statementImports', companyId ?? '', bankAccountId ?? ''] as const,
   bankTransactions: (params: BankTransactionsParams) => ['bankTransactions', params] as const,
+  periodSummary: (params: PeriodSummaryParams) => ['periodSummary', params] as const,
   classificationPolicy: (companyId: string) => ['classificationPolicy', companyId] as const,
   aging: (companyId: string, asOf?: string) => ['aging', companyId, asOf ?? ''] as const,
   agingItems: (params: AgingItemsParams) => ['agingItems', params] as const,
@@ -206,10 +210,20 @@ export interface BankTransactionsParams {
   bankAccountId?: string;
   importId?: string;
   matchStatus?: MatchStatus;
+  stage?: ReconciliationStage;
+  direction?: TransactionDirection;
   dueFrom?: string;
   dueTo?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface PeriodSummaryParams {
+  companyId?: string;
+  bankAccountId?: string;
+  direction?: TransactionDirection;
+  dueFrom?: string;
+  dueTo?: string;
 }
 
 export interface PayablesParams {
@@ -504,6 +518,15 @@ export function useStatementImports(companyId?: string, bankAccountId?: string) 
   return useQuery({
     queryKey: queryKeys.statementImports(companyId, bankAccountId),
     queryFn: () => api.listStatementImports(companyId, bankAccountId),
+  });
+}
+
+export function usePeriodSummary(params: PeriodSummaryParams, options?: { enabled?: boolean }) {
+  return useQuery<PeriodSummary>({
+    queryKey: queryKeys.periodSummary(params),
+    queryFn: () => api.periodSummary(params),
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -1033,8 +1056,15 @@ export function useCreateReceivable(options?: UseMutationOptions<Receivable, unk
  * Also invalidates payables, since confirming/matching a transaction registers a baixa. */
 function invalidateConciliation(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+  void qc.invalidateQueries({ queryKey: ['periodSummary'] });
   void qc.invalidateQueries({ queryKey: ['statementImports'] });
   void qc.invalidateQueries({ queryKey: ['payables'] });
+}
+
+export function useClearReconciliation(
+  options?: UseMutationOptions<{ ignored: number }, unknown, { companyId: string; bankAccountId: string; date: string }>,
+) {
+  return useInvalidatingMutation((body) => api.clearReconciliation(body), invalidateConciliation, options);
 }
 
 export function useImportStatement(
@@ -1044,6 +1074,7 @@ export function useImportStatement(
     ({ bankAccountId, file }) => api.importStatement(bankAccountId, file),
     (qc) => {
       void qc.invalidateQueries({ queryKey: ['bankTransactions'] });
+      void qc.invalidateQueries({ queryKey: ['periodSummary'] });
       void qc.invalidateQueries({ queryKey: ['statementImports'] });
     },
     options,

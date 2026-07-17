@@ -26,6 +26,6 @@ public sealed class ListStatementImports : IEndpoint
         if (companyId is { } c) q = q.Where(i => i.CompanyId == c.Value);
         if (bankAccountId is { } b) q = q.Where(i => i.BankAccountId == b.Value);
         var rows = await q.OrderByDescending(i => i.CreatedAt).ToListAsync(ct);
-        return TypedResults.Ok(rows.Select(StatementImportResponse.From).ToList());
+        return TypedResults.Ok(rows.Select(i => StatementImportResponse.From(i)).ToList());
     }
 }

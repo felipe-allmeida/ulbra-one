@@ -479,6 +479,18 @@ body {
   border: 1px solid var(--brand);
   border-radius: var(--radius);
 }
+/* Variante de aviso (ex.: extrato OFX importado parece ser de outra conta). */
+.form-notice.warn {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: var(--warning);
+}
+
+/* Resumo do periodo (conciliacao): valores monetarios menores para nao quebrarem em telas menores. */
+.reconciliation-summary .kpi-value {
+  font-size: 18px;
+  white-space: nowrap;
+}
 
 /* Intake choice (create flow): 3 modality cards — Folha (em breve), Nota Fiscal (primary), Adiantamento */
 .intake-choice-title {
