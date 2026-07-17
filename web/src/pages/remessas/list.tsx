@@ -113,7 +113,7 @@ function GenerateDialog({ companyId, onClose }: { companyId: string; onClose: ()
             ))}
           </Select>
           {!bankAccounts.isLoading && accounts.length === 0 && (
-            <p style={{ marginTop: 6, fontSize: 13, color: 'var(--muted, #6b7280)' }}>
+            <p style={{ marginTop: 6, fontSize: 13, color: 'var(--muted-foreground, #6b7280)' }}>
               {t('remittances.generate_dialog.noEligibleAccount')}
             </p>
           )}
