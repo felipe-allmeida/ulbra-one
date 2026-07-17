@@ -21,6 +21,7 @@ import {
   ListTree,
   Tags,
   BookOpen,
+  NotebookText,
   Scale,
   Percent,
   Truck,
@@ -170,6 +171,12 @@ export const NAV_DOMAINS: NavDomain[] = [
             to: '/app/accounting/journal-book',
             requires: [P.accountingRead],
             icon: <BookOpen />,
+          },
+          {
+            labelKey: 'nav.generalLedger',
+            to: '/app/accounting/ledger',
+            requires: [P.accountingRead],
+            icon: <NotebookText />,
           },
           {
             labelKey: 'nav.trialBalance',

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Ulbra.One.Common.Application;
 using Ulbra.One.Common.Application.Authentication;
 using Ulbra.One.Common.Application.Ids;
@@ -28,6 +29,7 @@ public sealed class ImportStatement : IEndpoint
         IBankStatementParser parser,
         IUnitOfWork uow,
         TimeProvider clock,
+        ILogger<ImportStatement> logger,
         CancellationToken ct)
     {
         var account = await uow.ReadSet<BankAccount>().FirstOrDefaultAsync(b => b.Id == bankAccountId.Value, ct);
@@ -43,8 +45,9 @@ public sealed class ImportStatement : IEndpoint
             await using var stream = file.OpenReadStream();
             parsed = await parser.ParseAsync(stream, ct);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "OFX parse failed for {FileName} (bank account {BankAccountId})", file.FileName, bankAccountId.Value);
             return TypedResults.Problem(detail: "Could not parse the bank statement.", statusCode: 400, title: "Statement.ParseFailed");
         }
 
@@ -81,12 +84,51 @@ public sealed class ImportStatement : IEndpoint
 
         return TypedResults.Created(
             $"/api/statement-imports/{new StatementImportId(import.Id)}",
-            StatementImportResponse.From(import));
+            StatementImportResponse.From(import, AccountMismatchWarning(account, parsed.Account)));
     }
+
+    /// <summary>
+    /// Builds a pt-BR warning when the imported statement's <c>BANKACCTFROM</c> looks like it belongs to a
+    /// different account than the one selected. Non-blocking (warn-and-allow): returns null when it matches,
+    /// when the OFX carries no account block, or when neither side has comparable data.
+    /// </summary>
+    private static string? AccountMismatchWarning(BankAccount account, ParsedAccount? parsed)
+    {
+        if (parsed is null) return null;
+
+        var detectedBank = DigitsOnly(parsed.BankId).TrimStart('0');
+        var selectedBank = DigitsOnly(account.BankCode).TrimStart('0');
+        var bankMismatch = detectedBank.Length > 0 && selectedBank.Length > 0 && detectedBank != selectedBank;
+
+        var detectedAccount = DigitsOnly(parsed.AccountId);
+        var selectedAccount = string.IsNullOrWhiteSpace(account.OfxAccountId)
+            ? DigitsOnly(account.Agency + account.AccountNumber + account.AccountDigit)
+            : DigitsOnly(account.OfxAccountId);
+        var accountMismatch = detectedAccount.Length > 0 && selectedAccount.Length > 0
+            && detectedAccount != selectedAccount
+            && !detectedAccount.Contains(selectedAccount, StringComparison.Ordinal)
+            && !selectedAccount.Contains(detectedAccount, StringComparison.Ordinal);
+
+        if (!bankMismatch && !accountMismatch) return null;
+
+        var detected = $"{Present(parsed.BankId)}/{Present(parsed.AccountId)}".Trim('/');
+        var selected = $"{account.BankCode}/{account.Agency}/{account.AccountNumber}-{account.AccountDigit}";
+        return $"O extrato importado parece pertencer à conta {detected}, mas a conta selecionada é {selected}. Verifique se selecionou a conta correta.";
+    }
+
+    private static string DigitsOnly(string? s) => new((s ?? string.Empty).Where(char.IsDigit).ToArray());
+    private static string Present(string? s) => string.IsNullOrWhiteSpace(s) ? "?" : s.Trim();
 
     private static async Task RunMatcher(IUnitOfWork uow, BankAccount account, List<BankTransaction> newTxns, CancellationToken ct)
     {
-        if (!newTxns.Any(t => t.Direction == TransactionDirection.Debit)) return;
+        // Deterministic order so the greedy one-to-one assignment below is stable across imports.
+        var debits = newTxns
+            .Where(t => t.Direction == TransactionDirection.Debit)
+            .OrderBy(t => t.Date)
+            .ThenBy(t => t.Amount)
+            .ThenBy(t => t.ExternalId, StringComparer.Ordinal)
+            .ToList();
+        if (debits.Count == 0) return;
 
         var candidates = await (
             from p in uow.ReadSet<Payable>()
@@ -96,8 +138,17 @@ public sealed class ImportStatement : IEndpoint
             select new InstallmentCandidate(i.Id, i.NetAmount - i.PaidAmount, i.DueDate))
             .ToListAsync(ct);
 
-        foreach (var t in newTxns.Where(t => t.Direction == TransactionDirection.Debit))
-            if (ConciliationMatcher.FindSuggestion(t.Amount, t.Date, candidates) is { } id)
+        // Greedy one-to-one: a suggested installment is removed from the pool so two same-value debits
+        // (e.g. the many identical "PAGFOR PIX" lines in a Santander file) never both claim the same parcela.
+        // Only unique, exact-value matches within the date window are suggested (see ConciliationMatcher).
+        var pool = candidates.ToList();
+        foreach (var t in debits)
+        {
+            if (ConciliationMatcher.FindSuggestion(t.Amount, t.Date, pool) is { } id)
+            {
                 t.Suggest(id);
+                pool.RemoveAll(c => c.InstallmentId == id);
+            }
+        }
     }
 }

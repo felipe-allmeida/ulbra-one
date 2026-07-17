@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, Save } from 'lucide-react';
 import { type AdminRole } from '../api';
+import { ROLE_LABEL } from '../permissions';
 import { useRoles, usePermissionCatalog, useSetRolePermissions } from '../queries';
 import { PageHeader, Panel, Button, EmptyState } from '../ui';
 import { useToast } from '../toast';
@@ -23,7 +24,7 @@ const RESOURCE_LABEL: Record<string, string> = {
 };
 const ACTION_LABEL: Record<string, string> = {
   read: 'Ver',
-  write: 'Editar',
+  write: 'Escrita',
   approve: 'Aprovar',
   pay: 'Pagar',
   receive: 'Receber',
@@ -83,7 +84,7 @@ export function RolesPage() {
     setPerms.mutate(
       { id: role.id, permissions: [...(draft[role.id] ?? [])] },
       {
-        onSuccess: () => toast.success(`Permissões de ${role.name} salvas.`),
+        onSuccess: () => toast.success(`Permissões de ${ROLE_LABEL[role.name] ?? role.name} salvas.`),
         onError: (e) => toast.error(getErrorMessage(e)),
       },
     );
@@ -110,7 +111,7 @@ export function RolesPage() {
                 <th style={{ textAlign: 'left' }}>Permissão</th>
                 {editableRoles.map((role) => (
                   <th key={role.id} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                    <div>{role.name}</div>
+                    <div>{ROLE_LABEL[role.name] ?? role.name}</div>
                     <Button
                       icon={<Save size={14} />}
                       disabled={!isDirty(role) || setPerms.isPending}
@@ -145,7 +146,7 @@ export function RolesPage() {
                           <td key={role.id} style={{ textAlign: 'center' }}>
                             <input
                               type='checkbox'
-                              aria-label={`${role.name} — ${perm}`}
+                              aria-label={`${ROLE_LABEL[role.name] ?? role.name} — ${perm}`}
                               checked={draft[role.id]?.has(perm) ?? false}
                               onChange={() => toggle(role.id, perm)}
                             />

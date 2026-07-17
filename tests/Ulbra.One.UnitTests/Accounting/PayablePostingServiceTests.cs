@@ -119,7 +119,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, documentRef: "NF-1001", CancellationToken.None);
 
         var entries = uow.JournalEntries;
         Assert.Single(entries);
@@ -129,6 +129,8 @@ public class PayablePostingServiceTests
         Assert.Equal(JournalStatus.Posted, entry.Status);
         Assert.Equal(JournalOrigin.Automatic, entry.Origin);
         Assert.Equal("payable-incurral:x", entry.SourceKey);
+        // Documento (human-facing) = the payable's document number, never the idempotency key.
+        Assert.Equal("NF-1001", entry.SourceReference);
         Assert.Equal(1, entry.Number);
         Assert.True(entry.IsBalanced);
         Assert.Equal(2, entry.Lines.Count);
@@ -154,8 +156,8 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, CancellationToken.None);
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:x", 100m, expense.Id, [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
 
         // Still only ONE entry — second call was idempotent
         Assert.Single(uow.JournalEntries);
@@ -171,7 +173,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:y", 200m, Guid.NewGuid(), [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:y", 200m, Guid.NewGuid(), [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
 
         Assert.Empty(uow.JournalEntries);
 
@@ -191,7 +193,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:z", 50m, null, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:z", 50m, null, [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
 
         Assert.Empty(uow.JournalEntries);
         var pending = Assert.Single(uow.Pendings);
@@ -207,12 +209,13 @@ public class PayablePostingServiceTests
         var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
         var (uow, sut) = BuildSut(liability, cash);
 
-        await sut.PostSettlementAsync(CompanyId, "payable-settlement:x", 75m, new DateOnly(2026, 7, 1), cashAccountId: null, CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payable-settlement:x", 75m, new DateOnly(2026, 7, 1), cashAccountId: null, documentRef: "NF-2002", CancellationToken.None);
 
         var entry = Assert.Single(uow.JournalEntries);
         Assert.Equal(JournalStatus.Posted, entry.Status);
         Assert.Equal(JournalOrigin.Automatic, entry.Origin);
         Assert.Equal("payable-settlement:x", entry.SourceKey);
+        Assert.Equal("NF-2002", entry.SourceReference);
         Assert.True(entry.IsBalanced);
 
         var debitLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Debit);
@@ -236,7 +239,7 @@ public class PayablePostingServiceTests
         var bank = MakeAnalytical(BankCode, AccountGroup.Asset);
         var (uow, sut) = BuildSut(liability, cash, bank);
 
-        await sut.PostSettlementAsync(CompanyId, "payment:m", 75m, new DateOnly(2026, 7, 1), cashAccountId: bank.Id, CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payment:m", 75m, new DateOnly(2026, 7, 1), cashAccountId: bank.Id, documentRef: null, CancellationToken.None);
 
         var entry = Assert.Single(uow.JournalEntries);
         var creditLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Credit);
@@ -252,7 +255,7 @@ public class PayablePostingServiceTests
         var cash = MakeAnalytical(CashCode, AccountGroup.Asset);
         var (uow, sut) = BuildSut(liability, cash);
 
-        await sut.PostSettlementAsync(CompanyId, "payment:fb", 75m, new DateOnly(2026, 7, 1), cashAccountId: Guid.NewGuid(), CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payment:fb", 75m, new DateOnly(2026, 7, 1), cashAccountId: Guid.NewGuid(), documentRef: null, CancellationToken.None);
 
         var entry = Assert.Single(uow.JournalEntries);
         var creditLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Credit);
@@ -269,8 +272,8 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        // First post an incurral
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev", 300m, expense.Id, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        // First post an incurral (with a document number, so we can assert the reversal inherits it).
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev", 300m, expense.Id, [], competenceDate: null, costCenterId: null, documentRef: "NF-REV", CancellationToken.None);
         Assert.Single(uow.JournalEntries);
 
         // Now reverse it
@@ -284,6 +287,7 @@ public class PayablePostingServiceTests
         Assert.Equal(JournalStatus.Reversed, original.Status);
         Assert.Equal(JournalStatus.Posted, reversal.Status);
         Assert.Equal("payable-incurral:rev:reversal", reversal.SourceKey);
+        Assert.Equal("NF-REV", reversal.SourceReference); // reversal carries the original's document number
         Assert.True(reversal.IsBalanced);
     }
 
@@ -296,7 +300,7 @@ public class PayablePostingServiceTests
         var liability = MakeAnalytical(LiabilityCode, AccountGroup.Liability);
         var (uow, sut) = BuildSut(expense, liability);
 
-        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev2", 100m, expense.Id, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await sut.PostIncurralAsync(CompanyId, "payable-incurral:rev2", 100m, expense.Id, [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
         await sut.ReverseAsync(CompanyId, "payable-incurral:rev2", "cancelled", CancellationToken.None);
         await sut.ReverseAsync(CompanyId, "payable-incurral:rev2", "cancelled again", CancellationToken.None);
 
@@ -327,7 +331,7 @@ public class PayablePostingServiceTests
         var competence = new DateOnly(2026, 3, 10);
 
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:c", 100m, expense.Id, [],
-            competenceDate: competence, costCenterId: null, CancellationToken.None);
+            competenceDate: competence, costCenterId: null, documentRef: null, CancellationToken.None);
 
         Assert.Equal(competence, uow.JournalEntries[0].CompetenceDate);
     }
@@ -340,7 +344,7 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut(expense, liability);
 
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:c2", 100m, expense.Id, [],
-            competenceDate: null, costCenterId: null, CancellationToken.None);
+            competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
 
         Assert.Equal(DateOnly.FromDateTime(FixedNow.UtcDateTime), uow.JournalEntries[0].CompetenceDate);
     }
@@ -353,7 +357,7 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut(liability, cash);
         var paymentDate = new DateOnly(2026, 5, 20);
 
-        await sut.PostSettlementAsync(CompanyId, "payment:c", 75m, paymentDate, cashAccountId: null, CancellationToken.None);
+        await sut.PostSettlementAsync(CompanyId, "payment:c", 75m, paymentDate, cashAccountId: null, documentRef: null, CancellationToken.None);
 
         Assert.Equal(paymentDate, uow.JournalEntries[0].CompetenceDate);
     }
@@ -369,7 +373,7 @@ public class PayablePostingServiceTests
         var costCenterId = Guid.NewGuid();
 
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:cc", 100m, expense.Id, [],
-            competenceDate: null, costCenterId: costCenterId, CancellationToken.None);
+            competenceDate: null, costCenterId: costCenterId, documentRef: null, CancellationToken.None);
 
         var entry = uow.JournalEntries[0];
         var debitLine = Assert.Single(entry.Lines, l => l.Side == EntrySide.Debit);
@@ -391,7 +395,7 @@ public class PayablePostingServiceTests
 
         // Competence in the closed March period; today (FixedNow) is July → open.
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:clamp", 100m, expense.Id, [],
-            competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, CancellationToken.None);
+            competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, documentRef: null, CancellationToken.None);
 
         var entry = Assert.Single(uow.JournalEntries);
         Assert.Equal(DateOnly.FromDateTime(FixedNow.UtcDateTime), entry.CompetenceDate); // clamped to today
@@ -408,9 +412,9 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut();
 
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:dup", 100m, Guid.NewGuid(), [],
-            competenceDate: null, costCenterId: null, CancellationToken.None);
+            competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:dup", 100m, Guid.NewGuid(), [],
-            competenceDate: null, costCenterId: null, CancellationToken.None);
+            competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
 
         Assert.Single(uow.Pendings); // redelivery did not duplicate
     }
@@ -423,7 +427,7 @@ public class PayablePostingServiceTests
         var (uow, sut) = BuildSut(expense);
 
         await sut.PostIncurralAsync(CompanyId, "payable-incurral:res", 100m, expense.Id, [],
-            competenceDate: null, costCenterId: null, CancellationToken.None);
+            competenceDate: null, costCenterId: null, documentRef: "NF-RES", CancellationToken.None);
         var pending = Assert.Single(uow.Pendings);
         Assert.Null(pending.ResolvedAt);
         Assert.Empty(uow.JournalEntries);
@@ -435,5 +439,7 @@ public class PayablePostingServiceTests
         Assert.True(resolved);
         Assert.NotNull(pending.ResolvedAt);
         Assert.Single(uow.JournalEntries);
+        // The document number survives the park → replay round-trip (carried in the serialized plan).
+        Assert.Equal("NF-RES", uow.JournalEntries[0].SourceReference);
     }
 }

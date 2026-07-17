@@ -3,8 +3,12 @@ import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '../../i18n';
 
-const { mockUseStageItems } = vi.hoisted(() => ({ mockUseStageItems: vi.fn() }));
-vi.mock('../../queries', () => ({ usePayableStageItems: mockUseStageItems }));
+const { mockUseStageItems, mockMe } = vi.hoisted(() => ({
+  mockUseStageItems: vi.fn(),
+  // Mutable identity; usePermissions() reads useMe(). Admin by default (non-gating tests see the action).
+  mockMe: { isAdmin: true, permissions: [] as string[] },
+}));
+vi.mock('../../queries', () => ({ usePayableStageItems: mockUseStageItems, useMe: () => ({ data: mockMe }) }));
 vi.mock('./use-names', () => ({ useNames: () => ({ centros: [], centroNome: {}, categoriaNome: {} }) }));
 vi.mock('./accounting-drawer', () => ({
   AccountingDrawer: ({ payableId }: { payableId: string }) => (
@@ -48,6 +52,8 @@ const items = [
 ];
 
 beforeEach(() => {
+  mockMe.isAdmin = true;
+  mockMe.permissions = [];
   mockUseStageItems.mockReturnValue({ data: { items, total: 2, totalPages: 1 } });
 });
 
@@ -108,5 +114,15 @@ describe('AdvancesTab', () => {
     expect(within(paidRow).getAllByText('—')).toHaveLength(1);
     const pendingRow = screen.getByText('Adiantamento obra').closest('tr')!;
     expect(within(pendingRow).getAllByText('—')).toHaveLength(2);
+  });
+
+  it('esconde a coluna/ação "Registrar despesa" sem payables:write, mantendo a leitura', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read'];
+    renderTab();
+    // A lista (leitura) segue visível…
+    expect(screen.getByText('Adiantamento obra')).toBeInTheDocument();
+    // …mas a ação de contabilizar (payables:write) não aparece.
+    expect(screen.queryByRole('button', { name: 'Registrar despesa' })).not.toBeInTheDocument();
   });
 });

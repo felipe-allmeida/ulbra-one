@@ -15,6 +15,7 @@ import {
   useRejectPayable,
 } from '../../queries';
 import { brl } from '../../lib';
+import { P, usePermissions } from '../../permissions';
 import { Button, Input, Panel, EmptyState, Drawer, ConfirmDialog } from '../../ui';
 import { fmtDate, fmtDateTime } from '../../datetime';
 import { AuditTimeline, BalanceForecastBanner, SlaChips } from '../../components/workflow';
@@ -30,6 +31,9 @@ export function PayableDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canWrite = can(P.payablesWrite);
+  const canApprove = can(P.payablesApprove);
   const query = usePayable(id);
   const p = query.data ?? null;
   const audit = usePayableAuditTrail(id);
@@ -66,7 +70,8 @@ export function PayableDetailPage() {
   const canEdit = p.status === 'PendingApproval' || p.status === 'Received' || p.status === 'PendingClassification';
   // Retentions are corrected in the accounting stage (Registro de Despesa), not on approval — so the
   // withholding editor is enabled only while the payable is PendingAccounting; read-only elsewhere.
-  const withholdingsEditable = p.status === 'PendingAccounting';
+  // SetWithholdings é backed por payables:write no backend — sem a permissão, fica somente-leitura.
+  const withholdingsEditable = canWrite && p.status === 'PendingAccounting';
 
   return (
     <>
@@ -92,22 +97,22 @@ export function PayableDetailPage() {
           {p.status === 'PendingApproval' && (
             <BalanceForecastBanner companyId={p.companyId} additionalOutflow={p.totalAmount} />
           )}
-          {p.status === 'PendingApproval' && (
+          {canApprove && p.status === 'PendingApproval' && (
             <Button className='btn-approve' icon={<Check />} onClick={() => approve.mutate({ id: p.id })}>
               {t('payables.actions.approve')}
             </Button>
           )}
-          {p.status === 'PendingApproval' && (
+          {canApprove && p.status === 'PendingApproval' && (
             <Button icon={<X />} onClick={() => setRejectOpen(true)}>
               {t('payables.actions.reject')}
             </Button>
           )}
-          {canEdit && (
+          {canWrite && canEdit && (
             <Button icon={<Pencil />} onClick={() => nav(`/app/payables/${p.id}/edit`)}>
               {t('payables.actions.edit')}
             </Button>
           )}
-          {canEdit && (
+          {canWrite && canEdit && (
             <Button icon={<X />} onClick={() => setCancelOpen(true)}>
               {t('payables.actions.cancel')}
             </Button>

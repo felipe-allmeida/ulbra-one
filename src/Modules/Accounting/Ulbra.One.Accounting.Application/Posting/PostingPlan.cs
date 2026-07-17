@@ -8,8 +8,11 @@ public sealed record PostingPlanLine(string? Code, EntrySide Side, decimal Amoun
 
 /// <summary>Serializable replay plan captured when a payable posting is parked as a
 /// <see cref="Domain.Entities.PendingAccountingPosting"/>. Stores the original (pre-clamp) competence so a
-/// later reprocess re-applies the closed-period clamp. Persisted as JSON on the pending row.</summary>
-public sealed record PostingPlan(DateOnly CompetenceDate, string Description, IReadOnlyList<PostingPlanLine> Lines)
+/// later reprocess re-applies the closed-period clamp. Persisted as JSON on the pending row. <see cref="DocumentRef"/>
+/// carries the document/NF number so a replayed posting keeps its human-facing SourceReference (defaults to null
+/// when deserializing legacy plans written before the field existed).</summary>
+public sealed record PostingPlan(
+    DateOnly CompetenceDate, string Description, IReadOnlyList<PostingPlanLine> Lines, string? DocumentRef = null)
 {
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
 
