@@ -110,7 +110,8 @@ locals {
   ca_web_name = "ca-ulbraone-web-${var.environment}"
 
   # Container App Job (scheduled) — daily CNAB remittance sweep.
-  caj_remittance_sweep_name = "caj-ulbraone-remittance-sweep-${var.environment}"
+  # Azure Container App Job names are capped at 32 chars — keep this short ("remit-sweep", not "remittance-sweep").
+  caj_remittance_sweep_name = "caj-ulbraone-remit-sweep-${var.environment}"
   psql_name                 = "psql-ulbraone-${var.environment}"
   sb_name                   = "sb-ulbraone-${var.environment}"
   storage_name              = "stulbraone${var.environment}" # no dashes, <=24 chars
