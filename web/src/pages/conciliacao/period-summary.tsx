@@ -11,7 +11,7 @@ export function PeriodSummaryTiles({ summary }: { summary: PeriodSummary | undef
   const count = (n: number) => t('conciliacao.summary.count', { count: n });
 
   return (
-    <div className='kpi-grid' style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
+    <div className='kpi-grid reconciliation-summary' style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
       <Kpi label={t('conciliacao.status.Reconciled')} value={brl(summary.reconciled.total)} foot={count(summary.reconciled.count)} />
       <Kpi label={t('conciliacao.status.Suggested')} value={brl(summary.suggested.total)} foot={count(summary.suggested.count)} />
       <Kpi label={t('conciliacao.status.Unmatched')} value={brl(summary.unmatched.total)} foot={count(summary.unmatched.count)} />

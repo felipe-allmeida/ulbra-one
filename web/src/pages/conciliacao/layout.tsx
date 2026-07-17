@@ -9,7 +9,7 @@ import { useToast } from '../../toast';
 import { EmptyState, Panel, Select, ToolbarField } from '../../ui';
 import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
-import { ImportPanel } from './import-panel';
+import { ImportControl } from './import-control';
 import { PeriodSummaryTiles } from './period-summary';
 import { TransactionsTable } from './transactions-table';
 import { ManualMatchDrawer } from './manual-match-drawer';
@@ -98,6 +98,9 @@ export function ConciliacaoPage() {
               ))}
             </Select>
           </ToolbarField>
+          {canWrite && (
+            <ImportControl hasBankAccount={!!bankAccountId} importing={importStatement.isPending} onSelect={onFile} />
+          )}
         </div>
       </div>
 
@@ -109,13 +112,10 @@ export function ConciliacaoPage() {
         />
       ) : (
         <>
-          {canWrite && (
-            <ImportPanel
-              hasBankAccount={!!bankAccountId}
-              importing={importStatement.isPending}
-              warning={warning}
-              onSelect={onFile}
-            />
+          {warning && (
+            <div className='form-notice warn' style={{ marginTop: 4 }}>
+              {warning}
+            </div>
           )}
 
           {!bankAccountId ? (
