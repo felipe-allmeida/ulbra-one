@@ -66,7 +66,7 @@ public class BankAccount : IAuditable, ISoftDeletable
         string accountDigit, BankAccountType accountType, string alias, decimal? openingBalance,
         string cnabAgreementCode, Guid? ledgerAccountId, string? ofxAccountId)
     {
-        BankCode = bankCode.Trim();
+        BankCode = BankCodes.Normalize(bankCode);
         BankName = bankName.Trim();
         Agency = agency.Trim();
         AccountNumber = accountNumber.Trim();

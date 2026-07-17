@@ -37,7 +37,34 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
         _logger = logger;
     }
 
+    private const int MaxGenerationAttempts = 5;
+
+    /// <summary>
+    /// Public entry point. Retries on a unique-index violation of the per-account remittance sequence
+    /// number — which happens when the daily sweep and a manual generation (or two manual generations)
+    /// race for the same (company, paying account). Each attempt re-reads fresh state, so installments
+    /// the winner already moved to <c>InRemittance</c> are naturally skipped: the retry is safe and
+    /// idempotent, and it also covers a concurrent installment change (DbUpdateConcurrencyException).
+    /// </summary>
     public async Task<Result<GenerateRemittanceOutcome>> GenerateAsync(
+        Guid companyId, Guid payingBankAccountId, DateOnly dueCutoff, string generatedBy, CancellationToken ct)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await GenerateOnceAsync(companyId, payingBankAccountId, dueCutoff, generatedBy, ct);
+            }
+            catch (DbUpdateException) when (attempt < MaxGenerationAttempts)
+            {
+                // Lost the sequence-number race against a concurrent generation. Discard the in-memory
+                // changes and re-run against fresh state.
+                _uow.ClearChangeTracker();
+            }
+        }
+    }
+
+    private async Task<Result<GenerateRemittanceOutcome>> GenerateOnceAsync(
         Guid companyId, Guid payingBankAccountId, DateOnly dueCutoff, string generatedBy, CancellationToken ct)
     {
         // Load paying bank account.
@@ -48,7 +75,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
             return Result.Failure<GenerateRemittanceOutcome>(
                 Error.NotFound("Remittance.BankAccountNotFound", "Paying bank account not found."));
 
-        if (payingAccount.BankCode != "033")
+        if (!BankCodes.IsSantander(payingAccount.BankCode))
             return Result.Failure<GenerateRemittanceOutcome>(
                 Error.Failure("Remittance.BankNotSupported", "Only Santander (033) is supported for CNAB remittance."));
 
@@ -64,6 +91,14 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
         if (company is null)
             return Result.Failure<GenerateRemittanceOutcome>(
                 Error.NotFound("Remittance.CompanyNotFound", "Company not found."));
+
+        // Payer data must fit the fixed-width CNAB header fields. A bad payer blocks the whole
+        // remittance (returned as a Result error instead of an unhandled overflow → HTTP 500).
+        var payerReason = CnabFieldValidation.PayerReason(
+            company.Cnpj, payingAccount.Agency, payingAccount.AccountNumber, payingAccount.AccountDigit);
+        if (payerReason is not null)
+            return Result.Failure<GenerateRemittanceOutcome>(
+                Error.Failure("Remittance.InvalidPayerData", payerReason));
 
         // Load eligible payables: Scheduled + Open installments with DueDate <= cutoff.
         var payables = await _uow.Set<Payable>()
@@ -115,6 +150,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
             }
 
             var bankInfo = vendor.BankInfo;
+            var favoredBankCode = BankCodes.Normalize(bankInfo.BankCode);
 
             // Validate bank info per method via shared eligibility helper.
             // Bank/agreement/method were already pre-screened above (and by the candidate-account query), so only VendorBankInfoMissing can surface here.
@@ -124,6 +160,16 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                 var skipReason = method == PaymentMethod.Ted ? "missing vendor bank account" : "missing vendor PIX key";
                 foreach (var inst in dueInstallments)
                     skipped.Add(new SkippedInstallment(payable.Id, inst.Id, skipReason));
+                continue;
+            }
+
+            // Width/format guard: malformed vendor data becomes a clean skip instead of an
+            // unhandled overflow in CnabRecordBuilder (which would surface as HTTP 500).
+            var invalidReason = CnabFieldValidation.FavoredReason(method.Value, vendor.Document, bankInfo);
+            if (invalidReason is not null)
+            {
+                foreach (var inst in dueInstallments)
+                    skipped.Add(new SkippedInstallment(payable.Id, inst.Id, invalidReason));
                 continue;
             }
 
@@ -137,7 +183,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                     Amount: inst.NetAmount,
                     FavoredName: vendor.Name,
                     FavoredDocument: vendor.Document,
-                    FavoredBankCode: bankInfo.BankCode,
+                    FavoredBankCode: favoredBankCode,
                     FavoredAgency: bankInfo.Branch,
                     FavoredAccount: bankInfo.Account,
                     FavoredAccountDigit: bankInfo.AccountDigit,
@@ -150,7 +196,7 @@ public sealed class RemittanceGenerationService : IRemittanceGenerationService
                     PaymentDate: paymentDate,
                     FavoredName: vendor.Name,
                     FavoredDocument: vendor.Document,
-                    FavoredBankCode: bankInfo.BankCode,
+                    FavoredBankCode: favoredBankCode,
                     FavoredAgency: bankInfo.Branch,
                     FavoredAccount: bankInfo.Account,
                     FavoredAccountDigit: bankInfo.AccountDigit,

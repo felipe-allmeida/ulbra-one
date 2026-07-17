@@ -22,6 +22,7 @@ public sealed class CreateRemittance : IEndpoint
             .WithName("CreateRemittance").WithTags("Finance").RequirePermission(Permissions.TreasuryWrite)
             .Produces<CreateRemittanceResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
     private static async Task<IResult> Handle(
@@ -51,6 +52,9 @@ public sealed class CreateRemittance : IEndpoint
                 "Remittance.NothingToRemit" => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
                 "Remittance.BankNotSupported" => TypedResults.Problem(detail: result.Error.Description, statusCode: 422, title: result.Error.Code),
                 "Remittance.MissingAgreementCode" => TypedResults.Problem(detail: result.Error.Description, statusCode: 422, title: result.Error.Code),
+                "Remittance.InvalidPayerData" => TypedResults.Problem(detail: result.Error.Description, statusCode: 422, title: result.Error.Code),
+                "Remittance.BankAccountNotFound" => TypedResults.Problem(detail: result.Error.Description, statusCode: 404, title: result.Error.Code),
+                "Remittance.CompanyNotFound" => TypedResults.Problem(detail: result.Error.Description, statusCode: 404, title: result.Error.Code),
                 _ => TypedResults.Problem(detail: result.Error.Description, statusCode: 400, title: result.Error.Code),
             };
         }

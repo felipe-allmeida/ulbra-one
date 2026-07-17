@@ -20,15 +20,17 @@ public sealed class RemittanceSweepService(
 {
     public async Task<RemittanceSweepResult> SweepAsync(DateOnly asOf, CancellationToken ct)
     {
-        // Find candidate companies = those with a default-for-payments Santander account
-        // that has a non-empty agreement code.
-        var accounts = await uow.ReadSet<BankAccount>()
+        // Find candidate companies = those with a default-for-payments account that has a non-empty
+        // agreement code. The Santander (033) filter is applied in-memory via BankCodes.IsSantander so
+        // legacy accounts stored un-normalized ("33"/"0033") are still picked up (belt for pre-backfill data).
+        var candidates = await uow.ReadSet<BankAccount>()
             .Where(b => b.IsDefaultForPayments
                         && b.DeletedAt == null
-                        && b.BankCode == "033"
                         && b.CnabAgreementCode != null
                         && b.CnabAgreementCode != "")
             .ToListAsync(ct);
+
+        var accounts = candidates.Where(b => BankCodes.IsSantander(b.BankCode)).ToList();
 
         int companies = 0, remittances = 0, lines = 0, failures = 0;
 
