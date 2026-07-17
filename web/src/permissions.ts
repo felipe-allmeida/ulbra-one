@@ -35,6 +35,26 @@ export const P = {
 
 export type Permission = (typeof P)[keyof typeof P];
 
+/**
+ * Rótulos em português dos cargos. O backend guarda o nome técnico em inglês
+ * (`User.Role` referencia o cargo por nome — é identificador, não dá pra renomear lá),
+ * então a tradução é só de exibição. Fonte única consumida pela Matriz de acesso e pelo
+ * cabeçalho do menu.
+ */
+export const ROLE_LABEL: Record<string, string> = {
+  Admin: 'Admin',
+  User: 'Usuário',
+  Finance: 'Financeiro',
+  Controllership: 'Controladoria',
+  Accounting: 'Contábil',
+};
+
+/** Nome do cargo em português; cai no próprio valor se não houver rótulo mapeado. */
+export function roleLabel(role: string | null | undefined): string {
+  if (!role) return '';
+  return ROLE_LABEL[role] ?? role;
+}
+
 /** Admin faz bypass; caso contrário checa a lista vinda de `/auth/me`. */
 export function can(me: Me | null | undefined, permission: Permission): boolean {
   if (!me) return false;

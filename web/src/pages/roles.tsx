@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, Save } from 'lucide-react';
 import { type AdminRole } from '../api';
+import { ROLE_LABEL } from '../permissions';
 import { useRoles, usePermissionCatalog, useSetRolePermissions } from '../queries';
 import { PageHeader, Panel, Button, EmptyState } from '../ui';
 import { useToast } from '../toast';
@@ -29,15 +30,6 @@ const ACTION_LABEL: Record<string, string> = {
   receive: 'Receber',
   post: 'Postar',
   users: 'Usuários',
-};
-
-// Rótulos legíveis para os cargos (o backend guarda o nome técnico em inglês; fallback = a própria chave).
-const ROLE_LABEL: Record<string, string> = {
-  Admin: 'Admin',
-  User: 'Usuário',
-  Finance: 'Financeiro',
-  Controllership: 'Controladoria',
-  Accounting: 'Contábil',
 };
 
 export function RolesPage() {
