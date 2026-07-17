@@ -26,4 +26,24 @@ public class BankAccountDefaultTests
         Assert.False(b.IsDefaultForPayments);
         Assert.Null(b.DefaultPaymentMethod);
     }
+
+    [Theory]
+    [InlineData("33", "033")]
+    [InlineData("0033", "033")]
+    [InlineData(" 033 ", "033")]
+    [InlineData("341", "341")]
+    public void Constructor_normalizes_bank_code(string input, string expected)
+    {
+        var b = new BankAccount(Guid.NewGuid(), input, "Santander", "1234", "5678", "9",
+            BankAccountType.Checking, "Conta", null);
+        Assert.Equal(expected, b.BankCode);
+    }
+
+    [Fact]
+    public void Update_normalizes_bank_code()
+    {
+        var b = New();
+        b.Update("33", "Santander", "1234", "5678", "9", BankAccountType.Checking, "Conta", null);
+        Assert.Equal("033", b.BankCode);
+    }
 }

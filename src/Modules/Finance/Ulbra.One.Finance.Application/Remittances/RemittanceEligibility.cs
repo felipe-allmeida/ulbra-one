@@ -33,7 +33,7 @@ public static class RemittanceEligibility
         PaymentMethod? payableMethod,
         BankInfo vendorBankInfo)
     {
-        if (payingAccount.BankCode != "033")
+        if (!BankCodes.IsSantander(payingAccount.BankCode))
             return RemittanceManualReason.BankNotSupported;
 
         if (string.IsNullOrEmpty(payingAccount.CnabAgreementCode))
