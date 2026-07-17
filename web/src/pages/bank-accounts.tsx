@@ -51,6 +51,7 @@ function BankAccountForm({
       isDefaultForPayments: initial?.isDefaultForPayments ?? false,
       defaultPaymentMethod: initial?.defaultPaymentMethod ?? null,
       cnabAgreementCode: initial?.cnabAgreementCode ?? '',
+      ofxAccountId: initial?.ofxAccountId ?? '',
       ledgerAccountId: initial?.ledgerAccountId ?? null,
     },
   });
@@ -71,6 +72,7 @@ function BankAccountForm({
       ? (v.defaultPaymentMethod ?? 'Pix')
       : null;
     const cnabAgreementCode = v.cnabAgreementCode.trim() || null;
+    const ofxAccountId = v.ofxAccountId.trim() || null;
     if (initial) {
       const body: BankAccountUpdateInput = {
         bankCode: v.bankCode.trim(),
@@ -85,6 +87,7 @@ function BankAccountForm({
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
         cnabAgreementCode,
+        ofxAccountId,
         ledgerAccountId: v.ledgerAccountId,
       };
       save.mutate({ id: initial.id, update: body });
@@ -102,6 +105,7 @@ function BankAccountForm({
         isDefaultForPayments: v.isDefaultForPayments,
         defaultPaymentMethod,
         cnabAgreementCode,
+        ofxAccountId,
         ledgerAccountId: v.ledgerAccountId,
       };
       save.mutate({ create: body });
@@ -193,12 +197,19 @@ function BankAccountForm({
           )}
         </Field>
       </div>
-      <div style={{ marginTop: 14 }}>
+      <div className='edit-grid' style={{ marginTop: 14 }}>
         <Field label={t('bankAccounts.fields.cnabAgreementCode')} help={t('bankAccounts.fields.cnabAgreementCodeHelp')}>
           <Controller
             control={control}
             name='cnabAgreementCode'
             render={({ field }) => <Input {...field} placeholder={t('bankAccounts.placeholders.cnabAgreementCode')} />}
+          />
+        </Field>
+        <Field label={t('bankAccounts.fields.ofxAccountId')} help={t('bankAccounts.fields.ofxAccountIdHelp')}>
+          <Controller
+            control={control}
+            name='ofxAccountId'
+            render={({ field }) => <Input {...field} placeholder={t('bankAccounts.placeholders.ofxAccountId')} />}
           />
         </Field>
       </div>

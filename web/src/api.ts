@@ -215,7 +215,8 @@ export interface FiscalDocument {
 }
 
 // ---------- Bank accounts + payments (baixa) ----------
-export type BankAccount = Schemas['BankAccountResponse'];
+// `ofxAccountId` (BANKACCTFROM/ACCTID) augmented for AEL-767 ahead of the generated-schema regeneration.
+export type BankAccount = Schemas['BankAccountResponse'] & { ofxAccountId?: string | null };
 export type Payment = Schemas['PaymentResponse'];
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type BankAccountType = Schemas['BankAccountType'];
@@ -356,11 +357,31 @@ export type CashFlowGranularity = Schemas['CashFlowGranularity'];
 export type ReconciledBalanceResult = Schemas['SetReconciledBalanceResponse'];
 
 // ---------- Conciliação OFX (statement imports + bank transactions) ----------
-export type StatementImport = Schemas['StatementImportResponse'];
+// `warning` is a non-blocking account-mismatch notice surfaced at import time (AEL-767); augmented here so
+// the UI can read it before the generated schema is regenerated.
+export type StatementImport = Schemas['StatementImportResponse'] & { warning?: string | null };
 export type BankTransaction = Schemas['BankTransactionResponse'];
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type MatchStatus = Schemas['MatchStatus'];
 export type TransactionDirection = Schemas['TransactionDirection'];
+
+/** One reconciliation-status bucket (count + summed amount) of the period summary. */
+export interface StatusBucket {
+  count: number;
+  total: number;
+}
+
+/** Aggregated "pagamentos do período" summary grouped by reconciliation status, plus debit/credit totals. */
+export interface PeriodSummary {
+  from?: string | null;
+  to?: string | null;
+  reconciled: StatusBucket;
+  suggested: StatusBucket;
+  unmatched: StatusBucket;
+  ignored: StatusBucket;
+  debitTotal: number;
+  creditTotal: number;
+}
 
 /** Request body for creating a bank account. */
 export interface BankAccountInput {
@@ -378,6 +399,8 @@ export interface BankAccountInput {
   cnabAgreementCode?: string | null;
   /** Accounting ledger account for this bank (credit account when settling a payable). Required on create. */
   ledgerAccountId?: string | null;
+  /** OFX account identifier (BANKACCTFROM/ACCTID) used to warn on statement import. Optional. */
+  ofxAccountId?: string | null;
 }
 
 /** Request body for updating a bank account (no companyId; `active` toggles status). */
@@ -838,6 +861,7 @@ export const api = {
     bankAccountId?: string;
     importId?: string;
     matchStatus?: MatchStatus;
+    direction?: TransactionDirection;
     dueFrom?: string;
     dueTo?: string;
     page?: number;
@@ -848,11 +872,27 @@ export const api = {
     if (params.bankAccountId) q.set('bankAccountId', params.bankAccountId);
     if (params.importId) q.set('importId', params.importId);
     if (params.matchStatus) q.set('matchStatus', params.matchStatus);
+    if (params.direction) q.set('direction', params.direction);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);
     if (params.page) q.set('page', String(params.page));
     if (params.pageSize) q.set('pageSize', String(params.pageSize));
     return request<Paginated<BankTransaction>>(`/bank-transactions?${q}`);
+  },
+  periodSummary: (params: {
+    companyId?: string;
+    bankAccountId?: string;
+    direction?: TransactionDirection;
+    dueFrom?: string;
+    dueTo?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.companyId) q.set('companyId', params.companyId);
+    if (params.bankAccountId) q.set('bankAccountId', params.bankAccountId);
+    if (params.direction) q.set('direction', params.direction);
+    if (params.dueFrom) q.set('dueFrom', params.dueFrom);
+    if (params.dueTo) q.set('dueTo', params.dueTo);
+    return request<PeriodSummary>(`/bank-transactions/period-summary?${q}`);
   },
   confirmMatch: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/confirm`, { method: 'POST' }),
   matchTransaction: (id: string, installmentId: string) =>

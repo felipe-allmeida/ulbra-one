@@ -1163,6 +1163,9 @@ const ptBR = {
       cnabAgreementCode: 'Código de convênio CNAB (opcional)',
       cnabAgreementCodeHelp:
         'Número que o banco (ex.: Santander) fornece ao contratar o serviço de Pagamento a Fornecedores. Só é necessário para gerar a remessa CNAB desta conta — peça ao seu gerente PJ ou consulte o internet banking da empresa.',
+      ofxAccountId: 'Identificador OFX da conta (opcional)',
+      ofxAccountIdHelp:
+        'Número da conta como aparece no arquivo OFX (campo ACCTID), normalmente agência + conta + dígito. Usado para avisar quando um extrato importado parece pertencer a outra conta. Deixe em branco para comparar automaticamente por agência/conta/dígito.',
       ledgerAccount: 'Conta contábil',
       ledgerAccountHelp:
         'Conta do plano de contas que representa este banco. É a conta creditada no lançamento contábil quando um título é pago por esta conta bancária (no Livro Diário/Razão).',
@@ -1177,6 +1180,7 @@ const ptBR = {
       alias: 'ex.: Conta principal',
       openingBalance: 'ex.: 1000',
       cnabAgreementCode: 'ex.: 123456',
+      ofxAccountId: 'ex.: 3578130509766',
     },
     types: {
       Checking: 'Corrente',
@@ -1412,6 +1416,7 @@ const ptBR = {
 
   conciliacao: {
     title: 'Conciliação bancária',
+    periodTitle: 'Pagamentos do período',
     subtitle: 'Importe o extrato OFX e concilie os lançamentos com as parcelas a pagar.',
     bankAccount: 'Conta bancária',
     bankAccountSelect: '— selecione —',
@@ -1425,10 +1430,20 @@ const ptBR = {
     summary: {
       title: 'Extrato importado',
       counts: '{{total}} lançamentos · {{newCount}} novos · {{duplicateCount}} duplicados',
+      count: '{{count}} lançamento(s)',
+      debitTotal: 'Débitos (cobranças)',
+      creditTotal: 'Créditos',
     },
     filter: {
       label: 'Status',
       all: 'Todos',
+      from: 'De',
+      to: 'Até',
+      direction: 'Tipo',
+    },
+    direction: {
+      Debit: 'Débitos',
+      Credit: 'Créditos',
     },
     columns: {
       date: 'Data',

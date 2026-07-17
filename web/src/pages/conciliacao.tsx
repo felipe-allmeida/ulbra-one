@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftRight, Check, Ban, Link2, Undo2, Upload } from 'lucide-react';
-import { type BankTransaction, type MatchStatus } from '../api';
+import { type BankTransaction, type MatchStatus, type PeriodSummary, type TransactionDirection } from '../api';
 import { useApp } from '../store';
 import {
   useBankAccounts,
@@ -11,6 +11,7 @@ import {
   useImportStatement,
   useMatchTransaction,
   usePayables,
+  usePeriodSummary,
   useUnmatchTransaction,
 } from '../queries';
 import { brl } from '../lib';
@@ -32,6 +33,38 @@ function StatusBadge({ s }: { s: MatchStatus }) {
     Ignored: 'badge-rejeitado',
   };
   return <span className={`badge-status ${cls[s]}`}>{t(`conciliacao.status.${s}`)}</span>;
+}
+
+/* ============ Period summary (pagamentos do período) ============ */
+function PeriodSummaryStrip({ summary }: { summary: PeriodSummary | undefined }) {
+  const { t } = useTranslation();
+  if (!summary) return null;
+
+  const tiles = [
+    { label: t('conciliacao.status.Reconciled'), bucket: summary.reconciled },
+    { label: t('conciliacao.status.Suggested'), bucket: summary.suggested },
+    { label: t('conciliacao.status.Unmatched'), bucket: summary.unmatched },
+    { label: t('conciliacao.status.Ignored'), bucket: summary.ignored },
+  ];
+
+  const tile = (label: string, value: string, sub?: string) => (
+    <div
+      key={label}
+      style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', minWidth: 130 }}
+    >
+      <div className='help' style={{ marginBottom: 2 }}>{label}</div>
+      <div style={{ fontWeight: 600 }}>{value}</div>
+      {sub && <div className='help'>{sub}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+      {tiles.map((x) => tile(x.label, brl(x.bucket.total), t('conciliacao.summary.count', { count: x.bucket.count })))}
+      {tile(t('conciliacao.summary.debitTotal'), brl(summary.debitTotal))}
+      {tile(t('conciliacao.summary.creditTotal'), brl(summary.creditTotal))}
+    </div>
+  );
 }
 
 /* ============ Manual installment picker (Drawer) ============ */
@@ -145,6 +178,9 @@ export function ConciliacaoPage() {
   const accounts = useBankAccounts(empresaId).data ?? [];
   const [bankAccountId, setBankAccountId] = useState('');
   const [status, setStatus] = useState<MatchStatus | ''>('');
+  const [direction, setDirection] = useState<TransactionDirection | ''>('');
+  const [dueFrom, setDueFrom] = useState('');
+  const [dueTo, setDueTo] = useState('');
   const [page, setPage] = useState(1);
   const [manualTx, setManualTx] = useState<BankTransaction | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -153,7 +189,7 @@ export function ConciliacaoPage() {
   useEffect(() => {
     setBankAccountId((cur) => (accounts.find((a) => a.id === cur) ? cur : (accounts[0]?.id ?? '')));
   }, [accounts]);
-  useEffect(() => setPage(1), [bankAccountId, status]);
+  useEffect(() => setPage(1), [bankAccountId, status, direction, dueFrom, dueTo]);
 
   const importStatement = useImportStatement({
     onSuccess: (imp) => {
@@ -164,6 +200,11 @@ export function ConciliacaoPage() {
           duplicateCount: imp.duplicateCount,
         }),
       );
+      // Non-blocking: the statement was imported, but its account looks different from the selected one.
+      if (imp.warning) toast.error(imp.warning);
+      // Default the period filter to the imported statement's period so the user lands on "this import".
+      if (imp.periodStart) setDueFrom(imp.periodStart);
+      if (imp.periodEnd) setDueTo(imp.periodEnd);
       if (fileRef.current) fileRef.current.value = '';
     },
     onError: (e) => {
@@ -172,9 +213,18 @@ export function ConciliacaoPage() {
     },
   });
 
+  const periodFilters = {
+    companyId: empresaId,
+    bankAccountId,
+    direction: direction || undefined,
+    dueFrom: dueFrom || undefined,
+    dueTo: dueTo || undefined,
+  };
+  const enabled = !!empresaId && !!bankAccountId;
+  const summary = usePeriodSummary(periodFilters, { enabled });
   const list = useBankTransactions(
-    { companyId: empresaId, bankAccountId, matchStatus: status || undefined, page },
-    { enabled: !!empresaId && !!bankAccountId },
+    { ...periodFilters, matchStatus: status || undefined, page },
+    { enabled },
   );
   const items = list.data?.items ?? [];
   const totalPages = list.data?.totalPages ?? 1;
@@ -224,20 +274,39 @@ export function ConciliacaoPage() {
             />
           ) : (
             <Panel
-              title={t('conciliacao.title')}
+              title={t('conciliacao.periodTitle')}
               action={
-                <ToolbarField label={t('conciliacao.filter.label')}>
-                  <Select value={status} onChange={(e) => setStatus(e.target.value as MatchStatus | '')}>
-                    <option value=''>{t('conciliacao.filter.all')}</option>
-                    {STATUS_FILTERS.map((s) => (
-                      <option key={s} value={s}>
-                        {t(`conciliacao.status.${s}`)}
-                      </option>
-                    ))}
-                  </Select>
-                </ToolbarField>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <ToolbarField label={t('conciliacao.filter.from')}>
+                    <input type='date' className='input' value={dueFrom} onChange={(e) => setDueFrom(e.target.value)} />
+                  </ToolbarField>
+                  <ToolbarField label={t('conciliacao.filter.to')}>
+                    <input type='date' className='input' value={dueTo} onChange={(e) => setDueTo(e.target.value)} />
+                  </ToolbarField>
+                  <ToolbarField label={t('conciliacao.filter.direction')}>
+                    <Select
+                      value={direction}
+                      onChange={(e) => setDirection(e.target.value as TransactionDirection | '')}
+                    >
+                      <option value=''>{t('conciliacao.filter.all')}</option>
+                      <option value='Debit'>{t('conciliacao.direction.Debit')}</option>
+                      <option value='Credit'>{t('conciliacao.direction.Credit')}</option>
+                    </Select>
+                  </ToolbarField>
+                  <ToolbarField label={t('conciliacao.filter.label')}>
+                    <Select value={status} onChange={(e) => setStatus(e.target.value as MatchStatus | '')}>
+                      <option value=''>{t('conciliacao.filter.all')}</option>
+                      {STATUS_FILTERS.map((s) => (
+                        <option key={s} value={s}>
+                          {t(`conciliacao.status.${s}`)}
+                        </option>
+                      ))}
+                    </Select>
+                  </ToolbarField>
+                </div>
               }
             >
+              <PeriodSummaryStrip summary={summary.data} />
               {items.length === 0 ? (
                 <div className='empty-state' style={{ padding: 24 }}>
                   <div className='t'>{t('conciliacao.empty.noItemsTitle')}</div>
