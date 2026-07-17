@@ -28,7 +28,8 @@ infra/terraform/
 │   ├── key_vault/           # RBAC mode + secrets
 │   ├── identity/            # User-assigned MI + role assignments
 │   ├── container_app_env/   # Container Apps Environment
-│   └── container_app/       # Parameterised (API + web)
+│   ├── container_app/       # Parameterised (API + web)
+│   └── container_app_job/   # Parameterised scheduled ACA Job (remittance sweep)
 ├── providers.tf
 ├── backend.tf
 ├── variables.tf             # also contains CAF name locals
@@ -89,4 +90,20 @@ The postgres admin password is generated with `random_password` and stored autom
 | Secret name | Used for |
 |---|---|
 | `Authentication--JwtSecret` | ASP.NET Core JWT signing |
-| `ConnectionStrings--Default` | EF Core / Npgsql connection string |
+| `ConnectionStrings--Database` | EF Core / Npgsql connection string |
+| `Ai--ApiKey` | Anthropic API key for the payable AI classifier |
+
+## Scheduled jobs (Container App Jobs)
+
+The daily **CNAB remittance sweep** runs as an `azurerm_container_app_job` (module `container_app_job`),
+not as an in-process timer: the API scales to zero, so an in-process `PeriodicTimer` would not fire
+reliably. The job **reuses the API image** with `args = ["--job","remittance-sweep"]` (run-once job
+mode in `Program.cs` → `JobRunner`), reuses the API's user-assigned identity (KV Secrets User +
+Storage Blob Data Contributor + AcrPull), and shares the Container Apps Environment.
+
+- `remittance_sweep_cron` (default `"0 9 * * *"` = 06:00 BRT) — the daily cutoff schedule (UTC).
+- `enable_remittance_sweep_job` (default `true`) — set `false` to skip the job in an environment (e.g. dev).
+
+The in-process `RemittanceSweepJob` stays disabled (`RemittanceSweep__Enabled=false`) so the scheduled
+job and the web replicas never double-run. No CI change is needed — the job reuses the SHA-tagged `api`
+image already built and applied by the deploy workflow.
