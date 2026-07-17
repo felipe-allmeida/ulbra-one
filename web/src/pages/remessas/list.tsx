@@ -235,15 +235,20 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
         )}
 
         {isDev && (
-          <a
-            href={api.remittanceSimulateReturnUrl(remittance.id)}
-            download
+          <button
+            type='button'
             className='btn btn-ghost'
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() =>
+              void downloadWithAuth(
+                api.remittanceSimulateReturnUrl(remittance.id),
+                `retorno-${remittance.sequenceNumber}.ret`,
+              ).catch(() => toast.error(t('remittances.downloadError')))
+            }
           >
             <ExternalLink size={14} />
             {t('remittances.return.simulateReturn')}
-          </a>
+          </button>
         )}
       </div>
 
