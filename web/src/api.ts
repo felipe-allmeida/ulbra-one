@@ -370,6 +370,8 @@ export type BankTransaction = Schemas['BankTransactionResponse'];
 // Enum unions: serialized as strings at runtime via the global JsonStringEnumConverter.
 export type MatchStatus = Schemas['MatchStatus'];
 export type TransactionDirection = Schemas['TransactionDirection'];
+/** Review stage grouping the statuses into the two tabs: analysis (open) vs resolved (approved/ignored). */
+export type ReconciliationStage = 'analysis' | 'resolved';
 
 /** One reconciliation-status bucket (count + summed amount) of the period summary. */
 export interface StatusBucket {
@@ -867,6 +869,7 @@ export const api = {
     bankAccountId?: string;
     importId?: string;
     matchStatus?: MatchStatus;
+    stage?: ReconciliationStage;
     direction?: TransactionDirection;
     dueFrom?: string;
     dueTo?: string;
@@ -878,6 +881,7 @@ export const api = {
     if (params.bankAccountId) q.set('bankAccountId', params.bankAccountId);
     if (params.importId) q.set('importId', params.importId);
     if (params.matchStatus) q.set('matchStatus', params.matchStatus);
+    if (params.stage) q.set('stage', params.stage);
     if (params.direction) q.set('direction', params.direction);
     if (params.dueFrom) q.set('dueFrom', params.dueFrom);
     if (params.dueTo) q.set('dueTo', params.dueTo);

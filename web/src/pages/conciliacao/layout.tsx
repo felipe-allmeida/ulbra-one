@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftRight, Eraser } from 'lucide-react';
-import { type BankTransaction, type MatchStatus, type TransactionDirection } from '../../api';
+import { type BankTransaction, type ReconciliationStage, type TransactionDirection } from '../../api';
 import { useApp } from '../../store';
 import { useBankAccounts, useBankTransactions, useImportStatement, usePeriodSummary } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { Button, EmptyState, Panel, Select, ToolbarField } from '../../ui';
+import { StageTabBar, type StageTab } from '../../components/workflow';
 import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
 import { ImportControl } from './import-control';
@@ -15,9 +16,10 @@ import { TransactionsTable } from './transactions-table';
 import { ManualMatchDrawer } from './manual-match-drawer';
 import { ClearReconciliationModal } from './clear-reconciliation-modal';
 
-const STATUS_FILTERS: MatchStatus[] = ['Suggested', 'Unmatched', 'Reconciled', 'Ignored'];
-
-/** Conciliação bancária: import an OFX statement, see the period's charges by status, and reconcile. */
+/**
+ * Conciliação bancária: import an OFX statement, review it in the "Em análise" stage (still-open lines),
+ * then approve/ignore each so it moves to the "Conciliados" stage.
+ */
 export function ConciliacaoPage() {
   const { t } = useTranslation();
   const { empresa, empresaId } = useApp();
@@ -26,7 +28,7 @@ export function ConciliacaoPage() {
 
   const accounts = useBankAccounts(empresaId).data ?? [];
   const [bankAccountId, setBankAccountId] = useState('');
-  const [status, setStatus] = useState<MatchStatus | ''>('');
+  const [stage, setStage] = useState<ReconciliationStage>('analysis');
   const [direction, setDirection] = useState<TransactionDirection | ''>('');
   const [dueFrom, setDueFrom] = useState('');
   const [dueTo, setDueTo] = useState('');
@@ -39,7 +41,7 @@ export function ConciliacaoPage() {
   useEffect(() => {
     setBankAccountId((cur) => (accounts.find((a) => a.id === cur) ? cur : (accounts[0]?.id ?? '')));
   }, [accounts]);
-  useEffect(() => setPage(1), [bankAccountId, status, direction, dueFrom, dueTo]);
+  useEffect(() => setPage(1), [bankAccountId, stage, direction, dueFrom, dueTo]);
 
   const importStatement = useImportStatement({
     onSuccess: (imp) => {
@@ -52,6 +54,8 @@ export function ConciliacaoPage() {
       );
       // Non-blocking account-mismatch notice, shown as a banner under the import panel.
       setWarning(imp.warning ?? null);
+      // Land on the analysis stage so the freshly imported (still-open) lines are what the user reviews.
+      setStage('analysis');
       // Default the period filter to the imported statement's period so the user lands on "this import".
       if (imp.periodStart) setDueFrom(imp.periodStart);
       if (imp.periodEnd) setDueTo(imp.periodEnd);
@@ -71,9 +75,15 @@ export function ConciliacaoPage() {
   };
   const enabled = !!empresaId && !!bankAccountId;
   const summary = usePeriodSummary(periodFilters, { enabled });
-  const list = useBankTransactions({ ...periodFilters, matchStatus: status || undefined, page }, { enabled });
+  const list = useBankTransactions({ ...periodFilters, stage, page }, { enabled });
   const items = list.data?.items ?? [];
   const totalPages = list.data?.totalPages ?? 1;
+
+  const s = summary.data;
+  const stageTabs: StageTab[] = [
+    { key: 'analysis', label: t('conciliacao.tabs.analysis'), count: s ? s.suggested.count + s.unmatched.count : undefined },
+    { key: 'resolved', label: t('conciliacao.tabs.resolved'), count: s ? s.reconciled.count + s.ignored.count : undefined },
+  ];
 
   const onFile = (file: File | null) => {
     if (!file || !bankAccountId || importStatement.isPending) return;
@@ -146,16 +156,6 @@ export function ConciliacaoPage() {
                         <option value='Credit'>{t('conciliacao.direction.Credit')}</option>
                       </Select>
                     </ToolbarField>
-                    <ToolbarField label={t('conciliacao.filter.label')}>
-                      <Select value={status} onChange={(e) => setStatus(e.target.value as MatchStatus | '')}>
-                        <option value=''>{t('conciliacao.filter.all')}</option>
-                        {STATUS_FILTERS.map((s) => (
-                          <option key={s} value={s}>
-                            {t(`conciliacao.status.${s}`)}
-                          </option>
-                        ))}
-                      </Select>
-                    </ToolbarField>
                     {canWrite && (
                       <Button icon={<Eraser />} onClick={() => setClearOpen(true)}>
                         {t('conciliacao.clear.button')}
@@ -164,6 +164,7 @@ export function ConciliacaoPage() {
                   </div>
                 }
               >
+                <StageTabBar tabs={stageTabs} active={stage} onChange={(k) => setStage(k as ReconciliationStage)} />
                 <TransactionsTable
                   items={items}
                   page={page}

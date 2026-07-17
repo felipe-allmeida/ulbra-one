@@ -1483,6 +1483,10 @@ const ptBR = {
       Debit: 'Débitos',
       Credit: 'Créditos',
     },
+    tabs: {
+      analysis: 'Em análise',
+      resolved: 'Conciliados',
+    },
     clear: {
       button: 'Limpar conciliação',
       title: 'Limpar conciliação do dia',

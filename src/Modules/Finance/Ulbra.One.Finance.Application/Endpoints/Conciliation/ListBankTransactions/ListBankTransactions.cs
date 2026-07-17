@@ -22,7 +22,7 @@ public sealed class ListBankTransactions : IEndpoint
     private static async Task<IResult> Handle(
         IUnitOfWork uow,
         CompanyId? companyId, BankAccountId? bankAccountId, StatementImportId? importId, MatchStatus? matchStatus,
-        TransactionDirection? direction, DateOnly? dueFrom, DateOnly? dueTo,
+        string? stage, TransactionDirection? direction, DateOnly? dueFrom, DateOnly? dueTo,
         [AsParameters] PaginationQueryParameters pagination, CancellationToken ct)
     {
         var q = uow.ReadSet<BankTransaction>();
@@ -30,6 +30,12 @@ public sealed class ListBankTransactions : IEndpoint
         if (bankAccountId is { } b) q = q.Where(t => t.BankAccountId == b.Value);
         if (importId is { } im) q = q.Where(t => t.ImportId == im.Value);
         if (matchStatus is { } ms) q = q.Where(t => t.MatchStatus == ms);
+        // Stage groups the statuses into the two review tabs: "analysis" = still open (import lands here),
+        // "resolved" = already treated (approved or ignored).
+        if (string.Equals(stage, "analysis", StringComparison.OrdinalIgnoreCase))
+            q = q.Where(t => t.MatchStatus == MatchStatus.Unmatched || t.MatchStatus == MatchStatus.Suggested);
+        else if (string.Equals(stage, "resolved", StringComparison.OrdinalIgnoreCase))
+            q = q.Where(t => t.MatchStatus == MatchStatus.Reconciled || t.MatchStatus == MatchStatus.Ignored);
         if (direction is { } dir) q = q.Where(t => t.Direction == dir);
         if (dueFrom is { } from) q = q.Where(t => t.Date >= from);
         if (dueTo is { } to) q = q.Where(t => t.Date <= to);

@@ -745,4 +745,30 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         Assert.Equal(1, (await ReadJson(await client.GetAsync(
             $"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Unmatched"))).GetProperty("total").GetInt32());
     }
+
+    [Fact]
+    public async Task ListBankTransactions_StageFilter_SplitsAnalysisAndResolved()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId); // debit Suggested + credit Unmatched → both "analysis"
+
+        async Task<int> StageTotal(string stage) =>
+            (await ReadJson(await client.GetAsync($"/api/bank-transactions?bankAccountId={bankId}&stage={stage}")))
+            .GetProperty("total").GetInt32();
+
+        Assert.Equal(2, await StageTotal("analysis"));
+        Assert.Equal(0, await StageTotal("resolved"));
+
+        // Ignore the credit → it leaves "analysis" and enters "resolved".
+        var credit = await SingleTransactionAsync(client, bankId, "Unmatched");
+        var ignoreRes = await client.PostAsJsonAsync($"/api/bank-transactions/{credit.GetProperty("id").GetString()}/ignore", new { });
+        Assert.Equal(HttpStatusCode.OK, ignoreRes.StatusCode);
+
+        Assert.Equal(1, await StageTotal("analysis"));
+        Assert.Equal(1, await StageTotal("resolved"));
+    }
 }

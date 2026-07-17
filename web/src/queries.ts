@@ -38,6 +38,7 @@ import {
   type WithholdingPreviewParams,
   type MatchStatus,
   type TransactionDirection,
+  type ReconciliationStage,
   type PeriodSummary,
   type ParsedFiscalDocument,
   type PayableStageSummaryResponse,
@@ -209,6 +210,7 @@ export interface BankTransactionsParams {
   bankAccountId?: string;
   importId?: string;
   matchStatus?: MatchStatus;
+  stage?: ReconciliationStage;
   direction?: TransactionDirection;
   dueFrom?: string;
   dueTo?: string;
