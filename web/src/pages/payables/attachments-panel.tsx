@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, Eye, Trash2, Paperclip } from 'lucide-react';
 import { type Payable, type PayableAttachment } from '../../api';
+import { P, usePermissions } from '../../permissions';
 import { Button, Panel } from '../../ui';
 import { downloadAttachment, previewAttachment } from './download';
 
@@ -14,6 +15,8 @@ export function AttachmentsPanel({
   onDelete: (att: PayableAttachment) => void;
 }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canWrite = can(P.payablesWrite);
   const [err, setErr] = useState<string | null>(null);
   return (
     <Panel title={t('attachments.title')}>
@@ -50,9 +53,11 @@ export function AttachmentsPanel({
                     >
                       {t('attachments.download')}
                     </Button>
-                    <Button icon={<Trash2 />} onClick={() => onDelete(att)}>
-                      {t('attachments.remove')}
-                    </Button>
+                    {canWrite && (
+                      <Button icon={<Trash2 />} onClick={() => onDelete(att)}>
+                        {t('attachments.remove')}
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

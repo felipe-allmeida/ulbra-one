@@ -72,6 +72,8 @@ vi.mock('../queries', async (orig) => {
     useBankAccounts: () => ({ data: [] }),
     useDeletePayableAttachment: noopMut,
     useClassificationSuggestion: () => ({ data: undefined }),
+    // usePermissions() reads useMe(); Admin so the form's "Lançar"/"Salvar" (payables:write) is visible.
+    useMe: () => ({ data: { isAdmin: true, permissions: [] } }),
   };
 });
 
