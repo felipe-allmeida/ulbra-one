@@ -17,6 +17,7 @@ import { useApp } from '../../store';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
 import { brlCents } from '../../lib';
+import { downloadWithAuth } from '../../download';
 import { Button, EmptyState, Field, Modal, PageHeader, Pager, Panel, Select } from '../../ui';
 import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
@@ -347,6 +348,16 @@ function RemittanceDetailModal({
 /* ============ List row ============ */
 function RemittanceRow({ item, onDetail }: { item: RemittanceListItem; onDetail: (id: string) => void }) {
   const { t } = useTranslation();
+  const toast = useToast();
+  // The .REM download endpoint requires the Bearer token, which a plain `<a href download>` navigation
+  // cannot send (→ 401). Fetch it with auth and trigger a blob download instead.
+  const handleDownload = async () => {
+    try {
+      await downloadWithAuth(api.remittanceFileUrl(item.id), `remessa-${item.sequenceNumber}.rem`);
+    } catch {
+      toast.error(t('remittances.downloadError'));
+    }
+  };
   return (
     <tr>
       <td>{item.sequenceNumber}</td>
@@ -361,10 +372,15 @@ function RemittanceRow({ item, onDetail }: { item: RemittanceListItem; onDetail:
       <td>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {item.status === 'Generated' && (
-            <a href={api.remittanceFileUrl(item.id)} download className='btn btn-ghost' style={{ padding: '4px 8px' }}>
+            <button
+              type='button'
+              className='btn btn-ghost'
+              style={{ padding: '4px 8px' }}
+              onClick={() => void handleDownload()}
+            >
               <Download size={14} style={{ marginRight: 4 }} />
               {t('remittances.download')}
-            </a>
+            </button>
           )}
           <Button style={{ padding: '4px 8px' }} onClick={() => onDetail(item.id)}>
             {t('remittances.return.linesTitle')}

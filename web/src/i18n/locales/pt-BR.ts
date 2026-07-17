@@ -709,6 +709,7 @@ const ptBR = {
     generate: 'Gerar remessa',
     generating: 'Gerando…',
     download: 'Baixar .REM',
+    downloadError: 'Falha ao baixar o arquivo .REM.',
     cancel: 'Cancelar',
     columns: {
       sequence: 'Nº',
