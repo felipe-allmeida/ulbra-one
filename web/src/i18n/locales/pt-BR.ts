@@ -1483,6 +1483,15 @@ const ptBR = {
       Debit: 'Débitos',
       Credit: 'Créditos',
     },
+    clear: {
+      button: 'Limpar conciliação',
+      title: 'Limpar conciliação do dia',
+      sub: 'Marca como ignorados todos os lançamentos ainda em aberto (não conciliados ou sugeridos) da conta no dia escolhido. Lançamentos já conciliados não são afetados.',
+      day: 'Dia',
+      confirm: 'Limpar',
+      clearing: 'Limpando…',
+      done: '{{count}} lançamento(s) ignorado(s).',
+    },
     columns: {
       date: 'Data',
       description: 'Descrição',

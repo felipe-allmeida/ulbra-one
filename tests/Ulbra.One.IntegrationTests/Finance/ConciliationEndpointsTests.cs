@@ -722,4 +722,27 @@ public class ConciliationEndpointsTests(PostgresFixture fixture)
         unmatchedRes.EnsureSuccessStatusCode();
         Assert.Equal(1, (await ReadJson(unmatchedRes)).GetProperty("total").GetInt32());
     }
+
+    [Fact]
+    public async Task ClearReconciliation_IgnoresOpenTransactionsOfDay_LeavesOtherDays()
+    {
+        await using var factory = new ApiFactory(fixture.ConnectionString);
+        var client = await factory.CreateAdminClientAsync();
+        var seed = await SeedAsync(client);
+        var bankId = await CreateBankAccountAsync(client, seed.CompanyId);
+        await CreateApprovedPayableAsync(factory, client, seed, 1000.00m, "2026-07-12");
+        await ImportAsync(client, bankId); // -1000 debit (2026-07-10, Suggested); 2500 credit (2026-07-12, Unmatched)
+
+        // Clear the debit's day → the open (Suggested) debit is ignored in bulk.
+        var res = await client.PostAsJsonAsync("/api/bank-transactions/clear",
+            new { companyId = seed.CompanyId, bankAccountId = bankId, date = "2026-07-10" });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        Assert.Equal(1, (await ReadJson(res)).GetProperty("ignored").GetInt32());
+
+        Assert.Equal(1, (await ReadJson(await client.GetAsync(
+            $"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Ignored"))).GetProperty("total").GetInt32());
+        // The 2026-07-12 credit is another day → untouched.
+        Assert.Equal(1, (await ReadJson(await client.GetAsync(
+            $"/api/bank-transactions?bankAccountId={bankId}&matchStatus=Unmatched"))).GetProperty("total").GetInt32());
+    }
 }

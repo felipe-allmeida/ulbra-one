@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, Eraser } from 'lucide-react';
 import { type BankTransaction, type MatchStatus, type TransactionDirection } from '../../api';
 import { useApp } from '../../store';
 import { useBankAccounts, useBankTransactions, useImportStatement, usePeriodSummary } from '../../queries';
 import { getErrorMessage } from '../../apiError';
 import { useToast } from '../../toast';
-import { EmptyState, Panel, Select, ToolbarField } from '../../ui';
+import { Button, EmptyState, Panel, Select, ToolbarField } from '../../ui';
 import { P, usePermissions } from '../../permissions';
 import { EmpresaPicker } from '../shared';
 import { ImportControl } from './import-control';
 import { PeriodSummaryTiles } from './period-summary';
 import { TransactionsTable } from './transactions-table';
 import { ManualMatchDrawer } from './manual-match-drawer';
+import { ClearReconciliationModal } from './clear-reconciliation-modal';
 
 const STATUS_FILTERS: MatchStatus[] = ['Suggested', 'Unmatched', 'Reconciled', 'Ignored'];
 
@@ -32,6 +33,7 @@ export function ConciliacaoPage() {
   const [page, setPage] = useState(1);
   const [manualTx, setManualTx] = useState<BankTransaction | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
 
   // Reset selection when the company changes (keep a valid bank account).
   useEffect(() => {
@@ -154,6 +156,11 @@ export function ConciliacaoPage() {
                         ))}
                       </Select>
                     </ToolbarField>
+                    {canWrite && (
+                      <Button icon={<Eraser />} onClick={() => setClearOpen(true)}>
+                        {t('conciliacao.clear.button')}
+                      </Button>
+                    )}
                   </div>
                 }
               >
@@ -171,6 +178,16 @@ export function ConciliacaoPage() {
       )}
 
       {manualTx && <ManualMatchDrawer companyId={empresaId} transaction={manualTx} onClose={() => setManualTx(null)} />}
+
+      {clearOpen && (
+        <ClearReconciliationModal
+          companyId={empresaId}
+          accounts={accounts}
+          defaultBankAccountId={bankAccountId}
+          defaultDate={dueFrom || dueTo || ''}
+          onClose={() => setClearOpen(false)}
+        />
+      )}
     </>
   );
 }

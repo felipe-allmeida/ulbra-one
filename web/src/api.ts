@@ -908,6 +908,9 @@ export const api = {
     }),
   ignoreTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/ignore`, { method: 'POST' }),
   unmatchTransaction: (id: string) => request<BankTransaction>(`/bank-transactions/${id}/unmatch`, { method: 'POST' }),
+  /** Bulk-ignore all still-open (Unmatched/Suggested) transactions of an account on a given day. */
+  clearReconciliation: (body: { companyId: string; bankAccountId: string; date: string }) =>
+    request<{ ignored: number }>('/bank-transactions/clear', { method: 'POST', body: JSON.stringify(body) }),
 
   // ---------- Classification ----------
   classifyPayable: (id: string, body: { accountingAccountId?: string | null }) =>

@@ -1059,6 +1059,12 @@ function invalidateConciliation(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: ['payables'] });
 }
 
+export function useClearReconciliation(
+  options?: UseMutationOptions<{ ignored: number }, unknown, { companyId: string; bankAccountId: string; date: string }>,
+) {
+  return useInvalidatingMutation((body) => api.clearReconciliation(body), invalidateConciliation, options);
+}
+
 export function useImportStatement(
   options?: UseMutationOptions<StatementImport, unknown, { bankAccountId: string; file: File }>,
 ) {

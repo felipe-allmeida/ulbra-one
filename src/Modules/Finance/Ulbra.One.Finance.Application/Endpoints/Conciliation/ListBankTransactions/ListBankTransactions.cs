@@ -33,7 +33,13 @@ public sealed class ListBankTransactions : IEndpoint
         if (direction is { } dir) q = q.Where(t => t.Direction == dir);
         if (dueFrom is { } from) q = q.Where(t => t.Date >= from);
         if (dueTo is { } to) q = q.Where(t => t.Date <= to);
-        var page = await q.OrderBy(t => t.Date).ToPaginatedAsync(pagination, ct);
+        // Deterministic, newest-first order. Date alone ties on single-day statements (every line same
+        // DTPOSTED), which makes OFFSET pagination drop/duplicate rows — CreatedAt + Id break the tie.
+        var page = await q
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.CreatedAt)
+            .ThenBy(t => t.Id)
+            .ToPaginatedAsync(pagination, ct);
         return TypedResults.Ok(page.Map(BankTransactionResponse.From));
     }
 }
