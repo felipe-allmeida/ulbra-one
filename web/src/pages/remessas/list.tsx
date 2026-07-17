@@ -37,11 +37,21 @@ function RemittanceStatusBadge({ status }: { status: string }) {
 }
 
 /* ============ Generate remittance dialog ============ */
+// A paying account can ride the CNAB240 rail only if it is Santander (COMPE 033, in any
+// entered form) and has a convênio code — mirrors the backend eligibility. Filtering the
+// dropdown to eligible accounts keeps the operator out of the "banco não suportado" dead-end.
+function isSantander(bankCode?: string | null): boolean {
+  return (bankCode ?? '').replace(/\D/g, '').replace(/^0+/, '') === '33';
+}
+function isCnabEligible(a: { bankCode?: string | null; cnabAgreementCode?: string | null }): boolean {
+  return isSantander(a.bankCode) && !!a.cnabAgreementCode?.trim();
+}
+
 function GenerateDialog({ companyId, onClose }: { companyId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
   const bankAccounts = useBankAccounts(companyId);
-  const accounts = (bankAccounts.data ?? []).filter((a) => a.active);
+  const accounts = (bankAccounts.data ?? []).filter((a) => a.active && isCnabEligible(a));
   const [bankAccountId, setBankAccountId] = useState('');
   const [dueCutoff, setDueCutoff] = useState('');
 
@@ -101,6 +111,11 @@ function GenerateDialog({ companyId, onClose }: { companyId: string; onClose: ()
               </option>
             ))}
           </Select>
+          {!bankAccounts.isLoading && accounts.length === 0 && (
+            <p style={{ marginTop: 6, fontSize: 13, color: 'var(--muted, #6b7280)' }}>
+              {t('remittances.generate_dialog.noEligibleAccount')}
+            </p>
+          )}
         </Field>
         <Field label={t('remittances.generate_dialog.dueCutoff')}>
           <input type='date' className='input' value={dueCutoff} onChange={(e) => setDueCutoff(e.target.value)} />

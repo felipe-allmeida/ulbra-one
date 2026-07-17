@@ -759,6 +759,8 @@ const ptBR = {
       bankAccountSelect: '— selecione —',
       dueCutoff: 'Vencimento até (opcional)',
       confirm: 'Gerar',
+      noEligibleAccount:
+        'Nenhuma conta pagadora elegível. A remessa CNAB240 exige uma conta Santander (033) com código de convênio configurado.',
     },
     success: 'Remessa gerada: {{count}} título(s) incluído(s).',
     skipped: '{{count}} parcela(s) ignorada(s) por falta de dados.',
