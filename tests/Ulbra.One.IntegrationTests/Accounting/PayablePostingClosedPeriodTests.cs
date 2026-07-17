@@ -56,9 +56,9 @@ public class PayablePostingClosedPeriodTests(PostgresFixture fixture)
         // Incurral competence in the CLOSED March period; settlement paid today (open). These arrive as two
         // separate consume operations in production, so each commits on its own (distinct entry Number).
         await posting.PostIncurralAsync(companyId, $"payable-incurral:{payableId}", 100m, expenseId, [],
-            competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, CancellationToken.None);
+            competenceDate: new DateOnly(2026, 3, 10), costCenterId: null, documentRef: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
-        await posting.PostSettlementAsync(companyId, $"payment:{payableId}", 100m, today, cashAccountId: null, CancellationToken.None);
+        await posting.PostSettlementAsync(companyId, $"payment:{payableId}", 100m, today, cashAccountId: null, documentRef: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // The incurral was clamped (posted), not parked.

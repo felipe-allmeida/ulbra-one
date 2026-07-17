@@ -37,7 +37,9 @@ describe('RolesPage', () => {
   it('renders the matrix with editable roles and hides Admin as a column', () => {
     render(<RolesPage />);
     expect(screen.getByText('Cargos & permissões')).toBeInTheDocument();
-    expect(screen.getByText('Finance')).toBeInTheDocument();
+    // O cabeçalho da coluna usa o rótulo em português, não o nome técnico em inglês.
+    expect(screen.getByText('Financeiro')).toBeInTheDocument();
+    expect(screen.queryByText('Finance')).not.toBeInTheDocument();
     // Admin is described as a bypass note, never as a matrix column with a checkbox.
     expect(screen.queryByRole('checkbox', { name: /^Admin —/ })).not.toBeInTheDocument();
     expect(screen.getByText(/acesso total/i)).toBeInTheDocument();
@@ -45,8 +47,8 @@ describe('RolesPage', () => {
 
   it('reflects the role\'s current permissions as checked boxes', () => {
     render(<RolesPage />);
-    expect(screen.getByRole('checkbox', { name: 'Finance — payables:read' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Finance — payables:write' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Financeiro — payables:read' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Financeiro — payables:write' })).not.toBeChecked();
   });
 
   it('enables Save only after an edit and submits the reconciled permission set', () => {
@@ -54,7 +56,7 @@ describe('RolesPage', () => {
     const saveBtn = screen.getByRole('button', { name: /Salvar/ });
     expect(saveBtn).toBeDisabled();
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Finance — payables:write' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Financeiro — payables:write' }));
     expect(saveBtn).toBeEnabled();
 
     fireEvent.click(saveBtn);

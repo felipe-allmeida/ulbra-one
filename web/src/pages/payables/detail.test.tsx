@@ -3,7 +3,12 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import '../../i18n';
 
-const { mockUsePayable, mockUseAudit } = vi.hoisted(() => ({ mockUsePayable: vi.fn(), mockUseAudit: vi.fn() }));
+const { mockUsePayable, mockUseAudit, mockMe } = vi.hoisted(() => ({
+  mockUsePayable: vi.fn(),
+  mockUseAudit: vi.fn(),
+  // Mutable identity; tests flip isAdmin/permissions to exercise the in-view gating.
+  mockMe: { isAdmin: true, permissions: [] as string[] },
+}));
 vi.mock('react-router-dom', async (orig) => {
   const actual = await orig<typeof import('react-router-dom')>();
   return { ...actual, useNavigate: () => vi.fn(), useParams: () => ({ id: 'payable_1' }) };
@@ -21,11 +26,15 @@ vi.mock('../../queries', () => ({
   useSetPayableWithholdings: () => ({ mutate: vi.fn(), isPending: false }),
   // BalanceForecastBanner (rendered on PendingApproval) uses this; loading short-circuits it harmlessly.
   useCashFlow: () => ({ isLoading: true }),
+  // usePermissions() reads useMe(); default to Admin so the non-gating tests see every action.
+  useMe: () => ({ data: mockMe }),
 }));
 
 import { PayableDetailPage } from './detail';
 
 beforeEach(() => {
+  mockMe.isAdmin = true;
+  mockMe.permissions = [];
   mockUsePayable.mockReturnValue({
     data: {
       id: 'payable_1',
@@ -154,5 +163,83 @@ describe('PayableDetailPage', () => {
     });
     renderWithProviders(<PayableDetailPage />);
     expect(screen.getByText('Adicionar retenção')).toBeInTheDocument();
+  });
+
+  // ---- Gating in-view por cargo (fonte da verdade: RequirePermission no backend) ----
+
+  const pendingApproval = {
+    id: 'payable_1', companyId: 'company_1', counterpartyName: 'ACME', description: 'NF 1',
+    status: 'PendingApproval', totalAmount: 1000, costCenterId: 'cc_1', categoryId: null,
+    accountingAccountId: null, documentNumber: 'NF-1', issueDate: '2026-06-01',
+    installments: [], attachments: [], withholdings: [], totalWithheld: 0, netTotal: 1000,
+  };
+
+  it('esconde Aprovar/Rejeitar sem payables:approve, mas mantém a leitura', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read'];
+    mockUsePayable.mockReturnValue({ data: pendingApproval });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.queryByRole('button', { name: 'Aprovar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rejeitar' })).not.toBeInTheDocument();
+    expect(screen.getByText(/ACME/)).toBeInTheDocument(); // detalhe (leitura) segue visível
+  });
+
+  it('mostra Aprovar/Rejeitar com payables:approve', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read', 'payables:approve'];
+    mockUsePayable.mockReturnValue({ data: pendingApproval });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.getByRole('button', { name: 'Aprovar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rejeitar' })).toBeInTheDocument();
+  });
+
+  it('esconde Editar/Cancelar sem payables:write (status editável)', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read', 'payables:approve'];
+    mockUsePayable.mockReturnValue({ data: { ...pendingApproval, status: 'Received' } });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument();
+  });
+
+  it('mostra Editar/Cancelar com payables:write', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read', 'payables:write'];
+    mockUsePayable.mockReturnValue({ data: { ...pendingApproval, status: 'Received' } });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+  });
+
+  it('esconde "Registrar pagamento" sem payables:pay (título agendado)', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read'];
+    mockUsePayable.mockReturnValue({
+      data: {
+        ...pendingApproval,
+        status: 'Scheduled',
+        installments: [
+          { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, netAmount: 1000, status: 'Open', paidAmount: 0, payments: [] },
+        ],
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.queryByRole('button', { name: /Dar baixa/ })).not.toBeInTheDocument();
+  });
+
+  it('mostra "Registrar pagamento" com payables:pay', () => {
+    mockMe.isAdmin = false;
+    mockMe.permissions = ['payables:read', 'payables:pay'];
+    mockUsePayable.mockReturnValue({
+      data: {
+        ...pendingApproval,
+        status: 'Scheduled',
+        installments: [
+          { id: 'i1', sequence: 1, dueDate: '2026-06-30', amount: 1000, netAmount: 1000, status: 'Open', paidAmount: 0, payments: [] },
+        ],
+      },
+    });
+    renderWithProviders(<PayableDetailPage />);
+    expect(screen.getByRole('button', { name: /Dar baixa/ })).toBeInTheDocument();
   });
 });

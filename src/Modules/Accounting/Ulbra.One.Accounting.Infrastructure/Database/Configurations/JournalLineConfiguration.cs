@@ -16,6 +16,7 @@ public sealed class JournalLineConfiguration : BaseEntityConfiguration<JournalLi
         e.Property(x => x.Description).HasMaxLength(300);
         e.HasIndex(x => x.JournalEntryId);
         e.HasIndex(x => x.LedgerAccountId);
+        e.HasIndex(x => x.CostCenterId);
         // Never delete a ledger account that has movement: line → account FK is Restrict.
         e.HasOne<LedgerAccount>().WithMany().HasForeignKey(x => x.LedgerAccountId).OnDelete(DeleteBehavior.Restrict);
     }

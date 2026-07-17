@@ -6,7 +6,7 @@ import { auth } from '../api';
 import { useMe } from '../queries';
 import { iniciais } from '../lib';
 import { NAV_DOMAINS, domainForPath, itemForPath, type NavDomain, type NavItem } from '../nav.config';
-import { canAny } from '../permissions';
+import { canAny, roleLabel } from '../permissions';
 
 const norm = (s: string) =>
   s
@@ -85,7 +85,7 @@ export function SideNav({ open, onClose }: { open: boolean; onClose: () => void 
         <nav className='nav-rail' aria-label={t('nav.sections.finance')}>
           <div
             className='nav-rail-avatar'
-            title={me ? `${me.name ?? ''}${me.role ? ` · ${me.role}` : ''}` : t('common.appName')}
+            title={me ? `${me.name ?? ''}${me.role ? ` · ${roleLabel(me.role)}` : ''}` : t('common.appName')}
           >
             {me ? iniciais(me.name ?? '') : 'U1'}
           </div>

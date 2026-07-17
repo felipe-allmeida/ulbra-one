@@ -55,9 +55,17 @@ export function Field({ label, help, children }: { label: ReactNode; help?: stri
 }
 
 /** Toolbar field (compact uppercase label). */
-export function ToolbarField({ label, children }: { label: string; children: ReactNode }) {
+export function ToolbarField({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className='field'>
+    <div className={className ? `field ${className}` : 'field'}>
       <label>{label}</label>
       {children}
     </div>

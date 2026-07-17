@@ -437,6 +437,9 @@ namespace Ulbra.One.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_journal_lines");
 
+                    b.HasIndex("CostCenterId")
+                        .HasDatabaseName("ix_journal_lines_cost_center_id");
+
                     b.HasIndex("JournalEntryId")
                         .HasDatabaseName("ix_journal_lines_journal_entry_id");
 

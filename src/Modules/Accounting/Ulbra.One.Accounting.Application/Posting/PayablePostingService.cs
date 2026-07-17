@@ -62,7 +62,8 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
     // Returns true when a posting is in place (posted now or already posted); false when parked (still blocked).
     private async Task<bool> PostEntryAsync(
         Guid companyId, string sourceKey, string description, PostingKind kind, DateOnly competenceDate,
-        IReadOnlyList<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)> lines, CancellationToken ct)
+        IReadOnlyList<(string? Code, EntrySide Side, decimal Amount, Guid? CostCenterId)> lines,
+        string? documentRef, CancellationToken ct)
     {
         if (await AlreadyPostedAsync(companyId, sourceKey, ct)) return true; // idempotent
 
@@ -91,7 +92,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         var debitTotal = lines.Sum(l => l.Side == EntrySide.Debit ? l.Amount : 0m);
         // Replay plan stores the ORIGINAL (pre-clamp) competence, so a later reprocess re-applies the clamp.
         var plan = new PostingPlan(competenceDate, description,
-            lines.Select(l => new PostingPlanLine(l.Code, l.Side, l.Amount, l.CostCenterId)).ToList()).Serialize();
+            lines.Select(l => new PostingPlanLine(l.Code, l.Side, l.Amount, l.CostCenterId)).ToList(), documentRef).Serialize();
 
         if (anyUnresolvable)
         {
@@ -122,8 +123,10 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
             ? PostingNarratives.ClampedCompetence(description, competenceDate, competence)
             : description;
 
+        // SourceReference is the human-facing document number (shown as "Documento" in the reports); SourceKey is
+        // the internal idempotency key. They are distinct — never surface the idempotency key to the user.
         var entry = new JournalEntry(companyId, competence, finalDescription,
-            JournalOrigin.Automatic, sourceReference: sourceKey, sourceKey: sourceKey);
+            JournalOrigin.Automatic, sourceReference: documentRef, sourceKey: sourceKey);
         foreach (var (account, side, amount, costCenterId) in resolved)
             entry.AddLine(new JournalLine(account.Id, side, amount, costCenterId));
         entry.Post(await NextNumberAsync(companyId, ct), clock.GetUtcNow());
@@ -154,7 +157,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
         var lines = plan.Lines
             .Select(l => (l.Code, l.Side, l.Amount, l.CostCenterId))
             .ToList();
-        var posted = await PostEntryAsync(pending.CompanyId, pending.SourceKey, plan.Description, pending.Kind, plan.CompetenceDate, lines, ct);
+        var posted = await PostEntryAsync(pending.CompanyId, pending.SourceKey, plan.Description, pending.Kind, plan.CompetenceDate, lines, plan.DocumentRef, ct);
         if (posted) pending.MarkResolved(clock.GetUtcNow());
         return posted;
     }
@@ -164,7 +167,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
     public async Task PostIncurralAsync(
         Guid companyId, string sourceKey, decimal amount, Guid? expenseAccountId,
         IReadOnlyList<(string TaxType, decimal Amount)> withholdings,
-        DateOnly? competenceDate, Guid? costCenterId, CancellationToken ct)
+        DateOnly? competenceDate, Guid? costCenterId, string? documentRef, CancellationToken ct)
     {
         // The expense line comes from the payable's classified global ledger account (resolved by id);
         // liability/cash/withholding lines are Accounting-internal config codes. An unresolvable expense
@@ -193,10 +196,10 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
 
         // Competence = título's real competence (IssueDate); null (e.g. advances with no NF) falls back to today.
         var competence = competenceDate ?? DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-        await PostEntryAsync(companyId, sourceKey, PostingNarratives.Incurral, PostingKind.Incurral, competence, lineList, ct);
+        await PostEntryAsync(companyId, sourceKey, PostingNarratives.Incurral, PostingKind.Incurral, competence, lineList, documentRef, ct);
     }
 
-    public async Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, Guid? cashAccountId, CancellationToken ct)
+    public async Task PostSettlementAsync(Guid companyId, string sourceKey, decimal amount, DateOnly paymentDate, Guid? cashAccountId, string? documentRef, CancellationToken ct)
     {
         // Credit the paying bank's own ledger account when it resolves to a postable account; otherwise fall
         // back to the configured global cash code (unmapped bank, or a stale/inactive mapping).
@@ -209,6 +212,7 @@ public sealed class PayablePostingService(IUnitOfWork uow, TimeProvider clock, A
                 (opts.PayablesLiabilityCode, EntrySide.Debit, amount, (Guid?)null),
                 (cashCode, EntrySide.Credit, amount, (Guid?)null),
             ],
+            documentRef,
             ct);
     }
 

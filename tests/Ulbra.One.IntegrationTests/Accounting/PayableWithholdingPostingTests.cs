@@ -71,7 +71,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         var withholdings = new List<(string TaxType, decimal Amount)> { ("Irrf", 150m) };
 
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, competenceDate: null, costCenterId: null, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No pending posting.
@@ -127,7 +127,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         var withholdings = new List<(string TaxType, decimal Amount)> { ("Other", 50m) };
 
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, competenceDate: null, costCenterId: null, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, withholdings, competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         // No journal entry.
@@ -161,7 +161,7 @@ public class PayableWithholdingPostingTests(PostgresFixture fixture)
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var expenseId = await AccountIdAsync(uow, ExpenseCode);
-        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, [], competenceDate: null, costCenterId: null, CancellationToken.None);
+        await posting.PostIncurralAsync(companyId, sourceKey, 1000m, expenseId, [], competenceDate: null, costCenterId: null, documentRef: null, CancellationToken.None);
         await uow.SaveChangesAsync(CancellationToken.None);
 
         var entry = await uow.ReadSet<JournalEntry>()
