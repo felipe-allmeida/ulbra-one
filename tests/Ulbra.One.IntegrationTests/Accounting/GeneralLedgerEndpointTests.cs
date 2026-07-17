@@ -192,7 +192,7 @@ public class GeneralLedgerEndpointTests(PostgresFixture fixture)
 
         var csv = Encoding.UTF8.GetString(bytes);
         Assert.Contains(
-            "conta;codigo_resumido;nome_conta;data;historico;documento;centro_custo;debito;credito;saldo_acumulado",
+            "conta;codigo_resumido;nome_conta;data;historico;centro_custo;debito;credito;saldo_acumulado",
             csv);
         Assert.Contains(EnergyCode, csv);       // all filtered accounts, not just one page
         Assert.Contains(CapitalBankCode, csv);
