@@ -24,6 +24,7 @@ import {
 } from '../../queries';
 import { brl } from '../../lib';
 import { getErrorMessage } from '../../apiError';
+import { P, usePermissions } from '../../permissions';
 import { Button, Input, Select, Field, EmptyState, Combobox, FilePicker } from '../../ui';
 import { AutoHint } from '../registry-forms';
 import { useNames } from './use-names';
@@ -37,6 +38,8 @@ function PayableForm({ initial }: { initial?: Payable }) {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canWrite = can(P.payablesWrite);
   const { centros } = useNames(empresaId);
   const accountingAccounts =
     useLedgerAccounts({ kind: 'Analytical', activeOnly: true }).data ?? [];
@@ -766,15 +769,17 @@ function PayableForm({ initial }: { initial?: Payable }) {
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-                <Button type='submit' variant='brand' disabled={!formState.isValid || saving}>
-                  {saving
-                    ? t('payables.actions.saving')
-                    : editing
-                      ? t('payables.actions.save')
-                      : t('payables.actions.create')}
-                </Button>
+                {canWrite && (
+                  <Button type='submit' variant='brand' disabled={!formState.isValid || saving}>
+                    {saving
+                      ? t('payables.actions.saving')
+                      : editing
+                        ? t('payables.actions.save')
+                        : t('payables.actions.create')}
+                  </Button>
+                )}
                 <Button type='button' onClick={() => nav(backTo)}>
-                  {t('payables.actions.cancel')}
+                  {canWrite ? t('payables.actions.cancel') : t('payables.actions.close')}
                 </Button>
               </div>
             </form>

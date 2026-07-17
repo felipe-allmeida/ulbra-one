@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tags } from 'lucide-react';
 import { usePayableStageItems } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { Button } from '../../ui';
 import { STAGE_STATUS } from './stages';
 import { PayableTable } from './payable-table';
@@ -9,6 +10,8 @@ import { ClassificationDrawer } from './classification-drawer';
 
 export function ClassificationTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canWrite = can(P.payablesWrite);
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
   const list = usePayableStageItems({ companyId, status: STAGE_STATUS.classification, page }, { enabled: !!companyId });
@@ -25,14 +28,18 @@ export function ClassificationTab({ companyId }: { companyId: string }) {
         page={page}
         totalPages={data?.totalPages ?? 1}
         onPage={setPage}
-        extraColumn={{
-          header: t('payables.classify.title'),
-          cell: (item) => (
-            <Button icon={<Tags />} onClick={() => setClassifyId(item.payableId)}>
-              {t('payables.classify.title')}
-            </Button>
-          ),
-        }}
+        extraColumn={
+          canWrite
+            ? {
+                header: t('payables.classify.title'),
+                cell: (item) => (
+                  <Button icon={<Tags />} onClick={() => setClassifyId(item.payableId)}>
+                    {t('payables.classify.title')}
+                  </Button>
+                ),
+              }
+            : undefined
+        }
       />
       {classifyId && <ClassificationDrawer payableId={classifyId} onClose={() => setClassifyId(null)} />}
     </>

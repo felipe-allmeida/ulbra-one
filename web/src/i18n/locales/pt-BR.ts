@@ -584,6 +584,7 @@ const ptBR = {
       reject: 'Rejeitar',
       edit: 'Editar',
       cancel: 'Cancelar',
+      close: 'Fechar',
       save: 'Salvar',
       saving: 'Salvando…',
       create: 'Lançar',
