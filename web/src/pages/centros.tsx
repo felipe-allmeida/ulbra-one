@@ -5,6 +5,7 @@ import { useApp } from '../store';
 import { useCostCenter, useCostCenters, useTransactions, useUnits } from '../queries';
 import { brlCompact, brl } from '../lib';
 import { Button, Chip, Kpi, EmptyState, PageHeader, Panel } from '../ui';
+import { P, usePermissions } from '../permissions';
 import { EmpresaPicker, CentroForm } from './shared';
 import { StatusBadge } from './lancamentos';
 import { fmtDate } from '../datetime';
@@ -13,6 +14,7 @@ import { fmtDate } from '../datetime';
 export function CentrosListPage() {
   const { empresa, empresaId } = useApp();
   const nav = useNavigate();
+  const canWrite = usePermissions().can(P.coreWrite);
   const unidades = useUnits(empresaId).data ?? [];
   const centros = useCostCenters(empresaId).data ?? [];
 
@@ -26,9 +28,16 @@ export function CentrosListPage() {
         sub='Áreas funcionais da empresa. Um centro de custo (ex.: Marketing) pode atuar em várias unidades.'
       >
         <EmpresaPicker />
-        <Button variant='brand' icon={<Plus />} disabled={!empresa} onClick={() => nav('/app/accounting/cost-centers/new')}>
-          Novo centro de custo
-        </Button>
+        {canWrite && (
+          <Button
+            variant='brand'
+            icon={<Plus />}
+            disabled={!empresa}
+            onClick={() => nav('/app/accounting/cost-centers/new')}
+          >
+            Novo centro de custo
+          </Button>
+        )}
       </PageHeader>
 
       {!empresa ? (
@@ -95,9 +104,11 @@ export function CentrosListPage() {
                   </div>
                 );
               })}
-              <button className='add-card' onClick={() => nav('/app/accounting/cost-centers/new')}>
-                <Plus /> Novo centro de custo
-              </button>
+              {canWrite && (
+                <button className='add-card' onClick={() => nav('/app/accounting/cost-centers/new')}>
+                  <Plus /> Novo centro de custo
+                </button>
+              )}
             </div>
           )}
         </>
@@ -111,6 +122,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
   const { id } = useParams();
   const nav = useNavigate();
   const { empresa, empresas } = useApp();
+  const canWrite = usePermissions().can(P.coreWrite);
 
   const [editando, setEditando] = useState(modo === 'novo');
 
@@ -189,7 +201,7 @@ export function CentroDetailPage({ modo }: { modo: 'novo' | 'detalhe' }) {
             {centro.code} · {empresaDoCentro.legalName}
           </div>
         </div>
-        {!editando && (
+        {!editando && canWrite && (
           <div className='detail-actions'>
             <Button icon={<Pencil />} onClick={() => setEditando(true)}>
               Editar
