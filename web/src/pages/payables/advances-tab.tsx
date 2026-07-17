@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calculator } from 'lucide-react';
 import { usePayableStageItems } from '../../queries';
+import { P, usePermissions } from '../../permissions';
 import { Button } from '../../ui';
 import { PayableTable } from './payable-table';
 import { PayableStatusBadge } from './badges';
@@ -16,6 +17,8 @@ import { AccountingDrawer } from './accounting-drawer';
  */
 export function AdvancesTab({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canWrite = can(P.payablesWrite);
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [companyId]);
   const list = usePayableStageItems({ companyId, origin: 'Advance', page }, { enabled: !!companyId });
@@ -41,16 +44,20 @@ export function AdvancesTab({ companyId }: { companyId: string }) {
             </span>
           </>
         )}
-        extraColumn={{
-          header: t('payables.accounting.actionColumn'),
-          // Only advances still awaiting accounting can be contabilizadas; later stages have no action.
-          cell: (item) =>
-            item.status === 'PendingAccounting' ? (
-              <Button icon={<Calculator />} onClick={() => setReviewId(item.payableId)}>
-                {t('payables.accounting.reviewButton')}
-              </Button>
-            ) : null,
-        }}
+        extraColumn={
+          canWrite
+            ? {
+                header: t('payables.accounting.actionColumn'),
+                // Only advances still awaiting accounting can be contabilizadas; later stages have no action.
+                cell: (item) =>
+                  item.status === 'PendingAccounting' ? (
+                    <Button icon={<Calculator />} onClick={() => setReviewId(item.payableId)}>
+                      {t('payables.accounting.reviewButton')}
+                    </Button>
+                  ) : null,
+              }
+            : undefined
+        }
       />
       {reviewId && <AccountingDrawer payableId={reviewId} onClose={() => setReviewId(null)} />}
     </>

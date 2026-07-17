@@ -180,6 +180,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounting/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetGeneralLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounting/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ExportGeneralLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounting/pending-postings": {
         parameters: {
             query?: never;
@@ -1780,6 +1812,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListRoles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetRolePermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2497,6 +2577,52 @@ export interface components {
             cofins: number | null;
             /** Format: double */
             totalTaxes: number | null;
+        };
+        GeneralLedgerAccountResponse: {
+            /** @example ledgacct_3fa85f64571742199730000000000000 */
+            ledgerAccountId: string;
+            accountCode: string;
+            reducedCode: string | null;
+            accountName: string;
+            normalBalance: components["schemas"]["NormalBalance"];
+            /** Format: double */
+            openingBalance: number;
+            movements: components["schemas"]["GeneralLedgerMovementResponse"][];
+            /** Format: double */
+            totalDebit: number;
+            /** Format: double */
+            totalCredit: number;
+            /** Format: double */
+            closingBalance: number;
+        };
+        GeneralLedgerAccountResponsePaginatedResponse: {
+            items: components["schemas"]["GeneralLedgerAccountResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        GeneralLedgerMovementResponse: {
+            /** @example journal_3fa85f64571742199730000000000000 */
+            entryId: string;
+            /** Format: int32 */
+            number: number | null;
+            /** Format: date */
+            competenceDate: string;
+            history: string;
+            documentRef: string | null;
+            /** @example cost_center_3fa85f64571742199730000000000000 */
+            costCenterId: string | null;
+            /** Format: double */
+            debit: number;
+            /** Format: double */
+            credit: number;
+            /** Format: double */
+            accumulatedBalance: number;
         };
         GenerateInput: {
             /** Format: double */
@@ -3377,6 +3503,12 @@ export interface components {
         ReverseReceiptReverseReceiptRequest: {
             reason: string | null;
         };
+        RoleResponse: {
+            /** @example role_3fa85f64571742199730000000000000 */
+            id: string;
+            name: string;
+            permissions: string[];
+        };
         RunRemittanceSweepRequest: {
             /** Format: date */
             asOf: string | null;
@@ -3396,6 +3528,9 @@ export interface components {
             reconciledAt: string;
             /** Format: double */
             currentBalance: number;
+        };
+        SetRolePermissionsRequest: {
+            permissions: string[];
         };
         SetWithholdingsRequest: {
             items: components["schemas"]["Item"][] | null;
@@ -4368,6 +4503,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JournalBookResponse"];
+                };
+            };
+        };
+    };
+    GetGeneralLedger: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                LedgerAccountId?: string;
+                Root?: string;
+                From?: string;
+                To?: string;
+                CostCenterId?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralLedgerAccountResponsePaginatedResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ExportGeneralLedger: {
+        parameters: {
+            query?: {
+                CompanyId?: string;
+                LedgerAccountId?: string;
+                Root?: string;
+                From?: string;
+                To?: string;
+                CostCenterId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -8738,6 +8938,88 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ListRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleResponse"][];
+                };
+            };
+        };
+    };
+    SetRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetRolePermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
             };
         };
     };

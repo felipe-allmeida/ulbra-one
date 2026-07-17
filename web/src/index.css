@@ -479,6 +479,18 @@ body {
   border: 1px solid var(--brand);
   border-radius: var(--radius);
 }
+/* Variante de aviso (ex.: extrato OFX importado parece ser de outra conta). */
+.form-notice.warn {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: var(--warning);
+}
+
+/* Resumo do periodo (conciliacao): valores monetarios menores para nao quebrarem em telas menores. */
+.reconciliation-summary .kpi-value {
+  font-size: 18px;
+  white-space: nowrap;
+}
 
 /* Intake choice (create flow): 3 modality cards — Folha (em breve), Nota Fiscal (primary), Adiantamento */
 .intake-choice-title {
@@ -3079,6 +3091,96 @@ tfoot td {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px 14px;
+}
+
+/* ===== Livro Razão ===== */
+/* Header: title row on top, full-width wrapping toolbar below — the Razão has more filters than fit
+   beside the title. Local to this page so the global .page-head is untouched (same as the cash-flow head). */
+.razao-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+/* Two fixed rows: row 1 = company + account group + specific account (export button pinned right),
+   row 2 = competence range + cost center. Fixed field widths keep the layout stable — selecting a long
+   account label never resizes a field or reflows the row. The 26px row-gap clears the CNPJ caption the
+   company picker anchors ~17px below its dropdown (out of flow). */
+.razao-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.razao-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.razao-filters-row .field {
+  width: 220px;
+  flex: 0 0 auto;
+}
+.razao-filters-row .field.razao-field-account {
+  width: 320px;
+}
+.razao-filters-row .field .select,
+.razao-filters-row .field .combobox-trigger,
+.razao-filters-row .field .input {
+  width: 100%;
+  min-width: 0;
+}
+/* Let the selected account label ellipsis-truncate instead of growing the trigger. */
+.razao-filters-row .combobox-value {
+  min-width: 0;
+}
+.razao-export {
+  margin-left: auto;
+}
+/* "Planilha" tab: a single flat table, grouped by account (header → opening → movements → total). */
+.razao-planilha {
+  min-width: 720px;
+}
+.razao-planilha td,
+.razao-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+  text-align: center;
+}
+/* Date + description columns read better left-aligned; the remaining columns stay centered. */
+.razao-planilha thead th:nth-child(1),
+.razao-planilha thead th:nth-child(2),
+.razao-planilha-move td:nth-child(1),
+.razao-planilha-move td:nth-child(2) {
+  text-align: left;
+}
+.razao-planilha-account td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+  padding-top: 12px;
+  text-align: left;
+}
+/* Account title on the left, its opening balance pinned to the far right on the same line. */
+.razao-planilha-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.razao-planilha-account-opening {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.razao-planilha-total td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+/* The closing-balance label spans the leading columns — right-align it so it reads next to its amount
+   instead of floating in the middle of the row. */
+.razao-planilha-total td:first-child {
+  text-align: right;
 }
 
 /* Vertical rhythm between the dashboard's stacked panels. */

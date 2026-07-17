@@ -11,7 +11,8 @@ namespace Ulbra.One.Accounting.Application.Endpoints.Reports;
 /// (omitted = consolidated across all companies).</summary>
 internal static class PostedLinesLoader
 {
-    public static async Task<List<PostedLine>> LoadAsync(IUnitOfWork uow, Guid? companyId, CancellationToken ct)
+    public static async Task<List<PostedLine>> LoadAsync(
+        IUnitOfWork uow, Guid? companyId, CancellationToken ct, Guid? costCenterId = null)
     {
         var entries = uow.ReadSet<JournalEntry>().Where(e => e.Status == JournalStatus.Posted);
         if (companyId is { } cid) entries = entries.Where(e => e.CompanyId == cid);
@@ -21,8 +22,10 @@ internal static class PostedLinesLoader
             from e in entries
             from l in e.Lines
             join a in uow.ReadSet<LedgerAccount>() on l.LedgerAccountId equals a.Id
+            where costCenterId == null || l.CostCenterId == costCenterId
             select new PostedLine(
-                a.Id, a.Code, a.Name, a.AccountGroup, a.NormalBalance, l.Side, l.Amount, e.CompetenceDate);
+                a.Id, a.Code, a.Name, a.AccountGroup, a.NormalBalance, l.Side, l.Amount, e.CompetenceDate,
+                l.CostCenterId, l.UnitId);
 
         return await query.ToListAsync(ct);
     }

@@ -21,6 +21,7 @@ public sealed class BankAccountConfiguration : BaseEntityConfiguration<BankAccou
         e.Property(x => x.OpeningBalance).HasPrecision(18, 2);
         e.Property(x => x.ReconciledBalance).HasPrecision(18, 2);
         e.Property(x => x.CnabAgreementCode).HasMaxLength(30);
+        e.Property(x => x.OfxAccountId).HasMaxLength(40);
         e.HasIndex(x => new { x.CompanyId, x.BankCode, x.Agency, x.AccountNumber, x.AccountDigit })
             .IsUnique().HasFilter("deleted_at IS NULL");
         // At most one default paying account per company (live rows only).

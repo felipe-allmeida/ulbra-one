@@ -49,7 +49,7 @@ public sealed class CompleteAccounting : IEndpoint
 
         var withholdings = p.Withholdings.Select(w => new ScheduledWithholding(w.TaxType.ToString(), w.Amount)).ToList();
         await publish.Publish(new PayableScheduled(p.Id, p.CompanyId, p.TotalAmount, p.AccountingAccountId,
-            withholdings, p.IssueDate, p.CostCenterId), ct);
+            withholdings, p.IssueDate, p.CostCenterId, p.DocumentNumber), ct);
 
         await uow.SaveChangesAsync(ct);
         return TypedResults.Ok(PayableResponse.From(p));

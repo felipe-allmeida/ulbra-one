@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Receipt } from 'lucide-react';
 import { type Payable, type Installment } from '../../api';
 import { brl } from '../../lib';
+import { P, usePermissions } from '../../permissions';
 import { Button, Panel } from '../../ui';
 import { fmtDate } from '../../datetime';
 import { InstallmentStatusBadge } from './badges';
@@ -15,6 +16,8 @@ export function InstallmentsTable({
   onRegister: (installment: Installment) => void;
 }) {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canPay = can(P.payablesPay);
   // The net becomes final (and payable) once accounting completes — show it per installment from there on.
   const showNet = p.status === 'Scheduled' || p.status === 'Paid';
   return (
@@ -53,7 +56,7 @@ export function InstallmentsTable({
                   <InstallmentStatusBadge s={inst.status} />
                 </td>
                 <td className='td-action'>
-                  {p.status === 'Scheduled' && inst.status !== 'Paid' && inst.status !== 'InRemittance' && (
+                  {canPay && p.status === 'Scheduled' && inst.status !== 'Paid' && inst.status !== 'InRemittance' && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button icon={<Receipt />} onClick={() => onRegister(inst)}>
                         {t('payments.register')}

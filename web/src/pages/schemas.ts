@@ -240,6 +240,7 @@ export const bankAccountSchema = z
     isDefaultForPayments: z.boolean(),
     defaultPaymentMethod: z.enum(PAYMENT_METHODS).nullable(),
     cnabAgreementCode: z.string(),
+    ofxAccountId: z.string(),
     // Optional at schema level so editing legacy accounts (null) stays valid; the create form enforces
     // selection (Save disabled) and the backend rejects a null on create.
     ledgerAccountId: z.string().nullable(),

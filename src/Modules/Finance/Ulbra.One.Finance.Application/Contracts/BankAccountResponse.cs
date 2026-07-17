@@ -9,11 +9,11 @@ public sealed record BankAccountResponse(
     string AccountNumber, string AccountDigit, BankAccountType AccountType, string Alias,
     decimal? OpeningBalance, bool Active,
     bool IsDefaultForPayments, PaymentMethod? DefaultPaymentMethod, string? CnabAgreementCode,
-    LedgerAccountId? LedgerAccountId)
+    LedgerAccountId? LedgerAccountId, string? OfxAccountId)
 {
     public static BankAccountResponse From(BankAccount a) => new(
         new BankAccountId(a.Id), new CompanyId(a.CompanyId), a.BankCode, a.BankName, a.Agency,
         a.AccountNumber, a.AccountDigit, a.AccountType, a.Alias, a.OpeningBalance, a.Active,
         a.IsDefaultForPayments, a.DefaultPaymentMethod, a.CnabAgreementCode,
-        a.LedgerAccountId is { } lid ? new LedgerAccountId(lid) : null);
+        a.LedgerAccountId is { } lid ? new LedgerAccountId(lid) : null, a.OfxAccountId);
 }

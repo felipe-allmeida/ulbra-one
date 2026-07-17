@@ -5,7 +5,9 @@ using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingItems;
 using Ulbra.One.Finance.Application.Endpoints.Aging.GetAgingReport;
 using Ulbra.One.Finance.Application.Endpoints.BankAccounts.CreateBankAccount;
 using Ulbra.One.Finance.Application.Endpoints.CashFlow;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.ClearReconciliation;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ConfirmMatch;
+using Ulbra.One.Finance.Application.Endpoints.Conciliation.GetPeriodSummary;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.IgnoreTransaction;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.ImportStatement;
 using Ulbra.One.Finance.Application.Endpoints.Conciliation.MatchManually;
@@ -173,6 +175,8 @@ public static class FinanceEndpoints
 
         var bankTransactions = builder.MapGroup("/bank-transactions");
         bankTransactions.MapEndpoint<ListBankTransactions>();
+        bankTransactions.MapEndpoint<GetPeriodSummary>();
+        bankTransactions.MapEndpoint<ClearReconciliation>();
         bankTransactions.MapEndpoint<ConfirmMatch>();
         bankTransactions.MapEndpoint<MatchManually>();
         bankTransactions.MapEndpoint<IgnoreTransaction>();

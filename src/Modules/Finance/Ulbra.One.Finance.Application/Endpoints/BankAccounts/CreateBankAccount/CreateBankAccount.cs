@@ -37,6 +37,10 @@ public sealed class CreateBankAccount : IEndpoint
         /// <summary>Accounting ledger account that represents this bank account (the credit account when settling a
         /// payable). Required on create.</summary>
         public LedgerAccountId? LedgerAccountId { get; set; }
+
+        /// <summary>OFX account identifier (BANKACCTFROM/ACCTID) used to warn when an imported statement belongs to
+        /// another account. Optional.</summary>
+        [NormalizeText] public string OfxAccountId { get; set; } = string.Empty;
     }
 
     public void Map(IEndpointRouteBuilder builder) =>
@@ -67,7 +71,7 @@ public sealed class CreateBankAccount : IEndpoint
             return TypedResults.Problem(detail: "A bank account with these details already exists.", statusCode: 400, title: "BankAccount.Duplicate");
 
         var acc = new BankAccount(companyId, req.BankCode, req.BankName, req.Agency, req.AccountNumber,
-            req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode, ledgerId.Value);
+            req.AccountDigit, req.AccountType, req.Alias, req.OpeningBalance, req.CnabAgreementCode, ledgerId.Value, req.OfxAccountId);
 
         if (req.IsDefaultForPayments)
         {

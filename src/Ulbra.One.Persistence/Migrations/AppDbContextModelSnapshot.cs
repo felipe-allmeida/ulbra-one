@@ -437,6 +437,9 @@ namespace Ulbra.One.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_journal_lines");
 
+                    b.HasIndex("CostCenterId")
+                        .HasDatabaseName("ix_journal_lines_cost_center_id");
+
                     b.HasIndex("JournalEntryId")
                         .HasDatabaseName("ix_journal_lines_journal_entry_id");
 
@@ -960,6 +963,11 @@ namespace Ulbra.One.Persistence.Migrations
                     b.Property<Guid?>("LedgerAccountId")
                         .HasColumnType("uuid")
                         .HasColumnName("ledger_account_id");
+
+                    b.Property<string>("OfxAccountId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ofx_account_id");
 
                     b.Property<decimal?>("OpeningBalance")
                         .HasPrecision(18, 2)
