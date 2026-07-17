@@ -25,7 +25,6 @@ export function SpreadsheetView({
             <tr>
               <th>{col('date')}</th>
               <th>{col('history')}</th>
-              <th>{col('document')}</th>
               <th>{col('costCenter')}</th>
               <th>{col('debit')}</th>
               <th>{col('credit')}</th>
@@ -36,7 +35,7 @@ export function SpreadsheetView({
             {accounts.map((a) => (
               <Fragment key={a.ledgerAccountId}>
                 <tr className='razao-planilha-account'>
-                  <td colSpan={7}>
+                  <td colSpan={6}>
                     <div className='razao-planilha-account-row'>
                       <span>{[a.accountCode, a.reducedCode, a.accountName].filter(Boolean).join(' · ')}</span>
                       <span className='razao-planilha-account-opening'>
@@ -49,7 +48,6 @@ export function SpreadsheetView({
                   <tr key={i} className='razao-planilha-move'>
                     <td>{fmtDate(m.competenceDate)}</td>
                     <td>{m.history}</td>
-                    <td className='t-mono'>{m.documentRef ?? ''}</td>
                     <td>{m.costCenterId ? (ccLabels.get(m.costCenterId) ?? '') : ''}</td>
                     <td className='amount-cell'>{m.debit ? brlCents(m.debit) : ''}</td>
                     <td className='amount-cell'>{m.credit ? brlCents(m.credit) : ''}</td>
@@ -57,7 +55,7 @@ export function SpreadsheetView({
                   </tr>
                 ))}
                 <tr className='razao-planilha-total'>
-                  <td colSpan={4}>{t('accounting.generalLedger.closing')}</td>
+                  <td colSpan={3}>{t('accounting.generalLedger.closing')}</td>
                   <td className='amount-cell'>{brlCents(a.totalDebit)}</td>
                   <td className='amount-cell'>{brlCents(a.totalCredit)}</td>
                   <td className='amount-cell'>{brlCents(a.closingBalance)}</td>

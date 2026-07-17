@@ -10,7 +10,7 @@ namespace Ulbra.One.Accounting.Application.Reports;
 public static class GeneralLedgerCsv
 {
     private const string Header =
-        "conta;codigo_resumido;nome_conta;data;historico;documento;centro_custo;debito;credito;saldo_acumulado";
+        "conta;codigo_resumido;nome_conta;data;historico;centro_custo;debito;credito;saldo_acumulado";
 
     public static string Build(
         IReadOnlyList<GeneralLedgerAccount> accounts, IReadOnlyDictionary<Guid, string> costCenterLabels)
@@ -24,7 +24,7 @@ public static class GeneralLedgerCsv
         foreach (var a in accounts)
         {
             // Opening-balance row so the accumulated-balance column stands on its own.
-            AppendRow(sb, a, date: "", history: "Saldo de abertura", document: "", costCenter: "",
+            AppendRow(sb, a, date: "", history: "Saldo de abertura", costCenter: "",
                 debit: null, credit: null, balance: a.OpeningBalance);
 
             foreach (var m in a.Movements)
@@ -32,7 +32,7 @@ public static class GeneralLedgerCsv
                 var cc = m.CostCenterId is { } id && costCenterLabels.TryGetValue(id, out var label) ? label : "";
                 AppendRow(sb, a,
                     date: m.CompetenceDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
-                    history: m.History, document: m.DocumentRef ?? "", costCenter: cc,
+                    history: m.History, costCenter: cc,
                     debit: m.Debit, credit: m.Credit, balance: m.AccumulatedBalance);
             }
         }
@@ -41,12 +41,12 @@ public static class GeneralLedgerCsv
     }
 
     private static void AppendRow(
-        StringBuilder sb, GeneralLedgerAccount a, string date, string history, string document, string costCenter,
+        StringBuilder sb, GeneralLedgerAccount a, string date, string history, string costCenter,
         decimal? debit, decimal? credit, decimal balance)
     {
         sb.Append(string.Join(';',
             Field(a.AccountCode), Field(a.ReducedCode ?? ""), Field(a.AccountName),
-            Field(date), Field(history), Field(document), Field(costCenter),
+            Field(date), Field(history), Field(costCenter),
             MoneyOrEmpty(debit), MoneyOrEmpty(credit), Money(balance)));
         sb.Append("\r\n");
     }

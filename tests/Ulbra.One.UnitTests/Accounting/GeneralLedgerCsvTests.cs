@@ -7,7 +7,7 @@ namespace Ulbra.One.UnitTests.Accounting;
 public class GeneralLedgerCsvTests
 {
     private const string Header =
-        "conta;codigo_resumido;nome_conta;data;historico;documento;centro_custo;debito;credito;saldo_acumulado";
+        "conta;codigo_resumido;nome_conta;data;historico;centro_custo;debito;credito;saldo_acumulado";
 
     [Fact]
     public void Builds_excel_friendly_csv()
@@ -25,7 +25,7 @@ public class GeneralLedgerCsvTests
         var csv = GeneralLedgerCsv.Build([account], new Dictionary<Guid, string> { [ccId] = "CC01 — Admin" });
 
         Assert.StartsWith(Header + "\r\n", csv);
-        Assert.Contains("1.1.01;R123;Caixa;;Saldo de abertura;;;;;100,00", csv); // opening row
+        Assert.Contains("1.1.01;R123;Caixa;;Saldo de abertura;;;;100,00", csv); // opening row
         Assert.Contains("1234,56", csv);                 // comma decimals
         Assert.Contains("\"Pagamento; parcial\"", csv);   // quoted (contains ';')
         Assert.Contains("'=CMD()", csv);                  // CSV formula-injection guard
