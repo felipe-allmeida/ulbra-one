@@ -192,18 +192,21 @@ export function Modal({
   onClose,
   footer,
   children,
+  size = 'default',
 }: {
   title: string;
   sub?: string;
   onClose: () => void;
   footer: ReactNode;
   children: ReactNode;
+  /** 'wide' widens the dialog for content like tables that don't fit the default 440px. */
+  size?: 'default' | 'wide';
 }) {
   return (
     <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className='modal-overlay'>
-          <Dialog.Content className='modal' aria-describedby={undefined}>
+          <Dialog.Content className={size === 'wide' ? 'modal modal-wide' : 'modal'} aria-describedby={undefined}>
             <div className='modal-head'>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div>

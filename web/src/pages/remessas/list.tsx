@@ -255,7 +255,8 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
       {/* Lines table */}
       <div style={{ fontSize: 13 }}>
         <strong>{t('remittances.return.linesTitle')}</strong>
-        <table style={{ marginTop: 8 }}>
+        <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <table>
           <thead>
             <tr>
               <th>{t('remittances.return.columns.reference')}</th>
@@ -307,7 +308,8 @@ function RemittanceDetail({ remittance, isDev }: { remittance: Remittance; isDev
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {returnLineId && (
@@ -337,6 +339,7 @@ function RemittanceDetailModal({
   return (
     <Modal
       title={t('remittances.title')}
+      size='wide'
       onClose={onClose}
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
