@@ -1,0 +1,120 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: ulbra-one-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ulbra_one
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ulbra_one"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Azurite (emulador do Azure Blob). A API (no container) acessa via azurite:10000.
+  # O fluxo fiscal é presigned (SAS): o navegador faz PUT direto na URL do storage.
+  # Como "azurite" não resolve no navegador, ObjectStorage__PublicBlobEndpoint (na API)
+  # reescreve o host da URL SAS para localhost:10000 (porta publicada abaixo) — o sig
+  # continua válido pois assina o caminho do recurso, não o host.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: ulbra-one-azurite
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 -l /data
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite_data:/data
+
+  rabbitmq:
+    build:
+      context: .
+      dockerfile: rabbitmq.Dockerfile
+    container_name: ulbra-one-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ulbra-one-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: src/API/Ulbra.One.Api/Dockerfile
+    container_name: ulbra-one-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=ulbra_one;Username=postgres;Password=postgres
+      ObjectStorage__Provider: AzureBlob
+      ObjectStorage__Bucket: attachments
+      ObjectStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      # SAS URLs are PUT directly by the browser; rewrite their host from azurite:10000 to the
+      # host-published localhost:10000 so the browser can reach them.
+      ObjectStorage__PublicBlobEndpoint: http://localhost:10000
+      MassTransit__Host: rabbitmq
+      MassTransit__User: guest
+      MassTransit__Password: guest
+      Redis__ConnectionString: redis:6379
+      # AI payable classifier. Key comes from the gitignored .env (ANTHROPIC_API_KEY); never hardcode it here.
+      Ai__Provider: Anthropic
+      Ai__ApiKey: ${ANTHROPIC_API_KEY:-}
+
+  web:
+    image: node:23-alpine
+    container_name: ulbra-one-web
+    working_dir: /app
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:5001/api
+      # Google OAuth client ID (public, not a secret). The client must have http://localhost:5173 as an authorized JS origin.
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-867854924898-uvv5b8h238cb2ctg3te66vri829dckla.apps.googleusercontent.com}
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --config.minimumReleaseAge=0 &&
+             pnpm dev --host 0.0.0.0"
+
+volumes:
+  pg_data:
+  azurite_data:
+  rabbitmq_data:
+  web_node_modules:

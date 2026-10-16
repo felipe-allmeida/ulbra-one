@@ -1,0 +1,359 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-range",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Período",
+            "type": 4,
+            "value": { "durationMs": 86400000 },
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 604800000 },
+                { "durationMs": 1209600000 },
+                { "durationMs": 2592000000 }
+              ]
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0
+      },
+      "name": "params"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Ulbra.One — ${env_name}\nSaúde da API, do frontend e das dependências. Todos os painéis respeitam o seletor de período acima.\n\n> Os `OPTIONS` (preflight CORS) são excluídos das contagens de request — eles não representam trabalho da aplicação."
+      },
+      "name": "header"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Visão geral" },
+      "name": "h-overview"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where name !startswith 'OPTIONS'\n| summarize\n    Requests = count(),\n    ['5xx'] = countif(toint(resultCode) >= 500),\n    ['4xx'] = countif(toint(resultCode) between (400 .. 499)),\n    ['p50 ms'] = round(percentile(duration, 50)),\n    ['p95 ms'] = round(percentile(duration, 95)),\n    ['p99 ms'] = round(percentile(duration, 99))",
+        "size": 4,
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "kpis"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where name !startswith 'OPTIONS'\n| extend Classe = case(toint(resultCode) >= 500, '5xx', toint(resultCode) >= 400, '4xx', '2xx/3xx')\n| summarize Requests = count() by bin(timestamp, 15m), Classe\n| render timechart",
+        "size": 0,
+        "title": "Requests por classe de status",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "timechart"
+      },
+      "customWidth": "50",
+      "name": "requests-over-time"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where name !startswith 'OPTIONS'\n| summarize ['p50'] = percentile(duration, 50), ['p95'] = percentile(duration, 95), ['p99'] = percentile(duration, 99) by bin(timestamp, 15m)\n| render timechart",
+        "size": 0,
+        "title": "Latência (ms)",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "timechart"
+      },
+      "customWidth": "50",
+      "name": "latency-over-time"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Endpoints" },
+      "name": "h-endpoints"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where name !startswith 'OPTIONS'\n| summarize\n    Requests = count(),\n    ['Erros'] = countif(toint(resultCode) >= 400),\n    ['p50 ms'] = round(percentile(duration, 50)),\n    ['p95 ms'] = round(percentile(duration, 95)),\n    ['p99 ms'] = round(percentile(duration, 99))\n  by Endpoint = name\n| extend ['% erro'] = round(100.0 * Erros / Requests, 1)\n| order by ['p95 ms'] desc\n| take 30",
+        "size": 0,
+        "title": "Mais lentos (p95)",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "Requests", "formatter": 4, "formatOptions": { "palette": "blue" } },
+            { "columnMatch": "p95 ms", "formatter": 4, "formatOptions": { "palette": "orange" } },
+            { "columnMatch": "% erro", "formatter": 4, "formatOptions": { "palette": "redBright" } }
+          ]
+        }
+      },
+      "customWidth": "50",
+      "name": "slowest-endpoints"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where name !startswith 'OPTIONS'\n| summarize Requests = count(), ['p95 ms'] = round(percentile(duration, 95)) by Endpoint = name\n| order by Requests desc\n| take 30",
+        "size": 0,
+        "title": "Mais chamados",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "Requests", "formatter": 4, "formatOptions": { "palette": "blue" } }
+          ]
+        }
+      },
+      "customWidth": "50",
+      "name": "top-endpoints"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where toint(resultCode) >= 400\n| summarize Ocorrencias = count(), Ultima = max(timestamp) by Status = resultCode, Endpoint = name\n| order by Ocorrencias desc\n| take 40",
+        "size": 0,
+        "title": "Requests com falha (4xx/5xx)",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "failed-requests"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Exceções e avisos" },
+      "name": "h-exceptions"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "exceptions\n| summarize Ocorrencias = count(), Ultima = max(timestamp) by Tipo = type, Mensagem = outerMessage, Operacao = operation_Name\n| order by Ocorrencias desc\n| take 40",
+        "size": 0,
+        "title": "Exceções agrupadas",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "Ocorrencias", "formatter": 4, "formatOptions": { "palette": "redBright" } }
+          ]
+        }
+      },
+      "customWidth": "60",
+      "name": "exceptions-grouped"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "traces\n| where severityLevel >= 2\n| extend Categoria = tostring(customDimensions['CategoryName'])\n| summarize Ocorrencias = count() by Categoria, Aviso = substring(message, 0, 120)\n| order by Ocorrencias desc\n| take 25",
+        "size": 0,
+        "title": "Warnings e erros de log",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "customWidth": "40",
+      "name": "warning-traces"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Dependências\nO polling do outbox/inbox do MassTransit é filtrado — sem isso ele responde por ~99% das dependências e esconde todo o resto." },
+      "name": "h-deps"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "dependencies\n| where not(type == 'postgresql' and (data has 'masstransit.inbox_state' or data has 'masstransit.outbox_state'))\n| summarize\n    Chamadas = count(),\n    Falhas = countif(success == false),\n    ['p95 ms'] = round(percentile(duration, 95))\n  by Tipo = type, Destino = target\n| extend ['% falha'] = round(100.0 * Falhas / Chamadas, 1)\n| order by Chamadas desc",
+        "size": 0,
+        "title": "Saúde por dependência",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "% falha", "formatter": 4, "formatOptions": { "palette": "redBright" } }
+          ]
+        }
+      },
+      "customWidth": "50",
+      "name": "dependency-health"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "dependencies\n| where success == false\n| summarize Ocorrencias = count(), Ultima = max(timestamp) by Tipo = type, Operacao = name, Codigo = resultCode\n| order by Ocorrencias desc\n| take 25",
+        "size": 0,
+        "title": "Dependências com falha",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "customWidth": "50",
+      "name": "dependency-failures"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "dependencies\n| where type == 'postgresql'\n| extend Origem = case(\n    data has 'masstransit.inbox_state', 'polling: inbox cleanup',\n    data has 'masstransit.outbox_state', 'polling: outbox delivery',\n    data has 'masstransit.outbox_message', 'outbox: mensagens',\n    'aplicação')\n| summarize Queries = count() by Origem\n| order by Queries desc",
+        "size": 0,
+        "title": "Queries Postgres: aplicação vs. polling do outbox",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "piechart"
+      },
+      "name": "postgres-noise"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Infraestrutura" },
+      "name": "h-infra"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "ca-cpu",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "Microsoft.App/containerapps",
+        "metricScope": 0,
+        "resourceIds": ["${ca_api_id}"],
+        "timeContextFromParameter": "TimeRange",
+        "timeContext": { "durationMs": 0 },
+        "metrics": [
+          {
+            "namespace": "Microsoft.App/containerapps",
+            "metric": "Microsoft.App/containerapps-Basic-UsageNanoCores",
+            "aggregation": 4,
+            "columnName": "CPU (nanocores, máx)"
+          },
+          {
+            "namespace": "Microsoft.App/containerapps",
+            "metric": "Microsoft.App/containerapps-Basic-WorkingSetBytes",
+            "aggregation": 4,
+            "columnName": "Memória (bytes, máx)"
+          }
+        ],
+        "title": "API — CPU e memória"
+      },
+      "customWidth": "50",
+      "name": "ca-api-resources"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "ca-replicas",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "Microsoft.App/containerapps",
+        "metricScope": 0,
+        "resourceIds": ["${ca_api_id}"],
+        "timeContextFromParameter": "TimeRange",
+        "timeContext": { "durationMs": 0 },
+        "metrics": [
+          {
+            "namespace": "Microsoft.App/containerapps",
+            "metric": "Microsoft.App/containerapps-Basic-Replicas",
+            "aggregation": 4,
+            "columnName": "Réplicas (máx)"
+          },
+          {
+            "namespace": "Microsoft.App/containerapps",
+            "metric": "Microsoft.App/containerapps-Basic-RestartCount",
+            "aggregation": 4,
+            "columnName": "Restarts (máx)"
+          }
+        ],
+        "title": "API — réplicas e restarts"
+      },
+      "customWidth": "50",
+      "name": "ca-api-replicas"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "traces\n| where customDimensions['CategoryName'] == 'Microsoft.Hosting.Lifetime'\n| where message startswith 'Application started'\n| summarize Boots = count() by bin(timestamp, 1h)\n| render columnchart",
+        "size": 0,
+        "title": "Boots da API (deploys, restarts e escala)",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "barchart"
+      },
+      "name": "boots"
+    },
+    {
+      "type": 1,
+      "content": { "json": "### Volume de telemetria\nSe o polling do outbox dominar este gráfico, ver a issue de ruído de telemetria — ele é o principal item da conta de ingestão do Application Insights." },
+      "name": "h-ingest"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union requests, exceptions, dependencies, traces\n| summarize Itens = count() by itemType, bin(timestamp, 1h)\n| render timechart",
+        "size": 0,
+        "title": "Itens ingeridos por tipo",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "timechart"
+      },
+      "name": "ingestion-volume"
+    }
+  ],
+  "fallbackResourceIds": ["${appi_id}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

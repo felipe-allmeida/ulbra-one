@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!-- AsSplitQuery. Relational-generic, not provider-specific: the Application layer still knows
+         nothing about Postgres. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <!-- [SwaggerSchema] on request DTOs / query-parameter objects. Referenced here (not per module) so every
+         module's Application project picks it up transitively — see docs/api-design.md "Endpoint documentation". -->
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <!-- Overrides the vulnerable 2.3.0 pulled transitively by Annotations (CVE-2026-49451); see Directory.Packages.props.
+         Flows to every project that references this one, which is why they don't each need the pin. -->
+    <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Ulbra.One.Common.Domain/Ulbra.One.Common.Domain.csproj" />
+    <ProjectReference Include="../../Ulbra.One.SourceGenerators/Ulbra.One.SourceGenerators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

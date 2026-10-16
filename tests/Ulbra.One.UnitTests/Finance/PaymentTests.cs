@@ -1,0 +1,143 @@
+using Ulbra.One.Finance.Domain;
+using Ulbra.One.Finance.Domain.Entities;
+using Xunit;
+
+namespace Ulbra.One.UnitTests.Finance;
+
+public class PaymentTests
+{
+    private static Payable ApprovedPayable(decimal total, int count = 1)
+    {
+        var p = new Payable(Guid.NewGuid(), PayableOrigin.Manual, Guid.NewGuid(), "CEEE", null, null, "Energia",
+            Guid.NewGuid(), null, Payable.GenerateInstallments(total, count, new DateOnly(2026, 7, 10), 1));
+        var at = new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero);
+        p.Approve("u1", at);
+        // Complete accounting so the payable is genuinely Scheduled (payable): payments only run on a Scheduled title.
+        p.CompleteAccounting("u1", at, hasFiscalDocument: true);
+        return p;
+    }
+
+    private static Payment NewPayment(Installment inst, decimal amount, decimal interest = 0, decimal fine = 0, decimal discount = 0) =>
+        new(inst.Id, Guid.NewGuid(), new DateOnly(2026, 7, 10), amount, Guid.NewGuid(), PaymentMethod.Pix, interest, fine, discount, null, Guid.NewGuid(), default);
+
+    [Fact]
+    public void Principal_applied_nets_interest_fine_discount()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Equal(1000m, NewPayment(inst, amount: 1050m, interest: 50m).PrincipalApplied);
+        Assert.Equal(1000m, NewPayment(inst, amount: 980m, discount: 20m).PrincipalApplied);
+    }
+
+    [Fact]
+    public void Full_payment_marks_installment_paid_and_payable_paid()
+    {
+        var payable = ApprovedPayable(1000m);
+        var inst = payable.Installments[0];
+        inst.RegisterPayment(NewPayment(inst, 1000m));
+        payable.RecomputeSettlement();
+        Assert.Equal(InstallmentStatus.Paid, inst.Status);
+        Assert.Equal(1000m, inst.PaidAmount);
+        Assert.Equal(PayableStatus.Paid, payable.Status);
+    }
+
+    [Fact]
+    public void Partial_payment_marks_partially_paid_and_keeps_scheduled()
+    {
+        var payable = ApprovedPayable(1000m);
+        var inst = payable.Installments[0];
+        inst.RegisterPayment(NewPayment(inst, 400m));
+        payable.RecomputeSettlement();
+        Assert.Equal(InstallmentStatus.PartiallyPaid, inst.Status);
+        Assert.Equal(400m, inst.PaidAmount);
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
+    }
+
+    [Fact]
+    public void Payable_settles_only_when_all_installments_paid()
+    {
+        var payable = ApprovedPayable(1000m, count: 2);
+        var i0 = payable.Installments[0];
+        i0.RegisterPayment(NewPayment(i0, 500m));
+        payable.RecomputeSettlement();
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
+        var i1 = payable.Installments[1];
+        i1.RegisterPayment(NewPayment(i1, 500m));
+        payable.RecomputeSettlement();
+        Assert.Equal(PayableStatus.Paid, payable.Status);
+    }
+
+    [Fact]
+    public void Registering_on_a_paid_installment_throws()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        inst.RegisterPayment(NewPayment(inst, 1000m));
+        Assert.Throws<InvalidOperationException>(() => inst.RegisterPayment(NewPayment(inst, 100m)));
+    }
+
+    [Fact]
+    public void Reversing_a_payment_reopens_the_installment_and_unpaids_payable()
+    {
+        var payable = ApprovedPayable(1000m);
+        var inst = payable.Installments[0];
+        var pay = inst.RegisterPayment(NewPayment(inst, 1000m));
+        payable.RecomputeSettlement();
+        Assert.Equal(PayableStatus.Paid, payable.Status);
+        inst.ReversePayment(pay.Id, "conta errada");
+        payable.RecomputeSettlement();
+        Assert.Equal(InstallmentStatus.Open, inst.Status);
+        Assert.Equal(0m, inst.PaidAmount);
+        Assert.Equal(PayableStatus.Scheduled, payable.Status);
+        Assert.True(pay.IsReversed);
+    }
+
+    [Fact]
+    public void Reversing_an_already_reversed_payment_throws()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        var pay = inst.RegisterPayment(NewPayment(inst, 1000m));
+        inst.ReversePayment(pay.Id, "x");
+        Assert.Throws<InvalidOperationException>(() => inst.ReversePayment(pay.Id, "y"));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public void Payment_ctor_rejects_nonpositive_amount(int amount)
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, amount));
+    }
+
+    [Fact]
+    public void Payment_ctor_rejects_negative_components()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, interest: -5m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, fine: -5m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => NewPayment(inst, 100m, discount: -5m));
+    }
+
+    [Fact]
+    public void Payment_ctor_rejects_negative_principal()
+    {
+        // interest + fine exceed amount + discount → principal would be negative (un-settles the installment)
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<ArgumentException>(() => NewPayment(inst, amount: 100m, interest: 150m));
+    }
+
+    [Fact]
+    public void RegisterPayment_rejects_overpayment_beyond_outstanding_balance()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        Assert.Throws<InvalidOperationException>(() => inst.RegisterPayment(NewPayment(inst, amount: 1500m)));
+        Assert.Equal(0m, inst.PaidAmount); // nothing applied
+    }
+
+    [Fact]
+    public void RegisterPayment_allows_exact_balance_within_rounding_tolerance()
+    {
+        var inst = ApprovedPayable(1000m).Installments[0];
+        inst.RegisterPayment(NewPayment(inst, amount: 1000m));
+        Assert.Equal(InstallmentStatus.Paid, inst.Status);
+    }
+}

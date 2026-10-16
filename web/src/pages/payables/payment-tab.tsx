@@ -1,0 +1,362 @@
+import { type ReactNode, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { Receipt, FileOutput, Lock } from 'lucide-react';
+import { type PayableListItem } from '../../api';
+import { usePayables, usePayable, useHoldInstallment, useReleaseInstallmentHold } from '../../queries';
+import { P, usePermissions } from '../../permissions';
+import { brl } from '../../lib';
+import { Panel, Button, Drawer, EmptyState, SkeletonRows } from '../../ui';
+import { fmtDate } from '../../datetime';
+import { StageTabBar, type StageTab } from '../../components/workflow';
+import { ResponsiveTable, type Column } from '../../components/ResponsiveTable';
+import { railBucket, toRailLine, todayIso } from './payment-rail';
+import { InstallmentRailChip } from './badges';
+import { PaymentForm } from './payment-form';
+import { HoldPrompt } from './hold-prompt';
+
+// ─── Column helper (shared shape of the Remessas/Manuais rail tables) ──────────
+
+/** Ordem = a ordem já renderizada hoje (vencimento, favorecido, parcela, bruto, a pagar, status, ação).
+ * Nenhum campo da linha é um identificador natural (não há "descrição" aqui, ao contrário do
+ * payable-table.tsx) — favorecido é quem mais se aproxima de identificar a linha, então vira `title`;
+ * vencimento e parcela ficam como `meta` (cap 2). O valor em negrito ("a pagar", líquido) é quem o olho
+ * busca, então é o único `amount`; o bruto é o 2º monetário e vira `detail` (cardinalidade do papel, ver
+ * ResponsiveTable.tsx). `status` e a ação seguem o payable-table.tsx. */
+function railColumns(
+  t: TFunction,
+  statusCell: (l: PayableListItem) => ReactNode,
+  actionCell: (l: PayableListItem) => ReactNode,
+): Column<PayableListItem>[] {
+  return [
+    {
+      key: 'dueDate',
+      header: t('payables.columns.dueDate'),
+      role: 'meta',
+      cell: (l) => <span className='t-mono'>{fmtDate(l.dueDate)}</span>,
+    },
+    { key: 'vendor', header: t('payables.columns.vendor'), role: 'title', cell: (l) => l.counterpartyName || '—' },
+    {
+      key: 'installment',
+      header: t('payables.columns.installment'),
+      role: 'meta',
+      cell: (l) => (
+        <span className='t-mono'>
+          {l.sequence}/{l.installmentCount}
+        </span>
+      ),
+    },
+    {
+      key: 'gross',
+      header: t('payables.columns.grossAmount'),
+      role: 'detail',
+      align: 'right',
+      cell: (l) => <span className='amount-cell'>{brl(l.amount)}</span>,
+    },
+    {
+      key: 'toPay',
+      header: t('payables.columns.toPay'),
+      role: 'amount',
+      align: 'right',
+      cell: (l) => (
+        <span className='amount-cell'>
+          <strong>{brl(l.netAmount)}</strong>
+        </span>
+      ),
+    },
+    { key: 'status', header: t('payables.columns.status'), role: 'status', cell: statusCell },
+    { key: 'actions', header: '', role: 'detail', cell: actionCell },
+  ];
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+type RailKey = 'remittance' | 'manual';
+
+// ─── Data helpers ─────────────────────────────────────────────────────────────
+
+/** Groups items by scheduledPaymentDate for the Remessas rail. */
+function groupByScheduledDate(
+  items: PayableListItem[],
+): { date: string; items: PayableListItem[]; subtotal: number }[] {
+  const map = new Map<string, PayableListItem[]>();
+  for (const item of items) {
+    const d = item.scheduledPaymentDate ?? item.dueDate;
+    (map.get(d) ?? map.set(d, []).get(d)!).push(item);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, groupItems]) => ({
+      date,
+      items: groupItems,
+      // Net of withholdings — what the remittance will actually debit on that date.
+      subtotal: groupItems.reduce((s, i) => s + i.netAmount, 0),
+    }));
+}
+
+// ─── Remessas rail ────────────────────────────────────────────────────────────
+
+function RemessasRail({
+  items,
+  onNavigateRemessa,
+}: {
+  items: PayableListItem[];
+  onNavigateRemessa: (remittanceId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const today = todayIso();
+  const holdMutation = useHoldInstallment();
+  const [holdingId, setHoldingId] = useState<string | null>(null);
+
+  const groups = groupByScheduledDate(items);
+
+  // nextSweep banner: earliest group with scheduledPaymentDate <= today
+  const nextSweepGroups = groups.filter((g) => g.date <= today);
+  const bannerGroup = nextSweepGroups[0] ?? groups[0];
+  const showBanner = bannerGroup != null;
+
+  return (
+    <>
+      {showBanner && (
+        <div className='chip' style={{ marginBottom: 12, display: 'inline-block' }}>
+          {t('workflow.payment.nextRemittance', {
+            date: fmtDate(bannerGroup.date),
+            count: bannerGroup.items.length,
+            amount: brl(bannerGroup.subtotal),
+          })}
+        </div>
+      )}
+
+      {groups.map((g) => (
+        <Panel key={g.date} title={`${fmtDate(g.date)} · ${brl(g.subtotal)}`}>
+          <ResponsiveTable
+            rows={g.items}
+            rowKey={(l) => l.installmentId}
+            columns={railColumns(
+              t,
+              (l) => {
+                const railLine = toRailLine(l);
+                const bucket = railBucket(railLine, today);
+                const isInRemittance = bucket === 'inRemittance';
+                return isInRemittance && l.remittanceSequence != null ? (
+                  <button
+                    type='button'
+                    className='badge-status badge-remessa'
+                    style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                    onClick={() => l.remittanceId && onNavigateRemessa(l.remittanceId)}
+                  >
+                    {t('installments.rail.inRemittance', { seq: l.remittanceSequence })}
+                  </button>
+                ) : (
+                  <InstallmentRailChip line={railLine} today={today} />
+                );
+              },
+              (l) => {
+                const bucket = railBucket(toRailLine(l), today);
+                const canHold = bucket === 'scheduled' || bucket === 'nextSweep';
+                return (
+                  <>
+                    {canHold && holdingId !== l.installmentId && (
+                      <Button icon={<Lock />} onClick={() => setHoldingId(l.installmentId)}>
+                        {t('workflow.payment.hold')}
+                      </Button>
+                    )}
+                    {holdingId === l.installmentId && (
+                      <HoldPrompt
+                        onConfirm={(reason) => {
+                          holdMutation.mutate({ id: l.payableId, installmentId: l.installmentId, reason });
+                          setHoldingId(null);
+                        }}
+                        onCancel={() => setHoldingId(null)}
+                      />
+                    )}
+                  </>
+                );
+              },
+            )}
+          />
+        </Panel>
+      ))}
+
+      {items.length === 0 && <EmptyState icon={<Receipt />} title={t('payables.empty.noItemsTitle')} />}
+    </>
+  );
+}
+
+// ─── Manuais rail ─────────────────────────────────────────────────────────────
+
+function ManuaisRail({ items, onBaixa }: { items: PayableListItem[]; onBaixa: (item: PayableListItem) => void }) {
+  const { t } = useTranslation();
+  const { can } = usePermissions();
+  const canPay = can(P.payablesPay);
+  const today = todayIso();
+  const releaseMutation = useReleaseInstallmentHold();
+
+  // Split into held vs manual (non-held) sub-groups
+  const heldItems = items.filter((l) => l.isHeld);
+  const manualItems = items.filter((l) => !l.isHeld);
+
+  if (items.length === 0) {
+    return <EmptyState icon={<Receipt />} title={t('payables.empty.noItemsTitle')} />;
+  }
+
+  return (
+    <>
+      {manualItems.length > 0 && (
+        <Panel title={`${t('installments.rail.payManual')} · ${brl(manualItems.reduce((s, i) => s + i.netAmount, 0))}`}>
+          <ResponsiveTable
+            rows={manualItems}
+            rowKey={(l) => l.installmentId}
+            columns={railColumns(
+              t,
+              (l) => (
+                <InstallmentRailChip line={toRailLine(l)} today={today} />
+              ),
+              (l) =>
+                canPay && l.installmentStatus !== 'InRemittance' && l.installmentStatus !== 'Paid' ? (
+                  <Button icon={<Receipt />} onClick={() => onBaixa(l)}>
+                    {t('payments.register')}
+                  </Button>
+                ) : null,
+            )}
+          />
+        </Panel>
+      )}
+
+      {heldItems.length > 0 && (
+        <Panel title={`${t('workflow.payment.heldGroup')} · ${brl(heldItems.reduce((s, i) => s + i.netAmount, 0))}`}>
+          <ResponsiveTable
+            rows={heldItems}
+            rowKey={(l) => l.installmentId}
+            columns={railColumns(
+              t,
+              (l) => (
+                <InstallmentRailChip line={toRailLine(l)} today={today} />
+              ),
+              (l) => (
+                <Button onClick={() => releaseMutation.mutate({ id: l.payableId, installmentId: l.installmentId })}>
+                  {t('workflow.payment.release')}
+                </Button>
+              ),
+            )}
+          />
+        </Panel>
+      )}
+    </>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export function PaymentTab({ companyId }: { companyId: string }) {
+  const { t } = useTranslation();
+  const nav = useNavigate();
+  const [page, setPage] = useState(1);
+  const [activeRail, setActiveRail] = useState<RailKey>('remittance');
+  useEffect(() => setPage(1), [companyId]);
+  const list = usePayables({ companyId, status: 'Scheduled', page }, { enabled: !!companyId });
+  const items = list.data?.items ?? [];
+  const today = todayIso();
+
+  // Partition items by rail
+  const remessasItems = items.filter((l) => {
+    const bucket = railBucket(toRailLine(l), today);
+    return bucket === 'scheduled' || bucket === 'nextSweep' || bucket === 'inRemittance' || bucket === 'paid';
+  });
+  const manuaisItems = items.filter((l) => {
+    const bucket = railBucket(toRailLine(l), today);
+    return bucket === 'manual' || bucket === 'held';
+  });
+
+  // "A pagar": net of withholdings — matches what the remittances/baixas will actually debit.
+  const total = items.reduce((s, i) => s + i.netAmount, 0);
+
+  // Dar baixa drawer state (used in Manuais rail)
+  const [baixa, setBaixa] = useState<PayableListItem | null>(null);
+  const detailQuery = usePayable(baixa?.payableId);
+  const detail = detailQuery ?? { data: undefined };
+  const installment = detail.data?.installments.find((i) => i.id === baixa?.installmentId) ?? null;
+
+  const railTabs: StageTab[] = [
+    { key: 'remittance', label: t('workflow.payment.railRemittance'), count: remessasItems.length },
+    { key: 'manual', label: t('workflow.payment.railManual'), count: manuaisItems.length },
+  ];
+
+  if (list.isLoading) {
+    return (
+      <Panel title={t('workflow.payment.railRemittance')}>
+        <table>
+          <thead>
+            <tr>
+              <th>{t('payables.columns.dueDate')}</th>
+              <th>{t('payables.columns.vendor')}</th>
+              <th>{t('payables.columns.installment')}</th>
+              <th style={{ textAlign: 'right' }}>{t('payables.columns.grossAmount')}</th>
+              <th style={{ textAlign: 'right' }}>{t('payables.columns.toPay')}</th>
+              <th>{t('payables.columns.status')}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            <SkeletonRows rows={5} cols={7} />
+          </tbody>
+        </table>
+      </Panel>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <EmptyState icon={<Receipt />} title={t('payables.empty.noItemsTitle')} sub={t('payables.empty.noItemsSub')} />
+    );
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <strong>{t('workflow.payment.weekSummaryToPay', { amount: brl(total), count: items.length })}</strong>
+        {activeRail === 'remittance' && (
+          <Button
+            icon={<FileOutput />}
+            onClick={() => {
+              void nav('/app/remittances');
+            }}
+          >
+            {t('payables.payment.generateRemittance')}
+          </Button>
+        )}
+      </div>
+
+      <StageTabBar tabs={railTabs} active={activeRail} onChange={(k) => setActiveRail(k as RailKey)} />
+
+      <div style={{ marginTop: 16 }}>
+        {activeRail === 'remittance' ? (
+          <RemessasRail
+            items={remessasItems}
+            onNavigateRemessa={(remittanceId) => {
+              void nav(`/app/remittances?remittance=${remittanceId}`);
+            }}
+          />
+        ) : (
+          <ManuaisRail items={manuaisItems} onBaixa={setBaixa} />
+        )}
+      </div>
+
+      <Drawer
+        open={!!baixa}
+        onClose={() => setBaixa(null)}
+        title={t('payments.register')}
+        sub={baixa?.counterpartyName}
+      >
+        {detail.data && installment && (
+          <PaymentForm
+            payable={detail.data}
+            installment={installment}
+            onDone={() => setBaixa(null)}
+            onCancel={() => setBaixa(null)}
+          />
+        )}
+      </Drawer>
+    </>
+  );
+}
