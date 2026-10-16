@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- NU1903: transitive test-only dependency (System.Security.Cryptography.Xml via
+         Microsoft.AspNetCore.Mvc.Testing). Not shipped; keep it from failing the test build. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903;NU1902</WarningsNotAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/API/Ulbra.One.Api/Ulbra.One.Api.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Domain/Ulbra.One.Audit.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/Audit/Ulbra.One.Audit.Infrastructure/Ulbra.One.Audit.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
+</Project>

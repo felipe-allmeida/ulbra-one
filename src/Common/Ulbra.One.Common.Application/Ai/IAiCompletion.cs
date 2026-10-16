@@ -1,0 +1,24 @@
+using Ulbra.One.Common.Domain;
+
+namespace Ulbra.One.Common.Application.Ai;
+
+/// <summary>Provider-agnostic LLM completion that returns a strongly-typed, schema-validated result.</summary>
+public interface IAiCompletion
+{
+    Task<Result<TResult>> CompleteAsync<TResult>(
+        AiPrompt prompt,
+        AiOptions? options = null,
+        CancellationToken ct = default) where TResult : class;
+}
+
+/// <summary>A system + user prompt pair, with optional document/image attachments (multimodal).</summary>
+public sealed record AiPrompt(string System, string User, IReadOnlyList<AiAttachment>? Attachments = null);
+
+/// <summary>A binary attachment (PDF/image) for multimodal extraction. MediaType e.g. "application/pdf", "image/png".</summary>
+public sealed record AiAttachment(ReadOnlyMemory<byte> Data, string MediaType);
+
+/// <summary>Per-call options. <see cref="Effort"/> is reserved (not wired in v1).</summary>
+public sealed record AiOptions(string? Model = null, AiEffort Effort = AiEffort.Medium);
+
+public enum AiEffort { Low, Medium, High }
+

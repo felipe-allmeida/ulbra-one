@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
+    <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Seeding/Resources/aelbra-plano-contabil-sa.json">
+      <LogicalName>aelbra-plano-contabil-sa.json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Seeding/Resources/aelbra-active-accounts.json">
+      <LogicalName>aelbra-active-accounts.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

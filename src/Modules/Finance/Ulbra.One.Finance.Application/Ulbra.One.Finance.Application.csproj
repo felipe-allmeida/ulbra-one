@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="PDFsharp" />
+    <PackageReference Include="PDFsharp-MigraDoc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Reports/Resources/DejaVuSans.ttf">
+      <LogicalName>DejaVuSans.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports/Resources/DejaVuSans-Bold.ttf">
+      <LogicalName>DejaVuSans-Bold.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports/Resources/logo.png">
+      <LogicalName>logo.png</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Ulbra.One.Finance.Domain/Ulbra.One.Finance.Domain.csproj" />
+    <ProjectReference Include="../../../Common/Ulbra.One.Common.Application/Ulbra.One.Common.Application.csproj" />
+    <!-- Read-only: classification reads the global chart of accounts (LedgerAccount) via uow.ReadSet<T>(). -->
+    <ProjectReference Include="../../Accounting/Ulbra.One.Accounting.Domain/Ulbra.One.Accounting.Domain.csproj" />
+    <ProjectReference Include="../../Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
+    <ProjectReference Include="../../Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
+    <!-- Read-only: the payments report resolves Solicitante/Aprovador from the originating Requisition + its transition trail via uow.ReadSet<T>(). -->
+    <ProjectReference Include="../../Budgeting/Ulbra.One.Budgeting.Domain/Ulbra.One.Budgeting.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Ulbra.One.Common.Domain" />
+  </ItemGroup>
+</Project>

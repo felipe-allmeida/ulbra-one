@@ -1,0 +1,75 @@
+using Microsoft.AspNetCore.Http;
+using Ulbra.One.Common.Application.Errors;
+using Ulbra.One.Common.Domain.Errors;
+using Ulbra.One.Common.Domain;
+using Ulbra.One.Common.Domain.Validation;
+
+namespace Ulbra.One.Budgeting.Application.Endpoints.Requisitions;
+
+/// <summary>Shared validation + projection of a submitted financial plan (installments + single emission date),
+/// returning RFC7807 problems with stable title codes (the frontend i18n contract). Used by the financial
+/// complement (required) and the front-load path on create/update (optional). Mirrors the guards so all
+/// three agree; domain-level rules (IssueDateAfterFirstDueDate, RecurringSingleInstallment) are enforced by the
+/// aggregate. Reuses <see cref="FinancialComplementInstallment"/> as the single installment CLR type so
+/// Swashbuckle emits one OpenAPI schema.</summary>
+internal static class FinancialPlanValidation
+{
+    /// <summary>Validates the plan and projects it to the domain tuple shape. With <paramref name="required"/>
+    /// false (front-load), an entirely-absent plan (no installments and no issue date) yields
+    /// <paramref name="plan"/> = null with no error — the caller then clears any prior plan. Returns false and
+    /// sets <paramref name="error"/> on a validation failure.</summary>
+    public static bool TryBuild(
+        DateOnly? issueDate,
+        IReadOnlyList<FinancialComplementInstallment>? installments,
+        bool required,
+        out IReadOnlyList<(DateOnly DueDate, decimal Amount, PaymentMethod Method, string? BoletoDigitableLine, string? PixKeyOverride)>? plan,
+        out IResult? error,
+        // false (create/update draft) STORES a wrong-length boleto line instead of rejecting it — the draft (and
+        // its read boleto attachment) saves; the 47/48 rule is enforced at Submit. Complement submit keeps it true.
+        bool enforceBoletoLine = true)
+    {
+        plan = null;
+        error = null;
+
+        var provided = installments is { Count: > 0 } || issueDate is not null;
+        if (!provided)
+        {
+            if (required) error = Problem(ErrorCodes.Requisition.InstallmentsRequired, "At least one installment is required.");
+            return !required;
+        }
+
+        if (installments is null || installments.Count == 0)
+        {
+            error = Problem(ErrorCodes.Requisition.InstallmentsRequired, "At least one installment is required.");
+            return false;
+        }
+        if (installments.Any(i => i.Amount <= 0))
+        {
+            error = Problem(ErrorCodes.Requisition.InstallmentAmountInvalid, "Each installment amount must be greater than zero.");
+            return false;
+        }
+        if (issueDate is not DateOnly issue || issue == default)
+        {
+            error = Problem(ErrorCodes.Requisition.IssueDateRequired, "The emission date is required.");
+            return false;
+        }
+        // A boleto installment must carry a valid linha digitável, validated at entry so an invalid/missing
+        // barcode never becomes a silent remittance-time skip (AEL-932). Mirrors the CNAB remittance rule
+        // (Finance CnabFieldValidation.BoletoReason): 47 digits (bancário) or 48 (convênio, starting with 8).
+        if (enforceBoletoLine
+            && installments.Any(i => i.PaymentMethod == PaymentMethod.Boleto && !BoletoLine.IsValid(i.BoletoDigitableLine)))
+        {
+            error = Problem(ErrorCodes.Requisition.BoletoDigitableLineInvalid,
+                "A boleto installment requires a linha digitável with 47 (bancário) or 48 (convênio, starting with 8) digits.");
+            return false;
+        }
+
+        plan = installments.Select(i => (i.DueDate, i.Amount, i.PaymentMethod,
+            i.PaymentMethod == PaymentMethod.Boleto ? i.BoletoDigitableLine : null,
+            i.PaymentMethod == PaymentMethod.Pix ? i.PixKeyOverride : null)).ToList();
+        return true;
+    }
+
+    private static IResult Problem(string errorCode, string detail) =>
+        ErrorResults.InvalidRequest(detail, errorCode);
+}

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- AppDbContext.NameRewriter is internal; the unit tests pin its output to the deployed FK names. -->
+    <InternalsVisibleTo Include="Ulbra.One.UnitTests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+    <!-- Was flowing transitively through the Audit.Infrastructure project reference; this project
+         calls UseNpgsql directly, so it declares the provider itself. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

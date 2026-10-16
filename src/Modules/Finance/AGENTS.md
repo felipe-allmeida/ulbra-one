@@ -1,0 +1,19 @@
+# Finance Module
+**Purpose:** Accounts payable + cash/bank lifecycle. Owns the `Payable` aggregate (with installments, payments, attachments), bank accounts, chart of accounts, expense categories, classification, and bank-statement conciliation/aging.
+**Schema:** `finance`  ·  **UoW:** inject `IUnitOfWork` directly (no key — single non-keyed `AppDbContext`-backed UoW)
+## Boundaries
+- Belongs here: `Payable` (aggregate root) + `Installment` + `Payment` + `PayableAttachment`; `BankAccount`, `ChartAccount`, `ExpenseCategory`, `ClassificationPolicy`; conciliation (`BankStatementImport`, `BankTransaction`); aging reports. Endpoints under `/payables`, `/bank-accounts`, `/chart-accounts`, `/expense-categories`, `/classification-policies`, `/conciliation`, `/aging`, `/transactions`.
+- **Legacy:** `Transaction` is the old generic finance entity, superseded by the `Payable` aggregate (see `TODO(AEL-579)` in `Transaction.cs`). Do not extend it; new payable work goes through `Payable`.
+- Recent invariants (AEL-579): **optimistic concurrency via Postgres `xmin`** on `Payable` + `Installment` (→ 409 on conflict); **payments are append-only** — a payable with payments cannot be edited, payment FK is `Restrict`; payment components non-negative, no overpayment beyond balance. Preserve these.
+- **CNAB return codes (AEL-797):** `Domain/Cnab/CnabReturnCodes.cs` holds the full 131-code FEBRABAN/Santander occurrence table (PT descriptions) — a **vocabulary, not a policy**. `Describe(code)` / `Explain(codes)` spell codes out in the conciliation notes and in `RemittanceLine.ReturnReason`. Paid/Rejected classification stays in `SantanderCnabProfile.OutcomeFor`; keep its doc-comment descriptions in step with the table. ⚠️ `03`/`05`/`06`/`09`/`10` were **removed** from the rejected set (the table shows `03` = "Débito Autorizado pela Agência - **Efetuado**", and the others belong to the cobrança table, not payment-return) — they fall to `Unknown` (manual review) rather than wrongly releasing a settled installment back to the queue. `03` is deliberately **not** promoted to Paid: auto-confirming needs homologação against a real .RET. Same open flag for `BD`/`EB`.
+- Does NOT belong: Company/Unit/CostCenter (Core), vendors/customers (Registry), users/auth (Identity).
+- Cross-module refs: `VendorId`, `CompanyId`, `CostCenterId` on `Payable` are loose `Guid` references — no FK constraints to Core/Registry schemas.
+- Dependency rule: Domain → (nothing but Common.Domain); Application → Domain + Common.Application (NEVER Infrastructure); Infrastructure → Application + Domain.
+## Key files
+- `Ulbra.One.Finance.Domain/Entities/{Payable,Installment,Payment,PayableAttachment,BankAccount,ChartAccount,ExpenseCategory,ClassificationPolicy,BankStatementImport,BankTransaction,Transaction}.cs`, `Enums.cs`
+- `Ulbra.One.Finance.Application/Endpoints/Payables/…` (CreatePayable, RegisterPayment, ReversePayment, Approve/Reject/Cancel, Classify, Upload/DownloadAttachment, …)
+- `Ulbra.One.Finance.Infrastructure/Database/Configurations/{PayableConfiguration,InstallmentConfiguration,…}.cs` (each extends `BaseEntityConfiguration<T>` and declares `Schema => Schemas.Finance` **and** `TableName`, e.g. `"payables"`; `xmin` rowversion config), `FinanceModule.cs`
+## Testing
+- Unit: `dotnet test tests/Ulbra.One.UnitTests` (Payable/Payment invariants, validators — no Docker).
+- Integration: `dotnet test tests/Ulbra.One.IntegrationTests` (Testcontainers Postgres; covers 409 concurrency + append-only payment paths). Use `ApiFactory.CreateAdminClientAsync()`.
+- After mapping/entity change: `dotnet ef migrations add <Name> --project src/Ulbra.One.Persistence --startup-project src/API/Ulbra.One.Api --context AppDbContext` (never hand-write); commit the snapshot. Note `xmin` is Postgres' hidden column — no DDL is generated for it.
