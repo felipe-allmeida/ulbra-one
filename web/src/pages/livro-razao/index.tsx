@@ -1,0 +1,1 @@
+export { LivroRazaoPage } from './layout';

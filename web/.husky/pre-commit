@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Frontend pre-commit: run lint-staged inside web/ (the only JS/TS package).
+# Hooks path is set via `git config core.hooksPath web/.husky`.
+cd web && npx lint-staged

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>ULBRA One</title>
+    <!-- Apply the persisted theme before first paint to avoid a light→dark flash (FOUC).
+         Default is always light: only an explicit stored choice switches to dark (the OS
+         preference is intentionally ignored so a first visit lands on light). -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('ulbra-one.theme');
+          document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Microsoft Clarity: carregado por src/analytics.ts (só em produção, e depois de env.js). -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Runtime env: regenerated at container startup; local dev serves public/env.js stub. -->
+    <script src="/env.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
