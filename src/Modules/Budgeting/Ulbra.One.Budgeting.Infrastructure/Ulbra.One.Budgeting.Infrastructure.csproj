@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Ulbra.One.Budgeting.Application/Ulbra.One.Budgeting.Application.csproj" />
+    <ProjectReference Include="../Ulbra.One.Budgeting.Domain/Ulbra.One.Budgeting.Domain.csproj" />
+    <ProjectReference Include="../../../Common/Ulbra.One.Common.Infrastructure/Ulbra.One.Common.Infrastructure.csproj" />
+    <ProjectReference Include="../../Core/Ulbra.One.Core.Domain/Ulbra.One.Core.Domain.csproj" />
+    <ProjectReference Include="../../Registry/Ulbra.One.Registry.Domain/Ulbra.One.Registry.Domain.csproj" />
+    <ProjectReference Include="../../Finance/Ulbra.One.Finance.Application/Ulbra.One.Finance.Application.csproj" />
+  </ItemGroup>
+</Project>

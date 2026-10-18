@@ -1,0 +1,362 @@
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Ulbra.One.Common.Application;
+using Ulbra.One.Common.Application.Ids;
+using Ulbra.One.Finance.Application.FiscalDocuments;
+using Ulbra.One.IntegrationTests;
+
+namespace Ulbra.One.IntegrationTests.Finance;
+
+/// <summary>Shared HTTP seeding helpers for Finance integration tests.</summary>
+public static class FinanceSeed
+{
+    // Minimal valid NF-e (Product). Uploading it registers a FiscalDocument so a payable can leave the
+    // accounting stage. Issuer CNPJ need not match the seeded vendor — upload only parses + persists.
+    private const string NfeXml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe12345678901234567890123456789012345678901234" versao="4.00">
+      <ide><nNF>1234</nNF><serie>1</serie><dhEmi>2026-06-16T14:30:00-03:00</dhEmi></ide>
+      <emit><CNPJ>11222333000181</CNPJ><xNome>Fornecedor Teste LTDA</xNome></emit>
+      <dest><CNPJ>11444777000161</CNPJ><xNome>ULBRA Teste</xNome></dest>
+      <total><ICMSTot><vNF>18000.00</vNF></ICMSTot></total>
+    </infNFe>
+  </NFe>
+</nfeProc>
+""";
+
+    /// <summary>
+    /// "Today" in Brazil local time (UTC-3), matching the API's ReceivableClock/business clock.
+    /// Tests must use this (not DateTime.UtcNow) for receipt/payment dates: near UTC midnight the UTC
+    /// date is a day ahead of the Brazil date, which the server rejects as a future-dated receipt.
+    /// </summary>
+    public static DateOnly Today() =>
+        DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-3)).DateTime);
+
+
+    /// <summary>A fresh 47-digit bancário linha digitável. The duplicate-boleto rule refuses a line already
+    /// queued for payment, and the Postgres fixture is shared by the whole suite — a hard-coded line would make
+    /// the second test that uses it fail on a conflict its own scenario never created.</summary>
+    public static string NewBoletoLine() => RandomLine(47, '3');
+
+    /// <summary>A fresh 48-digit arrecadação/convênio line (always leads with 8).</summary>
+    public static string NewConvenioLine() => RandomLine(48, '8');
+
+    private static string RandomLine(int length, char lead)
+    {
+        var digits = new char[length];
+        digits[0] = lead;
+        for (var i = 1; i < length; i++) digits[i] = (char)('0' + Random.Shared.Next(10));
+        return new string(digits);
+    }
+
+    private static async Task<JsonElement> ReadJson(HttpResponseMessage res) =>
+        JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+
+    public static async Task<string> CreateCompanyAsync(HttpClient client)
+    {
+        var cnpj = TestDocuments.RandomCnpj();
+        var res = await client.PostAsJsonAsync("/api/companies", new { legalName = "ULBRA Teste", cnpj });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    public static async Task<string> CreateUnitAsync(HttpClient client, string companyId, string name, string acronym)
+    {
+        var res = await client.PostAsJsonAsync("/api/units", new { companyId, name, acronym });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    public static async Task<string> CreateCostCenterAsync(HttpClient client, string companyId, string code, string name, params string[] unitIds)
+    {
+        var res = await client.PostAsJsonAsync("/api/cost-centers",
+            new { companyId, code, name, autoApprovalLimit = 1_000_000m, unitIds });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    /// <summary>Generates a valid (check-digit) CNPJ from a random 12-digit base.</summary>
+    public static string RandomCnpj()
+    {
+        var digits = new int[14];
+        for (var i = 0; i < 12; i++) digits[i] = Random.Shared.Next(0, 10);
+        int[] w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        digits[12] = Dv(digits, w1);
+        digits[13] = Dv(digits, w2);
+        return string.Concat(digits);
+
+        static int Dv(int[] d, int[] w)
+        {
+            var sum = 0;
+            for (var i = 0; i < w.Length; i++) sum += d[i] * w[i];
+            var rest = sum % 11;
+            return rest < 2 ? 0 : 11 - rest;
+        }
+    }
+
+    public static async Task<string> CreateVendorAsync(HttpClient client, string name)
+        => await CreateVendorAsync(client, name, RandomCnpj());
+
+    // Vendors are global to the organization — no company on creation.
+    public static async Task<string> CreateVendorAsync(HttpClient client, string name, string document)
+    {
+        var res = await client.PostAsJsonAsync("/api/vendors", new
+        {
+            personType = 1,
+            name,
+            tradeName = name,
+            document,
+            email = "contato@fs.com",
+            phone = "5133334444",
+            address = (object?)null,
+            paymentTerms = "30 dias",
+            bankInfo = (string?)null,
+        });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    public static async Task<string> CreateBankAccountAsync(HttpClient client, string companyId, string accountNumber, string? ledgerAccountId = null)
+    {
+        // A ledger account is required on create (it is the credit account when settling a payable).
+        // Resolve an analytical account from the global chart (auto-seeded on startup) unless the caller
+        // pinned a specific one.
+        ledgerAccountId ??= await CreateAccountingAccountAsync(client);
+        var res = await client.PostAsJsonAsync("/api/bank-accounts", new
+        {
+            companyId,
+            bankCode = "033",
+            bankName = "Banco Santander",
+            agency = "1234",
+            accountNumber,
+            accountDigit = "6",
+            accountType = "Checking",
+            alias = "Conta " + accountNumber,
+            openingBalance = 1_000_000m,
+            ledgerAccountId,
+        });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    /// <summary>
+    /// Creates a single-installment payable and (optionally) drives it to <c>Scheduled</c> — approve then
+    /// complete the accounting stage (register a NF + confirm). Returns the created payable id.
+    /// </summary>
+    public static async Task<string> CreatePayableAsync(
+        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true,
+        string origin = "Manual")
+    {
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId,
+            vendorId,
+            costCenterId,
+            origin,
+            description = "Para pagar",
+            installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+            type = "Product", // determined product (no source withholding) — required before a payable can schedule
+        });
+        createRes.EnsureSuccessStatusCode();
+        var body = await ReadJson(createRes);
+        var payableId = body.GetProperty("id").GetString()!;
+
+        if (approve)
+        {
+            var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+            approveRes.EnsureSuccessStatusCode();
+            await CompleteAccountingAsync(factory, client, payableId);
+        }
+
+        return payableId;
+    }
+
+    /// <summary>
+    /// Creates a single-installment payable and (optionally) drives it to <c>Scheduled</c> (approve +
+    /// complete accounting). Returns (payableId, installmentId).
+    /// </summary>
+    public static async Task<(string PayableId, string InstallmentId)> CreatePayableWithInstallmentAsync(
+        ApiFactory factory, HttpClient client, string companyId, string vendorId, string costCenterId, DateOnly dueDate, decimal amount, bool approve = true)
+    {
+        var createRes = await client.PostAsJsonAsync("/api/payables", new
+        {
+            companyId,
+            vendorId,
+            costCenterId,
+            description = "Para pagar",
+            installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+            type = "Product", // determined product (no source withholding) — required before a payable can schedule
+        });
+        createRes.EnsureSuccessStatusCode();
+        var body = await ReadJson(createRes);
+        var payableId = body.GetProperty("id").GetString()!;
+        var installmentId = body.GetProperty("installments")[0].GetProperty("id").GetString()!;
+
+        if (approve)
+        {
+            var approveRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+            approveRes.EnsureSuccessStatusCode();
+            await CompleteAccountingAsync(factory, client, payableId);
+        }
+
+        return (payableId, installmentId);
+    }
+
+    /// <summary>
+    /// Drives an approved payable through the accounting stage to <c>Scheduled</c>: registers a minimal NF-e
+    /// (satisfying the fiscal-document gate) and confirms the accounting review.
+    /// </summary>
+    public static async Task CompleteAccountingAsync(ApiFactory factory, HttpClient client, string payableId)
+    {
+        await RegisterFiscalDocAsync(factory, client, payableId);
+        await ConfirmAccountingAsync(client, payableId);
+    }
+
+    /// <summary>Confirms the accounting review (→ Scheduled) without touching the NF. Split out so a test can
+    /// register the NF first, then set a manual withholding (which survives, as confirm does not recalculate),
+    /// then confirm.</summary>
+    public static async Task ConfirmAccountingAsync(HttpClient client, string payableId)
+    {
+        var confirmRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/accounting/confirm", new { });
+        confirmRes.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Sets a single IRRF withholding on the payable (allowed until accounting completes).
+    /// The aggregate re-rateia every installment's NetAmount proportionally.</summary>
+    public static async Task SetWithholdingAsync(HttpClient client, string payableId, decimal baseAmount, decimal amount)
+    {
+        var res = await client.PutAsJsonAsync($"/api/payables/{payableId}/withholdings",
+            new { items = new[] { new { taxType = "Irrf", baseAmount, rate = (decimal?)null, amount } } });
+        res.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Approves a payable, parking it in <c>PendingAccounting</c> (no NF registered, accounting not confirmed).</summary>
+    public static async Task ApproveAsync(HttpClient client, string payableId)
+    {
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/approve", new { });
+        res.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Registers a minimal NF-e against the payable (satisfies the fiscal-document gate) without confirming.</summary>
+    public static async Task RegisterFiscalDocAsync(ApiFactory factory, HttpClient client, string payableId)
+    {
+        // AEL-764: the key must be in the payable company's namespace or the upload is a uniform 404.
+        var companyId = await GetPayableCompanyIdAsync(client, payableId);
+        var key = await SeedBlobAsync(factory, companyId, NfeXml, "nf.xml");
+        var uploadRes = await client.PostAsJsonAsync($"/api/payables/{payableId}/fiscal-document",
+            new { key, fileName = "nf.xml", contentType = "application/xml", sizeBytes = (long)Encoding.UTF8.GetByteCount(NfeXml) });
+        uploadRes.EnsureSuccessStatusCode();
+    }
+
+    private static async Task<Guid> GetPayableCompanyIdAsync(HttpClient client, string payableId)
+    {
+        var detail = await ReadJson(await client.GetAsync($"/api/payables/{payableId}"));
+        return CompanyId.Parse(detail.GetProperty("companyId").GetString()!, null).Value;
+    }
+
+    /// <summary>Attaches a document to the payable via the multipart /attachments endpoint — stored as a
+    /// PayableAttachment (no parsing). Defaults to kind=FiscalDocument, which satisfies the type-aware "has NF"
+    /// gate just like a parsed fiscal document (AEL-959); pass another kind (e.g. "BankSlip") for a non-NF
+    /// attachment that does NOT clear the gate.</summary>
+    public static async Task AttachDocumentAsync(HttpClient client, string payableId, string fileName = "nf.xml", string kind = "FiscalDocument")
+    {
+        using var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(Encoding.UTF8.GetBytes(NfeXml));
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/xml");
+        content.Add(file, "file", fileName);
+        (await client.PostAsync($"/api/payables/{payableId}/attachments?kind={kind}", content)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Saves a blob under the company's fiscal-document namespace and returns the key (AEL-764).</summary>
+    private static async Task<string> SeedBlobAsync(ApiFactory factory, Guid companyId, string xml, string fileName)
+    {
+        using var scope = factory.Services.CreateScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+        return await storage.SaveAsync(fileName, stream, FiscalDocumentKey.PrefixFor(companyId));
+    }
+
+    public static async Task RegisterPaymentAsync(HttpClient client, string payableId, string installmentId, string bankId, decimal amount, DateOnly date)
+    {
+        var res = await client.PostAsJsonAsync($"/api/payables/{payableId}/installments/{installmentId}/payments", new
+        {
+            paymentDate = date.ToString("yyyy-MM-dd"),
+            amount,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        res.EnsureSuccessStatusCode();
+    }
+
+    public static async Task<string> CreateCustomerAsync(HttpClient client, string companyId, string name)
+    {
+        var res = await client.PostAsJsonAsync("/api/customers", new
+        {
+            companyId,
+            personType = 1,
+            name,
+            tradeName = name,
+            document = RandomCnpj(),
+            email = "financeiro@hu.com",
+            phone = "5133334444",
+            address = (object?)null,
+            creditLimit = (decimal?)null,
+        });
+        res.EnsureSuccessStatusCode();
+        return (await ReadJson(res)).GetProperty("id").GetString()!;
+    }
+
+    /// <summary>
+    /// Creates a single-installment receivable. Returns (receivableId, firstInstallmentId).
+    /// </summary>
+    public static async Task<(string ReceivableId, string InstallmentId)> CreateReceivableAsync(
+        HttpClient client, string companyId, string payerId, string costCenterId, DateOnly dueDate, decimal amount)
+    {
+        var createRes = await client.PostAsJsonAsync("/api/receivables", new
+        {
+            companyId,
+            payerId,
+            costCenterId,
+            description = "Mensalidade",
+            installments = new[] { new { dueDate = dueDate.ToString("yyyy-MM-dd"), amount } },
+        });
+        createRes.EnsureSuccessStatusCode();
+        var body = await ReadJson(createRes);
+        var receivableId = body.GetProperty("id").GetString()!;
+
+        var detail = await ReadJson(await client.GetAsync($"/api/receivables/{receivableId}"));
+        var installmentId = detail.GetProperty("installments")[0].GetProperty("id").GetString()!;
+
+        return (receivableId, installmentId);
+    }
+
+    public static async Task RegisterReceiptAsync(HttpClient client, string receivableId, string installmentId, string bankId, decimal amount, DateOnly date)
+    {
+        var res = await client.PostAsJsonAsync($"/api/receivables/{receivableId}/installments/{installmentId}/receipts", new
+        {
+            receiptDate = date.ToString("yyyy-MM-dd"),
+            amount,
+            bankAccountId = bankId,
+            method = "Pix",
+        });
+        res.EnsureSuccessStatusCode();
+    }
+
+    private sealed record AccountRef(string Id, string Code, string Kind);
+
+    /// <summary>
+    /// Returns an analytical account id from the global ledger chart (auto-seeded on startup).
+    /// Used to classify a payable in tests.
+    /// </summary>
+    public static async Task<string> CreateAccountingAccountAsync(HttpClient client)
+    {
+        var accounts = await client.GetFromJsonAsync<List<AccountRef>>(
+            "/api/ledger-accounts?kind=Analytical&activeOnly=true");
+        return accounts!.First().Id;
+    }
+}

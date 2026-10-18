@@ -1,0 +1,86 @@
+name: API CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Directory.Packages.props'
+      - 'Directory.Build.props'
+      - 'Ulbra.One.slnx'
+      - 'global.json'
+      - '.github/workflows/api-ci.yml'
+      # OpenApiContractTests compares the generated spec against this committed file.
+      - 'web/openapi.json'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Directory.Packages.props'
+      - 'Directory.Build.props'
+      - 'Ulbra.One.slnx'
+      - 'global.json'
+      - '.github/workflows/api-ci.yml'
+      # OpenApiContractTests compares the generated spec against this committed file.
+      - 'web/openapi.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Defense in depth against billing a real AI provider from CI: the test host (ApiFactory) already forces
+    # the offline Fake at the DI level; this keeps configuration consistent so no runner ever resolves Anthropic.
+    env:
+      Ai__Provider: Fake
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore Ulbra.One.slnx
+
+      # Fail the build if the SHIPPED API project (incl. transitive deps) has any known-vulnerable
+      # package. Scoped to the deployable artifact — test-only transitive advisories are out of scope.
+      - name: Audit shipped dependencies for vulnerabilities
+        run: |
+          dotnet list src/API/Ulbra.One.Api/Ulbra.One.Api.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable" vuln.txt; then
+            echo "::error::Vulnerable package(s) detected in the shipped API project"; exit 1
+          fi
+
+      - name: Build (Release)
+        run: dotnet build Ulbra.One.slnx -c Release --no-restore
+
+      # Unit tests: fast, no Docker required.
+      - name: Run unit tests
+        run: dotnet test tests/Ulbra.One.UnitTests -c Release --no-build
+
+      # Integration tests: Testcontainers spins up its own PostgreSQL via the
+      # Docker daemon preinstalled on ubuntu-latest (no services block needed).
+      - name: Run integration tests
+        run: dotnet test tests/Ulbra.One.IntegrationTests -c Release --no-build
