@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "Firestore:ProjectId": "spherical-cell-g07pf",
+    "Firestore:DatabaseId": "ai-studio-9c0ba35e-15c2-4fa9-96ad-eb738fcf5bb5",
+    "LegacyStorage:Bucket": "spherical-cell-g07pf.firebasestorage.app",
+    "ObjectStorage:Bucket": "attachments",
+    "ObjectStorage:ConnectionString": "UseDevelopmentStorage=true"
+  },
+  "ConnectionStrings": {
+    "Database": "Host=localhost;Port=5433;Database=ulbra_one;Username=postgres;Password=postgres"
+  }
+}

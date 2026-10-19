@@ -1,0 +1,72 @@
+name: web-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  checks:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `checks` is format:check + lint + typecheck. It runs as one step on purpose: the local command a
+      # developer is told to run and the one CI runs are then the same thing, so a green local run means a
+      # green CI. Formatting was never enforced before, which is how 118 files drifted out of style.
+      - name: Checks (format, lint, typecheck)
+        run: pnpm checks
+
+      - name: Test
+        run: pnpm test
+
+      # Only these two specs: the rest of e2e/ needs the .NET API + a seeded DB (see
+      # playwright.config.ts), which CI doesn't have. Estas duas são deliberadamente backend-free —
+      # mockam toda chamada `/api/**` por conta própria (e2e/helpers/mobile-fixtures.ts) — e por isso
+      # são as únicas que rodam aqui. Chromium is installed on demand rather than added to the cached
+      # pnpm install above, since no other job needs a browser binary.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Mobile layout guard
+        run: pnpm exec playwright test e2e/mobile-layout.spec.ts --reporter=line
+
+      # A neutralização da preferência de nav abaixo de 1024px é regra de CSS, e jsdom não aplica
+      # CSS: sem esta trava, apagar aquele bloco deixa os unitários verdes e o drawer do tablet
+      # abrindo recolhido.
+      - name: Desktop nav guard
+        run: pnpm exec playwright test e2e/desktop-nav.spec.ts --reporter=line
+
+      - name: Build
+        run: pnpm build

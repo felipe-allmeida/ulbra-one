@@ -1,0 +1,7339 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&display=swap');
+@import 'tailwindcss';
+
+/* ============================================================================
+ * BREAKPOINTS — exatamente três. Não introduza um quarto.
+ *
+ *   640px    phone    card expansível, coluna única, filtros empilhados
+ *   1024px   tablet   drawer de navegação, grades 4→2
+ *   1200px   wide     layouts de duas colunas
+ *
+ * O corte da nav é 1024 e não 900 porque a sidebar fixa ocupa 307px (rail 82 +
+ * painel 225). Em 900 sobrariam 593px de conteúdo, e a tabela de 8 colunas de
+ * contas a pagar precisa de ~700px comprimida: existiria uma faixa de ~900 a
+ * ~1010px onde a tabela renderiza como <table> de desktop E AINDA ASSIM rola de
+ * lado. Em 1024 o iPad em paisagem usa drawer e o conteúdo pega a largura toda.
+ *
+ * Uma isenção, registrada aqui para não ser "corrigida": o painel decorativo do login
+ * colapsa em 900px (busque `.auth-brand-side`). Os dois motivos acima — sidebar de 307px
+ * e tabela de 8 colunas — não existem naquela tela, e 900 é um número medido ali.
+ *
+ * Variável CSS não funciona dentro de @media — são literais. A trava é revisão,
+ * não compilador. O critério de aceite 7 do spec cobra isto.
+ *
+ * `usePhone()` em `web/src/useMediaQuery.ts` (criado numa tarefa posterior) duplica
+ * o literal 640px em JS — mantenha os dois sincronizados manualmente. Variável CSS
+ * não funciona dentro de @media, então a duplicação é inevitável; documentada aqui
+ * em vez de corrigida.
+ * ========================================================================== */
+
+:root {
+  --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(225 10% 10%);
+  --card: hsl(0 0% 100%);
+  --surface: hsl(225 14% 98%);
+  --muted: hsl(225 14% 94%);
+  --muted-foreground: hsl(225 6% 42%);
+  --border: hsl(225 10% 92%);
+  --border-subtle: hsl(225 10% 95%);
+
+  --brand: hsl(174 88% 24%);
+  --brand-hover: hsl(174 88% 20%);
+  --brand-foreground: hsl(0 0% 100%);
+  --brand-subtle: hsl(174 40% 92%);
+  --accent: hsl(33 49% 61%);
+
+  --success: hsl(160 35% 38%);
+  --success-subtle: hsl(160 35% 92%);
+  --warning: hsl(35 55% 38%);
+  --warning-subtle: hsl(35 55% 92%);
+  --danger: hsl(0 55% 45%);
+  --danger-subtle: hsl(0 55% 94%);
+  --info: hsl(210 45% 40%);
+  --info-subtle: hsl(210 40% 94%);
+
+  /* Per-stage accents for the Documentação manual only (light). Small accents (numbered circles,
+     eyebrows, dots) — the flow is color-coded like the legacy manual, but through tokens so dark-mode
+     stays correct. */
+  --doc-stage-1: hsl(210 60% 45%);
+  --doc-stage-2: hsl(262 45% 52%);
+  --doc-stage-3: hsl(174 70% 30%);
+  --doc-stage-4: hsl(33 60% 44%);
+  --doc-stage-5: hsl(150 45% 36%);
+  --doc-stage-6: hsl(288 40% 46%);
+
+  --sb-bg: hsl(195 30% 11%);
+  --sb-rail: hsl(195 32% 9%);
+  --sb-surface: hsl(195 25% 16%);
+  --sb-active: hsl(174 50% 22%);
+  --sb-fg: hsl(195 10% 70%);
+  --sb-fg-bright: hsl(195 5% 96%);
+  --sb-border: hsl(195 25% 19%);
+
+  --radius: 0.375rem;
+  font-size: 14px;
+  /* Render native controls (select popups, scrollbars, date pickers) in the light scheme. */
+  color-scheme: light;
+}
+
+/*
+ * Dark theme. Overrides the APP variable names with the prototype's dark palette
+ * (hex values from ulbra-one-prototipo-papeis.html). The sidebar (--sb-*) is dark
+ * in both themes, so it is intentionally NOT overridden here. Absence of data-theme
+ * on <html> means the light :root above applies (the default).
+ */
+:root[data-theme='dark'] {
+  --background: #0b1211;
+  --foreground: #e9f1ef;
+  --card: #14201e;
+  --surface: #101a18;
+  --muted: #1a2725; /* muted BACKGROUND (app semantics), not the proto's muted TEXT */
+  --muted-foreground: #94a7a3; /* proto --muted is a text color */
+  --border: #243330;
+  --border-subtle: #1a2725;
+
+  --brand: #2bb6a4;
+  --brand-hover: #33c9b5;
+  --brand-foreground: #04201c;
+  --brand-subtle: #123430;
+  --accent: #c99d6f;
+
+  --success: #4ec27f;
+  --success-subtle: #14261b;
+  --warning: #e0a24a;
+  --warning-subtle: #2a2113;
+  --danger: #f0736e;
+  --danger-subtle: #2c1615;
+  --info: hsl(210 55% 62%);
+  --info-subtle: hsl(210 40% 16%);
+
+  /* Per-stage accents for the Documentação manual only (dark) — brighter for contrast on dark surfaces. */
+  --doc-stage-1: hsl(210 65% 65%);
+  --doc-stage-2: hsl(262 60% 72%);
+  --doc-stage-3: hsl(174 55% 52%);
+  --doc-stage-4: hsl(33 70% 62%);
+  --doc-stage-5: hsl(150 50% 58%);
+  --doc-stage-6: hsl(288 55% 70%);
+  /* Native controls (select popups, scrollbars, date pickers) follow the dark scheme. */
+  color-scheme: dark;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+#root {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== SIDE NAV (rail + panel) ===== */
+.side-nav {
+  display: flex;
+  flex-shrink: 0;
+  height: 100%;
+  /* Âncora do gatilho de recolher e da alça, que se posicionam na borda direita. */
+  position: relative;
+}
+
+/* --- domain rail --- */
+.nav-rail {
+  width: 82px;
+  background: var(--sb-rail);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 6px;
+  flex-shrink: 0;
+}
+.user-avatar {
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* Mesmo disco das iniciais em toda parte — o que muda por uso é só o tamanho. */
+  background: linear-gradient(135deg, hsl(174 88% 30%), hsl(33 49% 50%));
+  color: white;
+  font-weight: 700;
+}
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+/* Coluna "Autor" da trilha de auditoria. */
+.audit-actor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.audit-actor-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 9px;
+}
+/* Ao lado do "por Fulano" na timeline — acompanha a altura da linha de metadados. */
+.audit-event-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+}
+/* Dentro de um Chip de presença: pequeno o bastante para não esticar a linha de chips. */
+.presence-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 8px;
+}
+.nav-rail-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, hsl(174 88% 30%), hsl(33 49% 50%));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+.nav-rail-spacer {
+  flex: 1;
+  min-height: 14px;
+}
+.nav-rail-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  padding: 9px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--sb-fg);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.nav-rail-btn span {
+  font-size: 10.5px;
+  line-height: 1.1;
+  text-align: center;
+}
+.nav-rail-btn svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.8;
+}
+.nav-rail-btn:hover {
+  background: var(--sb-surface);
+  color: var(--sb-fg-bright);
+}
+.nav-rail-btn.active {
+  background: var(--sb-active);
+  color: var(--sb-fg-bright);
+}
+.nav-rail-btn.active svg {
+  opacity: 1;
+}
+
+/* --- contextual panel --- */
+.nav-panel {
+  /* O fallback é o valor de sempre: sem preferência salva a sidebar mede 82 + 225 = 307px, igual
+     a antes desta feature existir. */
+  width: var(--nav-panel-w, 225px);
+  background: var(--sb-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 12px 10px;
+  gap: 4px;
+  overflow: hidden;
+}
+.nav-panel-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sb-surface);
+  border-radius: 7px;
+  padding: 0 9px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.nav-panel-search svg {
+  width: 15px;
+  height: 15px;
+  color: var(--sb-fg);
+  flex-shrink: 0;
+}
+.nav-panel-search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 8px 0;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--sb-fg-bright);
+}
+.nav-panel-search input::placeholder {
+  color: var(--sb-fg);
+}
+.nav-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+}
+.nav-panel-title {
+  padding: 0 8px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sb-fg-bright);
+}
+.nav-panel-empty {
+  padding: 12px 10px;
+  font-size: 12px;
+  color: var(--sb-fg);
+}
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.nav-subgroup {
+  padding: 8px 10px 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sb-fg);
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.nav-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--sb-fg);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-weight: 450;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.nav-panel-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+.nav-panel-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.nav-panel-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-panel-item:hover:not(.soon) {
+  background: var(--sb-surface);
+  color: var(--sb-fg-bright);
+}
+.nav-panel-item.active {
+  background: var(--sb-active);
+  color: var(--sb-fg-bright);
+  font-weight: 500;
+}
+.nav-panel-item.active svg {
+  opacity: 1;
+}
+.nav-panel-item.soon {
+  opacity: 0.4;
+  cursor: default;
+}
+.nav-panel-item-hint {
+  font-size: 10.5px;
+  color: var(--sb-fg);
+  opacity: 0.65;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.soon-badge {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--sb-fg);
+  background: var(--sb-surface);
+  padding: 1px 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* ===== MAIN ===== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.crumb {
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.crumb b {
+  color: var(--foreground);
+  font-weight: 600;
+}
+/* Right-aligned header actions (notification bell). margin-left:auto keeps it flush right
+   regardless of what renders on the left; unlike .top-search it stays visible on mobile. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  /* Encolhe antes de espremer o hambúrguer para fora da tela. */
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Company selector in the topbar */
+.emp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.emp:hover {
+  border-color: var(--brand);
+}
+.emp-icon,
+.emp-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.emp-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+  /* Fixed width so the chip never resizes to the selected company name. */
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Transparent native <select> overlays the whole chip so a click anywhere (icon, name, chevron)
+   opens the dropdown. The visible label/icon/chevron above are inert. */
+.emp-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.emp-select option,
+.verocomo select option {
+  color: var(--foreground);
+  background: var(--card);
+}
+
+/* "Ver como" (admin role impersonation) */
+.verocomo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand-subtle);
+  border-radius: var(--radius);
+  padding: 4px 6px 4px 11px;
+}
+.verocomo-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  white-space: nowrap;
+}
+.verocomo select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 1px solid var(--brand);
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Notification bell dot (unread present; exact count lives in the aria-label/title) */
+.icon-btn.notif {
+  position: relative;
+}
+.notif-dot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 2px solid var(--card);
+}
+
+@media (max-width: 1024px) {
+  .verocomo-label {
+    display: none;
+  }
+  .emp-select {
+    max-width: 96px;
+  }
+}
+
+.top-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  width: 300px;
+}
+.top-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--foreground);
+}
+.top-search svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+}
+.content {
+  flex: 1;
+  overflow-y: auto;
+  /* Explícito: estouro vira scroll LOCAL da tabela (.table-scroll), nunca da página. */
+  overflow-x: hidden;
+  min-width: 0;
+  padding: 28px;
+}
+/* Treasury: reserve the scrollbar gutter so the two-column layout doesn't shift
+   horizontally between the empty state (no scroll) and a full queue (scrollbar visible). */
+.content:has(.treasury-aside-layout) {
+  scrollbar-gutter: stable;
+}
+/* Below 640px there's no scrollbar to reserve space for (touch scrolling doesn't use one), so the
+   reservation only inflates `.content`'s scrollWidth past its clientWidth — the page could
+   scroll sideways by that gutter width for zero visual benefit. Disable it on phones only; desktop
+   keeps the identical unconditional behavior above. */
+@media (max-width: 640px) {
+  .content:has(.treasury-aside-layout) {
+    scrollbar-gutter: auto;
+  }
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.page-sub {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+  max-width: 560px;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field > label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  /* Um `.field` espremido (flex:1;min-width:0 no mobile) pode ficar mais estreito que uma
+     palavra do rótulo (ex.: "PAGAMENTO"); sem isso a palavra vaza e rola o `.content` de lado. */
+  overflow-wrap: anywhere;
+}
+/* Retorno CNAB toolbar: give the file picker room for the filename and align it with the account select. */
+.field.cnab-return-file {
+  flex: 1;
+  min-width: 320px;
+}
+/* Relação de Pagamentos (payments-report): larguras que viviam em `style={{ width }}` inline no
+   próprio `<input>` (inalcançáveis por qualquer regra CSS) — movidas para a classe do `.field` que
+   as envolve, que `align-items: stretch` (herdado de `.field`) já propaga para o input. Sem a regra
+   de 640px abaixo, ficariam largas e fixas a 390px — mesma armadilha do `.select` global (Task 9). */
+.field.pr-search-field {
+  width: 240px;
+}
+.field.pr-date-field {
+  width: 150px;
+}
+.pr-filters-row,
+.pr-dates-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+@media (max-width: 640px) {
+  .field.pr-search-field,
+  .field.pr-date-field {
+    width: 100%;
+  }
+  /* Sem isto, os campos continuam lado a lado (só `width:100%` de uma fatia estreita da linha que o
+     `flex-wrap` já dividiu entre eles) — mesmo remédio do `.pq-toolbar`/`.cf-toolbar` acima: cada
+     campo vira sua própria linha. */
+  .pr-filters-row,
+  .pr-dates-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+/* Remessas/Títulos (payments-report): mesma armadilha, mesmo remédio — `style={{ width }}` inline
+   nos próprios `<Select>`/`<input>` do filtro (unidade/natureza/status a 180px, categoria/datas a
+   150px), movido para a classe do `.field`. */
+.field.rtt-field-180 {
+  width: 180px;
+}
+.field.rtt-field-150 {
+  width: 150px;
+}
+.rtt-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+@media (max-width: 640px) {
+  .field.rtt-field-180,
+  .field.rtt-field-150 {
+    width: 100%;
+  }
+  .rtt-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+.select,
+.input {
+  appearance: none;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 13px;
+  background: var(--background);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.12s;
+}
+.select {
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  min-width: 220px;
+}
+.select:focus,
+.input:focus {
+  border-color: var(--brand);
+}
+@media (max-width: 640px) {
+  /* O ofensor real dos formulários: min-width:220px do .select é global — dois lado a lado
+     estouram 390px sozinhos. Zera para o telefone; acima de 640px nada muda. */
+  .select,
+  .input,
+  .combobox-trigger {
+    min-width: 0;
+    width: 100%;
+  }
+  .toolbar,
+  .razao-filters-row,
+  /* .pq-toolbar (fila de pagamentos) é um `.toolbar` bespoke que não herda a regra genérica acima —
+     mesmo defeito do `.select` global (Task 9), classe diferente: sem isto o campo "Forma de
+     Pagamento" fica espremido a 390px porque `.field` não tem largura própria para o `width: 100%`
+     do `.select` (acima) preencher. */
+  .pq-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Custom file picker (icon + filename/placeholder), styled like an input */
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+.file-picker:hover {
+  border-color: var(--brand);
+}
+.file-picker-dragging {
+  border-color: var(--brand);
+  background: var(--surface);
+}
+.file-picker svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.file-picker .file-name {
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fiscal XML reader — hero (create flow): emphasize the upload before any field shows */
+.fiscal-hero {
+  max-width: 560px;
+  margin: 0 auto;
+}
+.fiscal-hero-emphasis {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0 0 14px;
+}
+.file-picker.file-picker-lg {
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-style: dashed;
+  text-align: center;
+  font-size: 13px;
+}
+.file-picker.file-picker-lg svg {
+  width: 22px;
+  height: 22px;
+  color: var(--brand);
+}
+
+/* Fiscal XML reader — band (após ler): faixa "somente leitura" com acento, separando dado-da-NF do payable */
+.fiscal-band {
+  border-left: 3px solid var(--brand);
+  background: var(--brand-subtle);
+}
+.tag-readonly {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--background);
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+/* Banner informativo no topo de um formulário (ex.: "Confirme os dados coletados da NF") */
+.form-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--brand);
+  background: var(--brand-subtle);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+}
+/* Variante de aviso (ex.: extrato OFX importado parece ser de outra conta). */
+.form-notice.warn {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: var(--warning);
+}
+
+/* Resumo do periodo (conciliacao): valores monetarios menores para nao quebrarem em telas menores. */
+.reconciliation-summary .kpi-value {
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+/* Intake choice (create flow): 3 modality cards — Folha (em breve), Nota Fiscal (primary), Adiantamento */
+.intake-choice-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 0 14px;
+}
+.intake-choice {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 14px;
+  max-width: 860px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+.intake-choice.cols-2 {
+  grid-template-columns: 1fr 1fr;
+  max-width: 640px;
+}
+@media (max-width: 1024px) {
+  .intake-choice {
+    grid-template-columns: 1fr;
+  }
+}
+.intake-card {
+  text-align: center;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  color: var(--foreground);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.intake-card:hover:not(:disabled) {
+  border-color: var(--brand, #4f46e5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.intake-card svg {
+  width: 28px;
+  height: 28px;
+  color: var(--brand, #4f46e5);
+}
+.intake-card.is-primary {
+  border-color: var(--brand, #4f46e5);
+  background: var(--brand-subtle);
+}
+.intake-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.intake-card-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.intake-card-hint {
+  font-size: 13px;
+  color: var(--muted-foreground, #6b7280);
+}
+.intake-soon-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground, #6b7280);
+  background: var(--surface, #f3f4f6);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* Inline text button styled as a link (e.g. "ou preencher manualmente") */
+.linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.linklike:hover {
+  color: var(--brand-hover);
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn:hover {
+  background: var(--surface);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn-brand {
+  background: var(--brand);
+  color: var(--brand-foreground);
+  border-color: var(--brand);
+}
+.btn-brand:hover {
+  background: var(--brand-hover);
+}
+.btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Ação de linha só-ícone: o rótulo migra para title/aria-label (o nome acessível continua o mesmo).
+   Padding simétrico para sair quadrado; no telefone o ícone sozinho seria um alvo pequeno demais
+   (Spec §6: 44x44). É o botão das colunas de ação — anexos e tabelas de cadastro. O `.icon-btn`
+   (fantasma, sem borda) fica para as afordâncias de dispensa/navegação, onde a borda pesaria:
+   fechar, expandir, avançar mês, tirar um arquivo da fila de upload. */
+.btn.btn-icon {
+  padding: 7px;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  .btn.btn-icon {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+}
+
+/* ===== KPI ===== */
+.kpi-grid {
+  display: grid;
+  /* auto-fit se resolve sozinho em qualquer largura, sem media query. */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 16px;
+}
+.kpi-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-foot {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+/* Forecast KPIs (requisition budget preview): the panel can be far narrower than the viewport
+   (e.g. the form's side column). `.kpi-grid` already reflows via auto-fit, but its 180px minmax
+   still squeezes currency values in this narrower panel. Fixes, in order of reliability:
+   - a slightly smaller value keeps the currency single-line in a narrow card (works everywhere);
+   - min-width:0 + overflow-wrap let the card shrink and the value wrap as a last resort (never clip);
+   - a smaller 170px minmax reflows to fewer, wider columns sooner than the base `.kpi-grid`. */
+.kpi-grid.forecast-kpis {
+  /* `display:grid` explícito porque existe um `.forecast-kpis { display:flex }` (mesmo nome de classe,
+     usado pelo BalanceForecastPanel) que, por vir depois no arquivo, vencia o `display:grid` do
+     `.kpi-grid`. Como este seletor tem 2 classes (especificidade maior), o grid volta a valer só no
+     BudgetForecast; o BalanceForecastPanel (1 classe) segue flex. minmax maior reflui p/ 2 colunas no
+     painel estreito (form da adequação) em vez de espremer os valores da moeda. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+.forecast-kpis .kpi-card {
+  min-width: 0;
+}
+.forecast-kpis .kpi-value {
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+/* Adjustment form + budget-context sidebar (Task 18 mobile audit sweep). Single column by default
+   (mobile-first, same convention as `.aside-layout`) — the inline `gridTemplateColumns: 'minmax(0, 2fr)
+   minmax(0, 1fr)'` this replaced had NO narrow-viewport override, so at 390px the sidebar column was
+   squeezed to ~113px while its `.empty-state` (24px padding both sides + prose text) still needed
+   ~127px, overflowing `.panel` by 14px — `minmax(0, …)` bounds the TRACK, but the grid ITEM sitting in
+   it keeps its own `min-width: auto` unless reset, so it can still force the row wider than intended.
+   `min-width: 0` on both children is the actual fix; the 2-column split only returns at 1024px, where
+   there is room for both without squeezing either. */
+.adj-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.adj-form-grid > * {
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .adj-form-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+/* Budget adjustment context (before → adjustment → after): label→value rows that fit millions
+   without wrapping, in both the narrow form panel and the detail. */
+.adj-ctx-rows {
+  display: flex;
+  flex-direction: column;
+  max-width: 460px;
+}
+.adj-ctx-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.adj-ctx-row:last-child {
+  border-bottom: 0;
+}
+.adj-ctx-row-label {
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.adj-ctx-row-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kpi-card--clickable {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.kpi-card--clickable:hover {
+  border-color: var(--brand);
+}
+.kpi-card--selected {
+  border-color: var(--brand);
+  background: var(--brand-subtle);
+}
+
+/* ===== CC CARDS ===== */
+.cc-grid {
+  display: grid;
+  /* auto-fit se resolve sozinho em qualquer largura, sem media query. */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.cc-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 16px;
+  transition: border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cc-card:hover {
+  border-color: var(--brand);
+}
+.cc-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cc-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.cc-code {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.cc-orc {
+  text-align: right;
+  flex-shrink: 0;
+}
+.cc-orc .v {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+.cc-orc .l {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.cc-progress {
+  height: 5px;
+  background: var(--muted);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cc-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--brand);
+  transition: width 0.5s;
+}
+/* Cost-center card: spend over the annual budget turns the bar (and the available) red. */
+.cc-progress-bar.over {
+  background: var(--danger);
+}
+.cc-orc .v.bad {
+  color: var(--danger);
+}
+/* Annual-budget line under the available amount (single line — scales to million-range values). */
+.cc-orc-sub {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+/* ---------- Project: acompanhamento do teto (AEL-792) ---------- */
+/* Stacked track: previsto (lighter) sits behind realizado (solid), both anchored left so the
+   realizado segment reads as a fill-level inside the committed amount. */
+.proj-progress {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+}
+.proj-progress .cc-progress-bar {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+.proj-bar-previsto {
+  background: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+.proj-bar-realizado {
+  background: var(--ok, var(--brand));
+}
+.proj-bar-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+.proj-bar-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.proj-bar-legend .dot-previsto {
+  background: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+.proj-bar-legend .dot-realizado {
+  background: var(--ok, var(--brand));
+}
+.proj-bar-pct {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.proj-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.cc-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chip {
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+.chip.all {
+  background: var(--brand-subtle);
+  border-color: transparent;
+  color: var(--brand);
+}
+.chip.auto {
+  background: var(--success-subtle);
+  border-color: transparent;
+  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chip.auto svg {
+  width: 11px;
+  height: 11px;
+}
+.chip.warn {
+  background: var(--warning-subtle);
+  border-color: transparent;
+  color: var(--warning);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chip.warn svg {
+  width: 11px;
+  height: 11px;
+}
+
+.cc-card {
+  cursor: pointer;
+}
+.cc-card .cc-edit {
+  opacity: 0;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  transition: opacity 0.12s;
+}
+.cc-card:hover .cc-edit {
+  opacity: 1;
+}
+
+/* row action button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+@media (max-width: 640px) {
+  /* Spec §6: alvo de toque mínimo de 44x44px. */
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+  /* Os botões do pager são o alvo mais errado hoje: texto curto, padding pequeno. */
+  .pager {
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .pager button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  /* Linha clicável de tabela — no card o alvo já é o .rt-head (min-height:44px). */
+  .row-click td {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+.td-action {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+.help {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+/* hamburger / mobile */
+.topbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Sem isto o breadcrumb estoura a largura disponível. */
+  min-width: 0;
+  flex: 1;
+}
+/* The trigger is a single element rendered once in Shell (App.tsx), a sibling of `.side-nav` and
+   `.main` — NOT a DOM child of `.topbar-menu` any more (see App.tsx for why: one element, CSS
+   decides where it sits per band). Above 1024px there is no trigger at all (rail + panel are
+   always visible). From 641–1024px it's `position: fixed` back at the topbar's old top-left spot
+   (`.topbar-menu` below reserves that space so the crumb doesn't slide under it). At ≤640px it
+   floats bottom-right instead — see the dedicated phone rule further down, which overrides this. */
+.hamburger {
+  display: none;
+}
+.crumb {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- recolher / redimensionar (só acima de 1024px; neutralizado no drawer, mais abaixo) --- */
+.side-nav.nav-collapsed .nav-panel {
+  display: none;
+}
+/* Alça na borda direita do painel. 5px de área de agarre num app de mouse; o cursor é o sinal. */
+.nav-resize {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 2;
+}
+.nav-resize:hover,
+.nav-resize:focus-visible {
+  background: var(--primary);
+  outline: none;
+}
+/* Enquanto arrasta, o cursor vale para a janela toda: sair da alça no meio do gesto não deve
+   trocar o cursor, e a seleção de texto atrapalharia o arrasto. */
+body.nav-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+/* Canto superior esquerdo da topbar, antes do breadcrumb — a convenção do Linear, do Azure e do
+   Claude Desktop. Mesma caixa do `.icon-btn` das ações à direita, para os dois lados da topbar
+   pesarem igual. Preso à sidebar ele desapareceria junto com ela ao recolher. */
+.nav-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 5px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.nav-collapse-btn:hover {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.nav-collapse-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.nav-collapse-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.sb-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  /* Aqui a navegação é drawer (ou folha, ≤640px) e o painel tem de aparecer inteiro: a preferência
+     de desktop não vale. Ela é neutralizada por CSS, e não por um breakpoint duplicado em JS —
+     `--nav-panel-w` chega como custom property justamente para esta regra poder vencê-la. */
+  .nav-panel {
+    width: 225px;
+  }
+  .side-nav.nav-collapsed .nav-panel {
+    display: flex;
+  }
+  .nav-resize,
+  .nav-collapse-btn {
+    display: none;
+  }
+  .side-nav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1100;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+  }
+  .side-nav.open {
+    transform: none;
+  }
+  .sb-backdrop.show {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1050;
+  }
+  /* 641–1024px: the trigger sits back exactly where the topbar used to render it — `position:
+     fixed` because the element itself now lives in Shell, outside `.topbar`'s DOM (see App.tsx).
+     `.topbar` isn't scrolled independently (only `.content` scrolls, inside `.main`'s
+     `overflow: hidden`), so a fixed position here tracks the topbar's on-screen spot exactly.
+     top: 6px = (56px topbar height − 44px button) / 2; left: 14px = this band's `.topbar` padding
+     (below). z-index sits below the side-nav/backdrop/drawer/modal stack (1000+) so an open
+     overlay covers it instead of floating above it. Reset to a bottom-right float at ≤640px
+     (see the dedicated phone rule further down, which overrides every one of these). */
+  .hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 6px;
+    left: 14px;
+    right: auto;
+    bottom: auto;
+    z-index: 500;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hamburger:hover {
+    background: var(--surface);
+    color: var(--foreground);
+  }
+  .hamburger svg {
+    width: 15px;
+    height: 15px;
+  }
+  /* Reserves the space the fixed trigger occupies (44px + the row's 10px gap) so the breadcrumb
+     doesn't render underneath it — `.topbar-menu` no longer has the trigger as a flex sibling to
+     push the crumb over. Undone at ≤640px, where the trigger floats away from the topbar entirely. */
+  .topbar-menu {
+    padding-left: 54px;
+  }
+  .topbar {
+    padding: 0 14px;
+  }
+  .top-search {
+    width: auto;
+    flex: 1;
+    max-width: 320px;
+  }
+  .content {
+    padding: 18px 14px;
+  }
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+  }
+  .field {
+    flex: 1;
+    min-width: 0;
+  }
+  .select {
+    min-width: 0;
+    width: 100%;
+  }
+  .panel-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .modal {
+    width: 100%;
+  }
+}
+
+/* ≤640px: the trigger leaves the topbar altogether and floats bottom-right instead — the
+   thumb-reachable corner on a phone held one-handed, versus the top-left corner the 641–1024px
+   rule above still uses (inherited from desktop, never chosen for touch). 56×56, larger than the
+   44px list-item minimum: a free-floating control someone reaches for without looking earns the
+   extra size. `env(safe-area-inset-bottom)` keeps it clear of the iPhone home indicator.
+   `.topbar-menu`'s reserved space (above) is undone here since the trigger no longer sits there. */
+@media (max-width: 640px) {
+  .hamburger {
+    top: auto;
+    left: auto;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: var(--brand-foreground);
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 500;
+  }
+  .hamburger:hover {
+    background: var(--brand-hover);
+    color: var(--brand-foreground);
+  }
+  .hamburger svg {
+    width: 22px;
+    height: 22px;
+  }
+  .topbar-menu {
+    padding-left: 0;
+  }
+  /* The floating trigger covers whatever sits at the very bottom of `.content` — confirmed on
+     /app/payables (last visible row) and /app/accounting/trial-balance (the "Totais" card).
+     `.content` already scrolls independently (`overflow-y: auto`), so reserving space here just
+     lets the user scroll every bit of real content clear of the button instead of permanently
+     shrinking the button or hiding it while scrolling — 56px button + 16px margin + 20px breathing
+     room, plus the safe area again since this is the last padding before the screen edge. */
+  .content {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ===== SIDE NAV — phone sheet (≤640px only; the 641–1024px band keeps the rail+panel above) =====
+   The component swaps its whole DOM (not just CSS) for `.side-nav-mobile` — see SideNav.tsx's
+   `usePhone()` branch — so these rules only ever apply to that markup. Kept in their own
+   `@media (max-width: 640px)` block anyway, as defense in depth against the class leaking. */
+@media (max-width: 640px) {
+  /* Rises from the bottom instead of sliding in from the left — matches the trigger's new
+     bottom-right home and the `.drawer` sheet pattern already in this codebase ("entrar pela
+     direita num telefone deixa o conteúdo longe do polegar" applies just as much to sliding in
+     from the left). `translateY` replaces the `translateX` the base `.side-nav` rule (≤1024px,
+     above) uses; `.side-nav.side-nav-mobile.open` needs the extra class in its selector so it
+     outweighs this rule instead of losing a same-specificity, source-order tie to it. */
+  .side-nav.side-nav-mobile {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    height: auto;
+    max-height: 88dvh;
+    border-radius: 14px 14px 0 0;
+    transform: translateY(100%);
+  }
+  .side-nav.side-nav-mobile.open {
+    transform: none;
+  }
+  .mnav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--sb-bg);
+  }
+  .mnav-list,
+  .mnav-domain {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  /* Tapping a domain slides its panel in from the right; back reverses with the same feel. */
+  .mnav-domain {
+    animation: mnav-slide-in-right 0.18s ease;
+  }
+  .mnav-list {
+    animation: mnav-slide-in-left 0.18s ease;
+  }
+  @keyframes mnav-slide-in-right {
+    from {
+      transform: translateX(28px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes mnav-slide-in-left {
+    from {
+      transform: translateX(-28px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  .mnav-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--sb-surface);
+  }
+  .mnav-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, hsl(174 88% 30%), hsl(33 49% 50%));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .mnav-user {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .mnav-user-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sb-fg-bright);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mnav-user-role {
+    font-size: 12px;
+    color: var(--sb-fg);
+    opacity: 0.75;
+  }
+  .mnav-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--sb-surface);
+    border-radius: 9px;
+    padding: 0 12px;
+    margin: 12px 16px;
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+  .mnav-search svg {
+    width: 17px;
+    height: 17px;
+    color: var(--sb-fg);
+    flex-shrink: 0;
+  }
+  .mnav-search input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    padding: 11px 0;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--sb-fg-bright);
+  }
+  .mnav-search input::placeholder {
+    color: var(--sb-fg);
+  }
+  .mnav-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Domain rows (level 1) and the back row (level 2 header) — both are full-width, ≥44px targets. */
+  .mnav-row,
+  .mnav-back {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    color: var(--sb-fg-bright);
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+  .mnav-row:active,
+  .mnav-back:active {
+    background: var(--sb-surface);
+  }
+  .mnav-row svg:not(.mnav-row-chevron),
+  .mnav-back svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+  .mnav-row-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mnav-row-chevron {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    opacity: 0.5;
+  }
+  .mnav-back {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--sb-surface);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .mnav-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--sb-surface);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Level 2 reuses the desktop's `.nav-panel-item` — bump its touch target and type size to the
+     sheet's scale without touching the 641–1024px/desktop rule those classes already have. */
+  .side-nav-mobile .nav-panel-body {
+    flex: 1;
+    padding: 8px 4px;
+  }
+  .side-nav-mobile .nav-panel-item {
+    min-height: 48px;
+    padding: 10px 12px;
+    font-size: 14.5px;
+  }
+  .side-nav-mobile .nav-panel-item svg {
+    width: 20px;
+    height: 20px;
+  }
+  .side-nav-mobile .nav-subgroup {
+    padding: 14px 12px 4px;
+    font-size: 11px;
+  }
+  .side-nav-mobile .nav-panel-empty {
+    padding: 24px 16px;
+    font-size: 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-nav {
+    transition: none;
+  }
+  .nav-collapse-btn {
+    transition: none;
+  }
+  .mnav-list,
+  .mnav-domain {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .top-search {
+    display: none;
+  }
+  .page-title {
+    font-size: 19px;
+  }
+  /* Spec §4: "Abaixo de 640px o seletor de empresa reduz a ícone." The label's fixed 150px
+     (.emp-name) doesn't fit next to "Ver como" + sino + tema at 390px — the topbar overflowed and
+     `.topbar-menu` (which holds the hamburger) collapsed, leaving the invisible `.emp-select`
+     overlay painted on top of the hamburger (found running the mobile guard with real company
+     data — Task 4). Dropping just the label keeps the chip a real tap target (icon + chevron)
+     without touching `.emp-select`, which stays `inset: 0` on `.emp` and shrinks with it. */
+  .emp-name {
+    display: none;
+  }
+  .emp {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+}
+
+/* ===== DETAIL PAGE ===== */
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.backlink:hover {
+  color: var(--foreground);
+}
+.backlink svg {
+  width: 15px;
+  height: 15px;
+}
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.detail-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.detail-sub {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+}
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+/* Right-aligned action bar (Payable + Adequação, AEL-891). A leading forecast banner, if any,
+   stays left via margin-right:auto. */
+.detail-actions--end {
+  justify-content: flex-end;
+}
+.detail-actions--end .forecast-banner {
+  margin-right: auto;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 14px 16px;
+}
+/* Vertical rhythm between the stacked detail sections (installments, withholdings, attachments, timeline). */
+.detail-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+/* AEL-843 — vertical rhythm between the requisition detail panels. The refactor to a consolidated list
+   left the panels as adjacent siblings (`.panel` has no margin); reintroduces the gap. */
+.detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 22px;
+}
+/* AEL-844 — "Send financial information" form (installments + issue date + billing summary). */
+.fc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.fc-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.fc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fc-head,
+.fc-row {
+  display: grid;
+  /* First column = sequence, last = fixed-width remove icon-button (empty in the header). The three middle
+     columns use minmax(0, 1fr) — NOT a bare `1fr` (= minmax(auto, 1fr)) — so the tracks are content-independent
+     and divide equally in BOTH grids. A bare 1fr lets the row's inputs (a date field, the `.select` with its
+     min-width: 220px) grow their tracks past the header's short-text tracks, breaking the column alignment on
+     narrower screens (the labels no longer sit above their fields). */
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+/* Let the row fields shrink to fill their (equal) tracks instead of forcing them wider — overrides the global
+   `.select { min-width: 220px }` and the date input's intrinsic width so the columns stay aligned when narrow. */
+.fc-row .input,
+.fc-row .select {
+  width: 100%;
+  min-width: 0;
+}
+/* Sub-linha da linha digitável do boleto (AEL-877): aparece abaixo da parcela quando a forma é Boleto,
+   recuada até a 1ª coluna de campo (28px da sequência + 8px de gap), com o badge de convênio ao lado. */
+.fc-boleto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 36px;
+}
+.fc-boleto .input {
+  flex: 1;
+  min-width: 0;
+}
+.fc-boleto-badge {
+  flex: none;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--warning);
+  background: var(--warning-subtle);
+}
+
+/* PIX key override sub-line (AEL-938): small hint ABOVE the field, indented like .fc-boleto. */
+.fc-pix {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 36px;
+}
+.fc-pix .input {
+  width: 100%;
+  min-width: 0;
+}
+.fc-pix-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--warning);
+}
+
+/* Recurrence cycles panel (AEL-877): the generated-Payables list + the "launch this month's invoice" form. */
+.rc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* O Panel não aplica inset ao corpo (padded é opt-in) — o painel de recorrência dá o próprio padding. */
+  padding: 16px;
+}
+.rc-list {
+  display: flex;
+  flex-direction: column;
+}
+.rc-head,
+.rc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.rc-head {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+.rc-row {
+  font-size: 14px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.rc-tag {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+/* Badge de status pago/parcial/aberto por ciclo (AEL-881). */
+.rc-nf-hint {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-radius: 8px;
+}
+.rc-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.rc-status-paid {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+.rc-status-partial {
+  color: var(--warning);
+  background: var(--warning-subtle);
+}
+.rc-status-open {
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+.rc-payable-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rc-pending {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.rc-launch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.rc-launch-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+.rc-launch-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.rc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rc-field .input,
+.rc-field .select {
+  width: 100%;
+  min-width: 0;
+}
+.rc-actions {
+  display: flex;
+  gap: 8px;
+}
+.fc-head {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.fc-seq {
+  text-align: left;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.fc-actions-row {
+  display: flex;
+  gap: 8px;
+}
+.fc-submit {
+  display: flex;
+  justify-content: flex-end;
+}
+/* Withholdings: two-column block — left = gross/withheld/net, right = per-tax lines; columns stretch to equal height. */
+.ret-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
+  margin-top: 16px;
+}
+.ret-block > .ret-col + .ret-col {
+  border-left: 1px solid var(--border);
+}
+.ret-col {
+  display: flex;
+  flex-direction: column;
+}
+.ret-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  flex: 1;
+}
+.ret-row + .ret-row {
+  border-top: 1px solid var(--border-subtle);
+}
+.ret-row-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ret-row-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.ret-row-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ret-empty {
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+@media (max-width: 640px) {
+  .ret-block {
+    grid-template-columns: 1fr;
+  }
+  .ret-block > .ret-col + .ret-col {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+/* Editable retentions — responsive grid that fits narrow containers (e.g. the accounting drawer) without the
+   horizontal overflow a <table> causes. Columns keep min widths and grow via fr. */
+.wh-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Keep the editable rows a tidy form width instead of stretching the inputs across the full-width
+     detail page (the PendingAccounting stage renders this editable grid). Narrow contexts (accounting
+     drawer) are already below this cap, so they are unaffected. */
+  max-width: 820px;
+}
+/* Inset for the editable retentions inside a Panel (payable page): the .panel body has no padding of its own,
+   so align the content with the panel title instead of sitting flush against the card edge. The accounting
+   drawer renders this section `bare` (already inset by the drawer body) and does not use this wrapper. */
+.wh-panel-body {
+  padding: 14px 16px 16px;
+}
+.wh-head,
+.wh-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1.5fr) minmax(84px, 1fr) minmax(64px, 0.7fr) minmax(88px, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+.wh-head > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.wh-row > * {
+  min-width: 0;
+}
+/* Remove-retention button: compact, bigger icon (overrides the global .btn svg 15px), hover tooltip "Remover". */
+.wh-remove {
+  position: relative;
+  display: inline-flex;
+}
+.wh-remove .btn {
+  padding: 6px;
+}
+.wh-remove .btn svg {
+  width: 18px;
+  height: 18px;
+}
+.wh-remove::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  padding: 3px 7px;
+  background: var(--foreground);
+  color: var(--card);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 5;
+}
+.wh-remove:hover::after {
+  opacity: 1;
+}
+/* Sectioned drawer body (e.g. Registro de Despesa): flat sections (title + content) separated by a subtle
+   divider — matches the other drawers instead of nesting Panel cards. */
+.drawer-section + .drawer-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 18px;
+}
+.drawer-section > .section-title {
+  margin: 0 0 12px;
+}
+.drawer-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.drawer-section-head > .section-title {
+  margin: 0;
+}
+.info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.info-value {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Requisition "Data" block: definition list (label→value) instead of loose cards. */
+.detail-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 11px 24px;
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+.detail-dl dt {
+  color: var(--muted-foreground);
+}
+.detail-dl dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.detail-dl .sub {
+  display: block;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  margin-top: 1px;
+}
+.detail-desc-text {
+  margin: 5px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 0 12px;
+}
+.activity-empty {
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.activity-empty svg {
+  width: 26px;
+  height: 26px;
+  opacity: 0.4;
+  margin: 0 auto 10px;
+  display: block;
+}
+/* Cost-center "Atividade": section header with the competency filter + stacked type accordions. */
+.cc-activity-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 20px 0 14px;
+}
+.cc-activity-head > .section-title {
+  margin: 0;
+}
+/* Breathing room between the "COMPETÊNCIA" label and its month input (default field gap is tight). */
+.cc-activity-head .field {
+  gap: 7px;
+}
+.cc-activity-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.cc-activity-table {
+  overflow-x: auto;
+}
+/* "Orçamento por unidade" rendered as a collapsible accordion between the KPIs and Atividade. */
+.cc-budget-accordion {
+  margin: 16px 0;
+}
+.edit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+/* Let each field shrink below its content's intrinsic width inside the (narrow) drawer. */
+.edit-grid > * {
+  min-width: 0;
+}
+.edit-grid.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 640px) {
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 20px;
+  max-width: 640px;
+}
+/* Vendor form rendered as a full-width page (the reused VendorForm, not the drawer): fill the content
+   area and lay the drawer's 2-col grids out in 3 columns. span-2 fields still span every column
+   (grid-column: 1 / -1), so wide fields stay full-width. */
+.card-form.vendor-page-form {
+  max-width: none;
+}
+@media (min-width: 1024px) {
+  .vendor-page-form .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* inline form (estrutura) */
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.inline-form .grow {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* status badges */
+.badge-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-pendente {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+.badge-aprovado {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+.badge-pago {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.badge-rejeitado {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+.badge-remessa {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+/* Document-kind tag (Nota Fiscal / Boleto / Fatura / Outro) — the same blue as the "do boleto lido" tag. */
+.badge-doc {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+.amount-cell {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.row-click {
+  cursor: pointer;
+}
+.row-click:hover td {
+  background: var(--surface);
+}
+.btn-approve {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+.btn-approve:hover {
+  filter: brightness(1.05);
+  background: var(--success);
+}
+
+.add-card {
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 120px;
+  border-radius: calc(var(--radius) + 4px);
+  transition: all 0.15s;
+}
+.add-card:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+.add-card svg {
+  width: 16px;
+  height: 16px;
+}
+
+.empty-state {
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.empty-state > svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.4;
+  margin: 0 auto 10px;
+  display: block;
+}
+.empty-state .t {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+.empty-state .s {
+  font-size: 12.5px;
+}
+.empty-state .a {
+  margin-top: 18px;
+}
+.empty-action {
+  gap: 5px;
+  padding: 7px 15px 7px 12px;
+  border: 1px solid var(--brand-subtle);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px hsl(174 88% 24% / 0.04);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.empty-action svg {
+  width: 14px;
+  height: 14px;
+}
+.empty-action:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-foreground);
+  box-shadow: 0 2px 8px hsl(174 88% 24% / 0.18);
+  transform: translateY(-1px);
+}
+
+/* ===== TABLE (estrutura) ===== */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Opt-in body inset for non-table content in a Panel (forms, chips, bars). Tables stay full-bleed. */
+.panel-body {
+  padding: 16px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead th {
+  text-align: left;
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+tbody td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+tfoot td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-top: 2px solid var(--border);
+}
+.t-mono {
+  font-variant-numeric: tabular-nums;
+}
+.t-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--border);
+}
+.pager-info {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Planilhas do Contábil — exceção declarada ao card =====
+ * A grade numérica É o produto: o contador compara linha contra linha. Card
+ * destruiria isso. Rola na horizontal, com a coluna de identificação fixa para
+ * o leitor não perder a referência. A trava mobile (e2e/mobile-layout.spec.ts)
+ * reconhece .table-scroll como opt-in e não a acusa.
+ *
+ * `:not([colspan])` exclui células que abrem mão de ser "a primeira coluna" para virar um
+ * cabeçalho de grupo ou uma linha de total (cabeçalho de dia/conta, total geral/fechamento —
+ * `colSpan` no JSX vira `colspan` no DOM). Sem o exclude, essas células viravam a única <td>
+ * da própria linha, batiam em `:first-child` e ficavam fixas cobrindo o conteúdo que o scroll
+ * horizontal existe para revelar — o oposto do que a coluna fixa é: uma referência de
+ * identificação, não um bloqueio por cima da grade. */
+.table-scroll {
+  overflow-x: auto;
+  /* Rolagem com inércia no iOS. */
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll th:first-child:not([colspan]),
+.table-scroll td:first-child:not([colspan]) {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+}
+.table-scroll thead th:first-child:not([colspan]) {
+  z-index: 2;
+  background: var(--surface);
+}
+/* A borda direita marca onde a coluna fixa termina, senão o texto que passa
+   por baixo dela parece um glitch. */
+.table-scroll th:first-child:not([colspan])::after,
+.table-scroll td:first-child:not([colspan])::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+/* ===== ResponsiveTable — desktop table scroll fallback (Task 18 fix-round 1) =====
+ * Reachability only — deliberately NOT `.table-scroll` above. That class also pins the first
+ * column (`position: sticky` + an explicit background + a border-marker `::after`) for the 4
+ * accounting sheets that chose it on purpose; reusing it here would give every migrated table a
+ * new look (sticky column, visible seam) even when it never scrolls. `.rt-scroll` sets only
+ * `overflow-x: auto`, but per CSS that also computes the used `overflow-y` to `auto` (the spec
+ * has no way to say "scroll x, stay visible y") — so a table that already fits its panel is
+ * pixel-identical for layout (no scrollbar, nothing moves, no visible change) but NOT identical
+ * for overflow semantics: any absolutely-positioned child of a cell (a dropdown, popover, tooltip)
+ * that used to escape the box can now be clipped by it, or force a vertical scrollbar of its own.
+ * A grep of src/pages and src/ui.tsx at the time this landed found nothing that does that inside
+ * a table cell, so the risk is latent, not live — but it applies to every one of the ~90 tables
+ * migrated onto ResponsiveTable, in one commit, so check here first if a popover/dropdown inside
+ * a table cell ever renders clipped or scrolls oddly. The engine engages `.rt-scroll`'s
+ * scrollbar itself only when a table's columns genuinely don't fit, which happens between 641px
+ * and ~1023px more often than the desktop-only testing this project had before Task 18 ever
+ * caught (card mode hides it below 640px; `pnpm shots` only checks ≥1180px). The mobile guard
+ * (e2e/mobile-layout.spec.ts) and the sweep (scripts/mobile-audit.mjs) both recognize `.rt-scroll`
+ * as opt-in, same as `.table-scroll`. */
+.rt-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== ResponsiveTable — card de telefone (<640px) ===== */
+.rt-card {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.rt-card:last-child {
+  border-bottom: none;
+}
+.rt-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  /* Alvo de toque confortável para a linha inteira. */
+  min-height: 44px;
+}
+.rt-head.row-click:hover {
+  background: var(--surface);
+}
+.rt-main {
+  flex: 1;
+  min-width: 0;
+}
+.rt-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rt-meta {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rt-status {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+}
+.rt-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.rt-amount {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rt-toggle {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.rt-chev {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s;
+}
+.rt-chev.open {
+  transform: rotate(180deg);
+}
+.rt-detail {
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
+  padding: 11px 14px 13px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 12px;
+}
+.rt-k {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 1px;
+}
+.rt-v {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.rt-subrow {
+  border-top: 1px solid var(--border-subtle);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rt-chev {
+    transition: none;
+  }
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fade 0.12s ease;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal {
+  background: var(--card);
+  border-radius: 12px;
+  width: 440px;
+  max-width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  animation: pop 0.16s ease;
+}
+/* Wider variant for content that doesn't fit 440px (e.g. multi-column tables). */
+.modal.modal-wide {
+  width: 960px;
+}
+@keyframes pop {
+  from {
+    transform: translateY(8px) scale(0.99);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.modal-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.modal-sub {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.modal-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.modal-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+/* Rodapé de formulário: botões alinhados à direita com respiro entre eles. */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.form-field > label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.form-field .input {
+  width: 100%;
+}
+.create-err {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.uni-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--background);
+}
+.uni-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.uni-pick-row:hover {
+  background: var(--surface);
+}
+.uni-pick-row input {
+  accent-color: var(--brand);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.uni-pick-row .sig {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.uni-pick-sep {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 3px 0;
+}
+.uni-pick-empty {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  padding: 8px;
+  text-align: center;
+}
+
+/* ===== DRAWER ===== */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fade 0.14s ease;
+}
+.drawer {
+  background: var(--card);
+  height: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -16px 0 50px rgba(0, 0, 0, 0.2);
+  animation: slide-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.drawer-sub {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.drawer-body {
+  flex: 1;
+  /* Set overflow-x explicitly: with only overflow-y:auto it computes to auto, so any too-wide child
+     adds a stray horizontal scrollbar to the whole drawer. Wide tables get their own local scroll. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.drawer-foot {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .drawer {
+    width: 100% !important;
+  }
+  /* Entrar pela direita num telefone deixa o conteúdo longe do polegar — sobe como uma folha. */
+  .drawer-overlay {
+    align-items: flex-end;
+    justify-content: stretch;
+  }
+  .drawer {
+    height: auto;
+    max-height: 85dvh;
+    border-radius: 14px 14px 0 0;
+    animation: sheet-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .modal {
+    max-height: 90dvh;
+  }
+  .modal.modal-wide {
+    width: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: none;
+  }
+}
+/* Local scroll for wide tables inside a drawer, so they scroll here instead of being clipped by
+   the drawer-body overflow-x guard (which would silently hide nowrap money/badge columns). */
+.drawer-table-scroll {
+  overflow-x: auto;
+}
+
+/* ===== COMBOBOX (searchable single-select) ===== */
+.combobox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 220px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.combobox-trigger:hover:not(:disabled) {
+  border-color: var(--muted-foreground);
+}
+.combobox-trigger:focus,
+.combobox-trigger[data-state='open'] {
+  border-color: var(--brand);
+}
+.combobox-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.combobox-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combobox-placeholder {
+  color: var(--muted-foreground);
+}
+.combobox-caret {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.combobox-panel {
+  width: var(--radix-popover-trigger-width);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fade 0.12s ease;
+  /* The popover is portal'd to <body>. When opened from inside a modal Radix
+     Dialog (Drawer), Radix sets body { pointer-events: none }, which the portal
+     would otherwise inherit — making the options unclickable. Re-enable it. */
+  pointer-events: auto;
+}
+.combobox-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.combobox-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 13px;
+  background: var(--background);
+  color: var(--foreground);
+  outline: none;
+}
+.combobox-input:focus {
+  border-color: var(--brand);
+}
+.combobox-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.combobox-empty {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.combobox-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.combobox-option.active {
+  background: var(--muted);
+}
+.combobox-option.selected {
+  color: var(--brand);
+}
+.combobox-option-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.combobox-option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combobox-option-sub {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combobox-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--brand);
+}
+.combobox-foot {
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px;
+}
+.combobox-foot .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+/* MultiSelect "clear" action in the popover footer. */
+.combobox-clear {
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.combobox-clear:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* form section divider inside drawer */
+.form-section {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 6px 0 -2px;
+}
+.form-grid {
+  display: grid;
+  /* minmax(0, 1fr) (not 1fr = minmax(auto, 1fr)) so a wide <select>'s min-content can't force the
+     column past the drawer width and spill sideways. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+/* Let each field shrink below its content's intrinsic width inside the (narrow) drawer. */
+.form-grid > * {
+  min-width: 0;
+}
+.form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+/* Selects and comboboxes fill their column and may shrink like inputs do, so two side by side keep
+   the gap instead of overflowing at the global 220px min-width (drawers are only ~440px wide). */
+.form-grid .select,
+.form-grid .combobox-trigger,
+.edit-grid .select,
+.edit-grid .combobox-trigger {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.field-err {
+  font-size: 11px;
+  color: var(--danger);
+  margin-top: 1px;
+}
+.input.input-err {
+  border-color: var(--danger);
+}
+.input.input-auto {
+  background: var(--success-subtle);
+}
+
+/* auto-fill hint */
+.auto-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--success);
+  margin-left: 6px;
+}
+.auto-hint svg {
+  width: 10px;
+  height: 10px;
+}
+.auto-hint--loading {
+  color: var(--muted-foreground);
+}
+.spin {
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Field being filled by the CNPJ lookup — shimmer while empty. */
+.input.input-loading {
+  background: linear-gradient(90deg, var(--muted) 25%, var(--border-subtle) 37%, var(--muted) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* PF/PJ toggle */
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  gap: 2px;
+}
+.seg button {
+  border: none;
+  background: none;
+  padding: 5px 14px;
+  border-radius: calc(var(--radius) - 1px);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.seg button.on {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+/* ===== CONFIRM DIALOG ===== */
+.confirm-modal {
+  width: 400px;
+}
+.confirm-body {
+  padding: 20px 22px;
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+.confirm-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: var(--danger-subtle);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.confirm-msg {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+/* Campo de motivo (textarea) preenche a largura do diálogo — o .input base não tem width, só regras
+   escopadas o definem; sem isto o textarea fica na largura intrínseca (~20 colunas) dentro da modal. */
+.confirm-msg .input {
+  width: 100%;
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn-danger:hover {
+  filter: brightness(1.05);
+  background: var(--danger);
+}
+/* Cancel: red outline (AEL-891). */
+.btn-danger-outline {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+.btn-danger-outline:hover {
+  background: var(--danger-subtle);
+}
+
+/* ===== SKELETON ===== */
+.skeleton {
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--muted) 25%, var(--border-subtle) 37%, var(--muted) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ===== LOADING STATE (spinner block) ===== */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.loading-state > svg {
+  color: var(--brand);
+}
+
+/* Movimento reduzido: mantém spinner/skeleton visíveis, sem animar. */
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+  .skeleton,
+  .input.input-loading {
+    animation: none;
+  }
+}
+
+/* ===== TOAST ===== */
+.toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: calc(100vw - 40px);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  font-size: 13px;
+  min-width: 280px;
+  animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.toast-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+.toast-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.toast-success .toast-icon {
+  color: var(--success);
+}
+.toast-error .toast-icon {
+  color: var(--danger);
+}
+.toast-msg {
+  flex: 1;
+  color: var(--foreground);
+  line-height: 1.35;
+}
+.toast-close {
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  display: flex;
+  padding: 2px;
+  border-radius: 4px;
+}
+.toast-close:hover {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.toast-close svg {
+  width: 14px;
+  height: 14px;
+}
+@media (max-width: 640px) {
+  .toast-stack {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+  .toast {
+    min-width: 0;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+.auth {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  /* `vh` first as the fallback, then `dvh`: mobile browsers size `100vh` to the viewport
+     with the URL bar retracted, so the bottom of the login hides under the chrome — and
+     `body` is overflow:hidden, so it can't be scrolled into view. `dvh` tracks what's
+     actually visible. */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--background);
+}
+/* `body` is overflow:hidden for the app shell, so the public login scrolls in its own
+   column — the dev build stacks six quick-login buttons and can outgrow a short viewport. */
+.auth-form-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  overflow-y: auto;
+  position: relative;
+}
+/* Auto margins, not `justify-content: center` on the column: centering a flex item that
+   overflows its scroll container pushes the top out of reach (the six dev quick-login
+   buttons do exactly that on a short viewport). Auto margins center it and still scroll. */
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  margin: auto 0;
+}
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--foreground);
+}
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--brand), hsl(33 49% 52%));
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.5px;
+  box-shadow: 0 4px 12px hsl(174 88% 24% / 0.28);
+}
+.auth-logo-lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  font-size: 18px;
+}
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  margin-top: 26px;
+}
+.auth-sub {
+  color: var(--muted-foreground);
+  margin-top: 6px;
+  font-size: 14.5px;
+}
+.auth-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Container for the Google Identity Services rendered button. */
+.auth-google-gis {
+  margin-top: 26px;
+  display: flex;
+  justify-content: center;
+}
+.auth-soon {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.auth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-field > span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.auth-field em {
+  font-style: normal;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.auth-field input {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--card);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-subtle);
+}
+.auth-error {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: 9px;
+}
+.auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--brand);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+.auth-submit svg {
+  width: 16px;
+  height: 16px;
+}
+.auth-submit:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+.auth-submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.auth-devnote {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.auth-brand-side {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(150deg, hsl(174 55% 26%), hsl(195 38% 16%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-brand-blob {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(33 80% 60% / 0.35), transparent 70%);
+  top: -120px;
+  right: -120px;
+  filter: blur(40px);
+}
+.auth-brand-content {
+  position: relative;
+  text-align: center;
+  padding: 40px;
+  /* The side clips (it has to, for the blob), so the content carries its own scroll —
+     a landscape phone leaves this panel under 400px of height. */
+  max-height: 100%;
+  overflow-y: auto;
+}
+.auth-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+}
+.auth-brand-tag {
+  font-family: var(--font-display);
+  color: hsl(0 0% 100% / 0.92);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin-top: 26px;
+  max-width: 12em;
+  margin-left: auto;
+  margin-right: auto;
+}
+.auth-brand-team {
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 1px solid hsl(0 0% 100% / 0.16);
+  max-width: 26em;
+  margin-left: auto;
+  margin-right: auto;
+}
+.auth-brand-team-label {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: hsl(33 80% 72%);
+}
+.auth-brand-team-body {
+  margin-top: 10px;
+  color: hsl(0 0% 100% / 0.72);
+  font-size: 14px;
+  line-height: 1.55;
+}
+/* O split só se paga quando as duas metades têm espaço; abaixo disso o formulário fica com a
+   tela. 900px é medido, não escolhido: a 910px o painel tem 435px e o card já está no seu
+   máximo de 420 — nada aperta. Cortar em 1024 escondia 124px de faixa que renderiza bem.
+
+   Este é o único @media fora dos três breakpoints, e de propósito: a doutrina no topo deste
+   arquivo se justifica pelo shell (sidebar de 307px, tabela de 8 colunas). O login não tem
+   sidebar nem tabela — nenhum dos dois motivos o alcança. Não "corrija" para 1024. */
+@media (max-width: 900px) {
+  .auth-brand-side {
+    display: none;
+  }
+  .auth-form-side {
+    padding: 24px 20px 32px;
+  }
+  .auth-card {
+    max-width: 420px;
+  }
+}
+/* Landscape phone: the panel is barely 390px tall. Keep the mark and the tagline and drop
+   the team paragraph — trimming reads better than a scrollbar on a decorative panel. */
+@media (max-height: 560px) {
+  .auth-brand-team {
+    display: none;
+  }
+  .auth-brand-tag {
+    font-size: 21px;
+    margin-top: 18px;
+  }
+}
+
+/* ===== ERROR BOUNDARY FALLBACK ===== */
+/* Fixed overlay so the card centers on the viewport even when rendered inside the
+   app shell's flex `#root` (a plain block there shrinks to content width and the
+   card lands near the left edge instead of centered). */
+.error-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface);
+}
+.error-fallback-card {
+  max-width: 440px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 6px);
+  padding: 32px;
+  text-align: center;
+}
+.error-fallback-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--danger-subtle);
+  color: var(--danger);
+  margin-bottom: 16px;
+}
+.error-fallback-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.error-fallback-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0 0 8px;
+}
+.error-fallback-message {
+  font-size: 14px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+.error-fallback-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ===== NO-ROLE GATE (authenticated user without a cargo) ===== */
+/* Fixed overlay for the same reason as .error-fallback. `margin: auto` on the card (instead of
+   align-items: center) keeps it centered while still scrolling on short viewports — `body` is
+   `overflow: hidden`, so a flex-centered card taller than the screen would be unreachable. */
+.no-role {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  overflow-y: auto;
+  padding: 32px 20px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  background: var(--surface);
+}
+.no-role-card {
+  margin: auto;
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 8px);
+  padding: 32px;
+  box-shadow:
+    0 1px 2px hsl(225 10% 10% / 0.04),
+    0 12px 32px hsl(225 10% 10% / 0.06);
+}
+.no-role-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.no-role-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+.no-role-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.no-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: var(--warning-subtle);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.no-role-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: no-role-pulse 1.8s ease-in-out infinite;
+}
+@keyframes no-role-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.no-role-title {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 5vw, 23px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  margin-top: 22px;
+}
+/* The email can be long (name.surname@domain) — wrap it instead of widening the card on mobile. */
+.no-role-account {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 18px;
+  padding: 11px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: calc(var(--radius) + 2px);
+}
+.no-role-account-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.no-role-account-email {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.no-role-message {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.no-role-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+.no-role-actions .btn {
+  flex: 1;
+  justify-content: center;
+  min-height: 40px;
+  font-size: 13.5px;
+}
+.no-role-spin {
+  animation: no-role-rotate 0.9s linear infinite;
+}
+@keyframes no-role-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .no-role-dot,
+  .no-role-spin {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .no-role {
+    padding: 20px 16px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  .no-role-card {
+    padding: 24px 20px;
+  }
+  /* Stacked full-width buttons with a 44px touch target — side by side they get too narrow to read. */
+  .no-role-actions {
+    flex-direction: column;
+  }
+  .no-role-actions .btn {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* ===== Accounting (núcleo contábil) ===== */
+/* Fixed layout + proportional columns so the row of controls fits the drawer instead of spilling
+   sideways; min-width keeps it usable and scrolls locally (.drawer-table-scroll) on narrow screens. */
+.journal-lines {
+  margin: 14px 0 8px;
+  width: 100%;
+  table-layout: fixed;
+  min-width: 600px;
+}
+/* Livro Diário: the spanning header row that opens each entry's tbody group. */
+.journal-entry-head {
+  background: var(--surface);
+  font-weight: 500;
+}
+.journal-lines th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+.journal-lines td {
+  vertical-align: top;
+  padding: 4px 6px;
+}
+/* Neutralize the global 220px min-widths so the controls shrink into their column (as .form-grid does). */
+.journal-lines .combobox-trigger,
+.journal-lines .select,
+.journal-lines .input {
+  min-width: 0;
+  width: 100%;
+}
+.journal-lines th:nth-child(2),
+.journal-lines td:nth-child(2) {
+  width: 15%;
+}
+.journal-lines th:nth-child(3),
+.journal-lines td:nth-child(3) {
+  width: 16%;
+}
+.journal-lines th:nth-child(4),
+.journal-lines td:nth-child(4) {
+  width: 26%;
+}
+.journal-lines th:last-child,
+.journal-lines td:last-child {
+  width: 44px;
+}
+.journal-totals {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.journal-totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+.journal-totals span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted-foreground);
+}
+
+/* Accounting — informative CNPJ anchored below the company picker (out of flow, so it doesn't
+   push the center-aligned filter row). */
+/* Livro Diário — "Planilha" tab: single columnar grid (one row per posting line). The daily and
+   grand-total rows are the summary rows that the display models highlight. */
+.diario-planilha {
+  min-width: 640px;
+}
+.diario-planilha td,
+.diario-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.diario-planilha-dash {
+  color: var(--muted-foreground);
+}
+.diario-planilha-entrystart td {
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-daytotal td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+.diario-planilha-grandtotal td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+}
+.diario-planilha-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+/* model1 — grid + highlighted day-total rows. */
+.diario-planilha--model1 td,
+.diario-planilha--model1 th {
+  border: 1px solid var(--border);
+}
+.diario-planilha--model1 .diario-planilha-daytotal td {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+/* model2 — no grid + underlined day-total rows. */
+.diario-planilha--model2 .diario-planilha-daytotal td {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom: 2px solid var(--foreground);
+}
+/* model3 — no grid (only the default horizontal separators). */
+
+.dre-table .dre-section td {
+  padding-top: 14px;
+  color: var(--muted-foreground);
+}
+.dre-table .dre-subtotal td {
+  border-top: 1px solid var(--border);
+}
+.dre-table .dre-result td {
+  border-top: 2px solid var(--foreground);
+  font-size: 15px;
+  padding-top: 12px;
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+/* Grid items get an implicit `min-width: auto` (= o conteúdo intrínseco), então sem isso o card do
+ * telefone (ResponsiveTable) força a coluna a crescer além de 390px em vez de deixar o `.rt-title`
+ * truncar com "…" como projetado — a tabela antiga não sofria disso porque `.table-scroll` (overflow-x:
+ * auto) suprime esse mínimo automático; o card não tem overflow próprio, então a correção vem daqui. */
+.balance-col {
+  min-width: 0;
+}
+@media (max-width: 1024px) {
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.balance-col .dre-section td {
+  padding-top: 12px;
+  color: var(--muted-foreground);
+}
+
+/* ===== Cash flow (Fluxo de caixa) ===== */
+
+/* Page header: title row on top, full-width control toolbar below. Local to this
+   page so the global .page-head (used elsewhere) is untouched. */
+.cf-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.cf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+/* Campo "Reserva mínima": largura fixa que vivia em `style={{ width: 120 }}` no próprio
+   CurrencyInput — inalcançável por CSS. Movida para a classe do `.field`, resetada a 100% no
+   telefone junto com o resto de `.cf-toolbar` logo abaixo (mesma armadilha do `.pq-toolbar`). */
+.field.cf-reserve-field {
+  width: 120px;
+}
+@media (max-width: 640px) {
+  .cf-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .field.cf-reserve-field {
+    width: 100%;
+  }
+}
+
+/* ===== Livro Razão ===== */
+/* Header: title row on top, full-width wrapping toolbar below — the Razão has more filters than fit
+   beside the title. Local to this page so the global .page-head is untouched (same as the cash-flow head). */
+.razao-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+/* Two fixed rows: row 1 = account group + specific account (export button pinned right), row 2 =
+   competence range + unidade + cost center. Fixed field widths keep the layout stable — selecting a
+   long account label never resizes a field or reflows the row. */
+.razao-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.razao-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.razao-filters-row .field {
+  width: 220px;
+  flex: 0 0 auto;
+}
+.razao-filters-row .field.razao-field-account {
+  width: 320px;
+}
+.razao-filters-row .field .select,
+.razao-filters-row .field .combobox-trigger,
+.razao-filters-row .field .input {
+  width: 100%;
+  min-width: 0;
+}
+/* Let the selected account label ellipsis-truncate instead of growing the trigger. */
+.razao-filters-row .combobox-value {
+  min-width: 0;
+}
+.razao-export {
+  margin-left: auto;
+}
+/* "Planilha" tab: a single flat table, grouped by account (header → opening → movements → total). */
+.razao-planilha {
+  min-width: 720px;
+}
+.razao-planilha td,
+.razao-planilha th {
+  padding: 6px 10px;
+  vertical-align: top;
+  text-align: center;
+}
+/* Date + description columns read better left-aligned; the remaining columns stay centered. */
+.razao-planilha thead th:nth-child(1),
+.razao-planilha thead th:nth-child(2),
+.razao-planilha-move td:nth-child(1),
+.razao-planilha-move td:nth-child(2) {
+  text-align: left;
+}
+.razao-planilha-account td {
+  font-weight: 700;
+  border-top: 2px solid var(--foreground);
+  padding-top: 12px;
+  text-align: left;
+}
+/* Account title on the left, its opening balance pinned to the far right on the same line. */
+.razao-planilha-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.razao-planilha-account-opening {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.razao-planilha-total td {
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+}
+/* The closing-balance label spans the leading columns — right-align it so it reads next to its amount
+   instead of floating in the middle of the row. */
+.razao-planilha-total td:first-child {
+  text-align: right;
+}
+
+/* Vertical rhythm between the dashboard's stacked panels. */
+.cf-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- KPI band ----- */
+.cf-kpis {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cf-kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.cf-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cf-kpi-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.cf-kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.cf-kpi-foot {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+/* Primary card — the cash-on-hand anchor gets visual primacy. */
+.cf-kpi-primary {
+  background: var(--brand-subtle);
+  border-color: var(--brand);
+}
+.cf-kpi-primary .cf-kpi-icon {
+  background: var(--brand);
+  color: var(--brand-foreground);
+}
+.cf-kpi-primary .cf-kpi-value {
+  color: var(--brand);
+  font-size: 28px;
+}
+
+/* Semantic risk treatments. */
+.cf-kpi-danger {
+  background: var(--danger-subtle);
+  border-color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-value {
+  color: var(--danger);
+}
+.cf-kpi-danger .cf-kpi-icon {
+  background: var(--danger);
+  color: var(--brand-foreground);
+}
+.cf-kpi-ok .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-value {
+  color: var(--success);
+}
+.cf-kpi-success .cf-kpi-icon {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+@media (max-width: 1200px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 3;
+  }
+}
+@media (max-width: 640px) {
+  .cf-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cf-kpi-primary {
+    grid-column: span 2;
+  }
+}
+
+/* ----- Overdue-receivable callout ----- */
+.cf-overdue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--danger);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--danger-subtle);
+}
+.cf-overdue-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--danger);
+}
+.cf-overdue-title {
+  font-weight: 600;
+  color: var(--danger);
+}
+.cf-overdue-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+}
+.cf-overdue-desc {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+/* ----- Periods table ----- */
+.cf-row-danger td {
+  background: var(--danger-subtle);
+}
+/* Telefone: `rowClassName` (ResponsiveTable.tsx) aplica `.cf-row-danger` direto no `.rt-card`, que
+   não tem `<td>` nenhum — sem esta regra o destaque de "abaixo da reserva" silenciosamente some
+   no card, mesmo a classe estando lá (checado a 390px). */
+.rt-card.cf-row-danger {
+  background: var(--danger-subtle);
+}
+/* `.cf-drill` era um <td> clicável; a migração para ResponsiveTable move o clique para dentro do
+   conteúdo da célula (o <td> em si é do primitivo) — agora um <button> nativo (a11y: teclado +
+   leitor de tela de graça, sem reescrever a interação), com o cromo de botão zerado para caber
+   igual dentro da célula. */
+.cf-drill {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.cf-drill-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.cf-drill-caret {
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+  transform: translateX(-2px);
+}
+.cf-drill:hover {
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+.cf-drill:hover .cf-drill-caret {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--brand);
+}
+
+/* ----- Hero chart ----- */
+.cf-chart {
+  position: relative;
+  padding: 8px 4px 0;
+}
+.cf-chart svg {
+  display: block;
+}
+.cf-chart-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+  padding: 7px 10px;
+  white-space: nowrap;
+  z-index: 2;
+}
+.cf-chart-tip-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 2px;
+}
+.cf-chart-tip-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-rows {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cf-chart-tip-in {
+  color: var(--success);
+}
+.cf-chart-tip-out {
+  color: var(--danger);
+}
+.cf-hero-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 16px 0 4px;
+}
+
+/* ----- Inflow vs outflow bars ----- */
+.cf-bars {
+  padding: 4px 4px 0;
+}
+.cf-bars-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.cf-bars-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cf-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.cf-dot-in {
+  background: var(--success);
+}
+.cf-dot-out {
+  background: var(--danger);
+}
+.cf-bars-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cf-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+  flex: 1;
+  height: 100%;
+  cursor: default;
+}
+.cf-bar-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+.cf-bar {
+  width: 12px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.12s;
+}
+.cf-bar-col:hover .cf-bar {
+  opacity: 0.55;
+}
+.cf-bar-col:hover .cf-bar:hover {
+  opacity: 1;
+}
+.cf-bar-in {
+  background: var(--success);
+}
+.cf-bar-out {
+  background: var(--danger);
+}
+.cf-bar-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+
+/* ----- Accounts panel ----- */
+.cf-acct {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.cf-acct-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.cf-acct-name {
+  font-weight: 500;
+}
+
+/* ---------- workflow components ---------- */
+.sla-chip {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.sla-ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+.sla-warn {
+  background: #fffbeb;
+  color: #b45309;
+}
+.sla-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.stage-tabbar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted-foreground, #6b7280);
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+}
+.stage-tab.active {
+  color: var(--brand, #4f46e5);
+  border-bottom-color: var(--brand, #4f46e5);
+}
+.stage-tab-count {
+  font-size: 12px;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.stage-tab-count.count-warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+.stage-tab-count.count-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.pendency-dashboard {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+}
+.pendency-card {
+  flex: 0 0 200px;
+  text-align: left;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.pendency-card:hover {
+  border-color: var(--brand, #4f46e5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.pendency-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground, #6b7280);
+}
+.pendency-card-count {
+  font-size: 22px;
+  font-weight: 700;
+}
+.pendency-card-amount {
+  color: var(--muted-foreground, #6b7280);
+  font-size: 13px;
+}
+.pendency-card-link {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--brand, #4f46e5);
+  font-weight: 600;
+}
+
+.audit-timeline {
+  list-style: none;
+  margin: 0;
+  /* Inset from the panel edges (the .panel body has no padding of its own). */
+  padding: 8px 16px;
+}
+.audit-event {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+.audit-event-dot {
+  color: var(--brand, #4f46e5);
+  display: flex;
+  align-items: center;
+}
+.audit-event-desc {
+  font-weight: 500;
+}
+.audit-event-meta {
+  display: flex;
+  gap: 10px;
+  color: var(--muted-foreground, #6b7280);
+  font-size: 12px;
+}
+.audit-event-reason {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--foreground, #111827);
+}
+.audit-timeline-empty {
+  color: var(--muted-foreground, #6b7280);
+  padding: 12px 16px;
+}
+
+.forecast-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.forecast-banner.tone-ok {
+  background: #ecfdf5;
+  color: #065f46;
+}
+.forecast-banner.tone-danger {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.forecast-banner-value {
+  font-weight: 700;
+}
+.forecast-banner-lowest {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.forecast-impact {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.forecast-impact-value {
+  font-weight: 700;
+}
+.forecast-kpis {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+.forecast-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 160px;
+  margin-top: 16px;
+}
+.forecast-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.forecast-bar {
+  width: 100%;
+  background: var(--brand, #4f46e5);
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+}
+.forecast-bar.below {
+  background: #ef4444;
+}
+.forecast-bar-label {
+  font-size: 11px;
+  color: var(--muted-foreground, #6b7280);
+}
+
+/* workflow components — element hooks */
+.stage-tab-label {
+  font-weight: 500;
+}
+.pendency-card-icon {
+  display: inline-flex;
+  color: var(--brand, #4f46e5);
+}
+.pendency-card-label {
+  font-weight: 600;
+}
+.audit-event-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.audit-event-actor {
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.audit-event-time {
+  white-space: nowrap;
+}
+.audit-timeline-skeleton {
+  width: 100%;
+}
+.forecast-banner-loading {
+  background: #f3f4f6;
+}
+.forecast-banner-label {
+  opacity: 0.85;
+}
+.forecast-impact-label {
+  color: var(--muted-foreground, #6b7280);
+}
+
+/* Two-column role home (content + sticky aside). Scoped by class → feature screens untouched. */
+.aside-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.aside-layout-main {
+  min-width: 0;
+}
+.aside-layout-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* Os painéis do aside têm overflow:hidden; num flex-column com max-height (desktop) eles encolheriam
+   e cortariam o conteúdo (ex.: a última linha de tiles da "Fila"). flex-shrink:0 mantém a altura natural
+   e deixa o próprio aside rolar (overflow:auto) quando fica alto. */
+.aside-layout-side > * {
+  flex-shrink: 0;
+}
+@media (min-width: 1200px) {
+  .aside-layout {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+  /* Aside fixo ao rolar: o scroll acontece no `.content` (o topbar fica fora dele), então o `top` é
+     medido a partir do topo da área de conteúdo — 28px casa o padding. Sem `max-height`/`overflow`
+     próprios: o aside cresce naturalmente e rola junto com a página, evitando um scroll aninhado. */
+  .aside-layout-side {
+    position: sticky;
+    top: 28px;
+    align-self: start;
+  }
+}
+
+/* ---------- Painel de decisão do aside (ações do detalhe) ----------
+   Fica no topo da coluna sticky, então acompanha o scroll. A borda brand o separa dos painéis
+   informativos do aside (fila, orçamento): ali se lê, aqui se decide. */
+.spanel-decision {
+  border-color: var(--brand);
+}
+.spanel-decision .sph {
+  background: var(--brand-subtle);
+  padding-bottom: 13px;
+}
+.decision-context {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+.decision-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+}
+.decision-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.decision-row .k {
+  color: var(--muted-foreground);
+}
+.decision-row .v {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.decision-row .v.is-warn {
+  color: var(--warning);
+}
+.decision-row .v.is-bad {
+  color: var(--danger);
+}
+.decision-row .v.is-muted {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+/* Um botão por linha, largura cheia: em 360px duas colunas truncariam rótulos como
+   "Solicitar ajuste nas parcelas". */
+.decision-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.decision-actions .btn {
+  justify-content: center;
+}
+
+/* Requester home — aside tiles + grouped sections */
+/* Aside panel + KPI tiles (ported from the prototype; reused by every role home). */
+.spanel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.spanel .sph {
+  padding: 15px 17px 0;
+}
+.spanel .spt {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.spanel .spt svg {
+  width: 15px;
+  height: 15px;
+  color: var(--brand);
+}
+.spanel .sps {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.spbody {
+  padding: 14px 17px 17px;
+}
+/* "A caminho do Financeiro" (Contábil aside): big queue value + rows + NF alert.
+   Ported from the "home por papel" prototype; uses the same token family as the other panels. */
+.cfbig {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.cfbig .n {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.cfbig .d {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.cfrows {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+.cfrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+}
+.cfrow:first-child {
+  border-top: none;
+}
+.cfrow .k {
+  color: var(--muted-foreground);
+}
+.cfrow .val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cfrow .val.neg {
+  color: var(--danger);
+}
+.cfrow .val.pos {
+  color: var(--success);
+}
+.cfnote {
+  margin-top: 11px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: var(--warning-subtle);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+.cfnote svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.cfnote b {
+  font-weight: 800;
+}
+.kpitiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* Size container so `.kn` can scale its font to the grid's actual width (`cqi` below). The same
+     tiles live in a 360px aside and in a full-width panel; a single fixed font-size can only be right
+     in one of them. `inline-size` only — the block size stays automatic, so tile height still follows
+     content. */
+  container-type: inline-size;
+}
+.ktile {
+  background: var(--card);
+  /* 12px sides, not 15px: the three lost pixels per side are what buy `.kn` enough room to keep a full
+     "R$ 999.999,99" on one line in the narrowest panel that uses these tiles (326px). */
+  padding: 14px 12px;
+  /* Task 18 fix-round 1: `.kpitiles`'s `1fr 1fr` tracks have no `minmax(0, …)`, so a grid item's
+     default `min-width: auto` lets a wide value (a 6+ digit BRL figure, tabular-nums, one unbroken
+     token) force its own track wider than its fair share — the whole `.kpitiles` then overflows its
+     panel and the LAST character of the right-column values gets clipped at 390px (confirmed with
+     R$ 96.300,55/R$ 48.601,64 in centros-activity.tsx: `.kpitiles` measured 348px in a 326px panel).
+     `min-width: 0` here + the container-scaled font on `.kn` below keep the value on one line — same
+     fix already applied to `.forecast-kpis .kpi-card`/`.kpi-value` a few rules up for the identical
+     narrow-panel-plus-currency problem. */
+  min-width: 0;
+}
+/* Odd tile count (e.g. 3): the last tile spans the full row so no empty grid cell shows the grey backing. */
+.kpitiles--span-last > :last-child {
+  grid-column: 1 / -1;
+}
+/* The value scales with the container instead of sitting at a fixed 21px. A tile gets roughly
+   (container − 1px gap)/2 − 24px of padding, and the widest value the money formatter can emit
+   ("R$ 999.999,99", or "R$ 999,99 tri" once abbreviated — see `brlKpi`) is about 7em wide in this
+   weight with tabular-nums. 5.3cqi keeps ~10% headroom at both ends of the range (measured in Inter:
+   ~17.2px in the 360px aside, ~15.5px in the 326px panel of centros-activity) and caps at 20px where
+   the panel is wide. Values above a million are abbreviated at the source, so no exact figure can
+   outgrow this — `overflow-wrap` stays only as a net (wrapping beats clipping, since `.kpitiles` has
+   `overflow: hidden`). */
+.ktile .kn {
+  font-size: clamp(13px, 5.3cqi, 20px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ktile .kn.warn {
+  color: var(--warning);
+}
+.ktile .kn.bad {
+  color: var(--danger);
+}
+.ktile .kl {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 1px;
+}
+
+/* Budget-by-natureza rows (aside panel): name + available + consumed/queued/available bar. */
+.bud-row {
+  padding: 9px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.bud-row:first-child {
+  padding-top: 2px;
+  border-top: none;
+}
+.bud-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  margin-bottom: 6px;
+}
+.bud-row-name {
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bud-row-avail {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bud-row-avail.bad {
+  color: var(--danger);
+}
+.bud-row-note {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.bud-row-sub {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+}
+/* Highlight the natureza currently selected in the form. */
+.bud-row--on {
+  background: var(--brand-subtle);
+  border-radius: 8px;
+  padding: 9px 8px;
+  border-top-color: transparent;
+}
+/* Consumption bar: consumido (used) + solicitado (queued), red when over budget. */
+.mbar {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  margin-top: 10px;
+}
+.mseg {
+  height: 100%;
+}
+.mseg.used {
+  background: var(--brand);
+}
+.mseg.queued {
+  background: var(--accent);
+}
+.mseg.over {
+  background: var(--danger);
+}
+.rq-section {
+  margin-top: 22px;
+}
+.rq-section:first-of-type {
+  margin-top: 4px;
+}
+.rq-seclabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 10px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+/* Green/teal section header (redesign do card de Dados e Fornecedor). */
+.rq-seclabel-brand {
+  color: var(--brand);
+}
+
+/* ---------- Requisition summary card (Dados e Fornecedor unificados) ---------- */
+.rq-summary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
+}
+.rq-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.rq-summary-heading {
+  min-width: 0;
+}
+.rq-summary-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+.rq-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.rq-summary-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+.rq-summary-amount-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.rq-summary-amount-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.rq-summary-action {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+.rq-summary-sec {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-subtle);
+}
+.rq-summary-sec:first-of-type {
+  border-top: none;
+}
+.rq-kv {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+.rq-kv-cell {
+  min-width: 0;
+}
+.rq-kv-value {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.rq-impact-sub {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.rq-summary-sec.rq-vendor {
+  border-top-color: var(--border);
+}
+.rq-vendor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rq-newvendor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rq-vendor-name {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.rq-vendor-doc {
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.rq-vendor .rq-kv {
+  margin-bottom: 14px;
+}
+.rq-retentions .info-label {
+  margin-bottom: 8px;
+}
+.rq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rq-vendor-actions {
+  margin-top: 14px;
+}
+@media (max-width: 640px) {
+  .rq-kv {
+    grid-template-columns: 1fr;
+  }
+}
+.rq-pip {
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+.rq-pip--risk {
+  color: var(--danger);
+}
+.rq-empty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.rq-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.rq-row {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  color: var(--foreground);
+  font-family: inherit;
+}
+.rq-row:last-child {
+  border-bottom: none;
+}
+.rq-row:hover {
+  background: var(--surface);
+}
+.rq-row-stripe {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+/* "Nota Fiscal pendente" callout — the requester sends the NF from the requisition detail (attachments panel). */
+.nf-callout {
+  border: 1px solid var(--warning);
+  background: var(--warning-subtle);
+  border-radius: 10px;
+  padding: 12px;
+}
+.nf-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning);
+}
+.nf-callout-sub {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.rq-row-main {
+  min-width: 0;
+}
+.rq-row-title {
+  font-weight: 600;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rq-row-meta {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.rq-row-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.rq-row-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rq-row-chevron {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.rq-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 12px 15px;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rq-collapsed:hover {
+  border-color: var(--brand);
+  color: var(--foreground);
+}
+
+/* Segmented control (requisition form: Tipo, Mensal/Integral) */
+.seg {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.segbtn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted-foreground);
+  border-radius: var(--radius);
+  padding: 8px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.segbtn:hover {
+  border-color: var(--brand);
+}
+.segbtn.on {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+
+/* Requisition form card (artifact "Nova requisição" layout) */
+.form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 760px;
+}
+/* Roomier rhythm inside the requisition form card (closer to the legacy form spacing). */
+.form .form-field {
+  gap: 7px;
+}
+.form .form-field > label {
+  font-size: 12px;
+  color: var(--foreground);
+}
+.form .input,
+.form .select {
+  min-width: 0;
+  width: 100%;
+}
+.form .input {
+  padding: 9px 12px;
+}
+.form .select {
+  padding: 9px 30px 9px 12px;
+}
+/* Required-field marker + legend (mirrors the legacy form's "* Obrigatório"). */
+.req-mark {
+  color: var(--danger);
+  font-weight: 700;
+}
+.form-legend {
+  max-width: 760px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.form-legend .req-mark {
+  margin-right: 2px;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 640px) {
+  .two {
+    grid-template-columns: 1fr;
+  }
+}
+/* Connected two-option toggle (Mensal/Integral) */
+.toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.toggle-btn {
+  border: none;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  padding: 9px 13px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toggle-btn + .toggle-btn {
+  border-left: 1px solid var(--border);
+}
+.toggle-btn.on {
+  background: var(--brand);
+  color: var(--brand-foreground);
+}
+/* Inline budget-impact hint */
+.budgethint {
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+.budgethint.bad {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.formfoot {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  max-width: 760px;
+}
+
+/* ── Aprovador (AEL-859) ────────────────────────────────────────────────── */
+
+/* Taller consumption bar for the dashboard/budget screens (mock ".mbar.tall"). */
+.mbar.tall {
+  height: 14px;
+  margin-top: 0;
+}
+/* Bar color legend (mock ".blegend"/".sw"). */
+.blegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+.blegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sw {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+/* Expandable row (mock "expItem") — budgets by natureza/projeto. */
+.xrow {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.xrow:last-child {
+  border-bottom: none;
+}
+.xrow-head {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--foreground);
+  font-family: inherit;
+}
+.xrow-head:hover {
+  background: var(--surface);
+}
+.xrow-main {
+  display: flex;
+  flex-direction: column;
+}
+.xrow-flag {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.xrow-flag.ok {
+  color: var(--success);
+}
+.xrow-flag.warn {
+  color: var(--warning);
+}
+.xrow-flag.bad {
+  color: var(--danger);
+}
+.xrow-flag.calm {
+  color: var(--muted-foreground);
+}
+.xrow-chevron {
+  transition: transform 0.18s;
+}
+.xrow-chevron.open {
+  transform: rotate(180deg);
+}
+.xrow-body {
+  padding: 2px 16px 16px;
+}
+/* Row number chip (e.g. requisition code "#42") shown inline before the title. */
+.xrow-titleline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.xrow-titleline .rq-row-title {
+  min-width: 0;
+}
+.xrow-num {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+
+/* "Conta sugerida" chip + actions inside a review-pending expandable row (mock ".sugg"/".exacts"). */
+.sugg {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  background: var(--brand-subtle);
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--foreground);
+  flex-wrap: wrap;
+}
+.sugg svg {
+  width: 15px;
+  height: 15px;
+  color: var(--brand);
+  flex: 0 0 auto;
+}
+.sugg .sugg-acct {
+  font-weight: 700;
+  color: var(--brand);
+}
+.sugg--none {
+  color: var(--muted-foreground);
+}
+.xrow-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* Count badges no nav (mock "rdot"/"ib"): bolinha agregada no rail + contagem no item do painel. */
+.nav-rail-btn {
+  position: relative;
+}
+.nav-rail-dot {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: hsl(33 60% 14%);
+  font-size: 10px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--sb-rail);
+}
+.nav-count-badge {
+  margin-left: auto;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--sb-active);
+  color: var(--sb-fg-bright);
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* "Revisar em sequência" fullscreen overlay (mock ".seq"). */
+.seq {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+.seqbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+.seqbar .prog {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.seqbar .progsub {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.seqtrack {
+  height: 4px;
+  background: var(--border-subtle);
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+.seqfill {
+  height: 100%;
+  background: var(--brand);
+  transition: width 0.35s ease;
+}
+.seqscroll {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 18px;
+}
+.seqinner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.seqname {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 3px;
+}
+.seqmeta {
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+.seqdone {
+  text-align: center;
+  padding: 56px 20px;
+}
+.seqdone .big {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--brand-subtle);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+}
+
+/* ─── Gestão Financeira — payment queue (treasury home) ─────────────────────── */
+
+.pq-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pq-chips {
+  display: flex;
+  gap: 0;
+}
+
+/* History filters: compact fields (dates + method), right-aligned; each sizes to its input. */
+.pq-history-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.pq-history-filters .field {
+  flex: 0 0 auto;
+}
+.pq-history-filters .field .input,
+.pq-history-filters .field .select {
+  min-width: 0;
+}
+.pq-chip {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  border-radius: 0;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  position: relative;
+}
+.pq-chip:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.pq-chip:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.pq-chip + .pq-chip {
+  margin-left: -1px;
+}
+.pq-chip:hover {
+  border-color: var(--brand);
+  color: var(--foreground);
+  z-index: 1;
+}
+.pq-chip.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-foreground, #fff);
+  z-index: 1;
+}
+
+/* Requisitions filter bar (AEL-876) */
+.rq-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rq-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.rq-filters-search {
+  flex: 1 1 240px;
+  max-width: 340px;
+}
+.rq-filters .field {
+  flex: 0 0 auto;
+}
+.rq-filters-hint {
+  margin: -4px 0 10px;
+}
+.rqf-chips {
+  display: flex;
+  gap: 0;
+}
+.rqf-chip {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  border-radius: 0;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  position: relative;
+}
+.rqf-chip:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.rqf-chip:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.rqf-chip + .rqf-chip {
+  margin-left: -1px;
+}
+.rqf-chip:hover {
+  border-color: var(--brand);
+  color: var(--foreground);
+  z-index: 1;
+}
+.rqf-chip.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-foreground, #fff);
+  z-index: 1;
+}
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.th-sort:hover {
+  color: var(--brand);
+}
+.th-sort-idle {
+  opacity: 0.4;
+}
+
+/* Budget-provision bullet bars (AEL-876) — provisão do orçamento mês a mês */
+/* Sparkline "Impacto no orçamento" (AEL-876): número grande + gráfico linha/área no aside. */
+.bpj-big {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.bpj-num {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.bpj-flag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--danger);
+}
+.bpj-chart {
+  margin-top: 6px;
+}
+.bpj-chart svg {
+  display: block;
+  height: auto;
+}
+
+/* Flex list — the queue reflows on any width instead of clipping table cells. */
+.pq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Group header (Vencidos / Vence hoje / per-day). */
+.pq-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: var(--muted, var(--card-2, rgba(0, 0, 0, 0.03)));
+  border-top: 1px solid var(--border);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+button.pq-group-head {
+  cursor: pointer;
+}
+.pq-group-title {
+  font-weight: 750;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pq-group-meta {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.pq-group-head--danger .pq-group-title {
+  color: var(--danger);
+}
+.pq-group-head--today .pq-group-title {
+  color: var(--warning);
+}
+
+/* One installment row: main block grows, value + actions sit right and wrap below when cramped. */
+.pq-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--hairline, var(--border));
+}
+.pq-row:first-child {
+  border-top: none;
+}
+.pq-row--overdue {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+.pq-row-check {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+/* Keeps the checkbox column aligned on rows that aren't remittance-eligible (no checkbox rendered). */
+.pq-row-check-spacer {
+  flex: 0 0 auto;
+  width: 13px;
+}
+/* Eligibility note above the queue when nothing can be remitted — subtle, not an error. */
+.pq-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline, var(--border));
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.pq-row-main {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.pq-row-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pq-row-vendor {
+  font-weight: 650;
+}
+.pq-row-meta {
+  display: flex;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.pq-row-meta > span:not(:first-child)::before {
+  content: '· ';
+}
+.pq-row-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.pq-method {
+  font-size: 12px;
+  font-weight: 600;
+}
+.pq-row-right {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+.pq-row-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pq-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Secondary text (CNPJ, competência, linha digitável). */
+.pq-sub {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+.pq-digitable {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Below the aside breakpoint the row gets tight — let value/actions take the full width.
+   .pq-row-right keeps flex:0 0 auto (no shrink); width:100% alone forces its flex-basis to 100%
+   (basis:auto defers to width) while flex-shrink:0 refuses to yield to .pq-row-main. In the
+   default nowrap .pq-row that squeezes main to ~0 without ever exceeding the row's own width, so
+   main's text overflows its collapsed box right under .pq-row-right — a visual overlap, not a
+   scrollWidth overflow, so the mobile-layout guard's scrollWidth check can't see it. Letting
+   .pq-row wrap gives .pq-row-right's forced 100% width nowhere to go but its own line below. */
+@media (max-width: 1024px) {
+  .pq-row {
+    flex-wrap: wrap;
+  }
+  .pq-row-right {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+}
+
+/* Sticky selection bar at the bottom of the queue. */
+.pq-bulkbar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 11px 14px;
+  background: var(--brand);
+  color: var(--brand-foreground, #fff);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md, 0 8px 24px -12px rgba(0, 0, 0, 0.4));
+}
+.pq-bulkbar-spacer {
+  flex: 1;
+}
+.pq-bulkbar .btn:not(.btn-brand) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: transparent;
+  color: inherit;
+}
+.pq-bulkbar .btn.btn-brand {
+  background: #fff;
+  color: var(--brand);
+  border-color: #fff;
+}
+
+/* ============================================================= Documentação (user manual)
+   A left table-of-contents + a content pane. Mirrors the legacy manual's information structure
+   (flow diagram, step cards, callouts, per-stage color-coding) using the One's tokens only, so the
+   dark theme stays correct. Scoped by `.doc-*` (repo pattern: .cc-*, .cf-*, .rq-*). */
+.doc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 4px;
+}
+@media (min-width: 1200px) {
+  .doc-layout {
+    grid-template-columns: 272px minmax(0, 1fr);
+  }
+  .doc-toc {
+    position: sticky;
+    top: 28px;
+  }
+}
+
+/* --- Table of contents (section switcher) --- */
+.doc-toc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 8px;
+}
+.doc-toc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+.doc-toc-item:hover {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.doc-toc-item.active {
+  background: var(--brand-subtle);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.doc-toc-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted-foreground);
+}
+.doc-toc-item.active .doc-toc-ico {
+  background: var(--brand);
+  color: var(--brand-foreground);
+}
+.doc-toc-ico svg {
+  width: 16px;
+  height: 16px;
+}
+.doc-toc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.doc-toc-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.doc-toc-sub {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.doc-toc-item.active .doc-toc-sub {
+  color: var(--brand);
+  opacity: 0.75;
+}
+.doc-toc-chev {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+
+/* --- Content typography --- */
+.doc-content {
+  min-width: 0;
+}
+.doc-lead {
+  font-size: 14px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+.doc-content .panel-body > * + * {
+  margin-top: 14px;
+}
+.doc-content .panel-body > .doc-heading {
+  margin-top: 28px;
+}
+.doc-p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+.doc-heading {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.doc-list {
+  padding-left: 20px;
+  margin: 0;
+  list-style: disc;
+}
+.doc-list.doc-list-ol {
+  list-style: decimal;
+}
+.doc-list li {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+.doc-list li::marker {
+  color: var(--muted-foreground);
+}
+.doc-list li + li {
+  margin-top: 7px;
+}
+
+/* --- Tone tokens (callouts + deviations share these) --- */
+.doc-tone-info {
+  --tone: var(--info);
+  --tone-subtle: var(--info-subtle);
+}
+.doc-tone-warning {
+  --tone: var(--warning);
+  --tone-subtle: var(--warning-subtle);
+}
+.doc-tone-danger {
+  --tone: var(--danger);
+  --tone-subtle: var(--danger-subtle);
+}
+.doc-tone-success {
+  --tone: var(--success);
+  --tone-subtle: var(--success-subtle);
+}
+
+/* --- Callout --- */
+.doc-callout {
+  display: flex;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--tone, var(--info));
+  background: var(--tone-subtle, var(--info-subtle));
+}
+.doc-callout-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  margin-top: 1px;
+  color: var(--tone, var(--info));
+}
+.doc-callout-ico svg {
+  width: 18px;
+  height: 18px;
+}
+.doc-callout-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--foreground);
+  margin-bottom: 3px;
+}
+.doc-callout-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+/* --- TODO / em revisão (dashed neutral) --- */
+.doc-todo {
+  display: flex;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+}
+.doc-todo-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  margin-top: 1px;
+  color: var(--muted-foreground);
+}
+.doc-todo-ico svg {
+  width: 18px;
+  height: 18px;
+}
+.doc-todo-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+.doc-todo-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+/* --- Flow diagram (overview) --- */
+.doc-flow-wrap {
+  overflow-x: auto;
+  padding: 6px 0 2px;
+}
+.doc-flow {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 720px;
+}
+.doc-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  flex: 1;
+  padding: 4px;
+}
+.doc-node-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 2px solid var(--stage-color, var(--brand));
+  color: var(--stage-color, var(--brand));
+  background: var(--card);
+  font-weight: 700;
+  font-size: 14px;
+}
+.doc-node-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+.doc-node-role {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.doc-node-sep {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--border);
+  align-self: center;
+  margin-top: 11px;
+}
+
+/* --- Deviations (branches) --- */
+.doc-deviations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.doc-deviation {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tone, var(--border));
+  border-radius: 10px;
+  background: var(--card);
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.doc-deviation-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.doc-deviation-ico {
+  display: inline-flex;
+  color: var(--tone, var(--muted-foreground));
+}
+.doc-deviation-ico svg {
+  width: 16px;
+  height: 16px;
+}
+.doc-deviation-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--foreground);
+}
+.doc-deviation-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+.doc-deviation-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--foreground);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 5px 9px;
+  margin-top: auto;
+}
+.doc-deviation-flow svg {
+  width: 13px;
+  height: 13px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+
+/* --- Roles (cargos) --- */
+.doc-roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.doc-role {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--brand);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.doc-role-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.doc-role-name {
+  font-weight: 700;
+  font-size: 14px;
+  font-family: var(--font-display);
+  color: var(--foreground);
+}
+.doc-role-summary {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.doc-role-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.doc-role-points li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+.doc-role-points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+/* --- Step cards (etapas) --- */
+.doc-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.doc-step {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--stage-color, var(--brand));
+  border-radius: 12px;
+  background: var(--card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.doc-step-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.doc-step-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.doc-step-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--stage-color, var(--brand));
+}
+.doc-step-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--foreground);
+}
+.doc-step-ico {
+  display: inline-flex;
+  color: var(--stage-color, var(--brand));
+}
+.doc-step-ico svg {
+  width: 18px;
+  height: 18px;
+}
+.doc-step-status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.doc-step-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.doc-meta-cell {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.doc-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+.doc-meta-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.doc-step-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.doc-step-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+.doc-check {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.doc-check li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+.doc-check li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--stage-color, var(--brand));
+}
+.doc-rules {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.doc-rules-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.doc-rules-list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+.doc-rules-list li::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--stage-color, var(--brand));
+}
+.doc-rules-list li strong {
+  color: var(--foreground);
+}
+
+/* --- Reference tables ---
+   Escopado a `.doc-table-wrap table` (não `.doc-table`) para também cobrir a <table> nua que o
+   ResponsiveTable desenha quando migrado (o primitivo não aceita `className`) — sem isso, migrar
+   relacao-tab.tsx / remessas-titulos-tab.tsx trocaria esta aparência pela genérica de `table` em
+   index.css, uma regressão visual de desktop. `.doc-table` continua funcionando (é uma <table>
+   dentro de `.doc-table-wrap`, ex.: o esqueleto de carregamento/vazio de relacao-tab.tsx e
+   remessas-titulos-tab.tsx, que roda antes do ResponsiveTable montar — documentation/index.tsx já
+   foi migrado, na Task 220ddb58, e usa só o ResponsiveTable). */
+.doc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.doc-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.doc-table-wrap th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  background: var(--surface);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.doc-table-wrap td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--foreground);
+  line-height: 1.5;
+  vertical-align: top;
+}
+.doc-table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+.doc-table-wrap td strong {
+  font-weight: 600;
+}
+
+/* --- Category chips (exemplos de conta fixa) --- */
+.doc-cats-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.doc-cats-caption {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.doc-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.doc-cat {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 12px;
+}
+.doc-cat-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+.doc-cat-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* --- Screen snippets: real app UI framed like a window (not a bitmap) --- */
+.doc-screen-fig {
+  margin: 0;
+}
+.doc-screen {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  overflow: hidden;
+}
+.doc-screen-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.doc-screen-dots {
+  display: inline-flex;
+  gap: 5px;
+}
+.doc-screen-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.doc-screen-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.doc-screen-body {
+  padding: 14px 16px 6px;
+}
+/* The embedded tab bar is illustrative: not clickable, and no default bottom margin inside the frame. */
+.doc-screen-body .stage-tabbar {
+  pointer-events: none;
+  margin-bottom: 0;
+}
+.doc-screen-caption {
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+/* ===== AUDIT TRAIL (admin) ===== */
+/* Filter row above the table: five fields never fit beside a panel title, so they get their own line. */
+.audit-filters {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.audit-filters .field {
+  min-width: 180px;
+}
+/* Raw payload: collapsed by default, since the field-by-field table is what the reader normally wants. */
+.audit-raw {
+  margin-top: 18px;
+  font-size: 13px;
+}
+.audit-raw summary {
+  cursor: pointer;
+  color: var(--muted-foreground);
+}
+.audit-raw pre {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── Conciliação bancária: linha densa + detalhe inline ────────────────────────────────────────────
+   The screen is a scan-then-act list of hundreds of statement lines, so the row is tuned for scanning:
+   one line tall, actions as icons, and everything that explains the line kept in the expandable body. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* Neutral status chip: nothing is pending on the operator (a tarifa with no título, a credit the matcher
+   never covers). The warm and calm badges are reserved for lines that still want a decision. */
+.badge-neutral {
+  background: var(--surface);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+.cc-table tbody td {
+  padding: 7px 16px;
+  vertical-align: middle;
+}
+.cc-table .cc-chevron-col {
+  width: 1%;
+  padding-right: 0;
+}
+.cc-chevron {
+  width: 15px;
+  height: 15px;
+  color: var(--muted-foreground);
+  transition: transform 0.12s ease;
+}
+.cc-chevron.open {
+  transform: rotate(90deg);
+}
+/* One line, ellipsised: bank descriptions run long and a wrapped one would undo the density gain. The full
+   text is a click away in the detail body. */
+.cc-desc {
+  max-width: 1px;
+  width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cc-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+}
+.cc-row:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.icon-btn.cc-ok:hover {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Expanded body */
+.cc-detail-row > td {
+  padding: 0 !important;
+  background: var(--surface);
+}
+.cc-detail {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 2fr);
+  gap: 20px;
+  padding: 14px 16px 16px 47px;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 1024px) {
+  .cc-detail {
+    grid-template-columns: 1fr;
+    padding-left: 16px;
+  }
+}
+.cc-detail h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--muted-foreground);
+}
+.cc-detail-ofx dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  font-size: 12.5px;
+}
+.cc-detail-ofx dt {
+  color: var(--muted-foreground);
+}
+.cc-detail-ofx dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cc-detail-cands .help {
+  margin: 0 0 10px;
+}
+.cc-cands {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cc-cand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+.cc-cand-main {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
+.cc-cand-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.cc-cand-meta {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+.cc-cand-deltas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+/* The two deltas are the whole point of showing a near miss: they say how far off the pairing is without
+   making the operator open the título. */
+.cc-delta {
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cc-delta.ok {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.cc-delta.warn {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+/* ===== NOTIFICATIONS INBOX (.ntf-*) =====
+   Prefix is `ntf-`, not `notif-`: `.notif-dot` is already the topbar bell's unread dot.
+   The row is a 4-area grid so the phone layout is a re-map of the same markup: on a wide screen
+   everything sits on one band, below 640px the chip and the timestamp drop to a meta band. */
+.ntf-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ntf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ntf-day {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 7px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.ntf-row {
+  display: grid;
+  /* The action button gets a column of its own — a slot that stays reserved on read rows, which is
+     what keeps every timestamp in one column instead of shifting by the button's width. */
+  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-areas: 'ico main tags time act';
+  gap: 0 12px;
+  align-items: center;
+  /* 13px on the left, not 16: the 3px unread bar makes up the difference so read and unread rows
+     keep the same text origin. */
+  padding: 11px 16px 11px 13px;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--card);
+  cursor: pointer;
+}
+.ntf-row:last-child {
+  border-bottom: 0;
+}
+.ntf-row:hover {
+  background: var(--surface);
+}
+.ntf-row:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.ntf-row.unread {
+  border-left-color: var(--brand);
+}
+.ntf-row.ntf-plain {
+  cursor: default;
+}
+.ntf-ico {
+  grid-area: ico;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+}
+.ntf-ico svg {
+  width: 15px;
+  height: 15px;
+}
+/* Tone = outcome: waiting / went through / needs you / died or blew its SLA. */
+.ntf-info .ntf-ico {
+  color: var(--info);
+  background: var(--info-subtle);
+}
+.ntf-success .ntf-ico {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+.ntf-warning .ntf-ico {
+  color: var(--warning);
+  background: var(--warning-subtle);
+}
+.ntf-danger .ntf-ico {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+.ntf-main {
+  grid-area: main;
+  min-width: 0;
+}
+.ntf-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+.unread .ntf-title {
+  font-weight: 700;
+}
+.ntf-dot {
+  display: inline-block;
+  vertical-align: middle;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--brand);
+  margin: -1px 6px 0 0;
+}
+.ntf-msg {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.ntf-tags {
+  grid-area: tags;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip.ntf-team {
+  background: var(--muted);
+  border-color: transparent;
+}
+.ntf-time {
+  grid-area: time;
+  min-width: 62px;
+  margin-left: 12px;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ntf-act-slot {
+  grid-area: act;
+  width: 24px;
+  display: grid;
+  place-items: center;
+}
+.ntf-act {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--muted-foreground);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.ntf-act svg {
+  width: 13px;
+  height: 13px;
+}
+.ntf-row:hover .ntf-act,
+.ntf-act:focus-visible {
+  opacity: 1;
+}
+.ntf-act:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+/* Touch has no :hover, so the action would be unreachable — show it, at a real touch target. */
+@media (hover: none) {
+  .ntf-act-slot {
+    width: 32px;
+  }
+  .ntf-act {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+  .ntf-row:hover {
+    background: var(--card);
+  }
+}
+
+/* Phone: the title takes the full width and the chip + timestamp drop to their own band. */
+@media (max-width: 640px) {
+  .ntf-row {
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas:
+      'ico main main main'
+      '. tags time act';
+    align-items: start;
+    padding: 10px 12px 10px 9px;
+    column-gap: 10px;
+  }
+  .ntf-ico {
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+  }
+  .ntf-ico svg {
+    width: 13px;
+    height: 13px;
+  }
+  .ntf-title {
+    font-size: 13px;
+  }
+  .ntf-tags,
+  .ntf-time,
+  .ntf-act-slot {
+    padding-top: 6px;
+  }
+  .ntf-act-slot {
+    width: 30px;
+  }
+  .ntf-act {
+    opacity: 1;
+    width: 30px;
+    height: 30px;
+  }
+  .ntf-day {
+    padding: 6px 12px;
+  }
+}
